@@ -14,7 +14,9 @@ const active=()=>p?.round&&!p.round.done&&!busy&&!$('parent').open&&!$('welcome'
 const elapsed=()=>Math.min(3600000,Math.max(0,(pausedAt??performance.now())-shotStart));
 function currentTargets(){if(feedback)return feedback.scene||[feedback.target];if(flight)return targetsFor(flight.round,flight.index,flight.elapsed+Math.min(flight.duration,performance.now()-flight.at));return p?.round?targetsFor(p.round,Math.min(4,p.round.shots.length),elapsed()):[{x:400,y:240,radius:125}];}
 function currentChallenge(){return p?.round?.rules===2?challengeFor(p.round,Math.min(4,p.round.shots.length)):null;}
-function announce(manual=false){const c=currentChallenge();if(c){$('message').textContent='Listen, then hit the matching '+(c.kind==='letter'?'letter.':'word.');void speak(c.cue,manual,true);log('cue',c.cue);}else{ $('message').textContent=WORDS.start;void speak(WORDS.start,manual,true);}}
+let controlsIntroSpoken=false;
+function announceControls(manual=false){let heard=controlsIntroSpoken;try{heard||=sessionStorage.getItem('target-controls-heard:'+player)==='1';}catch{}if(!manual&&(!sound||heard))return;controlsIntroSpoken=true;try{sessionStorage.setItem('target-controls-heard:'+player,'1');}catch{}void speak(WORDS.start,manual,true);}
+function announce(manual=false){const c=currentChallenge();if(c){$('message').textContent='Listen, then hit the matching '+(c.kind==='letter'?'letter.':'word.');void speak(c.cue,manual,true);log('cue',c.cue);}else{ $('message').textContent=WORDS.start;announceControls(manual);}}
 function circle(x,y,r,color){ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();}
 function draw(){
  const theme=THEMES[p?.round?.theme||0],targets=currentTargets(),sight=p?.round?aimAt(p.round,aim.x,aim.y,elapsed()):aim;ctx.clearRect(0,0,800,600);
