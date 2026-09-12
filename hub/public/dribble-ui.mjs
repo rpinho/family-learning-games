@@ -1,5 +1,6 @@
 import {LEVELS,RULES} from '../dribble.mjs';
 import {createPitch} from './pitch.mjs';
+import {createSaveQueue,fetchJSON} from './save-request.mjs';
 export function mountDribble(root,{player,name,event}){
  let p=null,busy=false,changing=false,alive=true,epoch=0,timer,voiceAt=-Infinity,audioContext=null,sound=true,help=[],clips={};const narration=new Audio();
  fetch('/voice/manifest.json').then(r=>r.ok?r.json():null).then(d=>{clips=d?.clips||{};}).catch(()=>{});
@@ -15,7 +16,7 @@ export function mountDribble(root,{player,name,event}){
  function stopVoice(){voiceToken++;narration.pause();narration.currentTime=0;speechSynthesis.cancel();}
  function speak(line,manual=false){if(!sound||!alive||!manual&&performance.now()-voiceAt<4000)return;stopVoice();voiceAt=performance.now();const stamp=voiceToken;const fallback=()=>{if(!alive||!sound||voiceToken!==stamp)return;const u=new SpeechSynthesisUtterance(line),voices=speechSynthesis.getVoices().filter(v=>/^en[-_]US$/i.test(v.lang));u.voice=voices.find(v=>/samantha|ava|jenny|aria|joanna|female|google us/i.test(v.name))||voices[0]||null;u.lang='en-US';u.rate=.94;speechSynthesis.speak(u);};if(clips[line]){narration.src=clips[line];narration.play().catch(()=>{event('voice_fallback',line);fallback();});}else fallback();}
  function effect(goal){if(!sound)return;try{audioContext??=new AudioContext();void audioContext.resume();const t=audioContext.currentTime;for(const [i,f]of (goal?[660,880,1100]:[230]).entries()){const o=audioContext.createOscillator(),g=audioContext.createGain();o.type='sine';o.frequency.setValueAtTime(f,t+i*.09);g.gain.setValueAtTime(0,t+i*.09);g.gain.linearRampToValueAtTime(.12,t+i*.09+.015);g.gain.exponentialRampToValueAtTime(.001,t+i*.09+.2);o.connect(g);g.connect(audioContext.destination);o.start(t+i*.09);o.stop(t+i*.09+.21);}}catch{}}
- async function request(a){const r=await fetch('/api/dribble?player='+player,a?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...a,rulesVersion:RULES,revision:p.revision,roundId:p.round?.id})}:{}),d=await r.json();if(!r.ok)throw Error(d.error||'Could not connect.');return d;}
+ async function request(a){return fetchJSON('/api/dribble?player='+player,a?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...a,rulesVersion:RULES,revision:p.revision,roundId:p.round?.id})}:{});}
  function show(line){if(!p||!alive||!p.round)return;const r=p.round;pitch.set(r);$('#goals').textContent=`${p.dribbles||0} dribble${p.dribbles===1?'':'s'} past`;$('#level').value=p.level;$('#easier').disabled=changing||p.level===1;$('#harder').disabled=changing||p.level===8;$('#level').disabled=changing;
   $('.feints').hidden=false;$('.controls').hidden=false;root.querySelectorAll('[data-move],[data-feint],#hint').forEach(b=>b.disabled=busy||changing||r?.done);
   root.querySelectorAll('[data-move]').forEach(b=>b.classList.toggle('hint',help.includes(b.dataset.move)));
@@ -24,19 +25,20 @@ export function mountDribble(root,{player,name,event}){
   $('.status').textContent=line||`Duel ${r.step+1} of ${r.steps} · Fake, watch, dribble.`;$('canvas').setAttribute('aria-label',r.balanced?'Defender is balanced, feet closed. No opening yet.':`Defender leans to your ${r.blocked}. Feet ${r.gap?'apart: nutmeg gap':'closed: no nutmeg gap'}.${r.touchline?' Your '+r.touchline+' is outside the field.':''}`);
  }
  async function send(a){if(!alive||changing||busy&&a.type!=='level')return;const myEpoch=a.type==='level'?++epoch:epoch;clearTimeout(timer);stopVoice();help=[];pitch.clear();busy=true;if(a.type==='level')changing=true;show('One moment…');try{
-  // Settings may cancel an animation, but never race an unresolved score save.
-  if(pending)await pending;
-  if(!alive)return;pending=request(a).then(d=>{if(alive)p=d.profile;return d;});const d=await pending;pending=null;if(!alive||myEpoch!==epoch)return;const r=d.result;
+  // Queue settings after a save; rejected jobs release the latch too. Reload
+  // state inside the queue on failure, before any next job uses its revision.
+  const d=await saves.run(async()=>{if(!alive)return null;try{const result=await request(a);if(alive)p=result.profile;return result;}catch(e){try{const latest=await request();if(alive)p=latest.profile;}catch{}throw e;}});
+  if(!alive||myEpoch!==epoch||!d)return;const r=d.result;
   if(['escaped','blocked','recover','feinted'].includes(r.kind)){
    show(r.line+(r.easierNext?' Next duel will be easier.':''));pitch.animate(r.kind==='feinted'?'feint':r.kind,a.move,r.kind==='escaped'?1700:850);if(['escaped','blocked'].includes(r.kind))effect(r.kind==='escaped');speak(r.line);
    timer=setTimeout(async()=>{if(!alive||myEpoch!==epoch)return;busy=false;pitch.clear();if(r.kind==='escaped'){await send({type:'start'});}else show(r.kind==='blocked'?'Keep the ball. Rethink your move.':undefined);},r.kind==='escaped'?2000:1000);
   }else{busy=false;changing=false;if(r.kind==='hint'){help=[];show(r.line);speak(r.line,true);}else{show();speak('New duel. Draw a step, then dribble past.');}}
- }catch(e){if(alive&&myEpoch===epoch){busy=false;changing=false;$('.status').textContent=e.message;event('dribble_error',e.message);try{p=(await request()).profile;show('Your saved game is here. Choose again.');}catch{}}}finally{if(myEpoch===epoch){changing=false;show($('.status').textContent);}}}
- let pending=null;
+ }catch(e){if(alive&&myEpoch===epoch){busy=false;changing=false;show(e.message);$('.status').textContent=e.message;event('dribble_error',e.message);if(e.code==='CLIENT_UPDATE'){const u=new URL(location.href);u.searchParams.set('v',Date.now());location.replace(u);}}}finally{if(alive&&myEpoch===epoch){changing=false;show($('.status').textContent);}}}
+ const saves=createSaveQueue();
  root.querySelectorAll('[data-move]').forEach(b=>b.onclick=()=>send({type:'move',move:b.dataset.move}));root.querySelectorAll('[data-feint]').forEach(b=>b.onclick=()=>send({type:'feint',move:b.dataset.feint}));
  $('#level').onchange=e=>send({type:'level',level:Number(e.target.value)});$('#easier').onclick=()=>send({type:'level',level:p.level-1});$('#harder').onclick=()=>send({type:'level',level:p.level+1});$('#hint').onclick=()=>send({type:'hint'});$('#hear').onclick=()=>speak(p.round.balanced?'Draw a step. Fake one way, then watch.':'Watch the body lean. Go away from the planted foot. Only go through an actual gap.',true);$('#sound').onclick=()=>{sound=!sound;$('#sound').textContent=sound?'♪ Sound on':'♪ Sound off';if(!sound)stopVoice();};
  const key=e=>{if(e.target.matches('input,select,button')||e.repeat)return;const fake={a:'left',d:'right'}[e.key.toLowerCase()],move={ArrowLeft:'left',ArrowUp:'middle',ArrowRight:'right'}[e.key];if(move||fake){e.preventDefault();send({type:fake?'feint':'move',move:fake||move});}};window.addEventListener('keydown',key);
  root.querySelectorAll('[data-move],[data-feint],#hint,#level,#easier,#harder').forEach(b=>b.disabled=true);
  request().then(async d=>{if(!alive)return;p=d.profile;if(p.rulesVersion!==RULES||!p.round||p.round.done)await send({type:'start'});else{show();speak('Draw a step. Fake one way, then watch.');}event('open_game','dribble-duel');}).catch(e=>{if(alive){$('.status').textContent=e.message;event('dribble_error',e.message);}});
- const dispose=()=>{alive=false;epoch++;clearTimeout(timer);stopVoice();pitch.dispose();audioContext?.close();window.removeEventListener('keydown',key);};dispose.busy=()=>!!pending;return dispose;
+ const dispose=()=>{alive=false;epoch++;clearTimeout(timer);stopVoice();pitch.dispose();audioContext?.close();window.removeEventListener('keydown',key);};dispose.busy=saves.busy;return dispose;
 }

@@ -1,4 +1,4 @@
-export const VERSION='family-games-2026-09-12-dribble-2';
+export const VERSION='family-games-2026-09-12-recovery-3';
 export const RULES=2;
 export const LEVELS=['Draw a step','Did the fake work?','Change your fake','Use the space','Beat the recovery','Patient defender','Change direction twice','Complete the duel'];
 export const DIRS=['left','middle','right'];
@@ -13,7 +13,7 @@ export function openRoutes(r){if(r.balanced)return [];return DIRS.filter(x=>x!==
 export function explain(r,move){if(r.balanced)return 'The defender is still balanced. Create an opening before you run.';if(move===r.touchline)return 'That way leaves the field. Keep the ball inside.';if(move==='middle')return 'Feet closed. No nutmeg gap.';return 'That side is covered by the defender.';}
 export function act(p,a){
  if(!a||a.revision!==p.revision)throw error('Your game changed. Refresh to continue.',409);
- if(a.rulesVersion!==RULES)throw error('Dribble Duel has changed. Tap Refresh for the new duel.',409);
+ if(a.rulesVersion!==RULES)throw Object.assign(error('Dribble Duel has changed. Tap Refresh for the new duel.',409),{code:'CLIENT_UPDATE'});
  if(p.rulesVersion!==RULES){
   // Preserve all legacy totals and evidence; new dribbles have a separate score.
   if(p.round)p.history.push({kind:'legacy-round',round:structuredClone(p.round)});
