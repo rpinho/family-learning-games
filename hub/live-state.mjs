@@ -2,7 +2,7 @@ import {LIVE_RULES,LIVE_LEVELS,replay,metrics} from './public/dribble-live.mjs';
 import {freshReading,makeReward,finishReward} from './public/reading-reward.mjs';
 const fail=(message,status=400)=>Object.assign(Error(message),{status});
 export function actLive(p,a,initialLevel=1){
- if(![1,LIVE_RULES].includes(a.liveRules)||a.liveRules===1&&p.live?.rules===LIVE_RULES)throw Object.assign(fail('Soccer has updated. Tap Refresh.',409),{code:'CLIENT_UPDATE'});
+ if(![1,2,LIVE_RULES].includes(a.liveRules)||a.liveRules<(p.live?.rules||1))throw Object.assign(fail('Soccer has updated. Tap Refresh.',409),{code:'CLIENT_UPDATE'});
  // Idempotent finish retries, including a lost HTTP response after persistence.
  if(a.type==='live-finish'&&p.live?.round?.id===a.roundId&&p.live.round.done)return {kind:'finished',...p.live.round.result};
  if(a.actionId&&p.live?.reading?.lastAction?.id===a.actionId)return p.live.reading.lastAction.result;
@@ -10,9 +10,9 @@ export function actLive(p,a,initialLevel=1){
  p.live??={rules:a.liveRules,level:Math.max(1,Math.min(8,initialLevel)),wins:0,losses:0,serial:0,streak:0,struggles:0,history:[],round:null};
  const g=p.live;
  const replayRound=r=>replay(r.level,r.seed,r.inputs,r.rules||1);
- if(a.liveRules===LIVE_RULES&&g.rules!==LIVE_RULES&&['live-start','live-level','live-restart'].includes(a.type)){
+ if(a.liveRules>(g.rules||1)&&['live-start','live-level','live-restart'].includes(a.type)){
   if(g.round&&!g.round.done){g.previousRound=structuredClone(g.round);g.history.push({id:g.round.id,level:g.round.level,kind:'rules-upgrade',...metrics(replayRound(g.round))});g.round=null;g.serial++;}
-  g.rules=LIVE_RULES;g.streak=0;g.struggles=0;g.goals??=0;
+  g.rules=a.liveRules;g.streak=0;g.struggles=0;g.goals??=0;
  }
  if(a.type.startsWith('live-reading-')){
   const reading=g.reading,q=reading?.pending;

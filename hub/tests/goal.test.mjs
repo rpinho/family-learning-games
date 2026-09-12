@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {createMatch,advance,replay,encodeInput,tuning,GOAL,LIVE_RULES} from '../public/dribble-live.mjs';
+import {createMatch,advance,replay,encodeInput,tuning,GOAL,LIVE_RULES} from '../public/dribble-live-v2.mjs';
 import {replay as oldReplay,createMatch as oldMatch,advance as oldAdvance} from '../public/dribble-live-v1.mjs';
 import {actLive} from '../live-state.mjs';import {fresh,act,RULES} from '../dribble.mjs';
 const go=(p,a)=>actLive(p,{revision:p.revision,liveRules:LIVE_RULES,roundId:p.live?.round?.id,...a});
