@@ -4,6 +4,7 @@ import {join,resolve,extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {hostname,networkInterfaces} from 'node:os';
 import {fresh,act,VERSION} from './dribble.mjs';
+import {actLive} from './live-state.mjs';
 import {proxy} from './proxy.mjs';
 const here=fileURLToPath(new URL('.',import.meta.url)),root=resolve(here,'..'),data=process.env.FAMILY_DATA||join(root,'.data','hub');
 const ids=['letter-quest','word-arcade','number-park','maze-garden','three-in-a-row','target-trail'];
@@ -18,7 +19,7 @@ const send=(res,status,obj)=>{res.writeHead(status,{'Content-Type':'application/
 async function load(player){try{return JSON.parse(await readFile(join(data,player+'.json'),'utf8'));}catch(e){if(e.code==='ENOENT')return fresh(player,config.players.find(x=>x.id===player).level||1);throw e;}}
 const icons={'letter-quest':'games/letter-quest/public/icons/app-192-v1.png','word-arcade':'games/word-arcade/public/icons/app-192-v1.png','number-park':'games/number-park/public/icons/number-park-192.png','maze-garden':'games/maze-garden/public/icon-192.png','three-in-a-row':'games/three-in-a-row/dist/icon-192.png','target-trail':'games/target-trail/dist/icon-192.png'};
 const types={'.html':'text/html','.mjs':'text/javascript','.css':'text/css','.png':'image/png','.svg':'image/svg+xml','.webmanifest':'application/manifest+json','.woff2':'font/woff2'};
-const files=['index.html','hub.mjs','style.css','bridge.mjs','dribble-ui.mjs','pitch.mjs','save-request.mjs','icon.svg','icon-192.png','icon-512.png','manifest.webmanifest'];
+const files=['index.html','hub.mjs','style.css','bridge.mjs','dribble-ui.mjs','dribble-live.mjs','live-pitch.mjs','pitch.mjs','save-request.mjs','icon.svg','icon-192.png','icon-512.png','manifest.webmanifest'];
 const server=http.createServer(async(req,res)=>{
  res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','SAMEORIGIN');
  try{
@@ -43,7 +44,7 @@ const server=http.createServer(async(req,res)=>{
    if(!req.headers['content-type']?.startsWith('application/json'))return send(res,415,{error:'JSON required.'});
    let raw='';for await(const part of req){raw+=part;if(raw.length>8192)return send(res,413,{error:'Too much data.'});}let input;try{input=JSON.parse(raw);}catch{return send(res,400,{error:'Invalid JSON.'});}
    if(u.pathname==='/api/events'){await log({type:'client',player,kind:String(input.kind||'').slice(0,60),detail:String(input.detail||'').slice(0,300)});return send(res,200,{ok:true});}
-   queue=queue.catch(()=>{}).then(async()=>{try{const p=await load(player),before=structuredClone(p.round),result=act(p,input),file=join(data,player+'.json');await writeFile(file+'.tmp',JSON.stringify(p),{mode:0o600});await rename(file+'.tmp',file);await log({type:'dribble',player,input,before,result,level:p.level,goals:p.goals,dribbles:p.dribbles});send(res,200,{profile:p,result,version:VERSION});}catch(e){await log({type:'rejected',player,error:e.message});send(res,e.status||500,{error:e.status?e.message:'Could not save. Please Refresh.',code:e.code==='CLIENT_UPDATE'?'CLIENT_UPDATE':undefined});}});return;
+   queue=queue.catch(()=>{}).then(async()=>{try{const p=await load(player),live=String(input.type).startsWith('live-'),before=live?{id:p.live?.round?.id,level:p.live?.level,inputs:p.live?.round?.inputs?.length}:structuredClone(p.round),result=live?actLive(p,input,config.players.find(x=>x.id===player).level||1):act(p,input),file=join(data,player+'.json');await writeFile(file+'.tmp',JSON.stringify(p),{mode:0o600});await rename(file+'.tmp',file);await log({type:live?'dribble-live':'dribble',player,input,before,result,level:live?p.live.level:p.level,goals:p.goals,dribbles:live?p.live.wins:p.dribbles});send(res,200,{profile:p,result,version:VERSION});}catch(e){await log({type:'rejected',player,error:e.message});send(res,e.status||500,{error:e.status?e.message:'Could not save. Please Refresh.',code:e.code==='CLIENT_UPDATE'?'CLIENT_UPDATE':undefined});}});return;
   }
   if(!['GET','HEAD'].includes(req.method))return send(res,405,{error:'Read only.'});
   let file;const icon=u.pathname.match(/^\/game-icons\/([a-z-]+)\.png$/);

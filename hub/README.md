@@ -4,24 +4,19 @@ Run `npm run play` at the repository root, then open **http://localhost:4810/**.
 
 Beginner and Explorer links: `/?player=beginner` and `/?player=explorer`. The hub remembers the selected preset on the device. The name remains large at the top. Use **Grown-ups** on the home screen to change it. This arithmetic gate prevents accidental changes; it is not authentication.
 
-Games stay inside the hub under `/g/<game>/<player>/`. A loopback-only reverse proxy preserves the original game servers and saves. Same-origin frame permissions are applied only by the hub; standalone apps keep their original protections. Browser preferences are scoped per game/preset. The single installed app has one manifest, icon, scope and start URL. There is no service worker cache, cloud server or offline-play guarantee. Return with **Games**; **Refresh** stays available. Leaving with pending writes is blocked; possible unsaved canvas input prompts confirmation.
+Games stay inside the hub under `/g/<game>/<player>/`. A loopback-only reverse proxy preserves the original game servers and saves. Same-origin frame permissions are applied only by the hub; standalone apps keep their original protections. Browser preferences are scoped per game/preset. The single installed app has one manifest, icon, scope and start URL. There is no service worker cache, cloud server or offline-play guarantee. Return with **Games**; **Refresh** stays available. Pending writes or unsaved input prompt a confirmation rather than trapping navigation.
 
 ## Dribble Duel
 
-A turn-based soccer observation puzzle, not a physical dribbling trainer. Left/right always mean **the attacker's screen perspective**:
+A **real-time drag-to-dribble game**. Drag anywhere on the pitch to steer your blue player and ball. The orange defender tracks your past position with limited acceleration: pull them one way, then change direction. A yellow line telegraphs a lunge; a shrinking ring shows recovery. The defender cannot read the finger, teleport or instantly reverse a committed lunge.
 
-| Visible defender commitment | What to read before dribbling |
-| --- | --- |
-| Balanced, hasn't committed | Create an opening with a fake; charging is blocked |
-| Leaning to your left | Dribble right, unless it crosses the touchline |
-| Leaning to your right | Dribble left, unless it crosses the touchline |
-| A real gap between the feet | Nutmeg is also possible; a sideways step alone is not enough |
+Lift to pause and protect the ball; there is **no shot**. Win by carrying the ball across the far line beyond the defender. Tackles trigger a short reset, not a long explanation. Arrow keys also work. Controls are narrated only once per session, with **Hear again** for replay.
 
-Every duel starts with a balanced defender. Fake left or right and observe the response. A patient defender may hold their ground; repeating an identical fake does not wear them down. Change the fake and read again. You can attempt a dribble at any time, but charging before creating an opening is blocked. The defender never secretly changes after a dribble choice. Hints explain what to observe rather than highlighting an answer. There is no timer or shooting: the player and ball travel past the defender together.
+Eight instantly selectable difficulties change reaction delay, movement speed, lunge and recovery. Levels 7–8 narrow the space. Beginner starts at 1 and Explorer at 3, independently of old puzzle levels. Three consecutive wins raise difficulty; three tackles lower the next level. A practice attempt ends after 90 seconds of active movement without a loss penalty. Starting positions and four pitch palettes vary across attempts. This is a first real-time calibration, not a claim that these levels fit every child.
 
-Levels 1–2 introduce a fake and a defender who may not follow. Level 3 requires changing the fake. Level 4 adds touchlines. Levels 5–6 add a recovery and more patient defenders; levels 7–8 require three escapes in a duel. Three independent duels raise difficulty; two blocked attempts ease the next duel. Manual changes apply immediately. Corrected/assisted successes still celebrate but do not promote. Original v1 goals/history are retained as legacy data; v2 has a separate dribbles-past count and does not interpret old scores as mastery. Stale v1 clients are asked to Refresh before submitting moves.
+The server stores a separate `live` record, preserving all prior goals, turn-based dribbles, levels and history. Deterministic steering replays are checkpointed every five active seconds and on finger lift; reload reconstructs the last saved movement, paused. Completed replays are validated by the same simulation on the server. Finishes are idempotent. Local logs contain replays, outcomes, direction changes, elapsed active time, lunges, near encounters and setting/cancellation events. Nothing is uploaded. Failed saves pause play and expose **Retry save**, while Games/Refresh still offer an exit. A forced quit may lose movement since the last checkpoint.
 
-This is a deliberately simplified rules system. In real soccer, a defender stepping sideways does not guarantee a nutmeg; the actual gap, distance, balance, ball control and timing matter. Pair screen play with slow, safe practice using a soft ball and a clear space. No tackling, sliding or jumping over a partner. [FIFA's 4–8 dribbling and dueling session](https://www.fifatrainingcentre.com/en/practice/grassroots/4-to-8/dribbling-and-dueling.php) is background inspiration for observing, feinting and 1v1 play, not validation of this app or an affiliation.
+This is not a physical dribbling trainer or a validated assessment of soccer skill. Pair screen play with slow, safe changes of direction using a soft ball and clear space. No tackling, sliding or jumping over a partner. The older turn-based API remains compatible with already-open tabs; Refresh opens the real-time version.
 
 ## Existing local installations
 

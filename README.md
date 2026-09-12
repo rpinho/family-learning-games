@@ -2,7 +2,7 @@
 
 ![Family Learning Games — six touch-friendly games for reading, counting, tracing and exploring](docs/media/social-preview.png)
 
-**One app. Seven ways to play.** A single game-picker home screen now brings together the original six games pictured above and the new **Dribble Duel** soccer puzzle. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, not a public online classroom or hosted play service.
+**One app. Seven ways to play.** A single game-picker home screen now brings together the original six games pictured above and **Dribble Duel**, a live soccer dribbling game. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, not a public online classroom or hosted play service.
 
 After setup, open **http://localhost:4810/**. Choose a player once; their name stays large at the top and their progress stays separate. Use **Games** to return home, **Refresh** to reload, and **Grown-ups** to change the device's player.
 
@@ -10,7 +10,7 @@ After setup, open **http://localhost:4810/**. Choose a player once; their name s
 
 ## Six games. Six different adventures.
 
-**New: [Dribble Duel](hub/README.md#dribble-duel)** joins these six. Draw the defender into a step, read the response, then dribble past with the ball. No shooting. Eight adjustable stages add patient defenders, changed fakes, touchlines and recoveries. No timer or hidden counter-move; difficulty changes apply immediately. It practices noticing openings, not physical ball control. [One-app installation and soccer rules →](hub/README.md)
+**New: [Dribble Duel](hub/README.md#dribble-duel)** joins these six. Drag your player and ball against a real-time defender. Draw a lunge, change direction and dribble past. Lift to pause—not shoot. Eight instantly adjustable levels change reactions, speed, recovery and space. Separate adaptive scores and server-validated replay logs preserve earlier progress. Screen play is not physical ball-control training. [One-app installation and soccer rules →](hub/README.md)
 
 Drag, trace, steer, aim, and think ahead. Pick an activity and a manageable challenge, then play together.
 

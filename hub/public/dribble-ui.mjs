@@ -1,44 +1,100 @@
-import {LEVELS,RULES} from '../dribble.mjs';
-import {createPitch} from './pitch.mjs';
+import {LIVE_RULES,LIVE_LEVELS,INTRO,createMatch,advance,replay,encodeInput,decodeInput,metrics} from './dribble-live.mjs';
+import {createLivePitch} from './live-pitch.mjs';
 import {createSaveQueue,fetchJSON} from './save-request.mjs';
-export function mountDribble(root,{player,name,event}){
- let p=null,busy=false,changing=false,alive=true,epoch=0,timer,voiceAt=-Infinity,audioContext=null,sound=true,help=[],clips={};const narration=new Audio();
+export function mountDribble(root,{player,event}){
+ let p=null,s=null,roundId=null,inputs='',alive=true,paused=true,changing=false,epoch=0,raf=0,last=0,acc=0,target=null,pointer=null,drag=null,finished=false,saveError=false,nextTimer=0,lastCheckpoint=0,voiceAt=-Infinity,spoken=false,sound=true,audioContext;
+ const saves=createSaveQueue(),keys=new Set(),narration=new Audio();let clips={},voiceToken=0;
  fetch('/voice/manifest.json').then(r=>r.ok?r.json():null).then(d=>{clips=d?.clips||{};}).catch(()=>{});
- root.innerHTML=`<section class="soccer"><div class="soccer-title"><h1>⚽ Dribble Duel</h1><span class="score" id="goals">0 dribbles</span><div class="difficulty"><button id="easier" aria-label="Easier soccer puzzles">−</button><select id="level" aria-label="Soccer difficulty">${LEVELS.map((x,i)=>`<option value="${i+1}">${i+1} · ${x}</option>`).join('')}</select><button id="harder" aria-label="Harder soccer puzzles">+</button></div></div><div class="match"><div><div class="pitch-wrap"><canvas aria-label="Soccer puzzle: read the defender’s feet, then choose a route"></canvas><span class="pitch-label">Your view · attack ↑</span></div><div class="feints" hidden><button data-feint="left">↶ Pretend left</button><button data-feint="right">Pretend right ↷</button></div><div class="controls"><button data-move="left"><b>↖</b>Your left</button><button data-move="middle"><b>↑</b>Through</button><button data-move="right"><b>↗</b>Your right</button></div><p class="status" role="status" aria-live="polite">Getting the pitch ready…</p></div><aside class="coach-panel"><h2 id="cue">Watch the feet.</h2><p id="explanation">Draw a step with a fake. Then dribble past.</p><div class="coach-buttons"><button id="hear">🔊 Hear again</button><button id="hint">A little clue</button></div><p class="small">No timer. Left and right are always yours. The defender will not secretly change after you choose.</p></aside></div><div class="soccer-foot"><button id="sound">♪ Sound on</button><details><summary>For grown-ups: try it with a real ball</summary><p>Practice the idea together: take a slow step to one side, let your child spot the open space, then dribble around. Use a soft ball and a clear space; no sliding, tackling or jumping over anyone. Later, let them fake one way before choosing another.</p><p>This game practices noticing openings and choosing a direction. It does not teach footwork or prove real-life soccer ability. A sideways step does not always leave a nutmeg gap in real play—look for the actual space.</p><p>Inspired by <a href="https://www.fifatrainingcentre.com/en/practice/grassroots/4-to-8/dribbling-and-dueling.php" target="_blank" rel="noreferrer">FIFA’s ages 4–8 dribbling and dueling ideas</a>. This app is not affiliated with FIFA.</p></details></div></section>`;
- const $=s=>root.querySelector(s),pitch=createPitch($('canvas'));
- $('#goals').textContent='0 dribbles';
- $('.pitch-label').textContent='Keep the ball · beat the defender ↑';
- $('.feints').hidden=false;
- root.querySelectorAll('[data-feint]').forEach(b=>b.textContent=b.dataset.feint==='left'?'↶ Fake left':'Fake right ↷');
- root.querySelectorAll('[data-move]').forEach(b=>b.lastChild.textContent=b.dataset.move==='middle'?'Nutmeg':b.dataset.move==='left'?'Dribble left':'Dribble right');
- $('.small').textContent='Fake first. Watch the response. Then take the ball past—not a shot.';
- let voiceToken=0;
- function stopVoice(){voiceToken++;narration.pause();narration.currentTime=0;speechSynthesis.cancel();}
- function speak(line,manual=false){if(!sound||!alive||!manual&&performance.now()-voiceAt<4000)return;stopVoice();voiceAt=performance.now();const stamp=voiceToken;const fallback=()=>{if(!alive||!sound||voiceToken!==stamp)return;const u=new SpeechSynthesisUtterance(line),voices=speechSynthesis.getVoices().filter(v=>/^en[-_]US$/i.test(v.lang));u.voice=voices.find(v=>/samantha|ava|jenny|aria|joanna|female|google us/i.test(v.name))||voices[0]||null;u.lang='en-US';u.rate=.94;speechSynthesis.speak(u);};if(clips[line]){narration.src=clips[line];narration.play().catch(()=>{event('voice_fallback',line);fallback();});}else fallback();}
- function effect(goal){if(!sound)return;try{audioContext??=new AudioContext();void audioContext.resume();const t=audioContext.currentTime;for(const [i,f]of (goal?[660,880,1100]:[230]).entries()){const o=audioContext.createOscillator(),g=audioContext.createGain();o.type='sine';o.frequency.setValueAtTime(f,t+i*.09);g.gain.setValueAtTime(0,t+i*.09);g.gain.linearRampToValueAtTime(.12,t+i*.09+.015);g.gain.exponentialRampToValueAtTime(.001,t+i*.09+.2);o.connect(g);g.connect(audioContext.destination);o.start(t+i*.09);o.stop(t+i*.09+.21);}}catch{}}
- async function request(a){return fetchJSON('/api/dribble?player='+player,a?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...a,rulesVersion:RULES,revision:p.revision,roundId:p.round?.id})}:{});}
- function show(line){if(!p||!alive||!p.round)return;const r=p.round;pitch.set(r);$('#goals').textContent=`${p.dribbles||0} dribble${p.dribbles===1?'':'s'} past`;$('#level').value=p.level;$('#easier').disabled=changing||p.level===1;$('#harder').disabled=changing||p.level===8;$('#level').disabled=changing;
-  $('.feints').hidden=false;$('.controls').hidden=false;root.querySelectorAll('[data-move],[data-feint],#hint').forEach(b=>b.disabled=busy||changing||r?.done);
-  root.querySelectorAll('[data-move]').forEach(b=>b.classList.toggle('hint',help.includes(b.dataset.move)));
-  $('#cue').textContent=r.balanced?'Draw a step.':'Did the fake work?';
-  $('#explanation').textContent=r.balanced?'Fake one way. Watch whether the defender follows.':'Read the lean and the feet. Keep the ball with you.';
-  $('.status').textContent=line||`Duel ${r.step+1} of ${r.steps} · Fake, watch, dribble.`;$('canvas').setAttribute('aria-label',r.balanced?'Defender is balanced, feet closed. No opening yet.':`Defender leans to your ${r.blocked}. Feet ${r.gap?'apart: nutmeg gap':'closed: no nutmeg gap'}.${r.touchline?' Your '+r.touchline+' is outside the field.':''}`);
+ root.innerHTML='<section class="soccer live-soccer"><div class="soccer-title"><h1>⚽ Dribble Duel <small>LIVE</small></h1><span class="score" id="goals">0 dribbles past</span><div class="difficulty"><button id="easier" aria-label="Easier defender">−</button><select id="level" aria-label="Defender difficulty">'+LIVE_LEVELS.map((n,i)=>'<option value="'+(i+1)+'">'+(i+1)+' · '+n+'</option>').join('')+'</select><button id="harder" aria-label="Harder defender">+</button></div></div><div class="match"><div><div class="pitch-wrap"><canvas tabindex="0" aria-label="Live soccer. Drag anywhere on the pitch to steer your blue player and ball. Lift to pause. Arrow keys also work."></canvas></div><p class="status" role="status" aria-live="polite">Getting the pitch ready…</p></div><aside class="coach-panel"><h2>Take the ball past.</h2><p>Drag to move. Pull the defender one way, then cut the other way.</p><p class="small">Lift to pause. Keep the ball at your feet—no shooting.</p><div class="coach-buttons"><button id="hear">🔊 Hear again</button><button id="sound">♪ Sound on</button></div><div class="live-actions"><button id="pause">▶ Resume</button><button id="restart">New try</button><button id="retry-save" hidden>Retry save</button></div><details><summary>Keyboard controls</summary><p>Hold the arrow keys to dribble. Space pauses. The blue player is you.</p></details></aside></div><details class="soccer-foot"><summary>For grown-ups</summary><p>The orange defender reacts to your player’s past position, not your finger. A yellow line shows a coming lunge; the ring shows recovery. Try a change of direction then. Difficulty changes start a new try immediately. Three wins move up; three tackles lower the next level. Old puzzle scores are kept separately.</p><p>This practices timing and spotting space on a screen, not real footwork. Try slow changes of direction together with a soft ball in a clear space.</p></details></section>';
+ const $=q=>root.querySelector(q),canvas=$('canvas'),pitch=createLivePitch(canvas);
+ function stopVoice(){voiceToken++;narration.pause();speechSynthesis.cancel();}
+ function speak(line,manual=false){
+  if(!alive||!sound||!manual&&performance.now()-voiceAt<7000)return;
+  stopVoice();voiceAt=performance.now();const token=voiceToken;
+  const fallback=()=>{if(!alive||!sound||token!==voiceToken)return;const u=new SpeechSynthesisUtterance(line),v=speechSynthesis.getVoices().filter(x=>/^en[-_]US$/i.test(x.lang));u.voice=v.find(x=>/samantha|ava|jenny|aria|joanna|female|google us/i.test(x.name))||v[0]||null;u.lang='en-US';u.rate=.94;speechSynthesis.speak(u);};
+  if(clips[line]){narration.src=clips[line];narration.play().catch(fallback);}else fallback();
  }
- async function send(a){if(!alive||changing||busy&&a.type!=='level')return;const myEpoch=a.type==='level'?++epoch:epoch;clearTimeout(timer);stopVoice();help=[];pitch.clear();busy=true;if(a.type==='level')changing=true;show('One moment…');try{
-  // Queue settings after a save; rejected jobs release the latch too. Reload
-  // state inside the queue on failure, before any next job uses its revision.
-  const d=await saves.run(async()=>{if(!alive)return null;try{const result=await request(a);if(alive)p=result.profile;return result;}catch(e){try{const latest=await request();if(alive)p=latest.profile;}catch{}throw e;}});
-  if(!alive||myEpoch!==epoch||!d)return;const r=d.result;
-  if(['escaped','blocked','recover','feinted'].includes(r.kind)){
-   show(r.line+(r.easierNext?' Next duel will be easier.':''));pitch.animate(r.kind==='feinted'?'feint':r.kind,a.move,r.kind==='escaped'?1700:850);if(['escaped','blocked'].includes(r.kind))effect(r.kind==='escaped');speak(r.line);
-   timer=setTimeout(async()=>{if(!alive||myEpoch!==epoch)return;busy=false;pitch.clear();if(r.kind==='escaped'){await send({type:'start'});}else show(r.kind==='blocked'?'Keep the ball. Rethink your move.':undefined);},r.kind==='escaped'?2000:1000);
-  }else{busy=false;changing=false;if(r.kind==='hint'){help=[];show(r.line);speak(r.line,true);}else{show();speak('New duel. Draw a step, then dribble past.');}}
- }catch(e){if(alive&&myEpoch===epoch){busy=false;changing=false;show(e.message);$('.status').textContent=e.message;event('dribble_error',e.message);if(e.code==='CLIENT_UPDATE'){const u=new URL(location.href);u.searchParams.set('v',Date.now());location.replace(u);}}}finally{if(alive&&myEpoch===epoch){changing=false;show($('.status').textContent);}}}
- const saves=createSaveQueue();
- root.querySelectorAll('[data-move]').forEach(b=>b.onclick=()=>send({type:'move',move:b.dataset.move}));root.querySelectorAll('[data-feint]').forEach(b=>b.onclick=()=>send({type:'feint',move:b.dataset.feint}));
- $('#level').onchange=e=>send({type:'level',level:Number(e.target.value)});$('#easier').onclick=()=>send({type:'level',level:p.level-1});$('#harder').onclick=()=>send({type:'level',level:p.level+1});$('#hint').onclick=()=>send({type:'hint'});$('#hear').onclick=()=>speak(p.round.balanced?'Draw a step. Fake one way, then watch.':'Watch the body lean. Go away from the planted foot. Only go through an actual gap.',true);$('#sound').onclick=()=>{sound=!sound;$('#sound').textContent=sound?'♪ Sound on':'♪ Sound off';if(!sound)stopVoice();};
- const key=e=>{if(e.target.matches('input,select,button')||e.repeat)return;const fake={a:'left',d:'right'}[e.key.toLowerCase()],move={ArrowLeft:'left',ArrowUp:'middle',ArrowRight:'right'}[e.key];if(move||fake){e.preventDefault();send({type:fake?'feint':'move',move:fake||move});}};window.addEventListener('keydown',key);
- root.querySelectorAll('[data-move],[data-feint],#hint,#level,#easier,#harder').forEach(b=>b.disabled=true);
- request().then(async d=>{if(!alive)return;p=d.profile;if(p.rulesVersion!==RULES||!p.round||p.round.done)await send({type:'start'});else{show();speak('Draw a step. Fake one way, then watch.');}event('open_game','dribble-duel');}).catch(e=>{if(alive){$('.status').textContent=e.message;event('dribble_error',e.message);}});
- const dispose=()=>{alive=false;epoch++;clearTimeout(timer);stopVoice();pitch.dispose();audioContext?.close();window.removeEventListener('keydown',key);};dispose.busy=saves.busy;return dispose;
+ function intro(){let heard=spoken;try{heard||=sessionStorage.getItem('live-dribble-intro:'+player)==='1';}catch{}if(heard||!sound)return;spoken=true;try{sessionStorage.setItem('live-dribble-intro:'+player,'1');}catch{}speak(INTRO);}
+ function effect(win){if(!sound)return;try{audioContext??=new AudioContext();void audioContext.resume();const t=audioContext.currentTime;for(const[i,f]of(win?[660,880,1100]:[210]).entries()){const o=audioContext.createOscillator(),g=audioContext.createGain();o.frequency.value=f;g.gain.setValueAtTime(.0001,t+i*.1);g.gain.exponentialRampToValueAtTime(.09,t+i*.1+.015);g.gain.exponentialRampToValueAtTime(.0001,t+i*.1+.18);o.connect(g);g.connect(audioContext.destination);o.start(t+i*.1);o.stop(t+i*.1+.2);}}catch{}}
+ function status(text){if(alive)$('.status').textContent=text;}
+ function show(){
+  if(!p||!alive)return;const g=p.live;
+  $('#goals').textContent=(g?.wins||0)+(g?.wins===1?' dribble past':' dribbles past');$('#level').value=g?.level||1;
+  $('#easier').disabled=changing||!g||g.level===1;$('#harder').disabled=changing||!g||g.level===8;$('#level').disabled=changing;
+  $('#restart').disabled=changing;$('#pause').disabled=changing||!s||!!s.outcome||saveError;
+  $('#pause').textContent=paused?'▶ Resume':'Ⅱ Pause';$('#retry-save').hidden=!saveError;$('#retry-save').disabled=false;
+ }
+ function release(){pointer=null;drag=null;keys.clear();paused=true;acc=0;show();}
+ function begin(){if(!s||s.outcome||changing||saveError)return;paused=false;intro();show();}
+ async function request(a){return fetchJSON('/api/dribble?player='+player,a?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...a,liveRules:LIVE_RULES,revision:p.revision})}:{});}
+ async function job(a){
+  return saves.run(async()=>{if(!alive)return null;try{const d=await request(a);if(alive)p=d.profile;return d;}catch(e){try{const d=await request();if(alive)p=d.profile;}catch{}throw e;}});
+ }
+ function failed(e){
+  if(!alive)return;release();saveError=true;clearTimeout(nextTimer);status('Could not save yet. Tap Retry save, or Games to leave.');show();event('dribble_live_error',e.message);
+  if(p?.live?.round&&roundId&&p.live.round.id!==roundId){install();status('The duel changed in another window. Your current game is here.');}
+  if(e.code==='CLIENT_UPDATE'){const u=new URL(location.href);u.searchParams.set('v',Date.now());location.replace(u);}
+ }
+ function install(){
+  const r=p.live.round;roundId=r.id;s=replay(r.level,r.seed,r.inputs);inputs=r.inputs;lastCheckpoint=inputs.length;finished=false;saveError=false;target={x:s.player.x,y:s.player.y};pitch.reset();release();status(inputs?'Your saved dribble is here. Drag to continue.':'Drag your blue player past the orange defender.');show();
+  if(s.outcome)void finish();
+ }
+ async function change(type,level){
+  if(changing)return;const my=++epoch;release();changing=true;clearTimeout(nextTimer);stopVoice();show();status('Starting your new try…');
+  try{const d=await job({type,...(level?{level}:{})});if(!alive||my!==epoch||!d)return;changing=false;install();event('dribble_live_setting',type+':'+p.live.level);}
+  catch(e){if(alive&&my===epoch){changing=false;failed(e);}}
+ }
+ async function checkpoint(){
+  if(!p||!s||finished||changing||saves.busy()||inputs.length===lastCheckpoint)return;
+  const my=epoch,copy=inputs,id=roundId;lastCheckpoint=copy.length;
+  try{await job({type:'live-checkpoint',roundId:id,inputs:copy});if(alive&&my===epoch)show();}
+  catch(e){if(alive&&my===epoch){lastCheckpoint=0;failed(e);}}
+ }
+ async function finish(){
+  if(finished||!s?.outcome||changing)return;finished=true;release();const my=epoch,outcome=s.outcome,copy=inputs,id=roundId;
+  effect(outcome==='escaped');status(outcome==='escaped'?'You kept the ball and got past!':outcome==='tackled'?'Ball taken. Try drawing a lunge, then change direction.':'Good practice. Try a fresh duel.');
+  event('dribble_live_end',JSON.stringify(metrics(s)));
+  try{
+   const d=await job({type:'live-finish',roundId:id,inputs:copy});if(!alive||my!==epoch||!d)return;
+   saveError=false;show();const r=d.result;
+   if(r.levelUp)status('Three dribbles past! A quicker defender is next.');else if(r.easierNext)status('A gentler defender is next. Try a new move.');
+   // No repeated spoken tutorial or result chatter. A short sound marks the result.
+   nextTimer=setTimeout(()=>{if(alive&&my===epoch)void change('live-start');},outcome==='escaped'?1800:2200);
+  }catch(e){if(alive&&my===epoch){finished=false;failed(e);}}
+ }
+ function frame(t){
+  if(!alive)return;raf=requestAnimationFrame(frame);const elapsed=Math.min(.1,(t-(last||t))/1000);last=t;
+  if(s&&!paused&&!changing&&!saveError&&!s.outcome){
+   acc+=elapsed;
+   while(acc>=.1&&!s.outcome){
+    acc-=.1;
+    if(keys.size)target={x:s.player.x+((keys.has('ArrowRight')?1:0)-(keys.has('ArrowLeft')?1:0))*100,y:s.player.y+((keys.has('ArrowDown')?1:0)-(keys.has('ArrowUp')?1:0))*100};
+    const token=encodeInput(target.x,target.y);inputs+=token;advance(s,decodeInput(token));
+   }
+   if(s.outcome)void finish();else if(inputs.length-lastCheckpoint>=200)void checkpoint();
+  }
+  if(s)pitch.draw(s,{paused,target,ready:s.ticks===0});
+ }
+ function position(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*800/r.width,y:(e.clientY-r.top)*620/r.height};}
+ canvas.onpointerdown=e=>{if(pointer!==null||e.button>0||!s||s.outcome||changing||saveError)return;e.preventDefault();canvas.focus({preventScroll:true});pointer=e.pointerId;const at=position(e);drag={x:at.x,y:at.y,px:s.player.x,py:s.player.y};target={x:s.player.x,y:s.player.y};canvas.setPointerCapture(e.pointerId);begin();};
+ canvas.onpointermove=e=>{if(e.pointerId!==pointer||!drag)return;e.preventDefault();const at=position(e);target={x:Math.max(s.cfg.left+23,Math.min(s.cfg.right-23,drag.px+at.x-drag.x)),y:Math.max(105,Math.min(570,drag.py+at.y-drag.y))};};
+ const lift=e=>{if(e.pointerId!==pointer)return;release();void checkpoint();};
+ canvas.onpointerup=lift;canvas.onpointercancel=lift;canvas.onlostpointercapture=lift;
+ $('#pause').onclick=()=>{if(paused){target={x:s.player.x,y:s.player.y};begin();}else{release();void checkpoint();}};
+ $('#level').onchange=e=>void change('live-level',Number(e.target.value));
+ $('#easier').onclick=()=>void change('live-level',p.live.level-1);$('#harder').onclick=()=>void change('live-level',p.live.level+1);
+ $('#restart').onclick=()=>{event('dribble_live_abandoned',s?JSON.stringify(metrics(s)):'');void change('live-restart');};
+ $('#retry-save').onclick=async()=>{if(changing||saves.busy())return;saveError=false;show();if(s?.outcome){finished=false;await finish();}else if(p?.live?.round){if(!s||p.live.round.done||!inputs.startsWith(p.live.round.inputs)){install();}else{lastCheckpoint=0;await checkpoint();if(!saveError)status('Saved. Drag to continue.');}}else{try{const d=await request();if(!alive)return;p=d.profile;await change('live-start');$('#hear').disabled=false;$('#sound').disabled=false;}catch(e){failed(e);}}};
+ $('#hear').onclick=()=>speak(INTRO,true);$('#sound').onclick=()=>{sound=!sound;$('#sound').textContent=sound?'♪ Sound on':'♪ Sound off';if(!sound)stopVoice();};
+ const keydown=e=>{if(e.target.matches('select,input,button')||e.altKey||e.metaKey||e.ctrlKey)return;if(e.key===' '){e.preventDefault();$('#pause').click();return;}if(e.key.startsWith('Arrow')){e.preventDefault();keys.add(e.key);begin();}};
+ const keyup=e=>{keys.delete(e.key);if(!keys.size&&pointer===null){release();void checkpoint();}};
+ const hidden=()=>{if(document.hidden){release();stopVoice();void checkpoint();}};
+ const blur=()=>{release();void checkpoint();};
+ window.addEventListener('keydown',keydown);window.addEventListener('keyup',keyup);window.addEventListener('blur',blur);document.addEventListener('visibilitychange',hidden);
+ root.querySelectorAll('button,select').forEach(b=>b.disabled=true);
+ request().then(async d=>{if(!alive)return;p=d.profile;await change('live-start');if(alive){$('#hear').disabled=false;$('#sound').disabled=false;event('open_game','dribble-duel-live');}}).catch(e=>{if(alive){failed(e);$('#retry-save').disabled=false;}});
+ raf=requestAnimationFrame(frame);
+ const dispose=()=>{event('dribble_live_leave',s?JSON.stringify({...metrics(s),savedInputs:lastCheckpoint,inputs:inputs.length}):'');alive=false;epoch++;cancelAnimationFrame(raf);clearTimeout(nextTimer);stopVoice();void audioContext?.close();window.removeEventListener('keydown',keydown);window.removeEventListener('keyup',keyup);window.removeEventListener('blur',blur);document.removeEventListener('visibilitychange',hidden);};
+ dispose.busy=()=>saves.busy()||!!s&&!s.outcome&&inputs.length>lastCheckpoint;
+ return dispose;
 }

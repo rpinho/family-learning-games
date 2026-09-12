@@ -28,5 +28,11 @@ test('Hub persists only the chosen profile, rejects replay/foreign origins, and 
   const redirect=await fetch(base+'/assets/runtime.js',{headers:{Referer:base+'/g/word-arcade/admin/'},redirect:'manual'});
   assert.equal(redirect.status,307);assert.equal(redirect.headers.get('location'),'/g/word-arcade/admin/assets/runtime.js');
   assert.equal((await fetch(base+'/assets/runtime.js',{headers:{Referer:'https://untrusted.example/g/word-arcade/admin/'},redirect:'manual'})).status,404);
+  for(const path of ['/dribble-live.mjs','/live-pitch.mjs','/dribble-ui.mjs'])assert.equal((await fetch(base+path)).status,200);
+  const live=await(await request({type:'live-start',liveRules:1,revision:escaped.profile.revision})).json();
+  assert.equal(live.profile.live.level,1);assert.equal(live.profile.dribbles,1);
+  const checkpoint=await(await request({type:'live-checkpoint',liveRules:1,revision:live.profile.revision,roundId:live.profile.live.round.id,inputs:'iwee'})).json();
+  assert.equal(checkpoint.profile.live.round.inputs,'iwee');
+  const reloaded=await(await fetch(base+'/api/dribble?player=admin')).json();assert.equal(reloaded.profile.live.round.inputs,'iwee');
  }finally{child.kill('SIGTERM');await once(child,'exit');}
 });

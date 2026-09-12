@@ -13,7 +13,7 @@ out.mkdir(parents=True,exist_ok=True)
 models=Path(os.environ['FAMILY_VOICE_MODELS'])
 opts=ort.SessionOptions();opts.intra_op_num_threads=4;opts.inter_op_num_threads=1
 kokoro=Kokoro.from_session(ort.InferenceSession(str(models/'kokoro-v1.0.onnx'),sess_options=opts,providers=['CPUExecutionProvider']),str(models/'voices-v1.0.bin'))
-lines=json.loads(subprocess.check_output(['node','--input-type=module','-e',"import {VOICE_LINES} from './dribble.mjs';console.log(JSON.stringify(VOICE_LINES))"],cwd=root))
+lines=json.loads(subprocess.check_output(['node','--input-type=module','-e',"import {VOICE_LINES} from './dribble.mjs';import {INTRO} from './public/dribble-live.mjs';console.log(JSON.stringify([...VOICE_LINES,INTRO]))"],cwd=root))
 manifest={'voice':'af_heart','version':'dribble-us-1','clips':{}}
 for text in lines:
     key=hashlib.sha256(('dribble-us-1\0'+text).encode()).hexdigest()[:16];file=out/(key+'.wav')
