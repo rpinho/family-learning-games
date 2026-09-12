@@ -1,6 +1,64 @@
 # Family Learning Games
 
+![Family Learning Games — six touch-friendly games for reading, counting, tracing and exploring](docs/media/social-preview.png)
+
 Six touch-friendly games for practicing reading, numbers, planning, and puzzles with a grown-up. This is a **self-hosted source collection**, not a public online classroom or a hosted play service.
+
+[Install in one command](#one-command-first-run) · [Let an agent install it](#let-a-coding-agent-install-it) · [Explore the games](#six-games-six-different-adventures) · [Privacy](PRIVACY.md)
+
+## Six games. Six different adventures.
+
+Drag, trace, steer, aim, and think ahead. Pick an activity and a manageable challenge, then play together.
+
+<table>
+<tr>
+<td width="50%" valign="top">
+<a href="games/letter-quest"><img src="docs/media/letter-quest.png" alt="Letter Quest: a first-person green labyrinth with a letter-position puzzle" width="100%"></a>
+<strong>Letter Quest — words open worlds.</strong><br>
+Letter tracing, reading missions, stories, soccer, and letter puzzles inside a 3D labyrinth.
+</td>
+<td width="50%" valign="top">
+<a href="games/word-arcade"><img src="docs/media/word-arcade.png" alt="Word Arcade: a spaceship aims at moving letters to complete a word" width="100%"></a>
+<strong>Word Arcade — spelling takes flight.</strong><br>
+Spaceship challenges, word building, rhyme hunts, sorting, and flashcards. Practice or Arcade pace.
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<a href="games/number-park"><img src="docs/media/number-park.png" alt="Number Park: draggable groups of five and four stars for a hands-on addition activity" width="100%"></a>
+<strong>Number Park — math you can move.</strong><br>
+Count objects, combine groups, take away, continue patterns, draw, trace, and explore reading or harder math.
+</td>
+<td width="50%" valign="top">
+<a href="games/maze-garden"><img src="docs/media/maze-garden.png" alt="Maze Garden: a 19-by-19 tracing maze with a rabbit, a carrot and adjustable difficulty" width="100%"></a>
+<strong>Maze Garden — find your own way.</strong><br>
+Adaptive 2D tracing mazes with changing themes, manual difficulty, zoom, and optional puzzle stops.
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<a href="games/three-in-a-row"><img src="docs/media/three-in-a-row.png" alt="Three in a Row: an active tic-tac-toe match against Rook with X, O and a clue button" width="100%"></a>
+<strong>Three in a Row — think one move ahead.</strong><br>
+Choose X or O, set the opponent's strength, play Rook, and explore one-move practice puzzles and tactical clues.
+</td>
+<td width="50%" valign="top">
+<a href="games/target-trail"><img src="docs/media/target-trail.png" alt="Target Trail: letter targets and an aiming crosshair, with immediate difficulty and practice controls" width="100%"></a>
+<strong>Target Trail — listen, aim, release.</strong><br>
+Spoken letter and word targets with adjustable motion and aiming difficulty. Settings apply immediately.
+</td>
+</tr>
+</table>
+
+*Actual gameplay from an isolated, generic Admin demo. Click a card for its game guide. No children's profiles or drawings are shown; screenshots are not evidence of learning outcomes.*
+
+### Made for playing together
+
+- **Touch-friendly:** drag objects, trace paths, steer a spaceship, and aim with a finger.
+- **Choose the challenge:** separate Beginner and Explorer presets; adjustable or adaptive challenges vary by game.
+- **Keep progress local:** saved rounds and diagnostics live on your own server. No ads or game-owned analytics.
+- **Easy to start:** one setup command for all six games. No AI API key required.
+
+## Pick a game
 
 | Game | What is inside | Default local link |
 | --- | --- | --- |
