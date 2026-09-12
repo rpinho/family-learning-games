@@ -2,7 +2,7 @@
 // World coordinates are independent of screen size. One input = six 60 Hz ticks.
 export const LIVE_RULES=1;
 export const LIVE_LEVELS=['Gentle defender','Follow my move','Change direction','Quick feet','Close control','Fast defender','Tight space','Match challenge'];
-export const INTRO='Drag to dribble. Change direction to get past. Lift to pause.';
+export const INTRO='Drag to dribble. Change direction to get past. Lift to stop with the ball.';
 export const MAX_INPUTS=900;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export function tuning(level){
