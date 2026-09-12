@@ -10,15 +10,16 @@ Games stay inside the hub under `/g/<game>/<player>/`. A loopback-only reverse p
 
 A turn-based soccer observation puzzle, not a physical dribbling trainer. Left/right always mean **the attacker's screen perspective**:
 
-| Visible defender commitment | Open routes before touchline restrictions |
+| Visible defender commitment | What to read before dribbling |
 | --- | --- |
-| Blocks your left, feet apart | Through or your right |
-| Blocks your right, feet apart | Your left or through |
-| Feet together, blocks middle | Your left or your right |
+| Balanced, hasn't committed | Create an opening with a fake; charging is blocked |
+| Leaning to your left | Dribble right, unless it crosses the touchline |
+| Leaning to your right | Dribble left, unless it crosses the touchline |
+| A real gap between the feet | Nutmeg is also possible; a sideways step alone is not enough |
 
-The defender commits before a scored choice. No hidden simultaneous counter-move, timer or unavoidable random loss. Getting past triggers an automatic shot and goal animation. Wrong choices explain the blocked route and let the player retry; a correct retry still celebrates but does not count as independent success.
+Every duel starts with a balanced defender. Fake left or right and observe the response. A patient defender may hold their ground; repeating an identical fake does not wear them down. Change the fake and read again. You can attempt a dribble at any time, but charging before creating an opening is blocked. The defender never secretly changes after a dribble choice. Hints explain what to observe rather than highlighting an answer. There is no timer or shooting: the player and ball travel past the defender together.
 
-Levels 1–2: read clear foot positions. Levels 3–4: touchlines can remove an escape route. Levels 5–6: make a pretend move, watch whether the defender follows or holds, then choose. Levels 7–8: read a second visible recovery movement before the goal. Six unassisted completed puzzles raise difficulty; two blocked attempts ease the next puzzle. Manual level changes immediately replace the current puzzle without resetting earned goals. Clues are recorded and do not drive promotion.
+Levels 1–2 introduce a fake and a defender who may not follow. Level 3 requires changing the fake. Level 4 adds touchlines. Levels 5–6 add a recovery and more patient defenders; levels 7–8 require three escapes in a duel. Three independent duels raise difficulty; two blocked attempts ease the next duel. Manual changes apply immediately. Corrected/assisted successes still celebrate but do not promote. Original v1 goals/history are retained as legacy data; v2 has a separate dribbles-past count and does not interpret old scores as mastery. Stale v1 clients are asked to Refresh before submitting moves.
 
 This is a deliberately simplified rules system. In real soccer, a defender stepping sideways does not guarantee a nutmeg; the actual gap, distance, balance, ball control and timing matter. Pair screen play with slow, safe practice using a soft ball and a clear space. No tackling, sliding or jumping over a partner. [FIFA's 4–8 dribbling and dueling session](https://www.fifatrainingcentre.com/en/practice/grassroots/4-to-8/dribbling-and-dueling.php) is background inspiration for observing, feinting and 1v1 play, not validation of this app or an affiliation.
 

@@ -12,17 +12,18 @@ test('Hub persists only the chosen profile, rejects replay/foreign origins, and 
  try{
   const output=await new Promise((resolve,reject)=>{child.stdout.once('data',x=>resolve(String(x)));child.once('error',reject);child.once('exit',c=>reject(Error('Server exited '+c)));});
   const base='http://127.0.0.1:'+output.match(/localhost:(\d+)/)[1];
-  const request=(a)=>fetch(base+'/api/dribble?player=admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(a)});
+  const request=(a)=>fetch(base+'/api/dribble?player=admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rulesVersion:2,...a})});
   assert.equal((await fetch(base+'/health',{headers:{Origin:'https://untrusted.example'}})).status,403);
   assert.equal((await fetch(base+'/config.json')).status,404);
   assert.equal((await fetch(base+'/api/dribble?player=unknown')).status,400);
   const first=await(await request({type:'start',revision:0})).json();
   assert.equal(first.profile.revision,1);
   assert.equal((await request({type:'level',level:2,revision:0})).status,409);
-  const move=['left','middle','right'].find(x=>x!==first.profile.round.blocked);
-  const goal=await(await request({type:'move',move,roundId:first.profile.round.id,revision:1})).json();
-  assert.equal(goal.profile.goals,1);
-  assert.equal(JSON.parse(await readFile(join(data,'admin.json'),'utf8')).goals,1);
+  const fake=await(await request({type:'feint',move:'left',roundId:first.profile.round.id,revision:1})).json();
+  assert.equal(fake.profile.round.balanced,false);
+  const escaped=await(await request({type:'move',move:'right',roundId:first.profile.round.id,revision:2})).json();
+  assert.equal(escaped.profile.dribbles,1);assert.equal(escaped.profile.goals,0);
+  assert.equal(JSON.parse(await readFile(join(data,'admin.json'),'utf8')).dribbles,1);
   assert.deepEqual((await readdir(data)).sort(),['admin.json','logs']);
   const redirect=await fetch(base+'/assets/runtime.js',{headers:{Referer:base+'/g/word-arcade/admin/'},redirect:'manual'});
   assert.equal(redirect.status,307);assert.equal(redirect.headers.get('location'),'/g/word-arcade/admin/assets/runtime.js');

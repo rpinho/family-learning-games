@@ -10,7 +10,7 @@ After setup, open **http://localhost:4810/**. Choose a player once; their name s
 
 ## Six games. Six different adventures.
 
-**New: [Dribble Duel](hub/README.md#dribble-duel)** joins these six. Read the defender, choose your left, through an open gap, or your right, then score an automatic goal. Eight adjustable stages add touchlines, feints and a second movement to read. No timer or hidden counter-move; difficulty changes apply immediately. It practices noticing openings, not physical ball control. [One-app installation and soccer rules →](hub/README.md)
+**New: [Dribble Duel](hub/README.md#dribble-duel)** joins these six. Draw the defender into a step, read the response, then dribble past with the ball. No shooting. Eight adjustable stages add patient defenders, changed fakes, touchlines and recoveries. No timer or hidden counter-move; difficulty changes apply immediately. It practices noticing openings, not physical ball control. [One-app installation and soccer rules →](hub/README.md)
 
 Drag, trace, steer, aim, and think ahead. Pick an activity and a manageable challenge, then play together.
 
@@ -67,7 +67,7 @@ Spoken letter and word targets with adjustable motion and aiming difficulty. Set
 
 | Game | What is inside | Default local link |
 | --- | --- | --- |
-| [Dribble Duel](hub/README.md#dribble-duel) | Read the defender, feint, find space, score | http://localhost:4810/#dribble-duel |
+| [Dribble Duel](hub/README.md#dribble-duel) | Feint, read the response, dribble past | http://localhost:4810/#dribble-duel |
 | [Letter Quest](games/letter-quest) | Letter tracing, reading practice, stories, soccer and 3D mazes | http://localhost:4810/#letter-quest |
 | [Word Arcade](games/word-arcade) | Moving spaceship challenges, word building, rhymes and flashcards | http://localhost:4810/#word-arcade |
 | [Number Park](games/number-park) | Counting, patterns, manipulatives, drawing, reading and harder math | http://localhost:4810/#number-park |
@@ -99,7 +99,7 @@ Give your agent this request:
 
 Choose **Beginner**, **Explorer**, or **Admin**. Add `/?player=beginner` or `/?player=explorer` to a link to open that preset. Beginner and Explorer have different starting challenges and separate saves; Admin is for testing. These are three shared presets per installation, not authenticated personal accounts. Spelling names in exercises are fictional examples.
 
-To run just one game, run `npm start` inside its directory (for the React games, first run `npm ci` and `npm run build`). Individual servers use their original default ports, listed in their READMEs. Run `npm test` from the collection root after setup to check all six suites.
+To run just one game, run `npm start` inside its directory (for the React games, first run `npm ci` and `npm run build`). Individual servers use their original default ports, listed in their READMEs. Run `npm test` from the collection root after setup to check all game and hub suites.
 
 ## Play on a tablet or Chromebook
 
