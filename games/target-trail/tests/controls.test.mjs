@@ -1,0 +1,15 @@
+import test from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';import {readFile} from 'node:fs/promises';import * as engine from '../engine.mjs';
+test('Client touch cancellation, duplicate releases, keyboard bounds and resume use the same saved state',async()=>{
+ const html=await readFile(new URL('../dist/index.html',import.meta.url),'utf8'),nodes=new Map();let now=10000,stored=engine.freshProfile('admin'),posts=0;
+ const noop=()=>{},context=new Proxy({createLinearGradient:()=>({addColorStop:noop})},{get:(o,k)=>o[k]||noop,set:(o,k,v)=>(o[k]=v,true)});
+ for(const [,id] of html.matchAll(/id="([^"]+)"/g))nodes.set(id,{textContent:'',hidden:false,open:false,value:'',classList:{add:noop,remove:noop},showModal(){this.open=true;},close(){this.open=false;this.onclose?.();},getContext:()=>context,getBoundingClientRect:()=>({left:0,top:0,width:800,height:600}),focus:noop,setPointerCapture:noop,hasPointerCapture:()=>true,releasePointerCapture:noop});
+ const document={getElementById:id=>{assert.ok(nodes.has(id),'Missing HTML element '+id);return nodes.get(id);},querySelectorAll:()=>[],addEventListener:noop,visibilityState:'visible'};
+ const sandbox={...engine,document,window:{addEventListener:noop},location:{href:'http://localhost/?player=admin'},localStorage:{getItem:()=>null,setItem:noop},performance:{now:()=>now},console,URL,AbortSignal,AbortController,requestAnimationFrame:()=>1,cancelAnimationFrame:noop,setTimeout:fn=>{queueMicrotask(fn);return 1;},fetch:async(path,opts)=>{let body;if(path.startsWith('/api/action')){posts++;engine.action(stored,JSON.parse(opts.body));body=stored;}else if(path.startsWith('/api/state'))body=stored;else body={clips:{}};return {ok:true,json:async()=>structuredClone(body)};}};
+ const source=(await readFile(new URL('../dist/app.mjs',import.meta.url),'utf8')).replace(/^import .*?;\n/,'');
+ vm.runInNewContext(source+'\nglobalThis.control={send,sync,shoot,getAim:()=>aim};',sandbox);
+ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};await flush();await sandbox.control.send({type:'start'});const canvas=nodes.get('canvas');
+ const event=(id,x,y)=>({pointerId:id,clientX:x,clientY:y,button:0,pointerType:'touch',preventDefault:noop});
+ canvas.onpointerdown(event(1,300,400));canvas.onpointermove(event(1,200,300));canvas.onpointercancel();canvas.onpointerup(event(1,200,300));await flush();assert.equal(stored.shots,0);
+ canvas.onpointerdown(event(2,300,400));canvas.onpointermove(event(2,-1000,-1000));assert.equal(sandbox.control.getAim().x,0);assert.equal(sandbox.control.getAim().y,0);now+=200;canvas.onpointerup(event(2,-1000,-1000));canvas.onpointerup(event(2,-1000,-1000));await flush();assert.equal(stored.shots,1);assert.equal(posts,2);
+ await sandbox.control.sync();assert.equal(stored.shots,1);canvas.onkeydown({key:'ArrowLeft',preventDefault:noop});assert.equal(sandbox.control.getAim().x,0);canvas.onkeydown({key:' ',preventDefault:noop});canvas.onkeydown({key:' ',preventDefault:noop});await flush();assert.equal(stored.shots,2);assert.equal(posts,3);assert.equal(nodes.get('error').textContent,'');
+});

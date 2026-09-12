@@ -1,0 +1,12 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFile,mkdtemp} from 'node:fs/promises';import {tmpdir} from 'node:os';import {join} from 'node:path';import {spawn} from 'node:child_process';import {once} from 'node:events';
+test('Home-screen icons are square PNGs, linked in a manifest, and served with correct types',async()=>{
+ const root=new URL('..',import.meta.url),data=await mkdtemp(join(tmpdir(),'game-icons-'));
+ const child=spawn(process.execPath,['server.mjs'],{cwd:root,env:{...process.env,PORT:'14326',HOST:'127.0.0.1',LETTER_QUEST_DATA:data,WORD_ARCADE_DATA:data},stdio:['ignore','pipe','pipe']});const timer=setTimeout(()=>child.kill(),10000);
+ try{await Promise.race([once(child.stdout,'data'),once(child,'exit').then(()=>{throw Error('Server exited early');})]);const base='http://127.0.0.1:14326';
+ const response=await fetch(base+'/manifest.webmanifest');assert.equal(response.status,200);assert.equal(response.headers.get('content-type'),'application/manifest+json');const manifest=await response.json();assert.ok(manifest.name);assert.equal(manifest.start_url,undefined);assert.equal(manifest.id,undefined);assert.ok(manifest.icons.some(i=>i.purpose.includes('maskable')));
+ for(const size of [16,32,48,180,192,512]){const path='/icons/app-'+size+'-v1.png',r=await fetch(base+path);assert.equal(r.status,200);assert.equal(r.headers.get('content-type'),'image/png');const png=Buffer.from(await r.arrayBuffer());assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png.readUInt32BE(16),size);assert.equal(png.readUInt32BE(20),size);const head=await fetch(base+path,{method:'HEAD'});assert.equal(head.status,200);assert.equal((await head.arrayBuffer()).byteLength,0);}
+ const icon=await fetch(base+'/favicon.ico');assert.equal(icon.status,200);assert.equal(icon.headers.get('content-type'),'image/x-icon');const ico=Buffer.from(await icon.arrayBuffer());assert.equal(ico.readUInt16LE(2),1);assert.equal(ico.readUInt16LE(4),3);
+ assert.equal((await fetch(base+'/icons/master-v1.png')).status,404);assert.equal((await fetch(base+'/icons/PROVENANCE.md')).status,404);assert.equal((await fetch(base+'/manifest.webmanifest',{method:'POST'})).status,405);
+ const source=await readFile(new URL('index.html',root),'utf8');assert.match(source,/manifest.webmanifest/);assert.match(source,/app-192-v1.png/);assert.ok(manifest.icons.some(i=>i.sizes==='512x512'));
+ }finally{clearTimeout(timer);const done=once(child,'exit');child.kill();await done;}
+});

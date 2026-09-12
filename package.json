@@ -1,0 +1,12 @@
+{
+  "name": "family-learning-games",
+  "private": true,
+  "type": "module",
+  "engines": {"node": ">=22.13.0"},
+  "scripts": {
+    "setup": "node scripts/manage.mjs setup",
+    "start": "node scripts/manage.mjs start",
+    "test": "node scripts/manage.mjs test",
+    "check:privacy": "node scripts/check-public-tree.mjs"
+  }
+}
