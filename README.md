@@ -2,11 +2,15 @@
 
 ![Family Learning Games — six touch-friendly games for reading, counting, tracing and exploring](docs/media/social-preview.png)
 
-Six touch-friendly games for practicing reading, numbers, planning, and puzzles with a grown-up. This is a **self-hosted source collection**, not a public online classroom or a hosted play service.
+**One app. Seven ways to play.** A single game-picker home screen now brings together the original six games pictured above and the new **Dribble Duel** soccer puzzle. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, not a public online classroom or hosted play service.
+
+After setup, open **http://localhost:4810/**. Choose a player once; their name stays large at the top and their progress stays separate. Use **Games** to return home, **Refresh** to reload, and **Grown-ups** to change the device's player.
 
 [Install in one command](#one-command-first-run) · [Let an agent install it](#let-a-coding-agent-install-it) · [Explore the games](#six-games-six-different-adventures) · [Privacy](PRIVACY.md)
 
 ## Six games. Six different adventures.
+
+**New: [Dribble Duel](hub/README.md#dribble-duel)** joins these six. Read the defender, choose your left, through an open gap, or your right, then score an automatic goal. Eight adjustable stages add touchlines, feints and a second movement to read. No timer or hidden counter-move; difficulty changes apply immediately. It practices noticing openings, not physical ball control. [One-app installation and soccer rules →](hub/README.md)
 
 Drag, trace, steer, aim, and think ahead. Pick an activity and a manageable challenge, then play together.
 
@@ -56,18 +60,20 @@ Spoken letter and word targets with adjustable motion and aiming difficulty. Set
 - **Touch-friendly:** drag objects, trace paths, steer a spaceship, and aim with a finger.
 - **Choose the challenge:** separate Beginner and Explorer presets; adjustable or adaptive challenges vary by game.
 - **Keep progress local:** saved rounds and diagnostics live on your own server. No ads or game-owned analytics.
-- **Easy to start:** one setup command for all six games. No AI API key required.
+- **One icon:** one installed home screen for all seven games; no separate installs needed.
+- **Easy to start:** one setup command for the whole collection. No AI API key required.
 
 ## Pick a game
 
 | Game | What is inside | Default local link |
 | --- | --- | --- |
-| [Letter Quest](games/letter-quest) | Letter tracing, reading practice, stories, soccer and 3D mazes | http://localhost:4811 |
-| [Word Arcade](games/word-arcade) | Moving spaceship challenges, word building, rhymes and flashcards | http://localhost:4812 |
-| [Number Park](games/number-park) | Counting, patterns, manipulatives, drawing, reading and harder math | http://localhost:4813 |
-| [Maze Garden](games/maze-garden) | Adaptive 2D tracing mazes with optional puzzle stops | http://localhost:4814 |
-| [Three in a Row](games/three-in-a-row) | Tic-tac-toe against Rook and one-move practice puzzles | http://localhost:4815 |
-| [Target Trail](games/target-trail) | Moving targets, adjustable aiming difficulty and spoken letters/words | http://localhost:4816 |
+| [Dribble Duel](hub/README.md#dribble-duel) | Read the defender, feint, find space, score | http://localhost:4810/#dribble-duel |
+| [Letter Quest](games/letter-quest) | Letter tracing, reading practice, stories, soccer and 3D mazes | http://localhost:4810/#letter-quest |
+| [Word Arcade](games/word-arcade) | Moving spaceship challenges, word building, rhymes and flashcards | http://localhost:4810/#word-arcade |
+| [Number Park](games/number-park) | Counting, patterns, manipulatives, drawing, reading and harder math | http://localhost:4810/#number-park |
+| [Maze Garden](games/maze-garden) | Adaptive 2D tracing mazes with optional puzzle stops | http://localhost:4810/#maze-garden |
+| [Three in a Row](games/three-in-a-row) | Tic-tac-toe against Rook and one-move practice puzzles | http://localhost:4810/#three-in-a-row |
+| [Target Trail](games/target-trail) | Moving targets, adjustable aiming difficulty and spoken letters/words | http://localhost:4810/#target-trail |
 
 ## Run on your computer
 
@@ -79,7 +85,7 @@ With **Node.js 22.13 or newer**, npm, and Git installed, paste this one command 
 git clone https://github.com/rpinho/family-learning-games.git && cd family-learning-games && npm run play
 ```
 
-This downloads the collection, installs locked dependencies, builds the two React interfaces, and starts all six games. The other four apps need only Node. Open a link above in Chrome, Edge, or another modern browser. Keep the terminal running; Ctrl+C stops the servers. Later, run `npm start` in the same folder; no reinstall is necessary. An existing `family-learning-games` folder is not overwritten.
+This downloads the collection, installs locked dependencies, builds the two React interfaces, and starts the hub plus the game servers. The hub and other games need only Node. Open **http://localhost:4810/** in Chrome, Edge, or another modern browser. Keep the terminal running; Ctrl+C stops the servers. Later, run `npm start` in the same folder; no reinstall is necessary. An existing `family-learning-games` folder is not overwritten.
 
 If you download the repository ZIP instead, unzip it, open a terminal in its folder, and run **`npm run play`**. Prerequisites are not silently installed and no administrator access is required by the game installer.
 
@@ -87,7 +93,7 @@ If you download the repository ZIP instead, unzip it, open a terminal in its fol
 
 Give your agent this request:
 
-> Install and run https://github.com/rpinho/family-learning-games locally. Read its AGENTS.md and README first. Check Node/npm, use a new folder, run npm run play, verify all six games, and give me the local links. Keep it private and preserve any existing saves.
+> Install and run https://github.com/rpinho/family-learning-games locally. Read its AGENTS.md and README first. Check Node/npm, use a new folder, run npm run play, verify all seven games through the hub, and give me the single home-screen link. Keep it private and preserve any existing saves.
 
 [AGENTS.md](AGENTS.md) contains the installation, verification, data-preservation and privacy instructions. No API key or paid AI service is needed to run the games.
 
@@ -103,7 +109,7 @@ By default the servers accept connections only from the computer running them. F
 HOST=0.0.0.0 npm start
 ```
 
-Then replace `localhost` in the links with that computer's LAN address. On PowerShell, set `$env:HOST="0.0.0.0"` before `npm start`. Allow the connection in your local firewall if necessary. Do **not** port-forward or expose these servers to the public internet. They do not have user authentication or internet-facing security hardening. A parent gate prevents accidental taps, not unauthorized access.
+Then open `http://YOUR-COMPUTER-LAN-ADDRESS:4810/` on the child's device. On PowerShell, set `$env:HOST="0.0.0.0"` before `npm start`. Only the hub listens on the LAN; the game backends remain loopback-only. Allow the hub connection in your local firewall if necessary. Use your browser's Install/Create app action on **this home screen**, not on individual games. Parental approval may be needed once for this new address/port. Do **not** port-forward or expose these servers to the public internet. They do not have user authentication or internet-facing security hardening. A parent gate prevents accidental taps, not unauthorized access.
 
 The apps include launcher icons and manifests. Installation/fullscreen behavior varies by browser; plain HTTP LAN addresses are not secure origins, so a seamless installable/offline experience is not guaranteed. GitHub Pages alone cannot run the Node save APIs.
 
