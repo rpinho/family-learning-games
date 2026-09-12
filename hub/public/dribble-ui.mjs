@@ -31,7 +31,7 @@ export function mountDribble(root,{player,event}){
   return saves.run(async()=>{if(!alive)return null;try{const d=await request(a);if(alive)p=d.profile;return d;}catch(e){try{const d=await request();if(alive)p=d.profile;}catch{}throw e;}});
  }
  function failed(e){
-  if(!alive)return;release();saveError=true;clearTimeout(nextTimer);status('Could not save yet. Tap Retry save, or Games to leave.');show();event('dribble_live_error',e.message);
+  if(!alive)return;release();saveError=true;clearTimeout(nextTimer);status('Could not save yet. Tap Retry save, or Games to leave.');$('#retry-save').hidden=false;$('#retry-save').disabled=false;show();event('dribble_live_error',e.message);
   if(p?.live?.round&&roundId&&p.live.round.id!==roundId){install();status('The duel changed in another window. Your current game is here.');}
   if(e.code==='CLIENT_UPDATE'){const u=new URL(location.href);u.searchParams.set('v',Date.now());location.replace(u);}
  }
