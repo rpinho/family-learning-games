@@ -5,7 +5,7 @@ import {lowerQuestion,lowerAttempt,lowerState} from './lowercase.mjs';
 import {BUILDER_STARTERS,builderState,builderQuestion,builderAttempt} from './builder.mjs';
 import {arcadeQuestion,arcadeAttempt} from './arcade-curriculum.mjs';
 import {chooseWord,rememberWord} from './variety.mjs';
-export const VERSION='word-arcade-2026-09-11-flight-rhymes-1';
+export const VERSION='word-arcade-2026-09-12-builder-edit-1';
 export const GAMES=[
  ['blaster','Letter Blaster','SPELLING','Blast the missing letter. Power your starship.','🚀','#48dfec'],
  ['orbit','Orbit Builder','SPELLING','Connect drifting letters. Fly your word through space.','✦','#ffcc73'],

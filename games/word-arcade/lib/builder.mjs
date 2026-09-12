@@ -1,5 +1,12 @@
 // Independent word history: restarting a flight must not restart a fixed word list.
 import {chooseWord} from './variety.mjs';
+// Corrections change only the current draft, never word history or earned XP.
+export function editBuilderDraft(draft,operation,index){
+ if(operation==='clear')return [];
+ if(operation==='backspace'){const next=[...draft];while(next.length&&!next.at(-1))next.pop();next.pop();while(next.length&&!next.at(-1))next.pop();return next;}
+ if(operation==='remove'&&Number.isInteger(index)&&index>=0&&index<draft.length){const next=[...draft];next[index]='';while(next.length&&!next.at(-1))next.pop();return next;}
+ return [...draft];
+}
 export const BUILDER_STARTERS=['cat','dog','sun','hat','pig','cup','bed','fox','map','hen','pen','bug','mat','cap','tap','log','hog','run','fun','bat','pan','fan','can','man','big','wig','dig','hop','mop','top','rug','mug','hug','red','pin','nap','bag','tag','rag','jam','ham','ram','van','wax','web','wet','net','pet','jet','leg','peg','ten','den','vet','win','fin','bin','lid','kid','lip','zip','sit','hit','fit','dip','tip','pot','hot','dot','pop','rod','mud'];
 export function builderState(p){
  if(p.builder)return p.builder;
