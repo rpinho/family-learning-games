@@ -1,4 +1,4 @@
-import {LIVE_RULES,LIVE_LEVELS,INTRO,createMatch,advance,replay,encodeInput,decodeInput,metrics} from './dribble-live.mjs';
+import {LIVE_RULES,LIVE_LEVELS,INTRO,GOAL_VOICE,createMatch,advance,replay,encodeInput,decodeInput,metrics} from './dribble-live.mjs';
 import {createLivePitch} from './live-pitch.mjs';
 import {createSaveQueue,fetchJSON} from './save-request.mjs';
 import {letterName} from './reading-reward.mjs';
@@ -11,6 +11,10 @@ export function mountDribble(root,{player,event}){
  const reward=document.createElement('section');reward.className='reading-reward';reward.hidden=true;reward.setAttribute('aria-label','Letter reward');$('.pitch-wrap').append(reward);
  canvas.setAttribute('aria-label','Drag to dribble. Lift to stop with the ball. Touch again to keep going.');
  $('.coach-panel .small').textContent='Lift to stop with the ball. Touch again to keep going.';
+ $('.coach-panel h2').textContent='Dribble into the goal.';
+ $('.coach-panel>p').textContent='Draw a lunge, change direction, then bring the ball between the posts.';
+ $('.soccer-foot p').textContent='The defender reacts faster and chases back toward the goal. A yellow line shows a committed lunge; the ring shows recovery. Twelve difficulty settings apply immediately. Three goals move up; three tackles ease the next level. Earlier dribbles and original puzzle scores are preserved separately.';
+ const previousScores=document.createElement('p');previousScores.className='previous-scores';$('.soccer-foot').append(previousScores);
  const pendingReward=()=>p?.live?.reading?.pending;
  function showReward(){
   const q=pendingReward();if(!q||q.done){reward.hidden=true;return false;}
@@ -25,7 +29,7 @@ export function mountDribble(root,{player,event}){
   reward.querySelector('[data-skip]').onclick=()=>void readingAction('skip');
   reward.querySelectorAll('button').forEach(b=>b.disabled=rewardBusy);
   if(rewardShown!==q.id){rewardShown=q.id;speak(q.cue,true);reward.querySelector('[data-hear]').focus({preventScroll:true});event('dribble_reading_open',q.id);}
-  status('Dribble won! A quick letter challenge.');show();return true;
+  status('A quick letter challenge. Your win is saved.');show();return true;
  }
  async function readingAction(type,answer){
   const q=pendingReward();if(rewardBusy||!q||q.done)return;const my=epoch;rewardBusy=true;
@@ -54,8 +58,9 @@ export function mountDribble(root,{player,event}){
  function status(text){if(alive)$('.status').textContent=text;}
  function show(){
   if(!p||!alive)return;const g=p.live;
-  $('#goals').textContent=(g?.wins||0)+(g?.wins===1?' dribble past':' dribbles past');$('#level').value=g?.level||1;
-  $('#easier').disabled=changing||!g||g.level===1;$('#harder').disabled=changing||!g||g.level===8;$('#level').disabled=changing;
+  $('#goals').textContent=(g?.goals||0)+(g?.goals===1?' goal':' goals');$('#level').value=g?.level||1;
+  previousScores.textContent='Previous end-zone dribbles: '+Math.max(0,(g?.wins||0)-(g?.goals||0))+'. Original puzzle dribbles: '+(p.dribbles||0)+'. All kept.';
+  $('#easier').disabled=changing||!g||g.level===1;$('#harder').disabled=changing||!g||g.level===LIVE_LEVELS.length;$('#level').disabled=changing;
   $('#restart').disabled=changing;$('#pause').disabled=changing||!s||!!s.outcome||saveError;
   $('#pause').textContent=paused?'▶ Resume':'Ⅱ Pause';$('#retry-save').hidden=!saveError;$('#retry-save').disabled=false;
   if(pendingReward()&&!pendingReward().done)$('#pause').disabled=true;
@@ -72,7 +77,7 @@ export function mountDribble(root,{player,event}){
   if(e.code==='CLIENT_UPDATE'){const u=new URL(location.href);u.searchParams.set('v',Date.now());location.replace(u);}
  }
  function install(){
-  const r=p.live.round;roundId=r.id;s=replay(r.level,r.seed,r.inputs);inputs=r.inputs;lastCheckpoint=inputs.length;finished=false;saveError=false;target={x:s.player.x,y:s.player.y};pitch.reset();release();status(inputs?'Your saved dribble is here. Drag to continue.':'Drag your blue player past the orange defender.');show();
+  const r=p.live.round;roundId=r.id;s=replay(r.level,r.seed,r.inputs,r.rules||1);inputs=r.inputs;lastCheckpoint=inputs.length;finished=false;saveError=false;target={x:s.player.x,y:s.player.y};pitch.reset();release();status(inputs?'Your saved dribble is here. Drag to continue.':'Dribble past the defender and into the goal.');show();
   if(showReward())return;
   if(s.outcome)void finish();
  }
@@ -89,15 +94,16 @@ export function mountDribble(root,{player,event}){
  }
  async function finish(){
   if(finished||!s?.outcome||changing)return;finished=true;release();const my=epoch,outcome=s.outcome,copy=inputs,id=roundId;
-  effect(outcome==='escaped');status(outcome==='escaped'?'You kept the ball and got past!':outcome==='tackled'?'Ball taken. Try drawing a lunge, then change direction.':'Good practice. Try a fresh duel.');
+  const won=['goal','escaped'].includes(outcome);effect(won);status(outcome==='goal'?'GOAL! You dribbled it into the net!':outcome==='escaped'?'You kept the ball and got past!':outcome==='tackled'?'Ball taken. Try drawing a lunge, then change direction.':'Good practice. Try a fresh duel.');
+  if(outcome==='goal')speak(GOAL_VOICE,true);
   event('dribble_live_end',JSON.stringify(metrics(s)));
   try{
    const d=await job({type:'live-finish',roundId:id,inputs:copy,reading:true});if(!alive||my!==epoch||!d)return;
    saveError=false;show();const r=d.result;
-   if(showReward())return;
-   if(r.levelUp)status('Three dribbles past! A quicker defender is next.');else if(r.easierNext)status('A gentler defender is next. Try a new move.');
+   if(pendingReward()&&!pendingReward().done){nextTimer=setTimeout(()=>{if(alive&&my===epoch)showReward();},outcome==='goal'?1500:500);return;}
+   if(r.levelUp)status('Three goals! A quicker defender is next.');else if(r.easierNext)status('A gentler defender is next. Try a new move.');
    // No repeated spoken tutorial or result chatter. A short sound marks the result.
-   nextTimer=setTimeout(()=>{if(alive&&my===epoch)void change('live-start');},outcome==='escaped'?1800:2200);
+   nextTimer=setTimeout(()=>{if(alive&&my===epoch)void change('live-start');},won?1800:2200);
   }catch(e){if(alive&&my===epoch){finished=false;failed(e);}}
  }
  function frame(t){
@@ -134,5 +140,6 @@ export function mountDribble(root,{player,event}){
  raf=requestAnimationFrame(frame);
  const dispose=()=>{event('dribble_live_leave',s?JSON.stringify({...metrics(s),savedInputs:lastCheckpoint,inputs:inputs.length}):'');alive=false;epoch++;cancelAnimationFrame(raf);clearTimeout(nextTimer);clearTimeout(rewardTimer);stopVoice();void audioContext?.close();window.removeEventListener('keydown',keydown);window.removeEventListener('keyup',keyup);window.removeEventListener('blur',blur);document.removeEventListener('visibilitychange',hidden);};
  dispose.busy=()=>saves.busy()||!!s&&!s.outcome&&inputs.length>lastCheckpoint;
+ dispose.prepareLeave=async()=>{release();clearTimeout(nextTimer);clearTimeout(rewardTimer);await saves.run(async()=>{});clearTimeout(nextTimer);clearTimeout(rewardTimer);if(saveError)throw Error('Could not save this dribble. Retry save or use Games to leave.');await checkpoint();if(saveError)throw Error('Could not save this dribble. Retry save or use Games to leave.');};
  return dispose;
 }

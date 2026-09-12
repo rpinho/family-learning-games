@@ -1,4 +1,4 @@
-import {mountDribble} from './dribble-ui.mjs';
+import {mountSoccer} from './soccer-mode.mjs';
 const $=s=>document.querySelector(s),main=$('#main');let config,player,frame=null,dispose=null,gate=0,statusResolver;
 const games=[['dribble-duel','Dribble Duel','Live dribbling. Fool the defender. Keep the ball.','#ffe39d'],['letter-quest','Letter Quest','Words, stories and a 3D letter maze.','#bce9d8'],['word-arcade','Word Arcade','Spaceships, spelling and rhyme hunts.','#ced0ff'],['number-park','Number Park','Count, move, draw and find patterns.','#b9eaf8'],['maze-garden','Maze Garden','Trace a path. Find the way out.','#d5eca4'],['three-in-a-row','Three in a Row','Play Rook. Think one move ahead.','#e1d4ff'],['target-trail','Target Trail','Listen for letters. Aim and release.','#ffd3b5']];
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -9,7 +9,7 @@ function choose(){stop();main.innerHTML=`<section class="choose"><h1>Who is play
 function render(){
  stop();const p=config.players.find(x=>x.id===player);$('#player-name').textContent=p?.name||'Family Games';if(!p){choose();return;}
  const game=location.hash.slice(1),item=games.find(x=>x[0]===game);
- if(game==='dribble-duel'){dispose=mountDribble(main,{player,name:p.name,event});return;}
+ if(game==='dribble-duel'){dispose=mountSoccer(main,{player,name:p.name,event});return;}
  if(item){main.innerHTML=`<section class="frame-wrap"><iframe title="${esc(item[1])}" allow="autoplay; fullscreen" src="/g/${game}/${player}/?player=${player}"></iframe><div class="loading-note">Opening ${esc(item[1])}…</div></section>`;frame=main.querySelector('iframe');setTimeout(()=>{const note=$('.loading-note');if(note)note.textContent='Still loading? Tap Games, then try again.';},12000);event('open_game',game);return;}
  main.innerHTML=`<section class="catalog"><h1>What shall we play?</h1><p>Your games. Your next adventure.</p><div class="cards">${games.map(([id,name,desc,tint])=>`<a class="card" href="#${id}" data-game="${id}" style="--tint:${tint}">${id==='dribble-duel'?'<span class="new">NEW</span><span class="ball-icon" aria-hidden="true">⚽</span>':`<img src="/game-icons/${id}.png" alt="">`}<h2>${name}</h2><p>${desc}</p></a>`).join('')}</div><footer><span>One app · Your progress stays with you.</span><button id="grown-ups">Grown-ups</button></footer></section>`;
  $('#grown-ups').onclick=()=>{const a=7+Math.floor(Math.random()*9),b=4+Math.floor(Math.random()*7);gate=a+b;$('#gate-question').textContent=`To change player: what is ${a} + ${b}?`;$('#gate-answer').value='';$('#gate-error').textContent='';$('#parents').showModal();};

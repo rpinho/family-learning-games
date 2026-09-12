@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {makeReward,WORDS,READING_LINES} from '../public/reading-reward.mjs';
 import {actLive} from '../live-state.mjs';import {fresh} from '../dribble.mjs';
-import {createMatch,advance,encodeInput,LIVE_RULES} from '../public/dribble-live.mjs';
+import {createMatch,advance,encodeInput,LIVE_RULES} from '../public/dribble-live-v1.mjs';
 const go=(p,a,initial=1)=>actLive(p,{revision:p.revision,liveRules:LIVE_RULES,roundId:p.live?.round?.id,...a},initial);
 function win(p,initial=1){go(p,{type:'live-level',level:1},initial);const r=p.live.round,s=createMatch(1,r.seed);let inputs='';while(!s.outcome){const t=s.time<1?{x:650,y:535}:{x:650,y:105};inputs+=encodeInput(t.x,t.y);advance(s,t);}assert.equal(s.outcome,'escaped');go(p,{type:'live-finish',inputs,reading:true},initial);return p.live.reading.pending;}
 const answer=(p,q,choice=q.answer,id=q.id+'-answer')=>go(p,{type:'live-reading-answer',questionId:q.id,answer:choice,actionId:id});

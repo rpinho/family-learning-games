@@ -10,7 +10,7 @@ After setup, open **http://localhost:4810/**. Choose a player once; their name s
 
 ## Six games. Six different adventures.
 
-**New: [Dribble Duel](hub/README.md#dribble-duel)** joins these six. Drag your player and ball against a real-time defender. Draw a lunge, change direction and dribble past. Lift to stop—not shoot. Successful dribbles unlock a short spoken letter/word reward, with separate reading adaptation and an option to keep dribbling. Eight instantly adjustable defender levels change reactions, speed, recovery and space. Separate adaptive scores and server-validated replay logs preserve earlier progress. Screen play is not physical ball-control training. [One-app installation and soccer rules →](hub/README.md)
+**New: [Dribble Duel](hub/README.md#dribble-duel)** joins these six. Choose **Live dribbling** or the **Original puzzle**. In live play, draw a lunge, change direction and dribble into a goal with posts and a net. Lift to stop—not shoot. Goals unlock a short spoken letter/word reward. Twelve instantly adjustable live levels now include much faster defenders that chase and recover. Both play styles preserve their separate progress, with server-validated replays for live play. Screen play is not physical ball-control training. [One-app installation and soccer rules →](hub/README.md)
 
 Drag, trace, steer, aim, and think ahead. Pick an activity and a manageable challenge, then play together.
 
