@@ -4,6 +4,7 @@
   "type": "module",
   "engines": {"node": ">=22.13.0"},
   "scripts": {
+    "play": "npm run setup && npm start",
     "setup": "node scripts/manage.mjs setup",
     "start": "node scripts/manage.mjs start",
     "test": "node scripts/manage.mjs test",

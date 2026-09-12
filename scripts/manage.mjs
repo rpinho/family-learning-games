@@ -5,7 +5,8 @@ import {resolve} from 'node:path';
 const root=fileURLToPath(new URL('..',import.meta.url));
 const games=[['letter-quest','LETTER_QUEST_DATA'],['word-arcade','WORD_ARCADE_DATA'],['number-park','NUMBER_PARK_DATA'],['maze-garden','MAZE_DATA_DIR'],['three-in-a-row','TTT_DATA'],['target-trail','TARGET_DATA']];
 const command=process.argv[2],children=[];
-function run(exe,args,game,env=process.env){return new Promise((ok,fail)=>{const p=spawn(exe,args,{cwd:resolve(root,'games',game),stdio:'inherit',env});p.on('error',fail);p.on('exit',code=>code===0?ok():fail(Error(game+' exited '+code)));});}
+const [major,minor]=process.versions.node.split('.').map(Number);if(major<22||major===22&&minor<13)throw Error('Please install Node.js 22.13 or newer, then run npm run play again.');
+function run(exe,args,game,env=process.env){return new Promise((ok,fail)=>{const p=spawn(exe,args,{cwd:resolve(root,'games',game),stdio:'inherit',env,shell:process.platform==='win32'&&exe==='npm'});p.on('error',fail);p.on('exit',code=>code===0?ok():fail(Error(game+' exited '+code)));});}
 if(command==='setup'){
  for(const game of ['word-arcade','number-park']){await run('npm',['ci'],game);await run('npm',['run','build'],game);}
  console.log('Ready. Run npm start.');

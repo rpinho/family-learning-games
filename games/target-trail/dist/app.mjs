@@ -1,6 +1,7 @@
 import {PLAYERS,THEMES,WORDS,targetsFor,challengeFor,aimAt,FLIGHT_MS,READING_NAMES,learningDefaults,cueLine,nameLine,clamp} from '/engine.mjs';
 const $=id=>document.getElementById(id),canvas=$('canvas'),ctx=canvas.getContext('2d');
 let player=null,p=null,busy=false,aim={x:400,y:240},drag=null,flight=null,feedback=null,shotStart=performance.now(),pausedAt=null,sound=true,voiceEpoch=0,audio,manifest,lastSpeech=0,sfxContext,parentSum=15,raf;
+let changing=false,sceneEpoch=0,pendingShot=null;
 const valid=id=>Object.hasOwn(PLAYERS,id),wait=ms=>new Promise(r=>setTimeout(r,ms));
 try{const id=new URL(location.href).searchParams.get('player'),saved=localStorage.getItem('target-player');player=valid(id)?id:valid(saved)?saved:null;sound=localStorage.getItem('target-sound')!=='off';}catch{}
 function log(kind,detail){if(player)void fetch('/api/events?player='+player,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind,detail})}).catch(()=>{});}
@@ -33,22 +34,32 @@ function draw(){
  circle(400,562,22,theme.ink);circle(400,562,9,'#fff8df');ctx.fillStyle=theme.ink;ctx.font='600 16px system-ui';ctx.fillText(drag?'LIFT TO SHOOT':'DRAG TO AIM',400,520);
  raf=requestAnimationFrame(draw);
 }
-function render(){if(!p)return;const r=p.round,done=r?.done,theme=THEMES[r?.theme||0],learning=p.learning||learningDefaults(p.id);$('name').textContent=p.name;document.title=p.name+' · Target Trail';$('theme').textContent=theme.name;$('level').textContent='Next aim: '+p.level;$('easier').disabled=busy||p.level<=1;$('harder').disabled=busy||p.level>=20;$('sound').textContent=sound?'♪ Sound on':'♪ Sound off';
- $('level-note').textContent=r&&!done?(r.rules!==2?'Finish this saved round. Letter targets begin with Another round.':`Playing now: aim ${r.level} · ${r.mode==='learn'?READING_NAMES[r.readingLevel]:'Aim only'} · Targets move during flight.`):'20 aiming levels · Visible sway from level 3 · Lead the moving target.';
- $('reading').value=String(learning.level);$('reading').disabled=busy;$('mode').value=p.mode||'learn';$('mode').disabled=busy;
+function render(){if(!p)return;const r=p.round,done=r?.done,theme=THEMES[r?.theme||0],learning=p.learning||learningDefaults(p.id);$('name').textContent=p.name;document.title=p.name+' · Target Trail';$('theme').textContent=theme.name;$('level').textContent='Aim level '+(r&&!done?r.level:p.level);$('easier').disabled=changing||p.level<=1;$('harder').disabled=changing||p.level>=20;$('sound').textContent=sound?'♪ Sound on':'♪ Sound off';
+ $('level-note').textContent=changing?'Changing the round…':`Changes start a new round immediately. ${r?.motion===3&&r.level===1?'Stationary targets.':r?.motion===3&&r.level===2?'Gentle movement.':'Higher levels add movement and sway.'}`;
+ $('reading').value=String(learning.level);$('reading').disabled=changing;$('mode').value=p.mode||'learn';$('mode').disabled=changing;
  const key=r?.rules===2?`v2-${r.mode}-${r.readingLevel}-${r.level}`:r?.level||p.level;
  $('score').textContent=r?.score||0;$('arrows').textContent=Array.from({length:5},(_,i)=>i<(r?.shots.length||0)?'○':'●').join(' ');$('best').textContent=`Best here: ${p.bestByLevel[key]||0}`;
  $('overlay').hidden=!!r&&(!done||busy);$('round-title').textContent=done?`${r.score} / 50`:'Listen. Aim. Find it.';$('round-detail').textContent=done?`${r.rules===2&&r.mode==='learn'?r.shots.filter(s=>s.outcome==='correct').length+' / 5 matching targets. ':''}Next: aim ${p.level} · ${p.mode==='aim'?'Aim only':READING_NAMES[learning.level]}.`:'Hear the target. Drag to aim. Lift to shoot.';$('start').textContent=done?'▶ Another round':'▶ Let’s play';$('start').disabled=busy;
  $('fire').disabled=!active();$('stats').textContent=`★ ${p.stars} · ${p.bullseyes} bullseyes · ${p.rounds} rounds${p.id==='admin'?' · ADMIN TEST SAVE':''}`;
 }
 async function sync(){p=await request('state');shotStart=performance.now();render();if(p.round&&!p.round.done)announce();}
-async function send(input){if(busy||!p)return;busy=true;drag=null;$('error').textContent='';render();try{p=await request('action',{...input,revision:p.revision});if(input.type==='start'){aim={x:400,y:240};shotStart=performance.now();feedback=null;announce();}}catch(e){$('error').textContent=e.message;try{await sync();}catch{}}finally{busy=false;render();}}
+async function send(input){
+ const setting=['level','mode','reading'].includes(input.type);if(!p||changing||busy&&!setting)return;
+ if(setting){changing=true;sceneEpoch++;stopVoice();flight=null;feedback=null;$('burst').classList.remove('show');}
+ busy=true;drag=null;$('error').textContent='';render();
+ try{
+  // Settle an already-sent arrow save, but never wait for its animation/feedback.
+  if(setting&&pendingShot){try{p=await pendingShot;}catch{p=await request('state');}pendingShot=null;}
+  p=await request('action',{...input,revision:p.revision});
+  aim={x:400,y:240};shotStart=performance.now();if(pausedAt!==null)pausedAt=shotStart;feedback=null;flight=null;announce();
+ }catch(e){$('error').textContent=e.message;try{await sync();}catch{}}finally{changing=false;busy=false;render();}
+}
 async function shoot(pointer='button'){
- if(!active())return;busy=true;stopVoice();const input={type:'shot',rules:2,shot:p.round.shots.length,x:aim.x,y:aim.y,elapsed:elapsed(),pointer,revision:p.revision};flight={...aimAt(p.round,aim.x,aim.y,input.elapsed),round:p.round,index:input.shot,elapsed:input.elapsed,duration:p.round.rules===2?FLIGHT_MS:500,at:performance.now()};effect('shoot');render();
- try{const next=await request('action',input);await wait(Math.max(0,flight.duration-(performance.now()-flight.at)));p=next;const s=p.round.shots.at(-1);feedback={...s};flight=null;effect('hit',s.points);$('burst').textContent=s.outcome==='wrong-target'?'Different target':s.points===10?'Bullseye!':s.points?'+'+s.points:'Missed';$('burst').classList.remove('show');void $('burst').offsetWidth;$('burst').classList.add('show');
+ if(!active())return;const generation=sceneEpoch;busy=true;stopVoice();const input={type:'shot',rules:2,motion:p.round.motion,roundId:p.round.id,shot:p.round.shots.length,x:aim.x,y:aim.y,elapsed:elapsed(),pointer,revision:p.revision};flight={...aimAt(p.round,aim.x,aim.y,input.elapsed),round:p.round,index:input.shot,elapsed:input.elapsed,duration:p.round.rules===2?FLIGHT_MS:500,at:performance.now()};effect('shoot');render();
+ try{const animation=flight;pendingShot=request('action',input);const next=await pendingShot;if(generation!==sceneEpoch)return;await wait(Math.max(0,animation.duration-(performance.now()-animation.at)));if(generation!==sceneEpoch)return;p=next;const s=p.round.shots.at(-1);feedback={...s};flight=null;effect('hit',s.points);$('burst').textContent=s.outcome==='wrong-target'?'Different target':s.points===10?'Bullseye!':s.points?'+'+s.points:'Missed';$('burst').classList.remove('show');void $('burst').offsetWidth;$('burst').classList.add('show');
   const dx=s.x-s.target.x,dy=s.y-s.target.y,line=s.points===10?WORDS.bull:s.points?WORDS.hit:Math.abs(dx)>Math.abs(dy)?dx>0?WORDS.left:WORDS.right:dy>0?WORDS.higher:WORDS.lower;
-  if(s.answer){$('message').textContent=s.outcome==='wrong-target'?`You hit ${s.hitLabel}. The target was ${s.answer}.`:s.outcome==='miss'?`Missed the target: ${s.answer}.`:`Found ${s.answer}! +${s.points}`;void speak(nameLine(s.answer,s.answer.length===1?'letter':'word'),false,true);}else{$('message').textContent=line;if(!s.points||s.points===10)void speak(line);}render();await wait(s.answer?1600:1050);feedback=null;shotStart=performance.now();if(p.round.done){$('message').textContent=WORDS.done;void speak(WORDS.done);}else announce();
- }catch(e){flight=null;feedback=null;$('error').textContent=e.message+' Your saved arrows will reload.';log('shot-error',e.message);try{await sync();}catch{}}finally{busy=false;render();}
+  if(s.answer){$('message').textContent=s.outcome==='wrong-target'?`You hit ${s.hitLabel}. The target was ${s.answer}.`:s.outcome==='miss'?`Missed the target: ${s.answer}.`:`Found ${s.answer}! +${s.points}`;void speak(nameLine(s.answer,s.answer.length===1?'letter':'word'),false,true);}else{$('message').textContent=line;if(!s.points||s.points===10)void speak(line);}render();await wait(s.answer?1600:1050);if(generation!==sceneEpoch)return;feedback=null;shotStart=performance.now();if(p.round.done){$('message').textContent=WORDS.done;void speak(WORDS.done);}else announce();
+ }catch(e){if(generation!==sceneEpoch)return;flight=null;feedback=null;$('error').textContent=e.message+' Your saved arrows will reload.';log('shot-error',e.message);try{await sync();}catch{}}finally{if(generation===sceneEpoch){pendingShot=null;busy=false;render();}}
 }
 function point(e){const b=canvas.getBoundingClientRect();return {x:(e.clientX-b.left)*800/b.width,y:(e.clientY-b.top)*600/b.height};}
 canvas.onpointerdown=e=>{if(!active()||drag||e.button!==0)return;e.preventDefault();unlock();canvas.focus({preventScroll:true});drag={id:e.pointerId,point:point(e),aim:{...aim},at:performance.now(),pointer:e.pointerType};canvas.setPointerCapture(e.pointerId);};

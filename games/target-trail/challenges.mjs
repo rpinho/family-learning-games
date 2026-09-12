@@ -21,10 +21,11 @@ export function movingTargets(r,index,elapsed){
  const c=challengeFor(r,index),level=clamp(r.level,1,20),rng=seeded(r.seed+index*113),count=c?.labels.length||1;
  const word=c?.kind==='word',radius=count===1?Math.max(20,95-level*3.8):word?78:Math.max(42,83-level*2);
  const ax=count===1?Math.min(220,65+level*7):Math.min(word?35:52,10+level*2.3),ay=count===1?Math.min(100,25+level*4):Math.min(word?25:40,7+level*1.6);
- const speed=.0008+level*.00018;
+ const gentle=r.motion===3&&level<5?[0,0,.35,.55,.8][level]:1;
+ const speed=(.0008+level*.00018)*(r.motion===3&&level<5?[0,0,.4,.65,.8][level]:1);
  return Array.from({length:count},(_,i)=>{
   const x=count===1?400:count===3?[150,400,650][i]:[215,585,215,585][i],y=count===1?250:count===3?[205,290,205][i]:[140,140,365,365][i],phase=rng()*Math.PI*2;
-  return {id:i,label:c?.labels[i]||'',x:x+Math.sin(elapsed*speed+phase)*ax,y:y+Math.sin(elapsed*speed*.73+phase*1.7)*ay,radius,kind:c?.kind||'aim'};
+  return {id:i,label:c?.labels[i]||'',x:x+Math.sin(elapsed*speed+phase)*ax*gentle,y:y+Math.sin(elapsed*speed*.73+phase*1.7)*ay*gentle,radius,kind:c?.kind||'aim'};
  });
 }
 export function aimAt(r,x,y,elapsed){

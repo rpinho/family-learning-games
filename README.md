@@ -13,16 +13,25 @@ Six touch-friendly games for practicing reading, numbers, planning, and puzzles 
 
 ## Run on your computer
 
-Install **Node.js 22.13 or newer**, npm, and Git. These commands work from a terminal:
+### One-command first run
+
+With **Node.js 22.13 or newer**, npm, and Git installed, paste this one command into Terminal (macOS/Linux) or PowerShell 7:
 
 ```sh
-git clone https://github.com/rpinho/family-learning-games.git
-cd family-learning-games
-npm run setup
-npm start
+git clone https://github.com/rpinho/family-learning-games.git && cd family-learning-games && npm run play
 ```
 
-Setup installs locked dependencies and builds the two React interfaces. The other four apps need only Node. Open a link above in Chrome, Edge, or another modern browser. Keep the terminal running; Ctrl+C stops the servers.
+This downloads the collection, installs locked dependencies, builds the two React interfaces, and starts all six games. The other four apps need only Node. Open a link above in Chrome, Edge, or another modern browser. Keep the terminal running; Ctrl+C stops the servers. Later, run `npm start` in the same folder; no reinstall is necessary. An existing `family-learning-games` folder is not overwritten.
+
+If you download the repository ZIP instead, unzip it, open a terminal in its folder, and run **`npm run play`**. Prerequisites are not silently installed and no administrator access is required by the game installer.
+
+### Let a coding agent install it
+
+Give your agent this request:
+
+> Install and run https://github.com/rpinho/family-learning-games locally. Read its AGENTS.md and README first. Check Node/npm, use a new folder, run npm run play, verify all six games, and give me the local links. Keep it private and preserve any existing saves.
+
+[AGENTS.md](AGENTS.md) contains the installation, verification, data-preservation and privacy instructions. No API key or paid AI service is needed to run the games.
 
 Choose **Beginner**, **Explorer**, or **Admin**. Add `/?player=beginner` or `/?player=explorer` to a link to open that preset. Beginner and Explorer have different starting challenges and separate saves; Admin is for testing. These are three shared presets per installation, not authenticated personal accounts. Spelling names in exercises are fictional examples.
 

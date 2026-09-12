@@ -1,6 +1,6 @@
 import {FLIGHT_MS,challengeFor,movingTargets,aimAt,learningDefaults} from './challenges.mjs';
 export {FLIGHT_MS,challengeFor,movingTargets,aimAt,learningDefaults,READING_NAMES,voiceLines,cueLine,nameLine} from './challenges.mjs';
-export const VERSION='target-trail-2026-09-12-letter-hunt';
+export const VERSION='target-trail-2026-09-12-instant-controls';
 export const PLAYERS={beginner:'Beginner',explorer:'Explorer',admin:'Admin · Admin'};
 export const WORDS={start:'Drag to aim. Lift your finger to shoot.',ready:'Ready for five arrows?',bull:'Bullseye!',done:'Five arrows! Ready for another round?',higher:'Try a little higher.',lower:'Try a little lower.',left:'Try a little left.',right:'Try a little right.',hit:'Nice shot!',move:'This target moves. Take your time.'};
 export const THEMES=[{name:'Golden hour',sky:'#fff0c6',floor:'#f4bb63',ink:'#17455b',accent:'#e76836'},{name:'Blue lagoon',sky:'#d2f7ff',floor:'#67d2d1',ink:'#123f69',accent:'#e75e5e'},{name:'Night lights',sky:'#17254c',floor:'#334b85',ink:'#fff2ca',accent:'#ffd36d'},{name:'Berry bright',sky:'#f9d9f3',floor:'#bb94d9',ink:'#49346d',accent:'#e55683'}];
@@ -23,18 +23,25 @@ export function targetFor(round,index){
 export function targetAt(t,elapsed=0){return {...t,x:t.x+Math.sin(t.phase+elapsed*t.speed)*t.amplitude};}
 export function scoreAim(x,y,t){const distance=Math.hypot(x-t.x,y-t.y),ratio=distance/t.radius;return {distance,ratio,points:ratio<=.16?10:ratio<=.36?8:ratio<=.6?6:ratio<=.8?4:ratio<=1?2:0};}
 const fail=(message,status=400)=>{throw Object.assign(Error(message),{status});};
+function startRound(p,reason){
+ if(reason&&p.round&&!p.round.done){p.cancelledRounds??=[];p.cancelledRounds.push({id:p.round.id,reason,level:p.round.level,mode:p.round.mode||'aim',shots:p.round.shots.length,score:p.round.score,at:new Date().toISOString()});p.cancelledRounds=p.cancelledRounds.slice(-20);}
+ p.learning??=learningDefaults(p.id);
+ p.round={id:`r-${p.revision}`,rules:2,motion:3,mode:p.mode||'learn',readingLevel:p.learning.level,sequence:p.rounds,seed:(p.rounds+1)*9013+(p.id==='explorer'?79:31),level:p.level,theme:p.rounds%THEMES.length,shots:[],score:0,done:false};
+}
 export function action(p,input){
  if(!input||input.revision!==p.revision)fail('Your game changed. Tap Refresh.',409);
- if(input.type==='level'){if(!Number.isInteger(input.level)||input.level<1||input.level>20)fail('Choose a level from 1 to 20.');p.level=input.level;p.streak=0;p.struggles=0;}
- else if(input.type==='mode'){if(!['learn','aim'].includes(input.mode))fail('Choose letters or aim only.');p.mode=input.mode;}
- else if(input.type==='reading'){if(!Number.isInteger(input.level)||input.level<1||input.level>5)fail('Choose a practice stage.');p.learning??=learningDefaults(p.id);p.learning.level=input.level;p.learning.streak=0;p.learning.struggles=0;}
+ if(input.type==='level'){if(!Number.isInteger(input.level)||input.level<1||input.level>20)fail('Choose a level from 1 to 20.');p.level=input.level;p.streak=0;p.struggles=0;startRound(p,'level');}
+ else if(input.type==='mode'){if(!['learn','aim'].includes(input.mode))fail('Choose letters or aim only.');p.mode=input.mode;p.streak=0;p.struggles=0;startRound(p,'mode');}
+ else if(input.type==='reading'){if(!Number.isInteger(input.level)||input.level<1||input.level>5)fail('Choose a practice stage.');p.learning??=learningDefaults(p.id);p.learning.level=input.level;p.learning.streak=0;p.learning.struggles=0;p.mode='learn';startRound(p,'reading');}
  else if(input.type==='start'){
   if(p.round&&!p.round.done)return p;
-  p.learning??=learningDefaults(p.id);p.round={id:`r-${p.revision}`,rules:2,mode:p.mode||'learn',readingLevel:p.learning.level,sequence:p.rounds,seed:(p.rounds+1)*9013+(p.id==='explorer'?79:31),level:p.level,theme:p.rounds%THEMES.length,shots:[],score:0,done:false};
+  startRound(p);
  }else if(input.type==='shot'){
   const r=p.round;if(!r||r.done||input.shot!==r.shots.length)fail('That arrow has already been used.',409);
+  if(input.roundId!==undefined&&input.roundId!==r.id)fail('The round changed. Aim at the new targets.',409);
   if(!Number.isFinite(input.x)||!Number.isFinite(input.y)||input.x<0||input.x>800||input.y<0||input.y>600||!Number.isFinite(input.elapsed)||input.elapsed<0||input.elapsed>3600000)fail('Invalid aim. Try again.');
   if(r.rules===2&&input.rules!==2)fail('New targets are ready. Tap Refresh before firing.',409);
+  if(r.motion===3&&input.motion!==3)fail('Gentler targets are ready. Tap Refresh before firing.',409);
   const score=scoreShot(r,r.shots.length,input);
   const shot={...score,elapsed:input.elapsed,input:['touch','mouse','pen','keyboard','button'].includes(input.pointer)?input.pointer:'unknown',at:new Date().toISOString()};
   r.shots.push(shot);r.score+=shot.points;p.shots++;if(shot.points===10)p.bullseyes++;

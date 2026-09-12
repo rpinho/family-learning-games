@@ -12,4 +12,10 @@ test('Client touch cancellation, duplicate releases, keyboard bounds and resume 
  canvas.onpointerdown(event(1,300,400));canvas.onpointermove(event(1,200,300));canvas.onpointercancel();canvas.onpointerup(event(1,200,300));await flush();assert.equal(stored.shots,0);
  canvas.onpointerdown(event(2,300,400));canvas.onpointermove(event(2,-1000,-1000));assert.equal(sandbox.control.getAim().x,0);assert.equal(sandbox.control.getAim().y,0);now+=200;canvas.onpointerup(event(2,-1000,-1000));canvas.onpointerup(event(2,-1000,-1000));await flush();assert.equal(stored.shots,1);assert.equal(posts,2);
  await sandbox.control.sync();assert.equal(stored.shots,1);canvas.onkeydown({key:'ArrowLeft',preventDefault:noop});assert.equal(sandbox.control.getAim().x,0);canvas.onkeydown({key:' ',preventDefault:noop});canvas.onkeydown({key:' ',preventDefault:noop});await flush();assert.equal(stored.shots,2);assert.equal(posts,3);assert.equal(nodes.get('error').textContent,'');
+ // A setting interrupts an in-flight shot/feedback instead of waiting for five arrows.
+ const oldId=stored.round.id,shot=sandbox.control.shoot();assert.equal(nodes.get('mode').disabled,false);
+ const change=sandbox.control.send({type:'mode',mode:'aim'});await Promise.all([shot,change]);await flush();
+ assert.notEqual(stored.round.id,oldId);assert.equal(stored.round.mode,'aim');assert.equal(stored.round.shots.length,0);assert.equal(nodes.get('score').textContent,0);assert.equal(nodes.get('error').textContent,'');
+ await sandbox.control.send({type:'level',level:1});await sandbox.control.send({type:'reading',level:4});await flush();
+ assert.equal(stored.round.level,1);assert.equal(stored.round.readingLevel,4);assert.equal(stored.round.mode,'learn');assert.equal(nodes.get('mode').value,'learn');
 });

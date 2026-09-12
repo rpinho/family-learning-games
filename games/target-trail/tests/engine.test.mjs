@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {freshProfile,action,targetFor,targetAt,scoreAim,targetsFor,challengeFor,aimAt,FLIGHT_MS,scoreShot} from '../engine.mjs';
 const act=(p,v)=>action(p,{...v,revision:p.revision});
-function aimedInput(r,index,id=challengeFor(r,index)?.answerIndex||0){const t=targetsFor(r,index,500+FLIGHT_MS)[id],drift=aimAt(r,400,250,500);return {type:'shot',rules:2,shot:index,x:t.x-(drift.x-400),y:t.y-(drift.y-250),elapsed:500,pointer:'touch'};}
+function aimedInput(r,index,id=challengeFor(r,index)?.answerIndex||0){const t=targetsFor(r,index,500+FLIGHT_MS)[id],drift=aimAt(r,400,250,500);return {type:'shot',rules:2,motion:r.motion,shot:index,x:t.x-(drift.x-400),y:t.y-(drift.y-250),elapsed:500,pointer:'touch'};}
 function shootCenter(p){act(p,aimedInput(p.round,p.round.shots.length));}
 test('Targets are varied, stay reachable at all levels and scoring is deterministic',()=>{
  const layouts=new Set();for(let level=1;level<=10;level++)for(let seed=1;seed<=30;seed++)for(let i=0;i<5;i++){const t=targetFor({seed,level},i);layouts.add(JSON.stringify(t));for(const time of [0,800,2400,10000]){const v=targetAt(t,time);assert.ok(v.x-v.radius>=0&&v.x+v.radius<=800);assert.ok(v.y-v.radius>=0&&v.y+v.radius<=500);assert.equal(scoreAim(v.x,v.y,v).points,10);assert.equal(scoreAim(v.x+v.radius*.7,v.y,v).points,4);assert.equal(scoreAim(v.x+v.radius*1.2,v.y,v).points,0);}}assert.ok(layouts.size>1000);
@@ -21,12 +21,30 @@ test('Letter and word choices are unique, varied and never overlap at any aiming
 test('Wrong-letter bullseyes earn zero; aim misses do not count as wrong-letter hits',()=>{
  const p=freshProfile('beginner');act(p,{type:'start'});const c=challengeFor(p.round,0),wrong=(c.answerIndex+1)%c.labels.length;
  act(p,aimedInput(p.round,0,wrong));assert.equal(p.round.shots[0].aimPoints,10);assert.equal(p.round.score,0);assert.equal(p.learning.wrong,1);assert.equal(p.learning.correct,0);
- act(p,{type:'shot',rules:2,shot:1,x:0,y:500,elapsed:500});assert.equal(p.round.shots[1].outcome,'miss');assert.equal(p.learning.misses,1);assert.equal(p.learning.wrong,1);
+ act(p,{type:'shot',rules:2,motion:p.round.motion,shot:1,x:0,y:500,elapsed:500});assert.equal(p.round.shots[1].outcome,'miss');assert.equal(p.learning.misses,1);assert.equal(p.learning.wrong,1);
  shootCenter(p);assert.equal(p.learning.correct,1);assert.equal(p.round.score,10);
 });
 test('Arrival-time collision and visible sway are deterministic; legacy rounds remain intact',()=>{
  const r={rules:2,mode:'learn',level:20,readingLevel:2,sequence:1,seed:18057};const input=aimedInput(r,0),s=scoreShot(r,0,input);assert.equal(s.points,10);assert.deepEqual(scoreShot(r,0,input),s);assert.deepEqual({x:s.x,y:s.y},aimAt(r,input.x,input.y,input.elapsed));
  const released=targetsFor(r,0,500)[challengeFor(r,0).answerIndex];assert.ok(Math.hypot(s.target.x-released.x,s.target.y-released.y)>10);
- const p=freshProfile('beginner');p.round={id:'legacy',seed:9044,level:2,theme:0,shots:[],score:0,done:false};const saved=structuredClone(p.round);act(p,{type:'mode',mode:'learn'});act(p,{type:'reading',level:4});act(p,{type:'start'});assert.deepEqual(p.round,saved);
+ const p=freshProfile('beginner');p.round={id:'legacy',seed:9044,level:2,theme:0,shots:[],score:0,done:false};const saved=structuredClone(p.round);act(p,{type:'start'});assert.deepEqual(p.round,saved);
  const t=targetAt(targetFor(p.round,0),0);act(p,{type:'shot',shot:0,x:t.x,y:t.y,elapsed:0});assert.equal(p.round.score,10);assert.equal(p.round.rules,undefined);
+ act(p,{type:'reading',level:4});assert.equal(p.round.rules,2);assert.equal(p.round.readingLevel,4);assert.equal(p.round.shots.length,0);
+});
+test('Every gameplay setting immediately replaces the round without awarding a finish or losing earned totals',()=>{
+ const p=freshProfile('beginner');act(p,{type:'start'});shootCenter(p);
+ const totals={shots:p.shots,bullseyes:p.bullseyes,rounds:p.rounds,stars:p.stars,best:p.best};let id=p.round.id;
+ for(const input of [{type:'level',level:1},{type:'level',level:12},{type:'mode',mode:'aim'},{type:'reading',level:4},{type:'mode',mode:'learn'}]){
+  act(p,input);assert.notEqual(p.round.id,id);assert.equal(p.round.shots.length,0);assert.equal(p.round.score,0);assert.equal(p.round.done,false);assert.equal(p.round.level,p.level);assert.equal(p.round.mode,p.mode||'learn');assert.equal(p.round.readingLevel,p.learning.level);
+  assert.deepEqual(Object.fromEntries(Object.keys(totals).map(k=>[k,p[k]])),totals);
+  assert.throws(()=>act(p,{...aimedInput(p.round,0),roundId:id}),/round changed/);id=p.round.id;
+ }
+ assert.equal(p.cancelledRounds[0].shots,1);assert.equal(p.cancelledRounds[0].score,10);
+ const restored=JSON.parse(JSON.stringify(p));assert.deepEqual(restored.round,p.round);
+});
+test('New level one targets stay still; level two moves gently; high levels retain their challenge',()=>{
+ const p=freshProfile('beginner');act(p,{type:'level',level:1});
+ for(const mode of ['aim','learn']){act(p,{type:'mode',mode});assert.deepEqual(targetsFor(p.round,0,0),targetsFor(p.round,0,20000));assert.deepEqual(aimAt(p.round,400,240,0),aimAt(p.round,400,240,30000));}
+ act(p,{type:'level',level:2});const gentle=targetsFor(p.round,0,0),later=targetsFor(p.round,0,1000);assert.ok(Math.hypot(later[0].x-gentle[0].x,later[0].y-gentle[0].y)<10);assert.notDeepEqual(gentle,later);
+ act(p,{type:'level',level:20});const old={...p.round,motion:undefined};assert.deepEqual(targetsFor(old,0,1200),targetsFor(p.round,0,1200));
 });
