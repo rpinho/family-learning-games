@@ -1,16 +1,16 @@
 # Family Learning Games
 
-![Family Learning Games — six touch-friendly games for reading, counting, tracing and exploring](docs/media/social-preview.png)
+![Family Learning Games — gameplay previews from the original six games](docs/media/social-preview.png)
 
-**One app. Seven ways to play.** A single game-picker home screen now brings together the original six games pictured above and **Dribble Duel**, a live soccer dribbling game. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, not a public online classroom or hosted play service.
+**One app. Seven ways to play.** A single game-picker home screen brings together seven games for reading, numbers, drawing, mazes, strategy, and live soccer dribbling. The image above previews the original six; **Dribble Duel** is the seventh. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, not a public online classroom or hosted play service.
 
 After setup, open **http://localhost:4810/**. Choose a player once; their name stays large at the top and their progress stays separate. Use **Games** to return home, **Refresh** to reload, and **Grown-ups** to change the device's player.
 
-[Install in one command](#one-command-first-run) · [Let an agent install it](#let-a-coding-agent-install-it) · [Explore the games](#six-games-six-different-adventures) · [Privacy](PRIVACY.md)
+[Install in one command](#one-command-first-run) · [Let an agent install it](#let-a-coding-agent-install-it) · [Explore the games](#seven-games-seven-different-adventures) · [Privacy](PRIVACY.md)
 
-## Six games. Six different adventures.
+## Seven games. Seven different adventures.
 
-**New: [Dribble Duel](hub/README.md#dribble-duel)** joins these six. Choose **Live dribbling** or the **Original puzzle**. In live play, draw a lunge, change direction and dribble into a goal with posts and a net. Lift to stop—not shoot. Goals unlock a short spoken letter/word reward. Twelve instantly adjustable live levels now include much faster defenders that chase and recover. Both play styles preserve their separate progress, with server-validated replays for live play. Screen play is not physical ball-control training. [One-app installation and soccer rules →](hub/README.md)
+**[Dribble Duel](hub/README.md#dribble-duel)** adds live soccer to the collection. Choose **Live dribbling** or the **Original puzzle**. In live play, draw a lunge, change direction and dribble into a goal with posts and a net. Lift to stop—not shoot. Goals unlock a short spoken letter/word reward. Twelve instantly adjustable live levels now include much faster defenders that chase and recover. Both play styles preserve their separate progress, with server-validated replays for live play. Screen play is not physical ball-control training. [One-app installation and soccer rules →](hub/README.md)
 
 Drag, trace, steer, aim, and think ahead. Pick an activity and a manageable challenge, then play together.
 
