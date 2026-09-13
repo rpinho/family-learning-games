@@ -1,4 +1,4 @@
-export const VERSION='family-games-2026-09-12-close-marking-1';
+export const VERSION='family-games-2026-09-13-gentler-progression-1';
 export const RULES=2;
 export const LEVELS=['Draw a step','Did the fake work?','Change your fake','Use the space','Beat the recovery','Patient defender','Change direction twice','Complete the duel'];
 export const DIRS=['left','middle','right'];

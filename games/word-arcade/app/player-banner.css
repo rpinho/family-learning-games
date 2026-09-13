@@ -1,3 +1,7 @@
 .arcade-shell.arcade-v2{padding-top:52px}.active-player-banner{position:fixed;inset:0 0 auto;z-index:25;height:52px;display:flex;align-items:center;justify-content:center;background:#006d73;border-bottom:4px solid #ffd15c;color:white;font-size:32px;font-weight:850;letter-spacing:.02em;line-height:1.1;box-sizing:border-box}.active-player-banner[data-player=explorer]{background:#164b9b}.active-player-banner[data-player=admin]{background:#684595}.arcade-shell.arcade-v2 .tutor-panel{top:52px;height:calc(100dvh - 52px)}@media(max-width:700px){.arcade-shell.arcade-v2 .tutor-panel{top:auto;height:auto}}@media(max-height:500px){.arcade-shell.arcade-v2{padding-top:42px}.active-player-banner{height:42px;font-size:28px}.arcade-shell.arcade-v2 .tutor-panel{top:42px;height:calc(100dvh - 42px)}}
 .arcade-shell.arcade-v2 .active-player-banner{flex:none}
+/* The compact coach is a control strip, never a transparent full-height hitbox. */
+.arcade-shell.arcade-v2.is-playing .tutor-panel{height:48px;bottom:auto;pointer-events:none}
+.arcade-shell.arcade-v2.is-playing .tutor-panel .player-bar{pointer-events:auto}
+@media(max-width:700px){.arcade-shell.arcade-v2.is-playing .tutor-panel{height:57px}}
 @media(max-width:700px) and (max-height:500px){.arcade-shell.arcade-v2 .tutor-panel{top:auto;height:auto}}

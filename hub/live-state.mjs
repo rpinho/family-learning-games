@@ -46,8 +46,9 @@ export function actLive(p,a,initialLevel=1){
  r.inputs=a.inputs;p.revision++;
  if(a.type==='live-checkpoint')return {kind:'saved'};
  const result=metrics(s);r.done=true;g.serial++;
- if(['escaped','goal'].includes(s.outcome)){g.wins++;if(s.outcome==='goal')g.goals=(g.goals||0)+1;g.streak++;g.struggles=0;if(g.streak>=3&&g.level<(a.liveRules===1?8:LIVE_LEVELS.length)){g.level++;g.streak=0;result.levelUp=true;}}
- else if(s.outcome==='tackled'){g.losses++;g.streak=0;g.struggles++;if(g.struggles>=3&&g.level>1){g.level--;g.struggles=0;result.easierNext=true;}}
+ const gentler=a.liveRules>=3;
+ if(['escaped','goal'].includes(s.outcome)){g.wins++;if(s.outcome==='goal')g.goals=(g.goals||0)+1;g.streak++;g.struggles=0;if(g.streak>=(gentler?4:3)&&g.level<(a.liveRules===1?8:LIVE_LEVELS.length)){g.level++;g.streak=0;result.levelUp=true;}}
+ else if(s.outcome==='tackled'){g.losses++;g.streak=0;g.struggles++;if(g.struggles>=(gentler?2:3)&&g.level>1){const from=g.level;g.level=Math.max(1,g.level-(gentler&&g.level>=6?2:1));g.struggles=0;result.easierNext=true;result.fromLevel=from;result.nextLevel=g.level;}}
  else{g.streak=0;}
  if(['escaped','goal'].includes(s.outcome)&&a.reading===true){g.reading??=freshReading(initialLevel);g.reading.pending=makeReward(g.reading.serial++,g.reading.level);}
  r.result=result;g.history.push({id:r.id,kind:'live-duel',level:r.level,...result});g.history=g.history.slice(-100);

@@ -5,6 +5,8 @@ export function flightWorld(values,{level=1,mode='practice'}={}){
 }
 export function nearestFlyingTarget(world,x){return [...world.targets].sort((a,b)=>Math.abs(a.x-x)-Math.abs(b.x-x))[0]||null;}
 export function flightAim(clientX,left,width,offset=0){return clamp((clientX-left-offset)/Math.max(1,width)*100,0,100);}
+export function dragFlightAim(ship,delta,width){return clamp(ship+delta/Math.max(1,width)*100,0,100);}
+export const FLIGHT_RECOVERY_MS=1400;
 export function snapFlightAim(world,x){const t=nearestFlyingTarget(world,x);return t&&Math.abs(t.x-x)<=9?t.x:clamp(x,0,100);}
 export function launchShot(world,id){
  const target=world.targets.find(t=>t.id===id);if(!target||world.shots.length)return false;

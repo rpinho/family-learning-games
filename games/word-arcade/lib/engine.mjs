@@ -5,7 +5,7 @@ import {lowerQuestion,lowerAttempt,lowerState} from './lowercase.mjs';
 import {BUILDER_STARTERS,builderState,builderQuestion,builderAttempt} from './builder.mjs';
 import {arcadeQuestion,arcadeAttempt} from './arcade-curriculum.mjs';
 import {chooseWord,rememberWord} from './variety.mjs';
-export const VERSION='word-arcade-2026-09-12-builder-edit-1';
+export const VERSION='word-arcade-2026-09-13-steady-flight-1';
 export const GAMES=[
  ['blaster','Letter Blaster','SPELLING','Blast the missing letter. Power your starship.','🚀','#48dfec'],
  ['orbit','Orbit Builder','SPELLING','Connect drifting letters. Fly your word through space.','✦','#ffcc73'],
@@ -82,13 +82,20 @@ export function act(p,input){
    if(s.game==='beats'&&d.some(x=>x!=='beat'))throw Error('Invalid beat');s.draft=[...d];
   }else if(input.kind==='answer'){
    if(!Number.isFinite(input.durationMs)||input.durationMs<0||input.durationMs>86400000)throw Error('Invalid duration');
-   s.activeMs=(s.activeMs||0)+input.durationMs;
    let answer=input.answer;
    if(['builder','cipher','transform','wordoku','orbit'].includes(s.game)||s.game==='flashcards'&&s.deck==='spelling')answer=s.draft.join('');
    if(s.game==='train')answer=s.draft.join(' ');
    if(s.game==='search')answer=s.draft.join(',');
    if(s.game==='beats')answer=String(s.draft.length);
    if(typeof answer!=='string'||answer.length>200)throw Error('Choose an answer');
+   // New flight clients mark their submissions. Ignore accidental repeat taps
+   // before any learning counters change, including a retry after refresh.
+   if(input.flight===true&&['blaster','asteroids','rhyme'].includes(s.game)&&answer!==q.answer){
+    const now=Date.now(),last=s.lastFlightMiss;
+    if(last?.question===q.id&&last.answer===answer&&now-last.at<1400){p.revision++;return {kind:'repeat-ignored'};}
+    s.lastFlightMiss={question:q.id,answer,at:now};
+   }
+   s.activeMs=(s.activeMs||0)+input.durationMs;
    let ok=answer===q.answer;
    if(s.game==='search'){const path=s.draft.map(Number);ok=path.length===q.word.length&&path.map(i=>q.grid[i]).join('')===q.word&&path.every((x,i)=>!i||(x===path[i-1]+1&&Math.floor(x/6)===Math.floor(path[i-1]/6))||x===path[i-1]+6);}
    if(s.game==='wordoku'){const d=s.draft;ok=d.length===16&&d.every(x=>q.tiles.includes(x))&&Array.from({length:4},(_,r)=>new Set(d.slice(r*4,r*4+4)).size===4&&new Set([0,1,2,3].map(c=>d[c*4+r])).size===4).every(Boolean);}

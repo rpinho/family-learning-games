@@ -13,7 +13,7 @@ export function mountDribble(root,{player,event}){
  $('.coach-panel .small').textContent='Lift to stop with the ball. Touch again to keep going.';
  $('.coach-panel h2').textContent='Dribble into the goal.';
  $('.coach-panel>p').textContent='Draw a lunge, change direction, then bring the ball between the posts.';
- $('.soccer-foot p').textContent='The defender reacts faster and chases back toward the goal. A yellow line shows a committed lunge; the ring shows recovery. Twelve difficulty settings apply immediately. Three goals move up; three tackles ease the next level. Earlier dribbles and original puzzle scores are preserved separately.';
+ $('.soccer-foot p').textContent='A yellow line shows a committed lunge; the ring shows recovery. Four consecutive goals move up one level. Two tackles ease the next level, by two steps at level 6 or above. You can always choose any of the twelve levels yourself; changes start a new try immediately. All earlier scores are preserved.';
  const previousScores=document.createElement('p');previousScores.className='previous-scores';$('.soccer-foot').append(previousScores);
  const pendingReward=()=>p?.live?.reading?.pending;
  function showReward(){
@@ -101,7 +101,7 @@ export function mountDribble(root,{player,event}){
    const d=await job({type:'live-finish',roundId:id,inputs:copy,reading:true});if(!alive||my!==epoch||!d)return;
    saveError=false;show();const r=d.result;
    if(pendingReward()&&!pendingReward().done){nextTimer=setTimeout(()=>{if(alive&&my===epoch)showReward();},outcome==='goal'?1500:500);return;}
-   if(r.levelUp)status('Three goals! A quicker defender is next.');else if(r.easierNext)status('A gentler defender is next. Try a new move.');
+   if(r.levelUp)status('Four goals! A quicker defender is next.');else if(r.easierNext)status('A gentler defender is next: level '+(r.nextLevel||p.live.level)+'. Try a new move.');
    // No repeated spoken tutorial or result chatter. A short sound marks the result.
    nextTimer=setTimeout(()=>{if(alive&&my===epoch)void change('live-start');},won?1800:2200);
   }catch(e){if(alive&&my===epoch){finished=false;failed(e);}}
