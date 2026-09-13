@@ -2,11 +2,11 @@
 
 For a LinkedIn Featured link or Projects entry, not a feed post.
 
-**Title:** Family Learning Games — Six Hands-On Learning Adventures
+**Title:** Family Learning Games — Hands-On Learning Adventures
 
 **Link:** https://github.com/rpinho/family-learning-games
 
-**Description:** A personal collection of six touch-friendly games for reading, numbers, drawing, mazes, and strategy. Steer a spaceship to complete words, move objects to explore arithmetic, trace a maze, or play tic-tac-toe with tactical clues. Adjustable challenges, local saves, and one-command setup. Built through iterative playtesting and feedback; shared as self-hosted source with generic demo profiles and no household data. Experimental practice games, not validated educational assessments.
+**Description:** A personal collection of seven touch-friendly games in one hub for reading, numbers, drawing, mazes, strategy, and live soccer dribbling. Steer a spaceship to complete words, move objects to explore arithmetic, trace a maze, or outmaneuver a defender. Adjustable challenges, local saves, and one-command setup. Built through iterative playtesting and feedback; shared as self-hosted source with generic demo profiles and no household data. Experimental practice games, not validated educational assessments.
 
 **Thumbnail:** `docs/media/social-preview.png` (1280 × 640).
 
