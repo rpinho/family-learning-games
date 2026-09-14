@@ -16,13 +16,6 @@ Drag, trace, steer, aim, and think ahead. Pick an activity and a manageable chal
 
 <table>
 <tr>
-<td colspan="2" align="center">
-<a href="hub/README.md#dribble-duel"><img src="docs/media/dribble-duel.png" alt="Dribble Duel: a live soccer pitch with a defender, player, ball, and netted goal" width="72%"></a><br>
-<strong>Dribble Duel — draw a lunge. Find the goal.</strong><br>
-Change direction, carry the ball past the defender, and earn a spoken letter or word reward.
-</td>
-</tr>
-<tr>
 <td width="50%" valign="top">
 <a href="games/letter-quest"><img src="docs/media/letter-quest.png" alt="Letter Quest: a first-person green labyrinth with a letter-position puzzle" width="100%"></a>
 <strong>Letter Quest — words open worlds.</strong><br>
@@ -57,6 +50,14 @@ Choose X or O, set the opponent's strength, play Rook, and explore one-move prac
 <strong>Target Trail — listen, aim, release.</strong><br>
 Spoken letter and word targets with adjustable motion and aiming difficulty. Settings apply immediately.
 </td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<a href="hub/README.md#dribble-duel"><img src="docs/media/dribble-duel.png" alt="Dribble Duel: a live soccer pitch with a defender, player, ball, and netted goal" width="100%"></a>
+<strong>Dribble Duel — draw a lunge. Find the goal.</strong><br>
+Change direction, carry the ball past the defender, and earn a spoken letter or word reward.
+</td>
+<td width="50%"></td>
 </tr>
 </table>
 
