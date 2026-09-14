@@ -1,8 +1,8 @@
 # Family Learning Games
 
-![Family Learning Games — gameplay previews from the original six games](docs/media/social-preview.png)
+![Family Learning Games — gameplay previews of all seven games](docs/media/social-preview.png)
 
-**One app. Seven ways to play.** A single game-picker home screen brings together seven games for reading, numbers, drawing, mazes, strategy, and live soccer dribbling. The image above previews the original six; **Dribble Duel** is the seventh. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, not a public online classroom or hosted play service.
+**One app. Seven ways to play.** A single game-picker home screen brings together seven games for reading, numbers, drawing, mazes, strategy, and live soccer dribbling. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, not a public online classroom or hosted play service.
 
 After setup, open **http://localhost:4810/**. Choose a player once; their name stays large at the top and their progress stays separate. Use **Games** to return home, **Refresh** to reload, and **Grown-ups** to change the device's player.
 
@@ -15,6 +15,13 @@ After setup, open **http://localhost:4810/**. Choose a player once; their name s
 Drag, trace, steer, aim, and think ahead. Pick an activity and a manageable challenge, then play together.
 
 <table>
+<tr>
+<td colspan="2" align="center">
+<a href="hub/README.md#dribble-duel"><img src="docs/media/dribble-duel.png" alt="Dribble Duel: a live soccer pitch with a defender, player, ball, and netted goal" width="72%"></a><br>
+<strong>Dribble Duel — draw a lunge. Find the goal.</strong><br>
+Change direction, carry the ball past the defender, and earn a spoken letter or word reward.
+</td>
+</tr>
 <tr>
 <td width="50%" valign="top">
 <a href="games/letter-quest"><img src="docs/media/letter-quest.png" alt="Letter Quest: a first-person green labyrinth with a letter-position puzzle" width="100%"></a>
