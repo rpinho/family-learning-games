@@ -4,7 +4,7 @@ Open **http://localhost:4810/#chess** after the normal collection setup. An orig
 
 ## Learning path
 
-Twelve units, six lessons per unit, five positions per lesson. Most positions require two to four learner moves, with the opponent's replies played automatically. Themes progress through forcing calculation, deflection, removing defenders, in-between moves, clearance, discovered attacks, mating nets, quiet threats, defense, passed pawns, rook endings and sacrifices. All units share one scrolling path. The next lesson unlocks after completion; future steps show locks. Previously reached or active lessons remain available, including older out-of-order progress.
+Twelve units, six lessons per unit, five positions per lesson. Most positions require two to four learner moves, with the opponent's replies played automatically. Themes progress through forcing calculation, deflection, removing defenders, in-between moves, clearance, discovered attacks, mating nets, quiet threats, defense, passed pawns, rook endings and sacrifices. All units share one scrolling path. Portrait screens and narrow windows use one centered column with compact Rook/settings/review controls above it; wide landscape screens keep the side coach. The next lesson unlocks after completion; future steps show locks. Previously reached or active lessons remain available, including older out-of-order progress.
 
 Each unit has an original explanation available on request and a short spoken task cue. Its first five lessons rise through the chosen position band. Checkpoints mix that unit with earlier ideas. The two **position difficulty** choices keep the themes while changing the calculation burden:
 

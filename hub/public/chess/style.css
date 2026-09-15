@@ -269,6 +269,8 @@
 .path-stop {
   position: relative;
   height: 105px;
+  width: calc(100% - 140px);
+  margin-inline: auto;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -1221,29 +1223,6 @@ body:has(.chess-lesson) > .top .home {
   .ac-content {
     padding: 18px 16px;
   }
-  .academy-layout {
-    display: flex;
-    flex-direction: column;
-    gap: 28px;
-    max-width: 500px;
-  }
-  .academy-sidebar {
-    padding: 0;
-    display: flex;
-    flex-direction: row;
-    align-items: end;
-    justify-content: center;
-    gap: 20px;
-  }
-  .path-rook {
-    display: none;
-  }
-  .practice-level {
-    max-width: 170px;
-  }
-  .academy-path {
-    width: 100%;
-  }
   .unit-selector {
     padding: 10px;
   }
@@ -1263,7 +1242,7 @@ body:has(.chess-lesson) > .top .home {
     transform: translateX(30px);
   }
   .node-label {
-    width: 100px;
+    width: clamp(80px, calc((100vw - 148px) / 2), 100px);
     font-size: 14px;
     left: calc(50% + 49px);
   }
@@ -1501,4 +1480,44 @@ body:has(.chess-lesson) > .top .home {
 .continuous-layout .academy-sidebar { position:sticky; top:84px; align-self:start; }
 .practice-level summary { cursor:pointer; color:var(--muted); font-size:14px; }
 .practice-level[open] summary { margin-bottom:14px; }
-@media(max-width:760px) { .continuous-layout .academy-sidebar { order:-1; position:static; width:100%; padding:0; } .unit-heading { padding:14px 16px; } .unit-heading h2 {font-size:19px;} }
+/* Collapse the whole layout together. Reordering just the sidebar while the
+   parent is still a two-column grid puts the path in the narrow second track. */
+@media (max-width: 900px), (orientation: portrait) {
+  .continuous-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    max-width: 560px;
+  }
+  .continuous-layout .academy-path {
+    width: 100%;
+  }
+  .continuous-layout .academy-sidebar {
+    order: -1;
+    position: static;
+    align-self: stretch;
+    padding: 0 0 16px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .continuous-layout .path-rook { display: flex; align-items: center; }
+  .continuous-layout .path-rook .academy-coach { width: 68px; height: 76px; }
+  .continuous-layout .path-rook .ac-button { width: 32px; min-height: 44px; }
+  .continuous-layout .practice-level { max-width: 190px; min-width: 0; }
+  .continuous-layout .practice-level summary { font-size: 14px; }
+  .continuous-layout .resume-strip { margin: 0 0 20px; }
+  .unit-heading { padding: 16px 20px; }
+  .unit-heading h2 { font-size: 21px; }
+}
+@media (max-width: 420px) {
+  .continuous-layout .academy-sidebar { gap: 10px; }
+  .continuous-layout .path-rook .academy-coach { width: 48px; height: 56px; }
+  .continuous-layout .path-rook .ac-button { width: 26px; }
+  .continuous-layout .academy-sidebar > .ac-button { padding: 8px 10px; font-size: 14px; }
+  .unit-heading { padding: 14px 16px; }
+  .unit-heading h2 { font-size: 19px; }
+}
