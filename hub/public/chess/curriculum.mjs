@@ -3,6 +3,8 @@ export const COURSE_VERSION = "rook-academy-1";
 export const UNITS = [
   {
     id: "forcing",
+    task: "Find the fork",
+    cue: "Find the move that makes two threats.",
     theme: "fork",
     name: "See the whole line",
     subtitle: "Checks, captures, then the reply",
@@ -25,6 +27,8 @@ export const UNITS = [
   },
   {
     id: "deflection",
+    task: "Pull the guard away",
+    cue: "Pull a defender away, then use the opening.",
     theme: "deflection",
     name: "Pull the guard away",
     subtitle: "Make a defender choose",
@@ -47,6 +51,8 @@ export const UNITS = [
   },
   {
     id: "guard",
+    task: "Remove the guard",
+    cue: "Capture a defender. What does that leave unprotected?",
     theme: "capturingDefender",
     name: "Remove the defender",
     subtitle: "Trade for the piece that matters",
@@ -69,6 +75,8 @@ export const UNITS = [
   },
   {
     id: "between",
+    task: "Find a stronger move",
+    cue: "Before you recapture, look for a stronger threat.",
     theme: "intermezzo",
     name: "First, something stronger",
     subtitle: "The in-between move",
@@ -91,6 +99,8 @@ export const UNITS = [
   },
   {
     id: "clearance",
+    task: "Open the line",
+    cue: "Make room for the piece behind.",
     theme: "clearance",
     name: "Open the line",
     subtitle: "Make room for your next piece",
@@ -113,6 +123,8 @@ export const UNITS = [
   },
   {
     id: "discovery",
+    task: "Reveal the attack",
+    cue: "Move one piece to uncover another attack.",
     theme: "discoveredAttack",
     name: "Reveal the attack",
     subtitle: "Two pieces working as one",
@@ -135,6 +147,8 @@ export const UNITS = [
   },
   {
     id: "mate",
+    task: "Find checkmate",
+    cue: "Find checkmate. Cover the king’s escape squares.",
     theme: "mateIn3",
     name: "Weave a mating net",
     subtitle: "Cover escapes before the finish",
@@ -157,6 +171,8 @@ export const UNITS = [
   },
   {
     id: "quiet",
+    task: "Build a threat",
+    cue: "Find a quiet move that creates a strong threat.",
     theme: "quietMove",
     name: "The quiet threat",
     subtitle: "Strong moves do not always check",
@@ -179,6 +195,8 @@ export const UNITS = [
   },
   {
     id: "defense",
+    task: "Stop the threat",
+    cue: "Find their threat, then get out of trouble.",
     theme: "defensiveMove",
     name: "Find the resource",
     subtitle: "Defend actively, not automatically",
@@ -201,6 +219,8 @@ export const UNITS = [
   },
   {
     id: "pawns",
+    task: "Win the pawn race",
+    cue: "Find the winning plan for the pawn race.",
     theme: "advancedPawn",
     name: "Race to promotion",
     subtitle: "Count moves and stop counterplay",
@@ -223,6 +243,8 @@ export const UNITS = [
   },
   {
     id: "rooks",
+    task: "Activate your rook",
+    cue: "Find the move that makes your rook stronger.",
     theme: "rookEndgame",
     name: "Make the rook active",
     subtitle: "Checks, cut-offs and passed pawns",
@@ -245,6 +267,8 @@ export const UNITS = [
   },
   {
     id: "combinations",
+    task: "Find the combination",
+    cue: "Find the combination. Check their best reply.",
     theme: "sacrifice",
     name: "Put it all together",
     subtitle: "Calculate the sacrifice all the way",
@@ -305,21 +329,28 @@ export function moveWords(move) {
 
 // Finite, original dialogue performed by the established Rook stock voice.
 // Precise board feedback remains visible; dynamic text never falls back to device TTS.
-export const VOICE={
- welcome:"You know the rules. Excellent. Now let's cause some very well-planned trouble.",
- progress:"Good. Now find the follow-up.",
- check:"Check. They have to answer. What comes next?",
- fork:"Two targets, one piece. A rather excellent bargain.",
- capture:"There it is. You found the loose piece.",
- promotion:"A promotion! That little pawn had big plans.",
- mate:"Checkmate. No escape, not even a tiny one.",
- solved:"Well played. You did the thinking. I supplied the moustache.",
- assisted:"We found it together. Next time, see if you can spot it on your own.",
- mistakes:["Not quite. Let's put that back and look again.","A legal move, but our plan needs something stronger.","My moustache is still thinking. Try checks, captures, and threats."],
- hintMove:"Follow the arrow. Then find their strongest reply.",
- gameHint:"Try the marked move. But first, tell me why it works.",
- alternative:"Here is one strong reply. Look at what it changes.",
- restart:"Back to the start. Let's see the whole plan again.",
- checkpoint:"No labels this time. Work out which idea the position needs."
+export const VOICE = {
+  welcome:
+    "You know the rules. Excellent. Now let's cause some very well-planned trouble.",
+  progress: "Good. Now find the follow-up.",
+  check: "Check. They have to answer. What comes next?",
+  fork: "Two targets, one piece. A rather excellent bargain.",
+  capture: "There it is. You found the loose piece.",
+  promotion: "A promotion! That little pawn had big plans.",
+  mate: "Checkmate. No escape, not even a tiny one.",
+  solved: "Well played. You did the thinking. I supplied the moustache.",
+  assisted:
+    "We found it together. Next time, see if you can spot it on your own.",
+  mistakes: [
+    "Not quite. Let's put that back and look again.",
+    "A legal move, but our plan needs something stronger.",
+    "My moustache is still thinking. Try checks, captures, and threats.",
+  ],
+  hintMove: "Follow the arrow. Then find their strongest reply.",
+  gameHint: "Try the marked move. But first, tell me why it works.",
+  alternative: "Here is one strong reply. Look at what it changes.",
+  restart: "Back to the start. Let's see the whole plan again.",
+  checkpoint: "No labels this time. Work out which idea the position needs.",
 };
-export const pieceHint=(type,square)=>`Have a look at your ${NAMES[type]} on ${square.toUpperCase()}.`;
+export const pieceHint = (type, square) =>
+  `Have a look at your ${NAMES[type]} on ${square.toUpperCase()}.`;

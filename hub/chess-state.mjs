@@ -462,7 +462,7 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
     result = { moves: g.lastMoves };
   } else if (input.type === "game-undo") {
     const g = p.game;
-    if (!g || g.moves.length < 2) fail("Play a turn before taking it back.");
+    if (!g || g.turns < 1) fail("Play a turn before taking it back.");
     g.moves.splice(-(gameBoard(g).turn() === g.side ? 2 : 1));
     g.turns = Math.max(0, g.turns - 1);
     g.help++;

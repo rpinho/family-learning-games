@@ -1,21 +1,10 @@
 import { rookAvatar } from "./rook.mjs";
-// Original vector artwork. No third-party character or chess-piece assets.
+import { PIECES } from "./pieces.mjs";
 export function piece(type, color) {
-  const fill = color === "w" ? "#fffdf1" : "#294e56",
-    stroke = color === "w" ? "#394f50" : "#102e36",
-    accent = color === "w" ? "#dfd3b5" : "#213640";
-  const paths = {
-    p: `<circle cx="30" cy="17" r="8"/><path d="M24 26H36L38 40H22Z"/><path d="M19 43H41L44 50H16Z"/>`,
-    r: `<path d="M15 11H23V18H27V11H34V18H38V11H46V26H40L38 43H22L20 26H15Z"/><path d="M19 43H41L45 51H15Z"/><path d="M21 29H39" fill="none"/>`,
-    n: `<path d="M19 43C19 34 31 31 32 25L22 29L12 25L21 14L24 6L33 12C47 16 47 35 39 44Z"/><path d="M18 44H42L46 51H14Z"/><path d="M32 15L39 24" fill="none"/><circle cx="26" cy="20" r="2" fill="${stroke}" stroke="none"/>`,
-    b: `<path d="M30 7C18 17 16 23 22 29L25 33L22 43H38L35 33L39 28C44 23 41 16 30 7Z"/><path d="M33 13L26 24" fill="none"/><path d="M19 44H41L45 51H15Z"/><circle cx="30" cy="6" r="3"/>`,
-    q: `<path d="M14 20L23 28L30 14L37 28L46 20L40 41H20Z"/><path d="M20 41H40L45 51H15Z"/><circle cx="12" cy="17" r="4"/><circle cx="30" cy="11" r="4"/><circle cx="48" cy="17" r="4"/><path d="M22 35H38" fill="none"/>`,
-    k: `<path d="M27 5H33V11H39V17H33V23H27V17H21V11H27Z"/><path d="M30 26C20 16 9 27 20 37L23 42H37L40 37C51 27 40 16 30 26Z"/><path d="M20 42H40L45 51H15Z"/>`,
-  };
-  return `<svg viewBox="0 0 60 60" aria-hidden="true" class="chess-piece"><ellipse cx="30" cy="53" rx="20" ry="3" fill="#142b3322"/><g fill="${fill}" stroke="${stroke}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${paths[type]}</g><path d="M21 46H39" stroke="${color === "w" ? "#fff" : "#6e9497"}" stroke-width="2.5" stroke-linecap="round"/><path d="M18 50H42" stroke="${accent}" stroke-width="2.5" opacity=".75"/></svg>`;
+  return PIECES[color + type.toUpperCase()] || "";
 }
 export function coach(mood = "idle") {
-  return rookAvatar(mood === "happy" ? "happy" : "idle").replace(
+  return rookAvatar(mood).replace(
     "rook-puppet ",
     `rook-puppet academy-coach rook-${mood} `,
   );

@@ -5,6 +5,7 @@
 - **chess.js 1.4.0:** unmodified rules module, BSD-2-Clause; [included license](hub/public/chess/CHESS-JS-LICENSE.txt).
 - **Stockfish.js 18.0.8:** unmodified local UCI engine, GPL-3.0; [license, corresponding source, network and build instructions](hub/vendor/stockfish/README.md).
 - **Lichess puzzle database:** CC0 positions, with source puzzle identifiers and validation documented in [the chess guide](hub/CHESS.md). Player names and game URLs are not included.
+- **RhosGFX chess pieces:** CC0 1.0, with palette and bishop-silhouette adjustments; [source and modification record](hub/public/chess/pieces/PROVENANCE.md).
 - **Original character and scene artwork:** [provenance](hub/public/chess/ART.md). Optional stock voice generation is documented in the chess guide; no Duolingo character art or recordings are distributed.
 
 

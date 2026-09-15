@@ -33,16 +33,20 @@ Every continuation was independently checked with python-chess and the bundled S
 
 ## Original art and narration
 
-The established Rook character, chess pieces and icon use original animated SVG artwork. The academy island is an original AI-generated illustration; its prompt and asset provenance are in `public/chess/ART.md`. Coaching and interface text are original. No Duolingo character art, scripts or recordings are included. The optional cache uses the stock Kokoro `am_michael` voice; it is not a clone of an actor. To generate the 452 finite teaching and feedback clips using an existing local Kokoro environment:
+The established Rook character and icon use original SVG artwork. The rounded chess pieces adapt the CC0 RhosGFX set with a clear bishop split and ivory/slate palette. The board-first interface has no decorative scenery; retained historical art and current asset provenance are in `public/chess/ART.md`. Coaching and interface text are original. No Duolingo character art, scripts or recordings are included. The optional cache uses the stock Kokoro `am_michael` voice; it is not a clone of an actor. To generate the 464 finite teaching and feedback clips using an existing local Kokoro environment:
 
 ```sh
 python scripts/build-chess-voice.py --models /path/to/kokoro-models --data /path/to/hub-data
 ```
 
-Generated clips stay outside source control under `chess-voice/`. Every spoken prompt uses this cache, including piece-and-square hints and short original reactions. There is no device-speech fallback: installations without the cache keep the same visible coaching text. Automatic sound can be disabled; explicit replay still plays Rook. Audio stops when leaving the game or hiding its tab. The game sends no text to an AI service.
+Generated clips stay outside source control under `chess-voice/`. Every spoken prompt uses this cache, including piece-and-square hints and short original reactions. There is no device-speech fallback: installations without the cache can show the coaching text with the captions button. Automatic sound can be disabled; explicit replay still plays Rook. Audio stops when leaving the game or hiding its tab. The game sends no text to an AI service.
 
 ## Dependencies and design references
 
 - [chess.js 1.4.0](https://jhlywa.github.io/chess.js/): legal moves and rules; BSD-2-Clause notice in `public/chess/CHESS-JS-LICENSE.txt`.
 - [Stockfish.js 18.0.8](https://github.com/nmrugg/stockfish.js): separate local UCI process. GPLv3 notice, exact corresponding source archive, network and rebuilding information in `vendor/stockfish/`.
 - [Duolingo's chess teaching overview](https://blog.duolingo.com/chess-course/) and [choosing the next move](https://blog.duolingo.com/how-to-pick-your-next-chess-move/): references for short contextual exercises and checking the opponent's reply. The shipped curriculum and implementation are independent.
+
+## Play presentation
+
+Lessons open directly on a large board with a short task cue. Rook narrates the task; detailed text is available through optional captions and practice notes. Piece selection, movement, capture, wrong-move return and completion have distinct motion, with reduced-motion support. Dragged pieces settle from the pointer position rather than jumping back to their starting square. Rook responds visually during muted play too. Rules, puzzle data and progress remain independent of these presentation changes.

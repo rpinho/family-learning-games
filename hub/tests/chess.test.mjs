@@ -223,6 +223,36 @@ test("Local opponent handles queued searches, Black starts, saved turns, hints a
     engine.close();
   }
 });
+test("A first-turn checkmate can be taken back without removing an opening move", async () => {
+  const p = freshChess();
+  const fen = "7k/5Q2/6K1/8/8/8/8/8 w - - 0 1";
+  p.game = {
+    id: "mate-fixture",
+    startFen: fen,
+    fen,
+    side: "w",
+    moves: [],
+    turns: 0,
+    mode: "full",
+    result: null,
+    help: 0,
+    strength: "friendly",
+  };
+  const engine = {
+    analyze: async () => {
+      throw Error("No search after mate");
+    },
+  };
+  await action(p, "game-move", { from: "f7", to: "e8" }, { engine });
+  assert.equal(p.game.moves.length, 1);
+  assert.equal(p.game.result, "Checkmate · you win");
+  await action(p, "game-undo");
+  assert.equal(p.game.fen, fen);
+  assert.equal(p.game.result, null);
+  assert.equal(p.game.turns, 0);
+  assert.equal(p.game.help, 1);
+  assert.equal(p.game.moves.length, 0);
+});
 test("Families keep all choices and legacy storage ownership; soccer stays last", () => {
   assert.equal(movedRoute("letter-quest", "soccer-menu"), "dribble-duel");
   assert.equal(movedRoute("letter-quest", "maze-menu"), "maze-garden");
