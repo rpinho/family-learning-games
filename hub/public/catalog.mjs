@@ -51,6 +51,7 @@ export const CATALOG = [
     description: "Live dribbling, clever feints and word penalties.",
     color: "#ffe39d",
     symbol: "⚽",
+    icon: "/soccer-logo.svg",
   },
 ];
 export const FAMILIES = {

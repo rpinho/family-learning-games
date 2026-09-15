@@ -1486,3 +1486,19 @@ body:has(.chess-lesson) > .top .home {
   width: 16px;
   height: 16px;
 }
+
+/* One continuous course, with the next step visible below completed lessons. */
+.path-unit { scroll-margin-top: 90px; }
+.unit-heading { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:18px 22px; border-radius:18px; background:var(--unit-color,#58b849); color:white; }
+.unit-heading small { font-size:12px; letter-spacing:1.5px; opacity:.9; }
+.unit-heading h2 { font-size:21px; }
+.academy .unit-heading .ac-button { color:white; padding:4px; }
+.path-unit .lesson-path { margin-bottom:20px; }
+.path-node.locked svg { width:28px; height:28px; }
+.academy .path-node:disabled { opacity:.8; }
+.node-label .next-ready { color:#348a36; font-size:13px; letter-spacing:0; font-weight:800; }
+.course-finish { text-align:center; padding:20px; }
+.continuous-layout .academy-sidebar { position:sticky; top:84px; align-self:start; }
+.practice-level summary { cursor:pointer; color:var(--muted); font-size:14px; }
+.practice-level[open] summary { margin-bottom:14px; }
+@media(max-width:760px) { .continuous-layout .academy-sidebar { order:-1; position:static; width:100%; padding:0; } .unit-heading { padding:14px 16px; } .unit-heading h2 {font-size:19px;} }

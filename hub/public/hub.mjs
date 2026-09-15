@@ -1,13 +1,15 @@
 import { mountSoccer } from "./soccer-mode.mjs";
 import { CATALOG, FAMILIES, destination, movedRoute } from "./catalog.mjs";
 import { mountChess } from "./chess/app.mjs";
+import { parentChallenge, parentAnswerMatches, menuStyle, gameArtwork } from "./menu-options.mjs";
 const $ = (s) => document.querySelector(s),
   main = $("#main");
 let config,
   player,
   frame = null,
   dispose = null,
-  gate = 0,
+  gate = null,
+  gateAttempts = 0,
   statusResolver;
 const games = CATALOG.map((g) => [g.id, g.name, g.description, g.color]);
 const esc = (s) =>
@@ -128,15 +130,16 @@ function render() {
     event("open_game", game + (dest.mode ? "/" + dest.mode.id : ""));
     return;
   }
-  main.innerHTML = `<section class="catalog"><h1>What shall we play?</h1><p>Your games. Your next adventure.</p><div class="cards">${games.map(([id, name, desc, tint]) => `<a class="card" href="#${id}" data-game="${id}" style="--tint:${tint}"><img class="game-preview" src="/previews/${id}.jpg" alt="" width="640" height="400"><h2>${name}</h2><p>${desc}</p></a>`).join("")}</div><footer><span>One app · Your progress stays with you.</span><button id="grown-ups">Grown-ups</button></footer></section>`;
+  const style = menuStyle(player, p.menuStyle, localStorage);
+  main.innerHTML = `<section class="catalog menu-${style}"><h1>What shall we play?</h1><p>Your games. Your next adventure.</p><div class="cards">${CATALOG.map(item => { const art = gameArtwork(item, style); return `<a class="card" href="#${item.id}" data-game="${item.id}" style="--tint:${item.color}"><img class="${art.className}" src="${art.src}" alt="" width="${style === "logos" ? 192 : 640}" height="${style === "logos" ? 192 : 400}"><h2>${item.name}</h2><p>${item.description}</p></a>`; }).join("")}</div><footer><span>One app · Your progress stays with you.</span><button id="grown-ups">Grown-ups</button></footer></section>`;
   $("#grown-ups").onclick = () => {
-    const a = 7 + Math.floor(Math.random() * 9),
-      b = 4 + Math.floor(Math.random() * 7);
-    gate = a + b;
-    $("#gate-question").textContent = `To change player: what is ${a} + ${b}?`;
-    $("#gate-answer").value = "";
-    $("#gate-error").textContent = "";
+    gateAttempts = 0;
+    newParentChallenge();
+    $("#gate-form").hidden = false;
+    $("#parent-options").hidden = true;
+    $("#menu-style").value = style;
     $("#parents").showModal();
+    $("#gate-answer").focus();
   };
   event("home");
 }
@@ -151,13 +154,32 @@ document.addEventListener("click", async (e) => {
   e.preventDefault();
   if (await safeLeave()) location.hash = link.getAttribute("href").slice(1);
 });
-$("#unlock").onclick = () => {
-  if (Number($("#gate-answer").value) !== gate) {
-    $("#gate-error").textContent = "Try that sum again.";
+function newParentChallenge() {
+  gate = parentChallenge();
+  $("#gate-question").textContent = gate.question;
+  $("#gate-code").textContent = gate.code;
+  $("#gate-answer").value = "";
+  $("#gate-error").textContent = "";
+}
+$("#gate-form").onsubmit = (e) => {
+  e.preventDefault();
+  if (!parentAnswerMatches(gate, $("#gate-answer").value)) {
+    gateAttempts++;
+    if (gateAttempts % 3 === 0) newParentChallenge();
+    $("#gate-error").textContent = "Read the instruction and try again.";
     return;
   }
-  $("#parents").close();
-  choose();
+  $("#gate-form").hidden = true;
+  $("#parent-options").hidden = false;
+  $("#menu-style").focus();
+};
+$("#gate-cancel").onclick = $("#parent-done").onclick = () => $("#parents").close();
+$("#change-player").onclick = () => { $("#parents").close(); choose(); };
+$("#menu-style").onchange = () => {
+  const style = $("#menu-style").value;
+  if (!["logos", "screenshots"].includes(style)) return;
+  try { localStorage.setItem("family-games-menu-style:" + player, style); } catch {}
+  render();
 };
 $("#home").onclick = async () => {
   if (!(await safeLeave())) return;

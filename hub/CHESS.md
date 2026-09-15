@@ -4,7 +4,7 @@ Open **http://localhost:4810/#chess** after the normal collection setup. An orig
 
 ## Learning path
 
-Twelve units, six lessons per unit, five positions per lesson. Most positions require two to four learner moves, with the opponent's replies played automatically. Themes progress through forcing calculation, deflection, removing defenders, in-between moves, clearance, discovered attacks, mating nets, quiet threats, defense, passed pawns, rook endings and sacrifices. All units are available immediately.
+Twelve units, six lessons per unit, five positions per lesson. Most positions require two to four learner moves, with the opponent's replies played automatically. Themes progress through forcing calculation, deflection, removing defenders, in-between moves, clearance, discovered attacks, mating nets, quiet threats, defense, passed pawns, rook endings and sacrifices. All units share one scrolling path. The next lesson unlocks after completion; future steps show locks. Previously reached or active lessons remain available, including older out-of-order progress.
 
 Each unit has an original explanation available on request and a short spoken task cue. Its first five lessons rise through the chosen position band. Checkpoints mix that unit with earlier ideas. The two **position difficulty** choices keep the themes while changing the calculation burden:
 
@@ -14,6 +14,8 @@ Each unit has an original explanation available on request and a short spoken ta
 These are **puzzle ratings, not estimates of the child's playing Elo**. Finishing another course does not establish a particular rating. Use the independent results and observed comfort to choose the band; switch before the next lesson. Best results retain their band in saved data, and recent practice labels it.
 
 Hints progress from idea → piece → marked move. An incorrect legal move visibly travels back to its starting square, keeps the original position available and offers a local engine reply to inspect. The board supports click/tap, dragging, arrow keys and Enter/Space, both orientations, castling, en passant and all four promotions. Correct exchanges animate in order; reduced-motion preferences are respected. Solved positions reveal a plain-language recap.
+
+The final correct move in a lesson briefly celebrates, saves completion, returns directly to the path and scrolls to the next step. There is no separate unit-selection screen or extra summary Continue. Failed completion saves retain Retry; leaving cancels the pending visual transition without losing the solved position.
 
 Mistakes and hints mark a result as assisted. Assisted puzzles return in review; independent solves expand the interval up to fourteen days. Replaying a lesson preserves the best result. There are no lives, countdowns, purchases or claimed rating gains.
 
