@@ -2,7 +2,7 @@
 
 Run `npm run play` at the repository root, then open **http://localhost:4810/**. This home screen contains eight destinations, including **Rook Academy**, **Maze Garden** and **Soccer Club**. Install this home screen once, not each game. Browser installation behavior depends on platform and secure-origin support; plain HTTP on a LAN can retain browser security chrome.
 
-Beginner and Explorer links: `/?player=beginner` and `/?player=explorer`. The hub remembers the selected preset on the device. The name remains large at the top. Use **Grown-ups** on the home screen to change it. This arithmetic gate prevents accidental changes; it is not authentication.
+Beginner and Explorer links: `/?player=beginner` and `/?player=explorer`. The hub remembers the selected preset on the device. The name remains large at the top. Use **Grown-ups** on the home screen to change it. The reading-and-code gate adds a deliberate step; it is not authentication.
 
 Games stay inside the hub under `/g/<game>/<player>/`. A loopback-only reverse proxy preserves the original game servers and saves. Same-origin frame permissions are applied only by the hub; standalone apps keep their original protections. Browser preferences are scoped per game/preset. The single installed app has one manifest, icon, scope and start URL. There is no service worker cache, cloud server or offline-play guarantee. Return with **Games**; **Refresh** stays available. Pending writes or unsaved input prompt a confirmation rather than trapping navigation.
 
@@ -11,6 +11,14 @@ Games stay inside the hub under `/g/<game>/<player>/`. A loopback-only reverse p
 **Maze Garden** offers tracing mazes, the 3D letter labyrinth, and obstacle rescues. **Soccer Club** offers the three soccer variants below. Each keeps its previous save location; Letter Quest’s former activities still use its backend, with no profile migration. Standalone Letter Quest links remain compatible. Its hub navigation now focuses on literacy and stories, with a book icon. Reading exercises with distinct mechanics in Word Arcade, Number Park and Target Trail remain separate.
 
 **[Rook Academy](CHESS.md)** is the new chess destination: 12 units, 72 short lessons, two difficulty bands, an original speaking coach, spaced review and local practice games. Chess owns the rook icon.
+
+## Personal menu order
+
+Main-menu cards rank separately for each preset from the last 14 days of local play. An actual play action starts a visit; switching game families or returning after ten minutes of inactivity starts another. Each family counts at most six visits per UTC day. Recent visits have more weight (three-day half-life); audio, hints, settings, rejected requests, automated opponent moves and page opens do not earn visits. This estimates play frequency, not enjoyment or mastery. A newly introduced game initially has less history.
+
+Old Letter Quest labyrinth and rescue events belong to Maze Garden; its soccer events belong to Soccer Club. The remaining reading/story events stay with Letter Quest. Family variants combine into their main card. Every card remains visible, with stable default order for ties or missing history. The order refreshes when opening the main menu and never changes underneath a visible selection. Screenshot/logo preferences are independent of order. The README showcase keeps its fixed educational-first ordering.
+
+For an existing installation, optional private `gameData` config maps game IDs to their existing data directories (the directory containing `logs/`). Without it, the hub reads `.data/<game>/logs/` from the standard launcher. Hub chess/soccer logs come from `FAMILY_DATA/logs/`. Reads are cached for a minute and changed files are streamed; the endpoint returns only the selected preset's ordered game IDs. No saves are changed and no new external telemetry is added.
 
 ## Dribble Duel
 

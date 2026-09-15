@@ -25,6 +25,16 @@ test('Hub persists only the chosen profile, rejects replay/foreign origins, and 
   assert.equal(escaped.profile.dribbles,1);assert.equal(escaped.profile.goals,0);
   assert.equal(JSON.parse(await readFile(join(data,'admin.json'),'utf8')).dribbles,1);
   assert.deepEqual((await readdir(data)).sort(),['admin.json','logs']);
+  const savedBeforeMenu=await readFile(join(data,'admin.json'),'utf8');
+  const menu=await(await fetch(base+'/api/menu?player=admin')).json();
+  assert.equal(menu.order[0],'dribble-duel');assert.equal(new Set(menu.order).size,8);
+  assert.deepEqual(Object.keys(menu),['order']);
+  assert.equal((await(await fetch(base+'/api/menu?player=beginner')).json()).order[0],'letter-quest');
+  assert.equal((await fetch(base+'/api/menu?player=unknown')).status,400);
+  assert.equal((await fetch(base+'/api/menu?player=admin',{headers:{Origin:'https://untrusted.example'}})).status,403);
+  assert.equal((await fetch(base+'/menu-order.mjs')).status,404);
+  assert.equal(await readFile(join(data,'admin.json'),'utf8'),savedBeforeMenu);
+
   const redirect=await fetch(base+'/assets/runtime.js',{headers:{Referer:base+'/g/word-arcade/admin/'},redirect:'manual'});
   assert.equal(redirect.status,307);assert.equal(redirect.headers.get('location'),'/g/word-arcade/admin/assets/runtime.js');
   assert.equal((await fetch(base+'/assets/runtime.js',{headers:{Referer:'https://untrusted.example/g/word-arcade/admin/'},redirect:'manual'})).status,404);

@@ -7,6 +7,7 @@ import {fresh,act,VERSION} from './dribble.mjs';
 import {actLive} from './live-state.mjs';
 import {proxy} from './proxy.mjs';
 import {chessService} from './chess-service.mjs';
+import {menuOrderService} from './menu-order.mjs';
 const here=fileURLToPath(new URL('.',import.meta.url)),root=resolve(here,'..'),data=process.env.FAMILY_DATA||join(root,'.data','hub');
 const ids=['letter-quest','word-arcade','number-park','maze-garden','three-in-a-row','target-trail'];
 const base=Number(process.env.BASE_PORT||4811);
@@ -21,7 +22,8 @@ async function load(player){try{return JSON.parse(await readFile(join(data,playe
 const icons={'letter-quest':'games/letter-quest/public/icons/app-192-v2.png','word-arcade':'games/word-arcade/public/icons/app-192-v1.png','number-park':'games/number-park/public/icons/number-park-192.png','maze-garden':'games/maze-garden/public/icon-192.png','three-in-a-row':'games/three-in-a-row/dist/icon-192.png','target-trail':'games/target-trail/dist/icon-192.png'};
 const types={'.html':'text/html','.mjs':'text/javascript','.css':'text/css','.jpg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml','.webmanifest':'application/manifest+json','.woff2':'font/woff2'};
 const files=['menu-options.mjs','soccer-logo.svg','chess/path.mjs','chess/narration.mjs','chess/pieces.mjs','chess/academy-world.png','catalog.mjs','letter-book.svg','chess/rook.mjs','chess/app.mjs','chess/style.css','chess/art.mjs','chess/board.mjs','chess/rules.mjs','chess/curriculum.mjs','chess/icon.svg','chess/CHESS-JS-LICENSE.txt','index.html','hub.mjs','style.css','bridge.mjs','dribble-ui.mjs','dribble-classic.mjs','soccer-mode.mjs','dribble-live.mjs','dribble-live-v1.mjs','dribble-live-v2.mjs','reading-reward.mjs','live-pitch.mjs','pitch.mjs','save-request.mjs','icon.svg','icon-192.png','icon-512.png','manifest.webmanifest'];
-const HUB_VERSION='family-games-2026-09-15-continuous-path-1';
+const HUB_VERSION='family-games-2026-09-15-personal-menu-1';
+const menu=menuOrderService({players,sources:{...Object.fromEntries(ids.map(id=>[id,join(config.gameData?.[id]||join(data,'..',id),'logs')])),hub:join(data,'logs')}});
 const chess=chessService({data,players,log,settingsFor:Object.fromEntries(config.players.map(p=>[p.id,p.chess||{}]))});
 const server=http.createServer(async(req,res)=>{
  res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','SAMEORIGIN');
@@ -43,6 +45,7 @@ const server=http.createServer(async(req,res)=>{
   if(u.pathname==='/api/config'&&req.method==='GET')return send(res,200,{players:config.players,version:HUB_VERSION});
   if(u.pathname.startsWith('/api/')){
    const player=u.searchParams.get('player');if(!players.includes(player))return send(res,400,{error:'Choose a player.'});
+   if(u.pathname==='/api/menu'&&req.method==='GET'){const {order}=await menu.ranking(player);return send(res,200,{order});}
    if(u.pathname==='/api/dribble'&&req.method==='GET'){await queue.catch(()=>{});return send(res,200,{profile:await load(player),version:VERSION});}
    if(req.method!=='POST'||!['/api/dribble','/api/events'].includes(u.pathname))return send(res,405,{error:'Unsupported action.'});
    if(!req.headers['content-type']?.startsWith('application/json'))return send(res,415,{error:'JSON required.'});

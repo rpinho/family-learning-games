@@ -10,7 +10,9 @@ let config,
   dispose = null,
   gate = null,
   gateAttempts = 0,
-  statusResolver;
+  statusResolver,
+  renderVersion = 0;
+const menuOrders = new Map();
 const games = CATALOG.map((g) => [g.id, g.name, g.description, g.color]);
 const esc = (s) =>
   String(s).replace(
@@ -72,6 +74,7 @@ function stop() {
   speechSynthesis.cancel();
 }
 function choose() {
+  renderVersion++;
   stop();
   main.innerHTML = `<section class="choose"><h1>Who is playing?</h1><p>Choose once for this device.</p>${config.players.map((p) => `<button data-choose="${p.id}">${esc(p.name)}</button>`).join("")}</section>`;
   main.querySelectorAll("[data-choose]").forEach(
@@ -87,7 +90,8 @@ function choose() {
       }),
   );
 }
-function render() {
+async function render() {
+  const version = ++renderVersion;
   stop();
   window.scrollTo(0, 0);
   const p = config.players.find((x) => x.id === player);
@@ -130,8 +134,25 @@ function render() {
     event("open_game", game + (dest.mode ? "/" + dest.mode.id : ""));
     return;
   }
+  // Resolve before showing the cards; never shuffle a menu under a finger.
+  const selectedPlayer = player;
+  main.innerHTML = '<section class="catalog"><h1>Opening your games…</h1></section>';
+  let order = menuOrders.get(player) || [];
+  try {
+    const response = await fetch('/api/menu?player=' + player, { signal: AbortSignal.timeout(5000) });
+    if (response.ok) {
+      const result = await response.json();
+      if (Array.isArray(result.order)) order = result.order;
+    }
+  } catch {} // A missing log must never prevent play.
+  if (version !== renderVersion || selectedPlayer !== player) return;
+  menuOrders.set(player, order);
+  const orderedGames = [...CATALOG].sort((a, b) => {
+    const rank = id => order.includes(id) ? order.indexOf(id) : order.length + CATALOG.findIndex(g => g.id === id);
+    return rank(a.id) - rank(b.id);
+  });
   const style = menuStyle(player, p.menuStyle, localStorage);
-  main.innerHTML = `<section class="catalog menu-${style}"><h1>What shall we play?</h1><p>Your games. Your next adventure.</p><div class="cards">${CATALOG.map(item => { const art = gameArtwork(item, style); return `<a class="card" href="#${item.id}" data-game="${item.id}" style="--tint:${item.color}"><img class="${art.className}" src="${art.src}" alt="" width="${style === "logos" ? 192 : 640}" height="${style === "logos" ? 192 : 400}"><h2>${item.name}</h2><p>${item.description}</p></a>`; }).join("")}</div><footer><span>One app · Your progress stays with you.</span><button id="grown-ups">Grown-ups</button></footer></section>`;
+  main.innerHTML = `<section class="catalog menu-${style}"><h1>What shall we play?</h1><p>Your games. Your next adventure.</p><div class="cards">${orderedGames.map(item => { const art = gameArtwork(item, style); return `<a class="card" href="#${item.id}" data-game="${item.id}" style="--tint:${item.color}"><img class="${art.className}" src="${art.src}" alt="" width="${style === "logos" ? 192 : 640}" height="${style === "logos" ? 192 : 400}"><h2>${item.name}</h2><p>${item.description}</p></a>`; }).join("")}</div><footer><span>One app · Your progress stays with you.</span><button id="grown-ups">Grown-ups</button></footer></section>`;
   $("#grown-ups").onclick = () => {
     gateAttempts = 0;
     newParentChallenge();

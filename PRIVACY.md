@@ -9,7 +9,7 @@ This repository contains game code, fictional examples, authored assets, synthet
 - Drawing strokes and recognition results where drawing features are used.
 - Technical diagnostics such as errors, revisions and request timing.
 
-The root launcher puts this in `.data/`, outside tracked source. These files persist until the adult operating the server removes them; there is no automatic retention schedule. Treat them as private, make backups if wanted, and do not publish them. The apps do not record the microphone or camera.
+The root launcher puts this in `.data/`, outside tracked source. These files persist until the adult operating the server removes them; there is no automatic retention schedule. Treat them as private, make backups if wanted, and do not publish them. The apps do not record the microphone or camera. The hub reads the last 14 days of local play diagnostics to rank each preset’s game menu; this is a frequency-based convenience, not a claim about enjoyment or learning. No history is sent outside the installation.
 
 Anyone who can reach your server may access the shared player presets. There is no private account boundary between families. Use separate local installations for separate households. Parent controls are not authentication.
 
