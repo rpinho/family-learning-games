@@ -136,7 +136,7 @@ Gameplay and drawing recognition run on your own server. There is no embedded AP
 
 ## Audio and learning limitations
 
-The shared edition uses device/browser narration instead of private voice caches. Voice quality and accent vary. In Number Park Reading, the fallback says **letter names with example words**, not isolated phonemes: a grown-up should model the actual sounds and blending. It is not equivalent to a professionally recorded phonics course.
+Most games in the shared edition use device/browser narration instead of private voice caches. Voice quality and accent vary. **Rook Academy uses optional locally generated stock narration and stays text-only when clips are unavailable; it never falls back to device speech.** See its [audio setup](hub/CHESS.md). In Number Park Reading, the fallback says **letter names with example words**, not isolated phonemes: a grown-up should model the actual sounds and blending. It is not equivalent to a professionally recorded phonics course.
 
 Word Arcade includes original synthesized music loops and CC0 laser effects. Private-use songs, third-party character recordings and extracted instructional audio are not included. [Third-party notices](THIRD_PARTY_NOTICES.md) document the included assets and drawing model.
 

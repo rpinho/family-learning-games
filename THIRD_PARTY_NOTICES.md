@@ -1,5 +1,13 @@
 # Third-party notices and asset provenance
 
+## Rook Academy chess components
+
+- **chess.js 1.4.0:** unmodified rules module, BSD-2-Clause; [included license](hub/public/chess/CHESS-JS-LICENSE.txt).
+- **Stockfish.js 18.0.8:** unmodified local UCI engine, GPL-3.0; [license, corresponding source, network and build instructions](hub/vendor/stockfish/README.md).
+- **Lichess puzzle database:** CC0 positions, with source puzzle identifiers and validation documented in [the chess guide](hub/CHESS.md). Player names and game URLs are not included.
+- **Original character and scene artwork:** [provenance](hub/public/chess/ART.md). Optional stock voice generation is documented in the chess guide; no Duolingo character art or recordings are distributed.
+
+
 ## Quick, Draw! derived model
 
 `games/number-park/data/doodle-model.json` contains reduced numeric feature vectors derived from eight categories of **The Quick, Draw! Dataset**, made available by **Google, Inc.** under **Creative Commons Attribution 4.0 International (CC BY 4.0)**.
