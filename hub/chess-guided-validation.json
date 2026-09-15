@@ -1,0 +1,58 @@
+{
+  "engine": "Stockfish 18 Lite WASM",
+  "limit": {
+    "nodes": 300000,
+    "depth": 22
+  },
+  "hash": "Cleared before every learner position; reproducible regardless of puzzle order",
+  "groups": {
+    "fork": {
+      "accepted": 30,
+      "rejected": []
+    },
+    "deflection": {
+      "accepted": 30,
+      "rejected": []
+    },
+    "capturingDefender": {
+      "accepted": 30,
+      "rejected": []
+    },
+    "intermezzo": {
+      "accepted": 30,
+      "rejected": []
+    },
+    "clearance": {
+      "accepted": 30,
+      "rejected": []
+    },
+    "discoveredAttack": {
+      "accepted": 30,
+      "rejected": []
+    },
+    "mateIn3": {
+      "accepted": 30,
+      "rejected": []
+    },
+    "quietMove": {
+      "accepted": 30,
+      "rejected": []
+    },
+    "defensiveMove": {
+      "accepted": 30,
+      "rejected": []
+    },
+    "advancedPawn": {
+      "accepted": 30,
+      "rejected": []
+    },
+    "rookEndgame": {
+      "accepted": 30,
+      "rejected": []
+    },
+    "sacrifice": {
+      "accepted": 30,
+      "rejected": []
+    }
+  }
+}

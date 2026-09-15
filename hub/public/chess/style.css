@@ -1,0 +1,3301 @@
+.academy {
+  --ink: #263e49;
+  --muted: #6c7d82;
+  --paper: #faf9f4;
+  --purple: #7861b4;
+  --purple-shadow: #584487;
+  --line: #e2e6df;
+  color: var(--ink);
+  background: var(--paper);
+  min-height: calc(100dvh - 84px);
+  font-weight: 550;
+  line-height: 1.5;
+  padding-bottom: 24px;
+}
+.academy * {
+  box-sizing: border-box;
+}
+.academy h1,
+.academy h2,
+.academy h3,
+.academy p {
+  margin: 0;
+}
+.academy h1 {
+  font-size: 38px;
+  line-height: 1.15;
+  letter-spacing: -1.3px;
+  font-weight: 850;
+}
+.academy h2 {
+  font-size: 25px;
+  line-height: 1.25;
+  letter-spacing: -0.5px;
+}
+.academy h3 {
+  font-size: 18px;
+  line-height: 1.35;
+}
+.academy button {
+  color: inherit;
+  font-weight: 750;
+}
+.academy .ac-button {
+  border: 2px solid var(--line);
+  box-shadow: 0 3px 0 var(--line);
+  border-radius: 13px;
+  min-height: 44px;
+  padding: 10px 17px;
+  background: #fff;
+  font-size: 14px;
+  letter-spacing: 0.1px;
+  transition:
+    transform 0.12s,
+    background 0.12s;
+  cursor: pointer;
+}
+.academy .ac-button:hover {
+  background: #f0f1ec;
+}
+.academy .ac-button:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--line);
+}
+.academy .ac-button.primary {
+  background: var(--purple);
+  border-color: var(--purple);
+  color: white;
+  box-shadow: 0 4px 0 var(--purple-shadow);
+}
+.academy .ac-button.primary:hover {
+  background: #876fc3;
+  border-color: #876fc3;
+}
+.academy .ac-button.large {
+  font-size: 17px;
+  padding: 14px 30px;
+  min-width: 230px;
+}
+.academy .ac-button.text {
+  border: 0;
+  box-shadow: none;
+  background: none;
+  color: #647b80;
+  padding: 8px 3px;
+  min-height: 40px;
+}
+.academy .ac-button.tab {
+  background: none;
+  border-color: transparent;
+  box-shadow: none;
+  font-size: 14px;
+  color: #6e7c82;
+  padding: 12px 16px;
+}
+.academy .ac-button.tab.active {
+  color: #6e53a9;
+  border-color: #e5def3;
+  background: #efeaf8;
+}
+.academy button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.academy button:focus-visible,
+.academy a:focus-visible,
+.academy select:focus-visible {
+  outline: 3px solid #d79632;
+  outline-offset: 3px;
+}
+.academy-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid var(--line);
+  padding: 17px max(24px, calc((100% - 1130px) / 2));
+  background: #fffefb;
+}
+.academy-brand {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  text-decoration: none;
+  color: #425158;
+  line-height: 1;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -1px;
+}
+.academy-brand img {
+  width: 43px;
+  height: 43px;
+}
+.academy-brand > span > span {
+  display: block;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 2px;
+  margin-top: 5px;
+}
+.academy-nav > div {
+  display: flex;
+  gap: 7px;
+}
+.academy-nav .sound {
+  font-size: 12px;
+  border: 0;
+  box-shadow: none;
+  background: none;
+  color: #617377;
+  padding: 8px;
+}
+.ac-content {
+  max-width: 1150px;
+  margin: auto;
+  padding: 28px 30px;
+}
+.ac-eyebrow {
+  display: block;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 1.6px;
+  color: #7b8989;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.academy-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 48px;
+  align-items: start;
+}
+.unit-selector {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 18px;
+  margin-bottom: 23px;
+}
+.unit-selector label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  grid-column: 1/-1;
+  color: #7c8585;
+}
+.unit-selector select {
+  border: 0;
+  background: transparent;
+  color: #3e5158;
+  font-size: 18px;
+  font-weight: 800;
+  max-width: 100%;
+  padding: 4px 28px 4px 0;
+  cursor: pointer;
+}
+.unit-selector > span {
+  font-size: 11px;
+  color: #8a9695;
+  align-self: center;
+}
+.unit-hero {
+  display: flex;
+  position: relative;
+  overflow: hidden;
+  background: #eee9f3;
+  border: 1px solid #e4dfea;
+  border-radius: 23px;
+  padding: 26px 28px;
+  min-height: 177px;
+}
+.unit-hero > div {
+  position: relative;
+  z-index: 1;
+  max-width: 66%;
+}
+.unit-hero .ac-eyebrow {
+  font-size: 9px;
+  color: #78638e;
+}
+.unit-hero h1 {
+  font-size: 32px;
+  max-width: 300px;
+  color: #493e62;
+  line-height: 1.15;
+}
+.unit-hero p {
+  font-size: 13px;
+  color: #857593;
+  margin-top: 10px;
+  max-width: 240px;
+}
+.academy-landscape {
+  position: absolute;
+  width: 340px;
+  right: -95px;
+  bottom: -1px;
+  opacity: 0.95;
+}
+.academy-sidebar {
+  padding-top: 44px;
+  position: sticky;
+  top: 105px;
+}
+.coach-card {
+  text-align: center;
+  border: 1.5px solid var(--line);
+  border-radius: 22px;
+  padding: 0 23px 23px;
+  background: #fffefb;
+  position: relative;
+}
+.academy-coach {
+  display: block;
+  width: 174px;
+  height: auto;
+  overflow: visible;
+}
+.coach-card > .academy-coach {
+  margin: -18px auto 8px;
+}
+.coach-card .ac-eyebrow {
+  font-size: 9px;
+}
+.coach-card h2 {
+  font-size: 26px;
+  color: #38555b;
+}
+.coach-card p {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin: 14px 0 8px;
+}
+.coach-eyes {
+  transform-origin: center 98px;
+  animation: academy-blink 8s infinite;
+}
+.academy-coach.talking .coach-mouth {
+  animation: academy-talk 0.35s infinite alternate;
+  transform-origin: 103px 126px;
+}
+.academy-coach.happy {
+  animation: academy-bob 0.5s ease-out;
+}
+.review-card {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 22px;
+  border: 1.5px solid #e4e5de;
+  border-radius: 20px;
+  margin-top: 20px;
+  background: #f2f2e9;
+}
+.review-icon {
+  font-size: 30px;
+  color: #8ba078;
+}
+.review-card > div {
+  flex: 1;
+}
+.review-card h3 {
+  font-size: 15px;
+}
+.review-card p {
+  font-size: 12px;
+  color: #7c8980;
+  margin-top: 6px;
+}
+.review-card .ac-button {
+  width: 100%;
+  background: #fbfcf5;
+  border-color: #dbe1d0;
+  box-shadow: 0 3px 0 #dbe1d0;
+}
+.academy-tip {
+  display: flex;
+  gap: 12px;
+  color: #8b9692;
+  padding: 24px 10px;
+  font-size: 12px;
+}
+.academy-tip > span {
+  font-size: 25px;
+  color: #aaa296;
+}
+.academy-tip strong {
+  font-weight: 750;
+  color: #73867e;
+}
+.resume-strip {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 15px;
+  padding: 15px 18px;
+  background: #eaf2e8;
+  border: 1px solid #d6e4d2;
+  font-size: 12px;
+  margin-top: 20px;
+}
+.resume-strip .ac-button {
+  white-space: nowrap;
+  font-size: 12px;
+}
+.lesson-path {
+  position: relative;
+  max-width: 520px;
+  margin: 20px auto 0;
+  padding: 16px 0 0;
+}
+.path-track {
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 100%;
+  height: 670px;
+  pointer-events: none;
+}
+.path-track path {
+  fill: none;
+  stroke: #e7e6df;
+  stroke-width: 12;
+  stroke-linecap: round;
+  stroke-dasharray: 3 24;
+}
+.path-stop {
+  position: relative;
+  height: 108px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.stop-0 {
+  transform: translateX(0);
+}
+.stop-1 {
+  transform: translateX(68px);
+}
+.stop-2 {
+  transform: translateX(-63px);
+}
+.stop-3 {
+  transform: translateX(59px);
+}
+.stop-4 {
+  transform: translateX(-68px);
+}
+.stop-5 {
+  transform: translateX(0);
+}
+.path-node {
+  width: 76px;
+  height: 68px;
+  border-radius: 50%;
+  border: 5px solid #f3efe5;
+  background: #e6e4dc;
+  box-shadow: 0 8px 0 #c9c9bf;
+  display: grid;
+  place-items: center;
+  font-size: 31px;
+  position: relative;
+  color: #939f98 !important;
+  padding: 0;
+  z-index: 2;
+  transition: transform 0.15s;
+}
+.path-node.current {
+  background: var(--unit);
+  border-color: #ded5ee;
+  box-shadow: 0 8px 0 #5d4e81;
+  color: #fff !important;
+}
+.path-node.current:before {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  border: 2px dashed #bfb1d3;
+  border-radius: 50%;
+  animation: academy-orbit 70s linear infinite;
+}
+.path-node.complete {
+  background: #93b49a;
+  border-color: #dce8d7;
+  box-shadow: 0 7px 0 #70997c;
+  color: white !important;
+}
+.path-node:hover {
+  transform: translateY(-3px);
+}
+.path-node:active {
+  transform: translateY(5px);
+  box-shadow: 0 2px 0 #8a809a;
+}
+.node-label {
+  position: absolute;
+  left: calc(50% + 57px);
+  width: 165px;
+  top: 9px;
+  font-size: 13px;
+  color: #67776f;
+}
+.stop-1 .node-label,
+.stop-3 .node-label {
+  left: auto;
+  right: calc(50% + 57px);
+  text-align: right;
+}
+.node-label strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.3;
+}
+.node-label span {
+  font-size: 10px;
+  color: #98a098;
+  display: block;
+  margin-top: 4px;
+}
+.node-label small {
+  font-size: 8px;
+  letter-spacing: 1.2px;
+  color: #8b6aae;
+  font-weight: 850;
+  display: block;
+  margin-bottom: 3px;
+}
+.node-stars {
+  color: #90a76c;
+  font-size: 12px;
+  letter-spacing: 2px;
+  margin-top: 9px;
+}
+.path-finish {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 3px;
+  color: #9a9e8f;
+  font-size: 12px;
+}
+.path-finish > span {
+  font-size: 25px;
+  color: #cbbf9a;
+}
+.path-finish .ac-button {
+  font-size: 12px;
+}
+.ac-saving {
+  position: fixed;
+  right: 16px;
+  bottom: 14px;
+  background: #344e52ed;
+  color: white;
+  font-size: 12px;
+  border-radius: 10px;
+  z-index: 40;
+}
+.ac-saving:not(:empty) {
+  padding: 9px 15px;
+}
+.ac-error {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px 25px;
+  border-bottom: 2px solid #d8a16c;
+  background: #fff0dd;
+  font-size: 13px;
+}
+.loading-academy {
+  text-align: center;
+  padding: 80px 20px;
+}
+.loading-academy .academy-coach {
+  margin: 0 auto 20px;
+}
+.loading-academy p {
+  margin: 14px;
+}
+.lesson-intro,
+.lesson-summary {
+  max-width: 650px;
+  margin: 0 auto;
+  padding: 10px 25px 40px;
+  text-align: center;
+}
+.ac-back {
+  display: block;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  font-size: 13px;
+  color: #83918b !important;
+  padding: 6px 0;
+}
+.intro-art {
+  position: relative;
+  width: 230px;
+  margin: 12px auto 25px;
+  background: #ecebdc;
+  border-radius: 50%;
+  height: 205px;
+}
+.intro-art .academy-coach {
+  position: absolute;
+  bottom: 0;
+  left: 20px;
+  width: 170px;
+}
+.intro-art > span {
+  position: absolute;
+  right: 0;
+  top: 30px;
+  font-size: 42px;
+  color: #ab96c3;
+  transform: rotate(12deg);
+}
+.lesson-intro > h1 {
+  font-size: 38px;
+  margin: 10px 0 20px;
+}
+.lesson-intro > p {
+  font-size: 18px;
+  line-height: 1.7;
+  color: #70807c;
+  max-width: 570px;
+  margin: auto;
+}
+.intro-question {
+  font-weight: 800;
+  font-size: 20px;
+  margin: 22px auto;
+  color: #5f567d;
+}
+.lesson-chips {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 25px 0 32px;
+  flex-wrap: wrap;
+}
+.lesson-chips span {
+  font-size: 12px;
+  background: #eeefe8;
+  border-radius: 30px;
+  padding: 7px 13px;
+  color: #85917e;
+}
+.lesson-intro > .text {
+  display: block;
+  margin: 18px auto;
+}
+.chess-lesson {
+  max-width: 1000px;
+  margin: auto;
+}
+.lesson-header {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin: 0 0 18px;
+}
+.lesson-header > div {
+  flex: 1;
+}
+.lesson-header > .ac-button {
+  min-width: 70px;
+}
+.lesson-header > span {
+  font-size: 13px;
+  color: #819089;
+}
+.lesson-header .ac-eyebrow {
+  margin-bottom: 5px;
+  font-size: 9px;
+}
+.lesson-progress {
+  height: 10px;
+  background: #e6e9df;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.lesson-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: 10px;
+  background: #8ca873;
+  transition: width 0.3s;
+}
+.lesson-arena {
+  display: grid;
+  grid-template-columns: minmax(0, 560px) minmax(220px, 290px);
+  justify-content: center;
+  gap: 35px;
+  align-items: start;
+}
+.board-column {
+  min-width: 0;
+}
+.position-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #8b938b;
+  margin-bottom: 10px;
+}
+.position-heading > div {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.position-heading strong {
+  font-size: 13px;
+  color: #60726d;
+}
+.turn-disc {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid #aebbb6;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px #203c4220;
+}
+.turn-disc.white {
+  background: #fff9e8;
+}
+.turn-disc.black {
+  background: #344c5a;
+}
+.board-column > h1 {
+  font-size: 25px;
+  letter-spacing: -0.6px;
+  margin-bottom: 17px;
+  line-height: 1.25;
+}
+.board-coordinates {
+  border-radius: 13px;
+  overflow: hidden;
+  border: 7px solid #344e51;
+  box-shadow:
+    0 5px 0 #253e43,
+    0 12px 20px #31494c0d;
+  background: #344e51;
+}
+.chess-board {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  aspect-ratio: 1;
+  touch-action: none;
+  user-select: none;
+  max-height: 62dvh;
+  width: 100%;
+}
+.board-column #chess-board {
+  max-width: min(100%, calc(62dvh + 14px));
+  margin: auto;
+  position: relative;
+}
+.sq {
+  position: relative;
+  aspect-ratio: 1;
+  min-width: 0;
+  min-height: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  display: grid;
+  place-items: center;
+  touch-action: none;
+  outline-offset: -4px !important;
+  opacity: 1 !important;
+}
+.sq.light {
+  background: #e4e5cf;
+}
+.sq.dark {
+  background: #6d9790;
+}
+.sq.last.light {
+  background: #e2d886;
+}
+.sq.last.dark {
+  background: #a8b16f;
+}
+.sq.selected.light,
+.sq.hint-piece.light {
+  background: #b5c9da;
+}
+.sq.selected.dark,
+.sq.hint-piece.dark {
+  background: #91b5c1;
+}
+.sq.hint-target:after {
+  content: "";
+  position: absolute;
+  inset: 10%;
+  border: 4px dashed #6d51a6;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.sq.in-check {
+  background: #d89988 !important;
+}
+.sq .chess-piece {
+  width: 92%;
+  height: 92%;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 1px #203b431e);
+  z-index: 1;
+}
+.sq .rank,
+.sq .file {
+  position: absolute;
+  font-size: 9px;
+  font-weight: 800;
+  z-index: 3;
+  pointer-events: none;
+  line-height: 1;
+  color: #688179;
+}
+.sq.dark .rank,
+.sq.dark .file {
+  color: #d8e4ce;
+}
+.sq .rank {
+  left: 3px;
+  top: 3px;
+}
+.sq .file {
+  right: 3px;
+  bottom: 3px;
+}
+.sq .move-dot {
+  display: none;
+  position: absolute;
+  width: 24%;
+  height: 24%;
+  border-radius: 50%;
+  background: #36545245;
+  pointer-events: none;
+  z-index: 4;
+}
+.sq.legal .move-dot {
+  display: block;
+}
+.sq.legal.capture .move-dot {
+  width: 88%;
+  height: 88%;
+  background: transparent;
+  border: 5px solid #36545265;
+}
+.sq.dragging .chess-piece {
+  transform: translateY(-6px) scale(1.1);
+  opacity: 0.6;
+}
+.board-selection {
+  color: #9a9f96;
+  text-align: center;
+  font-size: 11px;
+  margin: 13px 0 6px;
+}
+.coach-stage {
+  height: 153px;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+  padding-top: 0;
+}
+.coach-stage .academy-coach {
+  width: 162px;
+  align-self: flex-start;
+}
+.lesson-coach {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.coach-bubble {
+  padding: 20px 21px 12px;
+  border: 2px solid #e0e4dc;
+  border-radius: 18px;
+  background: #fffefb;
+  position: relative;
+  margin-top: -10px;
+}
+.coach-bubble:before {
+  content: "";
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  width: 15px;
+  height: 15px;
+  border-left: 2px solid #e0e4dc;
+  border-top: 2px solid #e0e4dc;
+  background: #fffefb;
+  transform: rotate(45deg);
+}
+.coach-bubble p {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #53695f;
+}
+.coach-bubble .ac-button {
+  font-size: 11px;
+  padding-top: 12px;
+}
+.thinking-card {
+  border-radius: 16px;
+  padding: 18px 20px;
+  background: #efefe5;
+  font-size: 13px;
+}
+.thinking-card > strong {
+  color: #767e67;
+}
+.thinking-card p {
+  font-size: 12px;
+  color: #8a907d;
+  margin-top: 7px;
+  line-height: 1.6;
+}
+.thinking-card > .ac-button {
+  width: 100%;
+  font-size: 12px;
+  margin-top: 10px;
+  background: #fcfcf4;
+  border-color: #dce1cf;
+  box-shadow: 0 3px 0 #dce1cf;
+}
+.hint-steps {
+  display: flex;
+  gap: 8px;
+  margin-top: 15px;
+  counter-reset: hint;
+}
+.hint-steps span {
+  font-size: 9px;
+  color: #a4ac94;
+  background: #e2e7d9;
+  padding: 4px 9px;
+  border-radius: 20px;
+}
+.hint-steps .on {
+  color: #526f50;
+  background: #cbdac0;
+}
+.lesson-tools {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.lesson-tools .text {
+  font-size: 11px;
+}
+.position-source {
+  font-size: 10px;
+  color: #99a096;
+}
+.position-source p {
+  padding-top: 8px;
+  line-height: 1.6;
+}
+.position-source summary {
+  cursor: pointer;
+}
+.lesson-feedback {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1.5px solid #e4e7dc;
+  padding: 17px 0 0;
+  margin-top: 16px;
+  min-height: 75px;
+}
+.lesson-feedback > div {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+.lesson-feedback > div > span {
+  font-size: 24px;
+  color: #91a786;
+  background: #ebeedf;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+}
+.lesson-feedback p strong {
+  font-size: 14px;
+  font-weight: 800;
+  display: block;
+  color: #657d65;
+}
+.lesson-feedback p small {
+  font-size: 11px;
+  display: block;
+  margin-top: 3px;
+  color: #9aab91;
+}
+.lesson-feedback.success .ac-button {
+  background: #719b75;
+  border-color: #719b75;
+  box-shadow: 0 4px 0 #567a59;
+}
+.lesson-feedback.try-again > div > span {
+  color: #ad8460;
+  background: #f2e7d7;
+}
+.lesson-feedback.try-again p strong {
+  color: #997957;
+}
+.promotion-chooser {
+  position: absolute;
+  inset: 20%;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px;
+  border: 3px solid #e2deef;
+  border-radius: 20px;
+  background: #fffdf7;
+  box-shadow: 0 10px 40px #25364055;
+}
+.promotion-chooser strong {
+  width: 100%;
+  text-align: center;
+}
+.promotion-chooser button {
+  padding: 4px;
+  width: 60px;
+  height: 64px;
+  flex: 1;
+  min-width: 40px;
+}
+.promotion-chooser button[data-cancel] {
+  flex-basis: 100%;
+  height: auto;
+  font-size: 12px;
+}
+.summary-badge {
+  position: relative;
+  font-size: 85px;
+  color: #8e70b6;
+  background: #eee7f6;
+  border: 7px solid #e2d7ed;
+  border-radius: 50%;
+  width: 170px;
+  height: 170px;
+  display: grid;
+  place-items: center;
+  margin: 35px auto 28px;
+  box-shadow: 0 7px 0 #cfc1df;
+}
+.summary-badge > span {
+  position: absolute;
+  top: -15px;
+  right: -10px;
+  color: #d2ad67;
+  font-size: 45px;
+}
+.lesson-summary > h1 {
+  margin: 10px 0 12px;
+}
+.lesson-summary > p {
+  color: #8b9286;
+  font-size: 16px;
+}
+.summary-stats {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 26px 0;
+}
+.summary-stats > div {
+  background: #f0f1e9;
+  border-radius: 15px;
+  padding: 16px 18px;
+  min-width: 115px;
+}
+.summary-stats strong {
+  font-size: 31px;
+  display: block;
+  color: #779773;
+}
+.summary-stats span {
+  font-size: 10px;
+  color: #94a089;
+}
+.summary-lesson {
+  border: 1.5px solid #e3e6da;
+  border-radius: 18px;
+  padding: 20px;
+  line-height: 1.65;
+  margin-bottom: 25px !important;
+}
+.lesson-summary > .ac-button {
+  margin: 8px;
+}
+.fine-print {
+  font-size: 11px !important;
+  color: #9aa29b !important;
+  line-height: 1.7;
+  margin-top: 25px !important;
+}
+.practice-lobby,
+.academy-notebook {
+  max-width: 930px;
+  margin: auto;
+}
+.practice-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 0 30px;
+}
+.practice-heading > div {
+  max-width: 570px;
+}
+.practice-heading p,
+.academy-notebook > p {
+  font-size: 16px;
+  color: #8a948a;
+  margin-top: 15px;
+}
+.practice-heading .academy-coach {
+  width: 160px;
+}
+.practice-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+.practice-cards article {
+  background: #fffefb;
+  border: 1.5px solid #e1e5da;
+  border-radius: 22px;
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 15px;
+}
+.practice-symbol {
+  font-size: 35px;
+  color: #947aa8;
+  background: #f0ebf4;
+  border-radius: 17px;
+  width: 66px;
+  height: 66px;
+  display: grid;
+  place-items: center;
+}
+.practice-cards h2 {
+  font-size: 24px;
+}
+.practice-cards p {
+  color: #899589;
+  font-size: 14px;
+  line-height: 1.7;
+  flex: 1;
+}
+.practice-cards article > div {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.opponent-select {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 13px;
+  color: #728879;
+  margin-bottom: 23px;
+}
+.opponent-select select {
+  padding: 9px 25px 9px 12px;
+  border: 1px solid #d6dfd1;
+  background: #fffefa;
+  border-radius: 10px;
+  color: #5c7163;
+  font-weight: 700;
+}
+.academy-notebook {
+  padding-top: 20px;
+}
+.notebook-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-top: 30px;
+}
+.notebook-unit {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  text-align: left;
+  border: 1.5px solid #e2e6dd !important;
+  box-shadow: 0 3px 0 #e2e6dd !important;
+  background: #fffefa !important;
+  padding: 18px !important;
+  border-radius: 15px !important;
+}
+.notebook-unit > span {
+  font-size: 25px;
+  background: #f0eee8;
+  border-radius: 13px;
+  width: 49px;
+  height: 49px;
+  display: grid;
+  place-items: center;
+  color: var(--unit);
+}
+.notebook-unit > div {
+  flex: 1;
+}
+.notebook-unit strong {
+  font-size: 14px;
+  display: block;
+}
+.notebook-unit small {
+  font-size: 11px;
+  display: block;
+  color: #98a291;
+  margin-top: 4px;
+}
+.notebook-unit > b {
+  color: #a7af9e;
+}
+.recent-lessons {
+  margin: 35px 0;
+}
+.recent-lessons h2 {
+  font-size: 21px;
+  margin-bottom: 18px;
+}
+.recent-lessons > div {
+  padding: 11px 0;
+  border-bottom: 1px solid #e3e7db;
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #7b8b7e;
+}
+.recent-lessons strong {
+  font-size: 11px;
+  color: #8fa084;
+}
+.move-notebook {
+  font-size: 12px;
+  color: #7e8c7e;
+  line-height: 1.8;
+  margin-top: 10px !important;
+}
+.lesson-coach > details {
+  font-size: 12px;
+  color: #8a9689;
+}
+@keyframes academy-blink {
+  0%,
+  42%,
+  45%,
+  100% {
+    transform: scaleY(1);
+  }
+  43%,
+  44% {
+    transform: scaleY(0.1);
+  }
+}
+@keyframes academy-talk {
+  to {
+    transform: scaleY(1.5) translateY(-1px);
+  }
+}
+@keyframes academy-bob {
+  50% {
+    transform: translateY(-5px);
+  }
+}
+@keyframes academy-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (min-width: 1400px) {
+  .ac-content {
+    max-width: 1200px;
+  }
+  .academy-layout {
+    gap: 65px;
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+  .unit-hero {
+    min-height: 190px;
+  }
+  .unit-hero h1 {
+    font-size: 36px;
+  }
+  .academy-landscape {
+    width: 385px;
+  }
+  .lesson-arena {
+    gap: 50px;
+  }
+}
+@media (max-width: 900px) {
+  .academy-layout {
+    grid-template-columns: minmax(0, 1fr) 245px;
+    gap: 25px;
+  }
+  .ac-content {
+    padding: 22px;
+  }
+  .academy-nav {
+    padding: 13px 20px;
+    gap: 8px;
+  }
+  .academy .ac-button.tab {
+    padding: 9px 10px;
+    font-size: 12px;
+  }
+  .academy-nav .sound {
+    font-size: 11px;
+  }
+  .unit-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .unit-hero {
+    padding: 23px;
+    min-height: 165px;
+  }
+  .unit-hero h1 {
+    font-size: 28px;
+  }
+  .unit-hero > div {
+    max-width: 75%;
+  }
+  .academy-landscape {
+    right: -146px;
+  }
+  .node-label {
+    width: 130px;
+    font-size: 12px;
+    left: calc(50% + 49px);
+  }
+  .node-label strong {
+    font-size: 12px;
+  }
+  .stop-1 .node-label,
+  .stop-3 .node-label {
+    right: calc(50% + 49px);
+  }
+  .stop-1,
+  .stop-3 {
+    transform: translateX(45px);
+  }
+  .stop-2,
+  .stop-4 {
+    transform: translateX(-45px);
+  }
+  .lesson-arena {
+    grid-template-columns: minmax(0, 1fr) 225px;
+    gap: 23px;
+  }
+  .board-column > h1 {
+    font-size: 22px;
+  }
+  .coach-bubble {
+    padding: 15px;
+  }
+  .coach-bubble p {
+    font-size: 14px;
+  }
+  .thinking-card {
+    padding: 15px;
+  }
+  .academy-nav > div {
+    gap: 0;
+  }
+  .coach-card {
+    padding: 0 17px 18px;
+  }
+  .coach-card h2 {
+    font-size: 23px;
+  }
+  .coach-card p {
+    font-size: 13px;
+  }
+}
+@media (max-width: 680px) {
+  .academy {
+    min-height: calc(100dvh - 70px);
+  }
+  .academy-nav {
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    padding: 12px 15px;
+  }
+  .academy-brand {
+    font-size: 20px;
+  }
+  .academy-brand img {
+    width: 36px;
+    height: 36px;
+  }
+  .academy-brand > span > span {
+    font-size: 10px;
+  }
+  .academy-nav > div {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    padding-top: 5px;
+    gap: 10px;
+  }
+  .academy-nav .sound {
+    margin-left: auto;
+  }
+  .ac-content {
+    padding: 19px 15px;
+  }
+  .academy-layout {
+    display: block;
+  }
+  .academy-sidebar {
+    position: static;
+    padding-top: 30px;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .coach-card {
+    display: none;
+  }
+  .review-card {
+    margin-top: 0;
+  }
+  .academy-tip {
+    padding: 18px 8px;
+  }
+  .unit-selector {
+    margin-bottom: 16px;
+  }
+  .unit-hero {
+    min-height: 154px;
+    padding: 22px;
+  }
+  .unit-hero h1 {
+    font-size: 28px;
+  }
+  .unit-hero > div {
+    max-width: 73%;
+  }
+  .academy-landscape {
+    width: 295px;
+    right: -112px;
+  }
+  .lesson-path {
+    max-width: 430px;
+  }
+  .node-label {
+    width: 125px;
+  }
+  .path-stop {
+    height: 105px;
+  }
+  .path-track {
+    height: 640px;
+  }
+  .academy h1 {
+    font-size: 30px;
+  }
+  .lesson-arena {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .board-column {
+    width: 100%;
+  }
+  .board-column #chess-board {
+    max-width: min(100%, calc(60dvh + 14px));
+  }
+  .chess-board {
+    max-height: 60dvh;
+  }
+  .board-column > h1 {
+    font-size: 21px;
+    margin-bottom: 13px;
+  }
+  .position-heading {
+    font-size: 10px;
+    margin-bottom: 6px;
+  }
+  .lesson-coach {
+    display: grid;
+    grid-template-columns: 70px minmax(0, 1fr);
+    width: 100%;
+    gap: 10px;
+    align-items: start;
+  }
+  .coach-stage {
+    height: 83px;
+    overflow: hidden;
+    grid-column: 1;
+  }
+  .coach-stage .academy-coach {
+    width: 82px;
+    min-width: 82px;
+    margin-top: -3px;
+  }
+  .coach-bubble {
+    grid-column: 2;
+    margin: 0;
+    padding: 12px 14px 5px;
+  }
+  .coach-bubble:before {
+    top: 22px;
+    left: -9px;
+    transform: rotate(-45deg);
+  }
+  .coach-bubble .ac-eyebrow {
+    font-size: 8px;
+    margin-bottom: 3px;
+  }
+  .coach-bubble p {
+    font-size: 13px;
+  }
+  .coach-bubble .ac-button {
+    font-size: 10px;
+    min-height: 30px;
+    padding: 4px 0;
+  }
+  .thinking-card {
+    grid-column: 1/-1;
+    padding: 12px 14px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 5px 12px;
+  }
+  .thinking-card > strong {
+    font-size: 11px;
+  }
+  .thinking-card > p {
+    grid-column: 1;
+    font-size: 11px;
+    margin: 0;
+  }
+  .thinking-card > .hint-steps {
+    grid-column: 1;
+    margin: 3px 0 0;
+  }
+  .thinking-card > .ac-button {
+    grid-column: 2;
+    grid-row: 1/4;
+    width: auto;
+    margin: 0;
+    align-self: center;
+  }
+  .lesson-tools,
+  .position-source,
+  .lesson-coach > details,
+  .lesson-coach > .fine-print {
+    grid-column: 1/-1;
+  }
+  .lesson-tools {
+    flex-direction: row;
+    justify-content: center;
+    gap: 20px;
+  }
+  .lesson-tools .text {
+    font-size: 10px;
+    min-height: 30px;
+  }
+  .position-source {
+    font-size: 9px;
+  }
+  .lesson-feedback {
+    margin-top: 13px;
+    padding-top: 14px;
+    gap: 9px;
+  }
+  .lesson-feedback > div {
+    gap: 8px;
+  }
+  .lesson-feedback > div > span {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    font-size: 20px;
+  }
+  .lesson-feedback p strong {
+    font-size: 12px;
+  }
+  .lesson-feedback p small {
+    font-size: 9px;
+    max-width: 190px;
+  }
+  .lesson-feedback > .ac-button {
+    font-size: 12px;
+    padding: 10px 13px;
+    white-space: nowrap;
+  }
+  .lesson-header {
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .lesson-header .ac-button {
+    font-size: 11px;
+    min-width: 45px;
+  }
+  .lesson-header .ac-eyebrow {
+    font-size: 8px;
+  }
+  .lesson-header > span {
+    font-size: 11px;
+  }
+  .practice-heading .academy-coach {
+    width: 105px;
+  }
+  .practice-heading > div {
+    max-width: 70%;
+  }
+  .practice-heading p {
+    font-size: 13px;
+  }
+  .practice-cards {
+    grid-template-columns: 1fr;
+  }
+  .notebook-grid {
+    grid-template-columns: 1fr;
+  }
+  .lesson-intro,
+  .lesson-summary {
+    padding: 5px 6px 25px;
+  }
+  .intro-art {
+    margin-top: 10px;
+    width: 200px;
+    height: 180px;
+  }
+  .intro-art .academy-coach {
+    width: 150px;
+  }
+  .lesson-intro > p {
+    font-size: 16px;
+  }
+  .intro-question {
+    font-size: 18px;
+  }
+  .lesson-intro > h1 {
+    font-size: 31px;
+  }
+  .summary-stats {
+    gap: 8px;
+  }
+  .summary-stats > div {
+    padding: 13px 10px;
+    min-width: 90px;
+  }
+  .summary-stats strong {
+    font-size: 28px;
+  }
+  .summary-stats span {
+    font-size: 9px;
+  }
+  .resume-strip {
+    font-size: 11px;
+    padding: 13px;
+    gap: 8px;
+  }
+  .resume-strip .ac-button {
+    font-size: 11px;
+    padding: 9px 11px;
+  }
+  .ac-error {
+    flex-wrap: wrap;
+    font-size: 12px;
+  }
+  .ac-error strong {
+    width: 100%;
+  }
+}
+@media (max-height: 560px) and (min-width: 681px) {
+  .academy-nav {
+    padding: 8px 20px;
+  }
+  .ac-content {
+    padding-top: 12px;
+  }
+  .lesson-arena {
+    grid-template-columns: minmax(200px, 330px) 1fr;
+    gap: 25px;
+  }
+  .board-column #chess-board {
+    max-width: calc(60dvh + 14px);
+  }
+  .chess-board {
+    max-height: 60dvh;
+  }
+  .coach-stage {
+    display: none;
+  }
+  .coach-bubble {
+    margin-top: 45px;
+  }
+  .lesson-coach {
+    gap: 10px;
+  }
+  .lesson-header {
+    margin-bottom: 7px;
+  }
+  .board-column > h1 {
+    font-size: 19px;
+    margin-bottom: 9px;
+  }
+  .thinking-card {
+    padding: 10px 15px;
+  }
+  .lesson-feedback {
+    padding-top: 10px;
+    margin-top: 8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .academy * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.practice-level {
+  background: white;
+  border: 1px solid #e5dfd5;
+  border-radius: 20px;
+  padding: 20px;
+}
+.practice-level label {
+  display: block;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+.practice-level select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #cbc4bb;
+  border-radius: 10px;
+  background: #fbfaf6;
+  font: inherit;
+  font-size: 13px;
+}
+.practice-level p {
+  font-size: 13px;
+  line-height: 1.55;
+  color: #736e69;
+}
+.academy:has(.chess-lesson) .academy-nav {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.ac-content:has(.chess-lesson) {
+  padding-top: 16px;
+}
+.chess-lesson .board-column {
+  max-width: 100%;
+}
+.chess-lesson .chess-board {
+  max-height: 53dvh;
+}
+.sq.dragging {
+  opacity: 0.35;
+}
+.drag-ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 50;
+  filter: drop-shadow(0 8px 6px #0005);
+  transform: translate(-50%, -50%);
+}
+.drag-ghost svg {
+  width: 100%;
+  height: 100%;
+}
+@media (max-width: 680px) {
+  .chess-lesson .board-column {
+    max-width: 100%;
+  }
+  .chess-lesson .chess-board {
+    max-height: none;
+  }
+}
+
+.solution-recap {
+  background: #eef2e6;
+  border-radius: 16px;
+  padding: 16px;
+  line-height: 1.6;
+  font-size: 14px;
+}
+.solution-recap summary {
+  font-weight: 800;
+  cursor: pointer;
+}
+.solution-recap ol {
+  padding-left: 20px;
+}
+.lesson-feedback.success {
+  position: sticky;
+  bottom: 8px;
+  z-index: 5;
+  box-shadow: 0 8px 24px #23432b18;
+}
+@media (max-width: 680px) {
+  .academy:has(.chess-lesson) .academy-nav {
+    display: none;
+  }
+  .chess-lesson .lesson-arena {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+  .chess-lesson .lesson-coach {
+    display: contents;
+  }
+  .chess-lesson .coach-stage {
+    display: none;
+  }
+  .chess-lesson .coach-bubble {
+    grid-column: 1;
+    grid-row: 1;
+    padding: 10px 14px 5px;
+    min-height: 0;
+  }
+  .chess-lesson .coach-bubble:before {
+    display: none;
+  }
+  .chess-lesson .coach-bubble .ac-eyebrow {
+    display: none;
+  }
+  .chess-lesson .coach-bubble p {
+    margin: 0;
+    font-size: 13px;
+  }
+  .chess-lesson .board-column {
+    grid-row: 2;
+  }
+  .chess-lesson .board-column > h1 {
+    font-size: 18px;
+    margin: 0 0 8px;
+  }
+  .chess-lesson .thinking-card {
+    grid-row: 3;
+    margin: 0;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+  .chess-lesson .thinking-card > strong,
+  .chess-lesson .thinking-card > p {
+    display: none;
+  }
+  .chess-lesson .thinking-card > .hint-steps {
+    grid-row: 1;
+  }
+  .chess-lesson .thinking-card > .ac-button {
+    grid-row: 1;
+  }
+  .chess-lesson .lesson-tools {
+    grid-row: 4;
+    margin: 0;
+  }
+  .chess-lesson .lesson-header {
+    margin-bottom: 10px;
+  }
+  .chess-lesson .board-selection {
+    font-size: 9px;
+    margin-top: 5px;
+  }
+}
+@media (max-width: 680px) {
+  .chess-lesson .coach-stage {
+    display: block;
+    grid-row: 1;
+    grid-column: 1;
+    width: 58px;
+    height: 76px;
+    overflow: hidden;
+  }
+  .chess-lesson .coach-stage .academy-coach {
+    width: 64px;
+    min-width: 64px;
+  }
+  .chess-lesson .coach-bubble {
+    margin-left: 67px;
+  }
+}
+@media (max-width: 680px) {
+  .lesson-path {
+    overflow: hidden;
+  }
+  .node-label {
+    width: calc(50% - 55px);
+  }
+}
+@media (max-height: 560px) and (min-width: 681px) {
+  body:has(.chess-lesson) > .top {
+    height: 48px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    gap: 15px;
+  }
+  body:has(.chess-lesson) > .top .home img {
+    width: 26px;
+    height: 26px;
+  }
+  body:has(.chess-lesson) > .top button {
+    padding: 5px 12px;
+    font-size: 12px;
+  }
+  body:has(.chess-lesson) > .top .identity strong {
+    font-size: 22px;
+  }
+  body:has(.chess-lesson) > .top .identity small {
+    font-size: 8px;
+  }
+  .academy:has(.chess-lesson) .academy-nav {
+    display: none;
+  }
+  .ac-content:has(.chess-lesson) {
+    padding: 6px 18px;
+  }
+  .chess-lesson .lesson-header {
+    min-height: 25px;
+    margin-bottom: 4px;
+    font-size: 12px;
+  }
+  .chess-lesson .lesson-header .ac-button {
+    min-height: 26px;
+    padding: 3px 8px;
+  }
+  .chess-lesson .position-heading {
+    margin-bottom: 3px;
+    font-size: 10px;
+  }
+  .chess-lesson .board-column > h1 {
+    font-size: 17px;
+    margin: 0 0 6px;
+  }
+  .chess-lesson .board-column {
+    max-width: calc(60dvh + 14px);
+  }
+  .chess-lesson .chess-board {
+    max-height: 60dvh;
+  }
+  .chess-lesson .coach-bubble {
+    margin-top: 0;
+    padding: 9px 13px;
+  }
+  .chess-lesson .coach-bubble p {
+    font-size: 12px;
+    margin: 0;
+  }
+  .chess-lesson .lesson-coach > .ac-button {
+    min-height: 30px;
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+  .chess-lesson .board-selection {
+    font-size: 9px;
+    margin-top: 4px;
+  }
+}
+/* The same Rook children already know from Letter Quest. */
+.rook-puppet .rook-eyes {
+  transform-origin: 120px 111px;
+  animation: rook-blink 6.8s infinite;
+}
+.rook-puppet .rook-head {
+  transform-origin: 120px 180px;
+  animation: rook-breathe 7s ease-in-out infinite;
+}
+.rook-puppet .rook-hand {
+  transform-origin: 184px 221px;
+}
+.rook-puppet.talking .rook-mouth {
+  transform-origin: 120px 168px;
+  animation: rook-talk 0.18s ease-in-out infinite alternate;
+}
+.rook-puppet.talking .rook-stache {
+  transform-origin: 120px 150px;
+  animation: rook-stache 0.35s ease-in-out infinite alternate;
+}
+.rook-puppet.rook-thinking .rook-head {
+  transform: rotate(-7deg);
+  animation: none;
+}
+.rook-puppet.rook-thinking .rook-hand {
+  transform: translate(-39px, -62px) rotate(-15deg);
+}
+.rook-puppet.happy .rook-hand {
+  animation: rook-wave 0.7s ease-in-out 3;
+}
+.rook-puppet.happy .rook-brow {
+  transform: translateY(-5px);
+}
+.sq.wrong-square {
+  box-shadow: inset 0 0 0 5px #f08362;
+  background: #f5b59a !important;
+}
+@keyframes rook-blink {
+  0%,
+  43%,
+  47%,
+  100% {
+    transform: scaleY(1);
+  }
+  45% {
+    transform: scaleY(0.08);
+  }
+}
+@keyframes rook-breathe {
+  0%,
+  100% {
+    transform: rotate(-1.2deg);
+  }
+  50% {
+    transform: rotate(1.2deg);
+  }
+}
+@keyframes rook-talk {
+  from {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(2.5);
+  }
+}
+@keyframes rook-stache {
+  from {
+    transform: rotate(-1deg);
+  }
+  to {
+    transform: rotate(1deg);
+  }
+}
+@keyframes rook-wave {
+  0%,
+  100% {
+    transform: translateY(-15px) rotate(0);
+  }
+  50% {
+    transform: translateY(-25px) rotate(-16deg);
+  }
+}
+
+/* Rook's academy: an illustrated journey and a focused chess table. */
+.academy {
+  --ink: #203f3a;
+  --muted: #657973;
+  --paper: #fffdf6;
+  --purple: #16896a;
+  --purple-shadow: #0b604c;
+  --line: #dbe5dc;
+  background: var(--paper);
+}
+.academy .ac-button.primary:hover {
+  background: #1b9d79;
+  border-color: #1b9d79;
+}
+.academy-nav {
+  background: #fffdf6;
+  border-bottom: 2px solid #e5e9df;
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+.academy-brand {
+  color: #215c49;
+}
+.academy-brand img {
+  width: 48px;
+  height: 48px;
+}
+.academy .ac-button.tab.active {
+  color: #16734f;
+  background: #e7f5dc;
+  border-color: #c8dfb6;
+}
+.academy-layout {
+  grid-template-columns: minmax(0, 680px) 270px;
+  gap: 34px;
+}
+.unit-selector label {
+  color: #66785a;
+}
+.unit-selector select {
+  color: #245844;
+  font-size: 20px;
+}
+.unit-hero {
+  background: #175840;
+  border: 0;
+  min-height: 178px;
+  box-shadow: 0 5px 0 #0f402f;
+  padding: 25px 28px;
+  border-radius: 22px;
+}
+.unit-hero > div {
+  max-width: 64%;
+}
+.unit-hero h1 {
+  color: #fffbed;
+  font-size: 33px;
+}
+.unit-hero .ac-eyebrow {
+  color: #b6d98c;
+}
+.unit-hero p {
+  color: #d5e9cb;
+  font-size: 14px;
+}
+.world-banner {
+  position: absolute;
+  right: -30px;
+  top: -12px;
+  width: 280px;
+  height: 210px;
+  object-fit: cover;
+  object-position: right top;
+  mask-image: linear-gradient(90deg, transparent, black 38%);
+}
+.lesson-path {
+  max-width: none;
+  margin: 20px -7px 0;
+  padding: 138px 0 35px;
+  border-radius: 24px;
+  background: #f7f2d6 url("/chess/academy-world.png") center top/100% 100%;
+  overflow: hidden;
+  min-height: 1000px;
+}
+.path-track {
+  top: 158px;
+  height: 725px;
+  left: 17%;
+  width: 66%;
+  opacity: 0.5;
+}
+.path-track path {
+  stroke: #a9a478;
+  stroke-width: 9;
+}
+.path-stop {
+  height: 124px;
+}
+.stop-1 {
+  transform: translateX(48px);
+}
+.stop-2 {
+  transform: translateX(-45px);
+}
+.stop-3 {
+  transform: translateX(44px);
+}
+.stop-4 {
+  transform: translateX(-42px);
+}
+.path-node {
+  width: 80px;
+  height: 73px;
+  background: #fff8d8;
+  border: 5px solid #fffdf1;
+  box-shadow:
+    0 8px 0 #bda979,
+    0 12px 12px #4e542420;
+  color: #99764b !important;
+  text-shadow: 0 2px #fff7;
+}
+.path-node.current {
+  background: #24a576;
+  border-color: #dbf5a9;
+  box-shadow:
+    0 8px 0 #126c4b,
+    0 12px 18px #325c352b;
+  text-shadow: 0 2px #0b6248;
+}
+.path-node.current:before {
+  border-color: #dd9e24;
+  border-width: 3px;
+  border-style: solid;
+  inset: -12px;
+  animation: rook-node-pulse 2.5s ease-in-out infinite;
+}
+.path-node.complete {
+  background: #d6a628;
+  border-color: #fff0a9;
+  box-shadow: 0 8px 0 #9c7217;
+  color: #fff !important;
+}
+.node-label {
+  background: #fffef2ed;
+  border: 1px solid #dddbc6;
+  box-shadow: 0 3px 0 #d7cfaf66;
+  padding: 10px 12px;
+  border-radius: 13px;
+  width: 164px;
+  top: 6px;
+  left: calc(50% + 59px);
+  color: #34563d;
+}
+.node-label strong {
+  font-size: 13px;
+}
+.node-label span {
+  font-size: 10px;
+  color: #68765c;
+}
+.node-label small {
+  color: #168054;
+  font-size: 8px;
+}
+.stop-1 .node-label,
+.stop-3 .node-label {
+  right: calc(50% + 59px);
+}
+.node-stars {
+  color: #815f16;
+  background: #fff8cf;
+  padding: 0 7px;
+  border-radius: 20px;
+}
+.path-finish {
+  color: #315641;
+  background: #fffef0ed;
+  width: max-content;
+  max-width: 90%;
+  margin: 4px auto 0;
+  padding: 14px 22px;
+  border-radius: 20px;
+  border: 1px solid #e3dbb9;
+}
+.path-finish > span {
+  display: none;
+}
+.coach-card {
+  border: 2px solid #dae5d4;
+  background: #f7faec;
+  padding: 0 22px 21px;
+  box-shadow: 0 4px 0 #e1e8d8;
+}
+.coach-card > .academy-coach {
+  width: 195px;
+  margin: -16px auto 0;
+}
+.coach-card h2 {
+  color: #215841;
+}
+.coach-card p {
+  color: #58715b;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.review-card {
+  background: #fff3cf;
+  border: 2px solid #eddba7;
+}
+.review-card .ac-button {
+  background: #fffcf2;
+  border-color: #e6d196;
+  box-shadow: 0 3px #dfc889;
+}
+.review-card h3 {
+  color: #785918;
+}
+.review-card p {
+  color: #82734b;
+}
+.resume-strip {
+  background: #e9f5df;
+  border: 2px solid #cde1b9;
+  color: #3d6944;
+}
+.practice-level {
+  background: #fffefa;
+}
+.academy:has(.chess-lesson) .academy-nav {
+  display: none;
+}
+.ac-content:has(.chess-lesson) {
+  padding: 20px 30px 16px;
+  max-width: 1070px;
+}
+.chess-lesson {
+  max-width: 960px;
+}
+.lesson-header {
+  gap: 18px;
+  margin-bottom: 12px;
+}
+.lesson-header .sound {
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  font-size: 24px;
+  padding: 4px 10px;
+  min-width: 42px;
+}
+.lesson-progress {
+  height: 14px;
+  background: #e2e8da;
+  box-shadow: inset 0 2px #cbd6c2;
+}
+.lesson-progress > span {
+  background: #7cbf42;
+  border-top: 4px solid #9bda5f;
+  box-shadow: 0 2px #499927;
+}
+.lesson-arena {
+  grid-template-columns: minmax(0, 570px) 250px;
+  gap: 32px;
+  align-items: start;
+}
+.rook-dialogue {
+  display: flex;
+  align-items: center;
+  min-height: 112px;
+  margin: 0 0 12px;
+  gap: 15px;
+}
+.rook-dialogue .coach-stage {
+  height: 112px;
+  width: 112px;
+  min-width: 112px;
+  display: block;
+  margin: 0;
+  overflow: hidden;
+  align-self: end;
+}
+.rook-dialogue .coach-stage .academy-coach {
+  width: 106px;
+  min-width: 106px;
+  margin: 0;
+  transform: none;
+}
+.rook-dialogue .coach-bubble {
+  margin: 0;
+  position: relative;
+  flex: 1;
+  padding: 15px 43px 15px 18px;
+  background: #fff;
+  border: 2px solid #dce5d6;
+  border-radius: 20px;
+  box-shadow: 0 3px 0 #e9ede1;
+}
+.rook-dialogue .coach-bubble:before {
+  content: "";
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  left: -10px;
+  top: 50%;
+  transform: rotate(45deg);
+  background: white;
+  border: 0;
+  border-left: 2px solid #dce5d6;
+  border-bottom: 2px solid #dce5d6;
+}
+.rook-dialogue .coach-bubble h1 {
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+  color: #27493e;
+  margin: 0 0 7px;
+}
+.rook-dialogue .coach-bubble p {
+  font-size: 14px;
+  line-height: 1.45;
+  color: #597265;
+  margin: 0;
+}
+.rook-dialogue .coach-bubble .ac-eyebrow {
+  font-size: 9px;
+  color: #378959;
+  margin-bottom: 5px;
+}
+.rook-dialogue .replay {
+  position: absolute;
+  right: 6px;
+  top: 8px;
+  padding: 5px !important;
+  min-height: 34px;
+  border: 0;
+  background: #f1f7e8;
+  box-shadow: none;
+  width: 32px;
+  color: #277452;
+  font-size: 21px !important;
+}
+.position-heading {
+  margin: 0 2px 8px;
+}
+.position-heading strong {
+  color: #355744;
+}
+.position-heading > span {
+  font-size: 11px;
+  color: #667e6e;
+}
+.board-coordinates {
+  position: relative;
+  border: 8px solid #275749;
+  border-radius: 15px;
+  box-shadow:
+    0 6px 0 #173e34,
+    0 12px 24px #284e371a;
+  background: #275749;
+}
+.chess-board {
+  max-height: 53dvh;
+}
+.board-column #chess-board {
+  max-width: min(100%, calc(53dvh + 16px));
+}
+.sq.light {
+  background: #f0eacf;
+}
+.sq.dark {
+  background: #86ad89;
+}
+.sq.last.light {
+  background: #f5df8b;
+}
+.sq.last.dark {
+  background: #bad175;
+}
+.sq.selected.light,
+.sq.hint-piece.light {
+  background: #b8ddcb;
+}
+.sq.selected.dark,
+.sq.hint-piece.dark {
+  background: #5cbb94;
+}
+.sq.hint-target:after {
+  display: none;
+}
+.sq .chess-piece {
+  width: 88%;
+  height: 88%;
+  filter: drop-shadow(0 3px 0 #163e3429);
+}
+.sq .rank,
+.sq .file {
+  color: #657d53;
+}
+.sq.dark .rank,
+.sq.dark .file {
+  color: #284c35;
+}
+.hint-arrow {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 6;
+  pointer-events: none;
+  opacity: 0.9;
+  filter: drop-shadow(0 2px 2px #5f481550);
+}
+.lesson-help {
+  padding-top: 132px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.thinking-card {
+  background: #f1f6e5;
+  border: 2px solid #dce7cb;
+  border-radius: 22px;
+  text-align: center;
+  padding: 18px 16px 20px;
+}
+.hint-art {
+  position: relative;
+  height: 88px;
+  width: 94px;
+  margin: -6px auto 7px;
+  background: #e3edc9;
+  border-radius: 50%;
+}
+.hint-art > svg {
+  width: 76px;
+  height: 76px;
+  position: absolute;
+  bottom: -2px;
+  left: 1px;
+  transform: rotate(-10deg);
+  filter: drop-shadow(0 3px #8b9b682b);
+}
+.hint-art > span {
+  position: absolute;
+  right: 0;
+  top: -4px;
+  font-size: 39px;
+  font-weight: 900;
+  color: #c39326;
+  transform: rotate(12deg);
+}
+.thinking-card h2 {
+  font-size: 19px;
+  color: #355f3e;
+}
+.thinking-card p {
+  color: #657a53;
+  line-height: 1.5;
+  font-size: 12px;
+}
+.thinking-card .ac-eyebrow {
+  font-size: 8px;
+  color: #6a7f4c;
+}
+.hint-steps {
+  justify-content: center;
+  gap: 5px;
+  margin-top: 17px;
+}
+.hint-steps span {
+  font-size: 9px;
+  padding: 4px 6px;
+  background: #e1e8d5;
+  color: #748467;
+}
+.hint-steps .on {
+  background: #c5dfa7;
+  color: #3d6629;
+}
+.thinking-card > .ac-button {
+  background: #fffefa;
+  border: 2px solid #ccdab9;
+  box-shadow: 0 4px #b8cc9b;
+  font-size: 14px;
+  padding: 11px;
+}
+.lesson-help .lesson-tools .text {
+  font-size: 11px;
+  color: #67845c;
+}
+.lesson-help .position-source {
+  font-size: 10px;
+  text-align: center;
+  color: #788d6c;
+}
+.solved-card {
+  text-align: center;
+  background: #edf8df;
+  border: 2px solid #cfe5b6;
+  border-radius: 22px;
+  padding: 0 16px 18px;
+}
+.solved-card > .academy-coach {
+  width: 150px;
+  margin: -20px auto 0;
+}
+.solved-card h2 {
+  color: #357824;
+  font-size: 24px;
+}
+.solved-card p {
+  font-size: 13px;
+  color: #6d8d51;
+  margin-top: 8px;
+}
+.lesson-feedback {
+  padding: 13px 18px;
+  background: #f3f6e9;
+  border: 2px solid #e3e9d6;
+  border-radius: 18px;
+  margin-top: 14px;
+  min-height: 75px;
+}
+.lesson-feedback.success {
+  background: #e7f5d3;
+  border-color: #c5e0a2;
+}
+.lesson-feedback.success .ac-button {
+  background: #58a735;
+  border-color: #58a735;
+  box-shadow: 0 4px #38791b;
+}
+.lesson-feedback.try-again {
+  background: #fff0dc;
+  border-color: #f0d3ad;
+}
+.lesson-feedback p strong {
+  color: #426b3c;
+}
+.lesson-feedback p small {
+  color: #728669;
+}
+.lesson-feedback > div > span {
+  background: #e2eccf;
+  color: #608c36;
+}
+.intro-art {
+  background: #edf4d7;
+  border: 5px solid #dfebc3;
+  height: 215px;
+  width: 235px;
+}
+.intro-art .academy-coach {
+  width: 185px;
+  left: 17px;
+}
+.intro-question {
+  color: #2d7850;
+}
+.summary-badge {
+  color: #297950;
+  background: #eff8d9;
+  border-color: #d8e9b9;
+  box-shadow: 0 7px #b6d48d;
+}
+@keyframes rook-node-pulse {
+  50% {
+    box-shadow: 0 0 0 5px #e5af2c22;
+    transform: scale(1.05);
+  }
+}
+@media (max-width: 900px) {
+  .academy-layout {
+    grid-template-columns: minmax(0, 1fr) 240px;
+    gap: 24px;
+  }
+  .ac-content {
+    padding: 24px 20px;
+  }
+  .node-label {
+    width: 140px;
+    padding: 8px;
+  }
+  .lesson-arena {
+    gap: 20px;
+    grid-template-columns: minmax(0, 1fr) 225px;
+  }
+  .rook-dialogue .coach-bubble h1 {
+    font-size: 19px;
+  }
+  .rook-dialogue .coach-bubble p {
+    font-size: 13px;
+  }
+  .rook-dialogue .coach-stage {
+    width: 88px;
+    min-width: 88px;
+  }
+  .rook-dialogue .coach-stage .academy-coach {
+    width: 102px;
+    min-width: 102px;
+  }
+  .rook-dialogue {
+    gap: 8px;
+  }
+  .lesson-help {
+    padding-top: 150px;
+  }
+}
+@media (max-width: 680px) {
+  .academy-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .academy-path {
+    width: 100%;
+  }
+  .academy-sidebar {
+    position: static;
+    padding: 0;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .coach-card {
+    display: none;
+  }
+  .review-card {
+    margin-top: 0;
+  }
+  .academy-tip {
+    display: none;
+  }
+  .unit-selector {
+    margin-bottom: 16px;
+  }
+  .unit-selector select {
+    font-size: 17px;
+  }
+  .unit-selector > span {
+    font-size: 10px;
+    grid-column: 1/-1;
+  }
+  .unit-hero {
+    min-height: 153px;
+    padding: 20px;
+  }
+  .unit-hero h1 {
+    font-size: 27px;
+  }
+  .unit-hero p {
+    font-size: 12px;
+  }
+  .world-banner {
+    width: 220px;
+    height: 190px;
+    right: -45px;
+  }
+  .unit-hero > div {
+    max-width: 70%;
+  }
+  .lesson-path {
+    min-height: 940px;
+    background-size: auto 100%;
+    margin: 17px -10px 0;
+    padding-top: 140px;
+  }
+  .path-stop {
+    height: 116px;
+  }
+  .path-node {
+    width: 68px;
+    height: 62px;
+    font-size: 26px;
+  }
+  .stop-1 {
+    transform: translateX(31px);
+  }
+  .stop-2 {
+    transform: translateX(-30px);
+  }
+  .stop-3 {
+    transform: translateX(28px);
+  }
+  .stop-4 {
+    transform: translateX(-29px);
+  }
+  .node-label {
+    left: calc(50% + 46px);
+    width: 119px;
+    padding: 7px 8px;
+    top: 4px;
+  }
+  .stop-1 .node-label,
+  .stop-3 .node-label {
+    right: calc(50% + 46px);
+  }
+  .node-label strong {
+    font-size: 11px;
+  }
+  .node-label span {
+    font-size: 8px;
+  }
+  .node-label small {
+    font-size: 7px;
+  }
+  .path-track {
+    top: 165px;
+    height: 645px;
+  }
+  .path-finish {
+    font-size: 11px;
+  }
+  .ac-content:has(.chess-lesson) {
+    padding: 12px 12px 16px;
+  }
+  .lesson-arena {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .board-column {
+    width: 100%;
+  }
+  .rook-dialogue {
+    min-height: 104px;
+    gap: 8px;
+    margin: 0 0 9px;
+  }
+  .chess-lesson .rook-dialogue .coach-stage {
+    width: 80px;
+    min-width: 80px;
+    height: 108px;
+    display: block;
+    overflow: hidden;
+  }
+  .chess-lesson .rook-dialogue .coach-stage .academy-coach {
+    width: 96px;
+    min-width: 96px;
+  }
+  .chess-lesson .rook-dialogue .coach-bubble {
+    margin: 0;
+    padding: 12px 31px 12px 13px;
+    grid-column: auto;
+  }
+  .rook-dialogue .coach-bubble h1 {
+    font-size: 19px;
+  }
+  .rook-dialogue .coach-bubble p {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  .rook-dialogue .replay {
+    width: 26px;
+    font-size: 18px !important;
+    right: 3px;
+  }
+  .lesson-header {
+    gap: 10px;
+  }
+  .lesson-header .sound {
+    display: block;
+  }
+  .lesson-header .ac-eyebrow {
+    font-size: 8px;
+  }
+  .chess-lesson .chess-board {
+    max-height: none;
+  }
+  .chess-lesson .board-column #chess-board {
+    max-width: 100%;
+  }
+  .chess-lesson .lesson-help {
+    display: flex;
+    width: 100%;
+    padding: 0;
+    gap: 8px;
+  }
+  .thinking-card {
+    padding: 12px 14px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 5px 12px;
+    text-align: left;
+    align-items: center;
+    width: 100%;
+  }
+  .thinking-card .hint-art,
+  .thinking-card > .ac-eyebrow,
+  .thinking-card > p {
+    display: none;
+  }
+  .thinking-card h2 {
+    font-size: 15px;
+  }
+  .thinking-card .hint-steps {
+    grid-row: 2;
+    margin: 0;
+    justify-content: flex-start;
+  }
+  .thinking-card > .ac-button {
+    grid-column: 2;
+    grid-row: 1/3;
+    margin: 0;
+    width: auto;
+    font-size: 12px;
+    max-width: 160px;
+  }
+  .lesson-help .lesson-tools {
+    margin: 0;
+  }
+  .lesson-help .lesson-tools .ac-button {
+    min-height: 28px;
+    padding: 3px;
+    font-size: 10px;
+  }
+  .lesson-help .position-source {
+    font-size: 9px;
+  }
+  .lesson-feedback {
+    padding: 12px;
+    margin-top: 10px;
+    min-height: 64px;
+  }
+  .lesson-feedback p strong {
+    font-size: 12px;
+  }
+  .lesson-feedback p small {
+    font-size: 10px;
+  }
+  .lesson-feedback > div > span {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    font-size: 20px;
+  }
+  .lesson-feedback.success {
+    position: sticky;
+    bottom: 8px;
+    z-index: 8;
+    box-shadow: 0 6px 22px #22472b25;
+  }
+  .lesson-feedback .ac-button {
+    font-size: 12px;
+    padding: 9px 12px;
+    white-space: nowrap;
+  }
+  .solved-card {
+    display: none;
+  }
+  .solution-recap {
+    font-size: 12px;
+  }
+  .position-heading > span {
+    font-size: 10px;
+  }
+  .board-coordinates {
+    border-width: 6px;
+  }
+  .lesson-summary {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .academy-nav {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .academy-nav > div {
+    width: 100%;
+    justify-content: center;
+    order: 3;
+  }
+  .academy-nav .ac-button.tab {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  .academy-nav .sound {
+    margin-left: auto;
+  }
+  .academy-brand {
+    font-size: 22px;
+  }
+}
+@media (max-height: 560px) and (min-width: 681px) {
+  .ac-content:has(.chess-lesson) {
+    padding: 7px 18px;
+  }
+  .chess-lesson .lesson-header {
+    margin-bottom: 5px;
+  }
+  .lesson-arena {
+    grid-template-columns: minmax(0, 1fr) 235px;
+    gap: 22px;
+    max-width: 730px;
+    margin: auto;
+  }
+  .chess-lesson .board-column {
+    max-width: none;
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 4px 13px;
+    align-items: start;
+  }
+  .rook-dialogue {
+    grid-column: 1;
+    grid-row: 1/4;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    margin: 0;
+    gap: 7px;
+  }
+  .chess-lesson .rook-dialogue .coach-stage {
+    height: 86px;
+    width: 80px;
+    min-width: 80px;
+    align-self: center;
+  }
+  .chess-lesson .rook-dialogue .coach-stage .academy-coach {
+    width: 83px;
+    min-width: 83px;
+  }
+  .rook-dialogue .coach-bubble {
+    padding: 8px 25px 9px 10px;
+  }
+  .rook-dialogue .coach-bubble:before {
+    display: none;
+  }
+  .rook-dialogue .coach-bubble h1 {
+    font-size: 15px;
+  }
+  .rook-dialogue .coach-bubble p {
+    font-size: 11px;
+  }
+  .rook-dialogue .coach-bubble .ac-eyebrow {
+    display: none;
+  }
+  .rook-dialogue .replay {
+    width: 23px;
+    font-size: 17px !important;
+    right: 0;
+  }
+  .chess-lesson .position-heading {
+    grid-column: 2;
+    margin: 0 0 2px;
+  }
+  .chess-lesson .position-heading > span {
+    display: none;
+  }
+  .chess-lesson #chess-board {
+    grid-column: 2;
+    grid-row: 2;
+    max-width: calc(58dvh + 16px);
+    width: 100%;
+  }
+  .chess-lesson .chess-board {
+    max-height: 58dvh;
+  }
+  .chess-lesson .board-selection {
+    grid-column: 2;
+    grid-row: 3;
+    font-size: 8px;
+    margin: 2px 0;
+  }
+  .lesson-help {
+    padding-top: 14px;
+    gap: 6px;
+  }
+  .thinking-card {
+    padding: 12px;
+  }
+  .hint-art {
+    display: none;
+  }
+  .thinking-card h2 {
+    font-size: 17px;
+  }
+  .thinking-card p {
+    font-size: 11px;
+  }
+  .thinking-card > .ac-button {
+    min-height: 32px;
+    padding: 7px;
+  }
+  .hint-steps {
+    margin-top: 9px;
+  }
+  .lesson-feedback {
+    margin-top: 7px;
+    min-height: 42px;
+    padding: 6px 12px;
+  }
+  .lesson-feedback > div > span {
+    width: 28px;
+    height: 28px;
+    font-size: 18px;
+  }
+  .lesson-feedback p strong {
+    font-size: 11px;
+  }
+  .lesson-feedback p small {
+    font-size: 9px;
+  }
+  .lesson-feedback .ac-button {
+    min-height: 30px;
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+  .lesson-help .position-source {
+    display: none;
+  }
+  .solved-card {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .academy *,
+  .academy *:before {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (max-width: 680px) {
+  .chess-lesson .lesson-help {
+    order: 0;
+    grid-row: auto;
+    grid-column: auto;
+  }
+  .chess-lesson .board-column {
+    order: 0;
+    grid-row: auto;
+    grid-column: auto;
+  }
+  .chess-lesson .lesson-arena {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .thinking-card > h2 {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .chess-lesson .thinking-card > .hint-steps {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .chess-lesson .thinking-card > .ac-button {
+    grid-column: 2;
+    grid-row: 1/3;
+  }
+}
+
+@media (min-width: 681px) and (min-height: 561px) {
+  .chess-lesson .chess-board {
+    max-height: min(51dvh, calc(100dvh - 424px));
+  }
+  .chess-lesson .board-column #chess-board {
+    max-width: min(100%, calc(51dvh + 16px), calc(100dvh - 408px));
+  }
+}
+@media (min-width: 681px) and (min-height: 561px) {
+  body:has(.chess-lesson) > .top {
+    height: 60px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+  body:has(.chess-lesson) > .top .home img {
+    width: 30px;
+    height: 30px;
+  }
+  body:has(.chess-lesson) > .top .identity strong {
+    font-size: 25px;
+  }
+  body:has(.chess-lesson) > .top .identity small {
+    font-size: 9px;
+  }
+  body:has(.chess-lesson) > .top button {
+    padding: 7px 14px;
+    font-size: 14px;
+  }
+  .ac-content:has(.chess-lesson) {
+    padding-top: 12px;
+  }
+  .lesson-header {
+    min-height: 32px;
+    margin-bottom: 8px;
+  }
+  .lesson-header .ac-button {
+    min-height: 32px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+  .rook-dialogue .coach-bubble {
+    padding-top: 11px;
+    padding-bottom: 11px;
+  }
+  .lesson-help {
+    padding-top: 127px;
+  }
+}
+@media (max-width: 680px) {
+  .academy-nav {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    gap: 8px;
+  }
+  .academy-nav > div {
+    gap: 3px;
+  }
+  .academy-nav .ac-button.tab {
+    padding: 6px 9px;
+    min-height: 36px;
+  }
+  .unit-hero {
+    min-height: 127px;
+    padding: 17px 18px;
+  }
+  .unit-hero h1 {
+    font-size: 25px;
+  }
+  .unit-hero p {
+    margin-top: 7px;
+  }
+  .unit-selector {
+    gap: 3px;
+    margin-bottom: 13px;
+  }
+  .resume-strip {
+    padding: 10px 12px;
+    margin-top: 15px;
+    gap: 9px;
+    font-size: 10px;
+  }
+  .resume-strip .ac-button {
+    padding: 8px 10px;
+    font-size: 11px;
+    min-height: 37px;
+  }
+  .lesson-path {
+    padding-top: 106px;
+    min-height: 904px;
+  }
+  .path-track {
+    top: 131px;
+  }
+}
+
+.practice-preview {
+  background: #edf3df;
+  border: 2px solid #d9e4cb;
+  border-radius: 17px;
+  padding: 18px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 20px;
+}
+.practice-board {
+  width: 220px;
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  border: 5px solid #315e4b;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px #183c2e;
+  transform: rotate(-3deg);
+}
+.practice-cards article:nth-child(2) .practice-board {
+  transform: rotate(3deg);
+}
+.practice-board > span {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+}
+.practice-board > span.light {
+  background: #f0eacf;
+}
+.practice-board > span.dark {
+  background: #86ad89;
+}
+.practice-board svg {
+  width: 100%;
+  height: 100%;
+}
+.game-help > .ac-button {
+  width: 100%;
+}
+.game-notebook {
+  font-size: 12px;
+  color: #597754;
+}
+.game-help .fine-print {
+  font-size: 11px;
+}
+@media (max-width: 680px) {
+  .practice-preview {
+    padding: 13px;
+    margin-bottom: 15px;
+  }
+  .practice-board {
+    width: 190px;
+  }
+  .chess-lesson .game-help {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .game-help > .thinking-card {
+    grid-column: 1/-1;
+  }
+  .game-help > .ac-button {
+    font-size: 12px;
+    min-height: 36px;
+    padding: 8px;
+  }
+  .game-notebook,
+  .game-help .fine-print {
+    grid-column: 1/-1;
+  }
+  .chess-lesson .game-help .thinking-card > h2 {
+    grid-row: 1;
+  }
+  .chess-lesson .game-help .thinking-card > .ac-button {
+    grid-row: 1;
+  }
+  .practice-game .lesson-header > strong {
+    font-size: 12px;
+    flex: 1;
+  }
+  .practice-game .lesson-header > span {
+    display: none;
+  }
+}
+
+.summary-celebration {
+  width: 260px;
+  height: 240px;
+  border-radius: 50%;
+  background: #edf6d7;
+  position: relative;
+  margin: 25px auto 30px;
+  border: 5px solid #dfedc0;
+}
+.summary-celebration > .academy-coach {
+  width: 214px;
+  position: absolute;
+  bottom: 0;
+  left: 17px;
+}
+.summary-celebration .confetti {
+  position: absolute;
+  color: #dca42f;
+  z-index: 2;
+  font-size: 34px;
+  animation: rook-confetti 2.4s ease-in-out infinite;
+}
+.summary-celebration .c1 {
+  left: -16px;
+  top: 30px;
+}
+.summary-celebration .c2 {
+  right: -15px;
+  top: 19px;
+  font-size: 48px;
+  animation-delay: 0.5s;
+}
+.summary-celebration .c3 {
+  left: 6px;
+  bottom: 20px;
+  color: #43a57a;
+  animation-delay: 1s;
+}
+.summary-celebration .c4 {
+  right: -13px;
+  bottom: 32px;
+  color: #43a57a;
+  animation-delay: 0.3s;
+}
+@keyframes rook-confetti {
+  50% {
+    transform: translateY(-10px) rotate(15deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .summary-celebration .confetti {
+    animation: none;
+  }
+}

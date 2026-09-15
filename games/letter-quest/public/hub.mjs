@@ -5,9 +5,9 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const button=(label,action,classes='button primary',extra='')=>`<button class="${classes}" data-action="${action}" ${extra}>${label}</button>`;
 export const NAV_ITEMS=[['practice','⌂','Learn'],['matches','♞','Matches'],['maze','⬡','Labyrinth'],['soccer','⚽','Soccer'],['adventure','🗺','Story'],['quests','▣','Quests'],['league','♜','Leaderboard']];
 export function routeTab(hash){const raw=hash.replace(/^#/,'');const key=raw==='leaderboard'?'league':raw;return [...NAV_ITEMS.map(n=>n[0]),'treasure','parents','reading','rescue'].includes(key)?key:'practice';}
-export function navItems(tab,p){
+export function navItems(tab,p,{grouped=false}={}){
  const ready=questBoard(p).quests.filter(q=>q.progress>=q.target&&!q.claimed).length;
- const items=NAV_ITEMS.map(item=>item[0]==='maze'?(p.id==='beginner'?['rescue','♜','Rescues']:['maze','⬡','Letter maze']):item);
+ const items=NAV_ITEMS.filter(item=>!grouped||!['soccer','maze'].includes(item[0])).map(item=>item[0]==='maze'?(p.id==='beginner'?['rescue','♜','Rescues']:['maze','⬡','Letter maze']):item);
  return items.map(([key,icon,label])=>button(`<span class="nav-icon" aria-hidden="true">${icon}</span><span class="nav-label">${label}</span>${key==='quests'&&ready?`<b class="nav-count" aria-label="${ready} rewards ready">${ready}</b>`:''}`,`tab:${key}`,`nav-item ${tab===key||key==='quests'&&tab==='treasure'?'selected':''}`,`aria-label="${label}" ${tab===key?'aria-current="page"':''}`)).join('');
 }
 export function mazeHome(p){

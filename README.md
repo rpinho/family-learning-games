@@ -1,25 +1,25 @@
 # Family Learning Games
 
-![Family Learning Games — gameplay previews of all seven games](docs/media/social-preview.png)
+![Family Learning Games — gameplay previews of all eight games](docs/media/social-preview.png)
 
-**One app. Seven ways to play.** A single game-picker home screen brings together seven games for reading, numbers, drawing, mazes, strategy, and live soccer dribbling. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, not a public online classroom or hosted play service.
+**One app. Eight ways to play.** A single game-picker home screen brings together eight games for reading, numbers, drawing, mazes, chess, strategy, and soccer. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, not a public online classroom or hosted play service.
 
 After setup, open **http://localhost:4810/**. Choose a player once; their name stays large at the top and their progress stays separate. Use **Games** to return home, **Refresh** to reload, and **Grown-ups** to change the device's player.
 
-[Install in one command](#one-command-first-run) · [Let an agent install it](#let-a-coding-agent-install-it) · [Explore the games](#seven-games-seven-different-adventures) · [Privacy](PRIVACY.md)
+[Install in one command](#one-command-first-run) · [Let an agent install it](#let-a-coding-agent-install-it) · [Explore the games](#eight-games-eight-different-adventures) · [Privacy](PRIVACY.md)
 
-## Seven games. Seven different adventures.
+## Eight games. Eight different adventures.
 
-**[Dribble Duel](hub/README.md#dribble-duel)** adds live soccer to the collection. Choose **Live dribbling** or the **Original puzzle**. In live play, draw a lunge, change direction and dribble into a goal with posts and a net. Lift to stop—not shoot. Goals unlock a short spoken letter/word reward. Twelve instantly adjustable live levels now include much faster defenders that chase and recover. Both play styles preserve their separate progress, with server-validated replays for live play. Screen play is not physical ball-control training. [One-app installation and soccer rules →](hub/README.md)
+**[Rook Academy](hub/CHESS.md)** adds a chess continuation: 12 units, 72 short lessons, two difficulty bands, an original speaking coach, hints, review and local practice games. **Maze Garden** now gathers all three maze variants, and **Soccer Club** gathers all three soccer variants. Choose any version; existing progress is preserved.
 
 Drag, trace, steer, aim, and think ahead. Pick an activity and a manageable challenge, then play together.
 
 <table>
 <tr>
 <td width="50%" valign="top">
-<a href="games/letter-quest"><img src="docs/media/letter-quest.png" alt="Letter Quest: a first-person green labyrinth with a letter-position puzzle" width="100%"></a>
+<a href="games/letter-quest"><img src="docs/media/letter-quest.png" alt="Letter Quest: reading missions with word building, sentence activities and an original coach" width="100%"></a>
 <strong>Letter Quest — words open worlds.</strong><br>
-Letter tracing, reading missions, stories, soccer, and letter puzzles inside a 3D labyrinth.
+Letter tracing, reading missions, word building and story adventures.
 </td>
 <td width="50%" valign="top">
 <a href="games/word-arcade"><img src="docs/media/word-arcade.png" alt="Word Arcade: a spaceship aims at moving letters to complete a word" width="100%"></a>
@@ -36,7 +36,7 @@ Count objects, combine groups, take away, continue patterns, draw, trace, and ex
 <td width="50%" valign="top">
 <a href="games/maze-garden"><img src="docs/media/maze-garden.png" alt="Maze Garden: a 19-by-19 tracing maze with a rabbit, a carrot and adjustable difficulty" width="100%"></a>
 <strong>Maze Garden — find your own way.</strong><br>
-Adaptive 2D tracing mazes with changing themes, manual difficulty, zoom, and optional puzzle stops.
+Choose tracing mazes, the 3D letter labyrinth, or obstacle rescues. Each keeps its own progress.
 </td>
 </tr>
 <tr>
@@ -53,11 +53,15 @@ Spoken letter and word targets with adjustable motion and aiming difficulty. Set
 </tr>
 <tr>
 <td width="50%" valign="top">
-<a href="hub/README.md#dribble-duel"><img src="docs/media/dribble-duel.png" alt="Dribble Duel: a live soccer pitch with a defender, player, ball, and netted goal" width="100%"></a>
-<strong>Dribble Duel — draw a lunge. Find the goal.</strong><br>
-Change direction, carry the ball past the defender, and earn a spoken letter or word reward.
+<a href="hub/CHESS.md"><img src="docs/media/chess.png" alt="Rook Academy: a tactical chess position with Rook and staged hints" width="100%"></a>
+<strong>Rook Academy — your next good move.</strong><br>
+Short tactical positions, a winding lesson path, two difficulty bands, review and practice games.
 </td>
-<td width="50%"></td>
+<td width="50%" valign="top">
+<a href="hub/README.md#dribble-duel"><img src="docs/media/dribble-duel.png" alt="Dribble Duel: a live soccer pitch with a defender, player, ball, and netted goal" width="100%"></a>
+<strong>Soccer Club — three ways to play.</strong><br>
+Choose live dribbling, feint puzzles, or word penalties. Existing saves stay separate.
+</td>
 </tr>
 </table>
 
@@ -68,20 +72,21 @@ Change direction, carry the ball past the defender, and earn a spoken letter or 
 - **Touch-friendly:** drag objects, trace paths, steer a spaceship, and aim with a finger.
 - **Choose the challenge:** separate Beginner and Explorer presets; adjustable or adaptive challenges vary by game.
 - **Keep progress local:** saved rounds and diagnostics live on your own server. No ads or game-owned analytics.
-- **One icon:** one installed home screen for all seven games; no separate installs needed.
+- **One icon:** one installed home screen for all eight games; no separate installs needed.
 - **Easy to start:** one setup command for the whole collection. No AI API key required.
 
 ## Pick a game
 
 | Game | What is inside | Default local link |
 | --- | --- | --- |
-| [Dribble Duel](hub/README.md#dribble-duel) | Feint, read the response, dribble past | http://localhost:4810/#dribble-duel |
-| [Letter Quest](games/letter-quest) | Letter tracing, reading practice, stories, soccer and 3D mazes | http://localhost:4810/#letter-quest |
+| [Letter Quest](games/letter-quest) | Letter tracing, reading practice and stories | http://localhost:4810/#letter-quest |
 | [Word Arcade](games/word-arcade) | Moving spaceship challenges, word building, rhymes and flashcards | http://localhost:4810/#word-arcade |
 | [Number Park](games/number-park) | Counting, patterns, manipulatives, drawing, reading and harder math | http://localhost:4810/#number-park |
-| [Maze Garden](games/maze-garden) | Adaptive 2D tracing mazes with optional puzzle stops | http://localhost:4810/#maze-garden |
+| [Maze Garden](games/maze-garden) | Tracing mazes, 3D letter labyrinths and obstacle rescues | http://localhost:4810/#maze-garden |
 | [Three in a Row](games/three-in-a-row) | Tic-tac-toe against Rook and one-move practice puzzles | http://localhost:4810/#three-in-a-row |
 | [Target Trail](games/target-trail) | Moving targets, adjustable aiming difficulty and spoken letters/words | http://localhost:4810/#target-trail |
+| [Rook Academy](hub/CHESS.md) | 72 short chess lessons, review and local practice games | http://localhost:4810/#chess |
+| [Soccer Club](hub/README.md#dribble-duel) | Live dribbling, feint puzzles and word penalties | http://localhost:4810/#dribble-duel |
 
 ## Run on your computer
 
@@ -101,7 +106,7 @@ If you download the repository ZIP instead, unzip it, open a terminal in its fol
 
 Give your agent this request:
 
-> Install and run https://github.com/rpinho/family-learning-games locally. Read its AGENTS.md and README first. Check Node/npm, use a new folder, run npm run play, verify all seven games through the hub, and give me the single home-screen link. Keep it private and preserve any existing saves.
+> Install and run https://github.com/rpinho/family-learning-games locally. Read its AGENTS.md and README first. Check Node/npm, use a new folder, run npm run play, verify all eight games through the hub, and give me the single home-screen link. Keep it private and preserve any existing saves.
 
 [AGENTS.md](AGENTS.md) contains the installation, verification, data-preservation and privacy instructions. No API key or paid AI service is needed to run the games.
 

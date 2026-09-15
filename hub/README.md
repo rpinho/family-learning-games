@@ -1,14 +1,20 @@
 # One app: Family Learning Games
 
-Run `npm run play` at the repository root, then open **http://localhost:4810/**. This home screen contains all six existing games plus **Dribble Duel**. Install this home screen once, not each game. Browser installation behavior depends on platform and secure-origin support; plain HTTP on a LAN can retain browser security chrome.
+Run `npm run play` at the repository root, then open **http://localhost:4810/**. This home screen contains eight destinations, including **Rook Academy**, **Maze Garden** and **Soccer Club**. Install this home screen once, not each game. Browser installation behavior depends on platform and secure-origin support; plain HTTP on a LAN can retain browser security chrome.
 
 Beginner and Explorer links: `/?player=beginner` and `/?player=explorer`. The hub remembers the selected preset on the device. The name remains large at the top. Use **Grown-ups** on the home screen to change it. This arithmetic gate prevents accidental changes; it is not authentication.
 
 Games stay inside the hub under `/g/<game>/<player>/`. A loopback-only reverse proxy preserves the original game servers and saves. Same-origin frame permissions are applied only by the hub; standalone apps keep their original protections. Browser preferences are scoped per game/preset. The single installed app has one manifest, icon, scope and start URL. There is no service worker cache, cloud server or offline-play guarantee. Return with **Games**; **Refresh** stays available. Pending writes or unsaved input prompt a confirmation rather than trapping navigation.
 
+## Activity families
+
+**Maze Garden** offers tracing mazes, the 3D letter labyrinth, and obstacle rescues. **Soccer Club** offers the three soccer variants below. Each keeps its previous save location; Letter Quest’s former activities still use its backend, with no profile migration. Standalone Letter Quest links remain compatible. Its hub navigation now focuses on literacy and stories, with a book icon. Reading exercises with distinct mechanics in Word Arcade, Number Park and Target Trail remain separate.
+
+**[Rook Academy](CHESS.md)** is the new chess destination: 12 units, 72 short lessons, two difficulty bands, an original speaking coach, spaced review and local practice games. Chess owns the rook icon.
+
 ## Dribble Duel
 
-A **Play style** dropdown switches between **Live dribbling** and **Original puzzle · take turns**. The choice is remembered per player on that device. Switching saves the current live position and keeps the original puzzle state separately; it does not wait until a whole round finishes. Pending network saves must settle first, with a visible error if they fail. The original version has the Fake left/right and Dribble left/Nutmeg/right controls, eight puzzle difficulties and its earlier saved progress.
+The **Soccer Club** picker offers **Live dribbling**, **Feint puzzles** (the original turn-based game), and **Word penalties** (moved from Letter Quest). The activity bar switches between them. Switching saves the current live position and keeps the original puzzle state separately; it does not wait until a whole round finishes. Pending network saves must settle first, with a visible error if they fail. The original version has the Fake left/right and Dribble left/Nutmeg/right controls, eight puzzle difficulties and its earlier saved progress.
 
 In **Live dribbling**, drag anywhere on the pitch to steer your blue player and ball. The faster orange defender predicts from delayed observed movement, cuts off the goal-side route and chases after being beaten. A yellow line telegraphs a committed lunge; a shrinking ring shows recovery. It cannot read the finger, teleport or instantly reverse a committed lunge.
 

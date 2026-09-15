@@ -3,7 +3,9 @@ import {mountClassic} from './dribble-classic.mjs';
 export function mountSoccer(root,options){
  const key='family-soccer-mode:'+options.player;let mode='live',child,alive=true,switching=false;
  try{if(localStorage.getItem(key)==='classic')mode='classic';}catch{}
+ if(['live','classic'].includes(options.initialMode))mode=options.initialMode;
  root.innerHTML='<div class="soccer-mode-bar"><label for="soccer-mode">Play style <select id="soccer-mode"><option value="live">Live dribbling</option><option value="classic">Original puzzle · take turns</option></select></label><span class="mode-note">You can switch any time. Both saves are kept.</span><span class="mode-error" role="status"></span></div><div class="soccer-game"></div>';
+ if(options.initialMode)root.querySelector('.soccer-mode-bar').hidden=true;
  const select=root.querySelector('select'),surface=root.querySelector('.soccer-game'),error=root.querySelector('.mode-error');
  function mount(){select.value=mode;child=(mode==='live'?mountDribble:mountClassic)(surface,options);}
  select.onchange=async()=>{
@@ -12,5 +14,5 @@ export function mountSoccer(root,options){
   catch(e){select.value=mode;error.textContent=e.message||'Could not save yet. Please try again.';}
   finally{switching=false;if(alive)select.disabled=false;}
  };
- mount();const dispose=()=>{alive=false;child?.();};dispose.busy=()=>switching||child?.busy?.();return dispose;
+ mount();const dispose=()=>{alive=false;child?.();};dispose.busy=()=>switching||child?.busy?.();dispose.prepareLeave=()=>child?.prepareLeave?.();return dispose;
 }
