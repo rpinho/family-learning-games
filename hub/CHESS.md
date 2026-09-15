@@ -6,7 +6,7 @@ Open **http://localhost:4810/#chess** after the normal collection setup. An orig
 
 Twelve units, six lessons per unit, five positions per lesson. Most positions require two to four learner moves, with the opponent's replies played automatically. Themes progress through forcing calculation, deflection, removing defenders, in-between moves, clearance, discovered attacks, mating nets, quiet threats, defense, passed pawns, rook endings and sacrifices. All units are available immediately.
 
-Each unit starts with an original explanation and a question to ask before moving. Its first five lessons rise through the chosen position band. Checkpoints mix that unit with earlier ideas. The two **position difficulty** choices keep the themes while changing the calculation burden:
+Each unit has an original explanation available on request and a short spoken task cue. Its first five lessons rise through the chosen position band. Checkpoints mix that unit with earlier ideas. The two **position difficulty** choices keep the themes while changing the calculation burden:
 
 - **Stretch:** deeper combinations, selected from roughly 1300–2050 Lichess puzzle ratings.
 - **Guided:** clearer patterns, roughly 700–1300 puzzle ratings.
@@ -16,6 +16,12 @@ These are **puzzle ratings, not estimates of the child's playing Elo**. Finishin
 Hints progress from idea → piece → marked move. An incorrect legal move visibly travels back to its starting square, keeps the original position available and offers a local engine reply to inspect. The board supports click/tap, dragging, arrow keys and Enter/Space, both orientations, castling, en passant and all four promotions. Correct exchanges animate in order; reduced-motion preferences are respected. Solved positions reveal a plain-language recap.
 
 Mistakes and hints mark a result as assisted. Assisted puzzles return in review; independent solves expand the interval up to fourteen days. Replaying a lesson preserves the best result. There are no lives, countdowns, purchases or claimed rating gains.
+
+## Separate starting levels and quieter coaching
+
+The generic Beginner preset starts Guided with a Friendly opponent; Explorer starts Stretch with a Club opponent. A private install can specify `chess: {"band":"guided","strength":"friendly"}` on each player in its external configuration. These starting choices apply once; later manual selections stay in control. Existing lesson boards and games finish at their original settings. New lessons, reviews and practice games use the selected difficulty; earlier review evidence remains available when returning to its band.
+
+Rook automatically gives short task cues, with repeated cues suppressed for 90 seconds and other automatic speech spaced at least 15 seconds apart. Routine correct moves, mistakes, restarts and assisted finishes use visual feedback without automatic commentary. Requested hints still speak; the same hint line is suppressed for 20 seconds. Tapping Rook always replays the guidance, including when coaching is muted. Lesson stars distinguish independent solves (filled) from assisted practice (outlined); hints never cost lives or block play.
 
 ## Practice games
 

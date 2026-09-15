@@ -10,7 +10,7 @@ import {chessService} from './chess-service.mjs';
 const here=fileURLToPath(new URL('.',import.meta.url)),root=resolve(here,'..'),data=process.env.FAMILY_DATA||join(root,'.data','hub');
 const ids=['letter-quest','word-arcade','number-park','maze-garden','three-in-a-row','target-trail'];
 const base=Number(process.env.BASE_PORT||4811);
-const defaults={players:[{id:'beginner',name:'Beginner',level:1},{id:'explorer',name:'Explorer',level:3},{id:'admin',name:'Admin',level:1}],games:Object.fromEntries(ids.map((id,i)=>[id,base+i])),hosts:[]};
+const defaults={players:[{id:'beginner',name:'Beginner',level:1,chess:{band:'guided',strength:'friendly'}},{id:'explorer',name:'Explorer',level:3,chess:{band:'stretch',strength:'club'}},{id:'admin',name:'Admin',level:1}],games:Object.fromEntries(ids.map((id,i)=>[id,base+i])),hosts:[]};
 const config=process.env.FAMILY_CONFIG?JSON.parse(await readFile(process.env.FAMILY_CONFIG,'utf8')):defaults;
 if(!config.players?.length||config.players.some(p=>!/^\w{1,24}$/.test(p.id)||typeof p.name!=='string')||ids.some(id=>!Number.isInteger(config.games[id])||config.games[id]<1024||config.games[id]>65535))throw Error('Invalid local hub configuration');
 const players=config.players.map(p=>p.id),hosts=new Set(['localhost','127.0.0.1',hostname().toLowerCase(),...Object.values(networkInterfaces()).flat().filter(Boolean).map(x=>x.address),...(config.hosts||[])]);
@@ -20,9 +20,9 @@ const send=(res,status,obj)=>{res.writeHead(status,{'Content-Type':'application/
 async function load(player){try{return JSON.parse(await readFile(join(data,player+'.json'),'utf8'));}catch(e){if(e.code==='ENOENT')return fresh(player,config.players.find(x=>x.id===player).level||1);throw e;}}
 const icons={'letter-quest':'games/letter-quest/public/icons/app-192-v2.png','word-arcade':'games/word-arcade/public/icons/app-192-v1.png','number-park':'games/number-park/public/icons/number-park-192.png','maze-garden':'games/maze-garden/public/icon-192.png','three-in-a-row':'games/three-in-a-row/dist/icon-192.png','target-trail':'games/target-trail/dist/icon-192.png'};
 const types={'.html':'text/html','.mjs':'text/javascript','.css':'text/css','.jpg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml','.webmanifest':'application/manifest+json','.woff2':'font/woff2'};
-const files=['chess/pieces.mjs','chess/academy-world.png','catalog.mjs','letter-book.svg','chess/rook.mjs','chess/app.mjs','chess/style.css','chess/art.mjs','chess/board.mjs','chess/rules.mjs','chess/curriculum.mjs','chess/icon.svg','chess/CHESS-JS-LICENSE.txt','index.html','hub.mjs','style.css','bridge.mjs','dribble-ui.mjs','dribble-classic.mjs','soccer-mode.mjs','dribble-live.mjs','dribble-live-v1.mjs','dribble-live-v2.mjs','reading-reward.mjs','live-pitch.mjs','pitch.mjs','save-request.mjs','icon.svg','icon-192.png','icon-512.png','manifest.webmanifest'];
-const HUB_VERSION='family-games-2026-09-15-board-first-1';
-const chess=chessService({data,players,log});
+const files=['chess/narration.mjs','chess/pieces.mjs','chess/academy-world.png','catalog.mjs','letter-book.svg','chess/rook.mjs','chess/app.mjs','chess/style.css','chess/art.mjs','chess/board.mjs','chess/rules.mjs','chess/curriculum.mjs','chess/icon.svg','chess/CHESS-JS-LICENSE.txt','index.html','hub.mjs','style.css','bridge.mjs','dribble-ui.mjs','dribble-classic.mjs','soccer-mode.mjs','dribble-live.mjs','dribble-live-v1.mjs','dribble-live-v2.mjs','reading-reward.mjs','live-pitch.mjs','pitch.mjs','save-request.mjs','icon.svg','icon-192.png','icon-512.png','manifest.webmanifest'];
+const HUB_VERSION='family-games-2026-09-15-quieter-chess-1';
+const chess=chessService({data,players,log,settingsFor:Object.fromEntries(config.players.map(p=>[p.id,p.chess||{}]))});
 const server=http.createServer(async(req,res)=>{
  res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','SAMEORIGIN');
  try{
@@ -56,5 +56,5 @@ const server=http.createServer(async(req,res)=>{
   const bytes=await readFile(file);res.writeHead(200,{'Content-Type':types[extname(file)]||'application/octet-stream','Content-Length':bytes.length});res.end(req.method==='HEAD'?undefined:bytes);
  }catch(e){await log({type:'error',detail:e.message});send(res,e.code==='ENOENT'?404:500,{error:'Could not load. Try Refresh.'});}
 });
-process.on('SIGTERM',()=>{chess.close();server.close(()=>process.exit(0));});
+process.on('SIGTERM',()=>{server.close(async()=>{chess.close();await queue;process.exit(0);});});
 server.requestTimeout=20000;server.headersTimeout=20000;server.listen(Number(process.env.PORT||base-1),process.env.HOST||'127.0.0.1',()=>console.log(`Family Learning Games: http://localhost:${server.address().port}`));

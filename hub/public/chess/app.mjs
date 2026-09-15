@@ -2,6 +2,7 @@ import { UNITS, LESSONS, lessonFor, NAMES, VOICE } from "./curriculum.mjs";
 import { coach, piece } from "./art.mjs";
 import { mountBoard } from "./board.mjs";
 import { Chess } from "./rules.mjs";
+import { narrationFor, createNarrationGate } from "./narration.mjs";
 const esc = (s) =>
   String(s ?? "").replace(
     /[&<>"']/g,
@@ -41,8 +42,10 @@ export function mountChess(root, { player, name, event = () => {} }) {
       .then((m) => (voiceManifest = m.clips || {}))
       .catch(() => {}),
     speechGeneration = 0;
-  async function say(text, { force = false } = {}) {
+  const allowNarration = createNarrationGate();
+  async function say(text, { force = false, kind = "automatic" } = {}) {
     if ((!profile?.settings.sound && !force) || !text) return;
+    if (!allowNarration(text, { force, kind })) return;
     utterance();
     const generation = speechGeneration;
     await voiceReady;
@@ -189,18 +192,8 @@ export function mountChess(root, { player, name, event = () => {} }) {
           clickSound(
             body.type === "move" && profile.session?.phase === "solved",
           );
-        const text = ["begin", "next"].includes(body.type)
-          ? profile.session?.phase === "summary"
-            ? VOICE.checkpoint
-            : currentUnit().cue
-          : body.type === "game-hint"
-            ? VOICE.gameHint
-            : body.type === "move" || body.type === "hint"
-              ? profile.session?.feedback?.voice || VOICE.progress
-              : body.type === "start"
-                ? currentUnit().idea
-                : null;
-        if (text) say(text);
+        const narration = narrationFor(body.type, profile, currentUnit().cue);
+        if (narration) say(narration.text, { kind: narration.kind });
         event("chess_action", body.type);
       } catch (e) {
         if (preview) await preview.catch(() => {});
@@ -357,7 +350,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
     if (s.phase === "intro")
       return `<section class="lesson-intro">${coach()}<h1>${title}</h1>${btn("▶", "begin", "primary large", 'aria-label="Start the puzzles"')}${btn(glyph("hear"), "hear", "text", 'aria-label="Hear the idea"')}</section>`;
     if (s.phase === "summary")
-      return `<section class="lesson-summary">${coach("happy")}<h1>Lesson complete!</h1><div class="summary-stars" aria-label="${s.results.length} positions completed">${s.results.map(() => "★").join(" ")}</div>${btn("Continue ➜", "path", "primary large")}<details><summary>Practice notes</summary><p>${s.results.filter((r) => r.independent).length} of ${s.results.length} without hints.</p><p>${u.idea}</p></details></section>`;
+      return `<section class="lesson-summary">${coach("happy")}<h1>Lesson complete!</h1><div class="summary-stars" aria-label="${s.results.length} positions completed, ${s.results.filter((r) => r.independent).length} without help">${s.results.map((r) => r.independent ? "★" : "☆").join(" ")}</div>${btn("Continue ➜", "path", "primary large")}<details><summary>Practice notes</summary><p>${s.results.filter((r) => r.independent).length} of ${s.results.length} without hints.</p><p>${u.idea}</p></details></section>`;
     const f = s.feedback,
       solved = s.phase === "solved";
     return `<section class="chess-lesson"><header class="lesson-header">${iconButton("close", "path", "Back to lesson path")}<div class="lesson-progress" role="progressbar" aria-label="Lesson progress" aria-valuenow="${s.index + (solved ? 1 : 0)}" aria-valuemin="0" aria-valuemax="${s.total}"><span style="width:${((s.index + (solved ? 1 : 0)) / s.total) * 100}%"></span></div>${btn(glyph(profile.settings.sound ? "hear" : "muted"), "sound", "sound", `aria-label="${profile.settings.sound ? "Mute coaching" : "Enable coaching"}"`)}</header><div class="play-table ${solved ? "solved" : ""}">${arenaHead(shortPrompt(), solved ? "happy" : f?.kind === "incorrect" ? "thinking" : "idle")}<div id="chess-board"></div><div id="board-selection" class="sr-only" aria-live="polite"></div><footer class="board-controls">${iconButton("undo", "restart", "Restart this position", solved ? "disabled" : "")}${solved ? btn("➜", "next", "primary next-puzzle", `aria-label="${s.index + 1 === s.total ? "Finish lesson" : "Next position"}"`) : `<div class="hint-control">${btn(glyph("hint") + "<span>Hint</span>", "hint", "hint-button", s.hints >= 3 ? 'disabled aria-label="All hints shown"' : 'aria-label="Get a hint"')}<span class="hint-dots" aria-label="${s.hints} of 3 hints used">${[1, 2, 3].map((n) => `<i class="${s.hints >= n ? "on" : ""}"></i>`).join("")}</span></div>`}<details class="board-more"><summary aria-label="More options">•••</summary><div>${f?.refutation ? btn(analysisView ? "Back to puzzle" : "See the reply", "explain", "text") : ""}<p>${esc(title)}</p><p>${esc(s.puzzle.goal)}</p>${solved ? `<ol>${s.solution.map((m) => `<li>${esc(m.text)}</li>`).join("")}</ol>` : ""}<small>Lichess ${s.puzzle.id} · CC0</small></div></details></footer></div></section>`;

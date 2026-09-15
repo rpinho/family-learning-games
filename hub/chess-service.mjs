@@ -1,8 +1,8 @@
 import { readFile, writeFile, rename, mkdir } from "node:fs/promises";
 import { join } from "node:path";
-import { freshChess, publicChess, actChess } from "./chess-state.mjs";
+import { freshChess, publicChess, actChess, applyChessDefaults } from "./chess-state.mjs";
 import { LocalEngine } from "./stockfish.mjs";
-export function chessService({ data, players, log }) {
+export function chessService({ data, players, log, settingsFor = {} }) {
   const engine = new LocalEngine(),
     queues = new Map();
   const dir = join(data, "chess");
@@ -12,9 +12,9 @@ export function chessService({ data, players, log }) {
   };
   async function load(player) {
     try {
-      return JSON.parse(await readFile(join(dir, player + ".json"), "utf8"));
+      return applyChessDefaults(JSON.parse(await readFile(join(dir, player + ".json"), "utf8")), settingsFor[player]);
     } catch (e) {
-      if (e.code === "ENOENT") return freshChess();
+      if (e.code === "ENOENT") return applyChessDefaults(freshChess(), settingsFor[player]);
       throw e;
     }
   }

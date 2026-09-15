@@ -37,6 +37,14 @@ export const freshChess = () => ({
   settings: { sound: true, strength: "friendly", band: "stretch" },
   course: COURSE_VERSION,
 });
+// Apply an install's explicit per-player starting choices once. Keep active boards intact.
+export function applyChessDefaults(p, defaults = {}) {
+  if (p.settings.defaultsApplied) return p;
+  if (["guided", "stretch"].includes(defaults.band)) p.settings.band = defaults.band;
+  if (["friendly", "club", "challenge"].includes(defaults.strength)) p.settings.strength = defaults.strength;
+  p.settings.defaultsApplied = true;
+  return p;
+}
 export function lessonPuzzles(id, band = "stretch") {
   const l = lessonFor(id);
   if (!l) return [];
@@ -48,6 +56,9 @@ export function lessonPuzzles(id, band = "stretch") {
     own[4] = groups[UNITS[Math.max(0, l.unit - 2)].theme][28];
   }
   return own.map((p) => p.id);
+}
+function bandPuzzleIds(band) {
+  return new Set(Object.values(band === "guided" ? GUIDED : GROUPS).flat().map(p => p.id));
 }
 function boardAt(s) {
   const p = PUZZLES[s.ids[s.index]],
@@ -155,7 +166,7 @@ function finishLesson(p, now) {
   p.history = p.history.slice(-100);
 }
 export function publicChess(p) {
-  const s = p.session;
+  const s = p.session, reviewIds = bandPuzzleIds(p.settings.band);
   let session = null;
   if (s) {
     const puzzle = PUZZLES[s.ids[s.index]],
@@ -214,8 +225,8 @@ export function publicChess(p) {
     current: p.current,
     course: p.course,
     completed: p.completed,
-    reviewDue: Object.values(p.review).filter(
-      (r) => r.due <= Date.now() || r.needsPractice,
+    reviewDue: Object.entries(p.review).filter(
+      ([id, r]) => reviewIds.has(id) && (r.due <= Date.now() || r.needsPractice),
     ).length,
     history: p.history.slice(-20),
     session,
@@ -238,8 +249,9 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
   if (input.type === "start") {
     let ids = lessonPuzzles(input.lesson, p.settings.band);
     if (input.lesson === "review") {
+      const eligible = bandPuzzleIds(p.settings.band);
       ids = Object.entries(p.review)
-        .filter(([id, r]) => PUZZLES[id] && (r.due <= now || r.needsPractice))
+        .filter(([id, r]) => eligible.has(id) && (r.due <= now || r.needsPractice))
         .sort(
           (a, b) =>
             Number(b[1].needsPractice) - Number(a[1].needsPractice) ||
@@ -249,7 +261,7 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
         .map(([id]) => id);
       if (!ids.length)
         ids = Object.values(PUZZLES)
-          .filter((x) => p.review[x.id])
+          .filter((x) => eligible.has(x.id) && p.review[x.id])
           .slice(-5)
           .map((x) => x.id);
       if (!ids.length) ids = lessonPuzzles(LESSONS[0].id, p.settings.band);
