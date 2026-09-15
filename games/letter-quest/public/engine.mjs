@@ -32,13 +32,13 @@ const raw = {
 };
 export const GLYPHS = Object.fromEntries(Object.entries(raw).map(([k,v])=>[k,parse(v)]));
 export const KINGDOMS = [
- {name:'The First Move',gem:'Jade',color:'#46bd90',icon:'♟',intro:'Every great adventure starts with one move.'},
- {name:'Knight’s Garden',gem:'Sapphire',color:'#58b8f3',icon:'♞',intro:'New letters. Clever little moves.'},
- {name:'Bishop’s Bridge',gem:'Amethyst',color:'#ac85ed',icon:'♝',intro:'Build your alphabet, one bridge at a time.'},
- {name:'Rook’s Workshop',gem:'Ruby',color:'#ee7790',icon:'♜',intro:'Big letters meet their little partners.'},
- {name:'Queen’s Library',gem:'Topaz',color:'#edb951',icon:'♛',intro:'A growing collection of letters and numbers.'},
- {name:'King’s Castle',gem:'Emerald',color:'#3fcdb5',icon:'♚',intro:'Let your memory make the next move.'},
- {name:'The Grandmaster',gem:'Diamond',color:'#a4d7e6',icon:'★',intro:'Small steps have brought you a long way.'}
+ {name:'The First Word',gem:'Jade',color:'#46bd90',icon:'📖',intro:'Every reading adventure starts with one word.'},
+ {name:'Alphabet Garden',gem:'Sapphire',color:'#58b8f3',icon:'🌷',intro:'New letters. New discoveries.'},
+ {name:'Letter Bridge',gem:'Amethyst',color:'#ac85ed',icon:'🌉',intro:'Build your alphabet, one bridge at a time.'},
+ {name:'Word Workshop',gem:'Ruby',color:'#ee7790',icon:'🧩',intro:'Big letters meet their little partners.'},
+ {name:'Story Library',gem:'Topaz',color:'#edb951',icon:'📚',intro:'A growing collection of letters and numbers.'},
+ {name:'Memory Castle',gem:'Emerald',color:'#3fcdb5',icon:'🏰',intro:'Remember a letter. Build a word.'},
+ {name:'Reading Rainbow',gem:'Diamond',color:'#a4d7e6',icon:'★',intro:'Small steps have brought you a long way.'}
 ];
 export function freshProfile(id='explorer') {return {id,name:id==='beginner'?'Beginner':id==='demo'?'Explorer':id==='admin'?'Admin':'Explorer',seq:0,xp:0,gems:0,completed:0,inLesson:0,league:0,leagueBase:0,crowns:0,chests:0,skills:{},history:[],settings:{leftHanded:id!=='beginner',sound:true},revision:0};}
 export function resetProgress(p){return {...freshProfile(p.id),settings:{...p.settings},revision:p.revision+1,ignoreAttemptsThroughRevision:p.ignoreAttemptsThroughRevision||0};}
@@ -49,9 +49,9 @@ export const WORDS=[
  ['shark','🦈',3],['train','🚂',3],['snail','🐌',3],['whale','🐋',3],['grape','🍇',3],['snake','🐍',3],['robot','🤖',3],['tiger','🐯',3],['zebra','🦓',3],['lemon','🍋',3],['crown','👑',3],['chest','🧰',3]
 ].map(([word,picture,tier])=>({word,picture,tier}));
 export const DUEL_LEVELS=[
- {id:1,name:'Friendly',icon:'♟',description:'Copy short words · two-choice clues'},
- {id:2,name:'Clever',icon:'♞',description:'Four-letter words · smaller letter bank'},
- {id:3,name:'Boss',icon:'♛',description:'Five-letter words · tricky trails'}
+ {id:1,name:'Friendly',icon:'📖',description:'Copy short words · two-choice clues'},
+ {id:2,name:'Clever',icon:'🔤',description:'Four-letter words · smaller letter bank'},
+ {id:3,name:'Boss',icon:'👑',description:'Five-letter words · tricky trails'}
 ];
 export function recommendedDuelLevel(p){
  const recent=(p.duelHistory||[]).filter(m=>m.scoring==='single-point').slice(-2),base=1;
@@ -67,9 +67,9 @@ export function questBoard(p){
  const claimed=q.claimed||[];let chapter=0;
  while(['moves','words','matches'].every(key=>claimed.includes(`${chapter}:${key}`)))chapter++;
  return {chapter:chapter+1,quests:[
-  {key:'moves',icon:'⚡',title:'Make five good moves',description:'Correct answers in Learn or Matches.',target:5},
+  {key:'moves',icon:'⚡',title:'Solve five challenges',description:'Correct answers in Learn or Word games.',target:5},
   {key:'words',icon:'🔤',title:'Solve three word puzzles',description:'Spell a word or find its missing letter.',target:3},
-  {key:'matches',icon:'♞',title:'Finish a match with Rook',description:'Win, lose, or tie — play all five rounds.',target:1}
+  {key:'matches',icon:'🔤',title:'Finish a word game with Rook',description:'Win, lose, or tie — play all five rounds.',target:1}
  ].map(qt=>({...qt,id:`${chapter}:${qt.key}`,progress:Math.min(qt.target,Math.max(0,(q[qt.key]||0)-chapter*qt.target)),claimed:claimed.includes(`${chapter}:${qt.key}`),gems:10}))};
 }
 export function claimQuest(p,id){
@@ -283,7 +283,7 @@ export function applyAttempt(p,challenge,payload){
  }
  return {...result,xp:xp+(lesson?20:0)+bonus,lesson,chest,level:s.level,...(duel?{duel}:{})};
 }
-export function leagueRows(p){return [{name:p.name,xp:p.xp-p.leagueBase,you:true,icon:'♟'},...['Fern the fox','Pip the penguin','Luna the owl','Bram the bear'].map((name,i)=>({name,xp:[250,170,95,35][i]+p.league*35,icon:['🦊','🐧','🦉','🐻'][i]}))].sort((a,b)=>b.xp-a.xp);}
+export function leagueRows(p){return [{name:p.name,xp:p.xp-p.leagueBase,you:true,icon:'📖'},...['Fern the fox','Pip the penguin','Luna the owl','Bram the bear'].map((name,i)=>({name,xp:[250,170,95,35][i]+p.league*35,icon:['🦊','🐧','🦉','🐻'][i]}))].sort((a,b)=>b.xp-a.xp);}
 export function questRating(p){
  // Transparent game progression score, not a calibrated educational assessment or chess Elo.
  const score=400+Object.entries(p.skills).reduce((n,[key,s])=>n+Math.max(0,Math.min(3,s.level||0))*(key.startsWith('find:')?10:20),0);

@@ -1,5 +1,9 @@
 # Letter Quest
 
+## Literacy identity — September 15, 2026
+
+Letter Quest uses reading and word-game imagery throughout navigation, lesson paths, rewards and saved standings. The former Matches tab is labeled Word games; existing routes and progress remain compatible. The header shows the practice level without the old rating number. Rook and existing narration stay. Chess is a separate game in the family hub.
+
 Part of [Family Learning Games](../../README.md). Use the root setup and launcher for all six games.
 
 ## Run separately

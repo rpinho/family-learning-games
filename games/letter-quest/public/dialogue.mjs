@@ -150,7 +150,7 @@ export const FIXED_LINES = [
 export function allVoiceLines(){
   const lines=[...Object.values(DIALOGUE).flat(),...FIXED_LINES,...storyVoiceLines(),...mazeVoiceLines(),...soccerVoiceLines(),...readingVoiceLines(),'A point for Rook. Now let us solve it together.','First place! Your crown is yours. Stay and enjoy your victory.'];
   // Old open tabs can still ask for these clips during a deployment.
-  lines.push('My strategy was excellent. My answer was not.','That letter was clearly wearing a disguise.','My mustache pressed the wrong button. Very unprofessional.','Checkmate! Wait. Wrong game. Still counts.');
+  lines.push('My strategy was excellent. My answer was not.','That letter was clearly wearing a disguise.','My mustache pressed the wrong button. Very unprofessional.');
   for(const {word} of WORDS)for(const type of ['spell','gap'])lines.push(taskPrompt({type,word}));
   lines.push(taskPrompt({type:'sequence'}));
   for(const letter of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')lines.push(`The letter ${letter}.`);

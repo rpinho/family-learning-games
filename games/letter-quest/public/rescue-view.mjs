@@ -26,9 +26,9 @@ export function createRescueView(root,onAction,report){
   let actions='';
   if(s.paused)actions=button('▶ Resume rescue','resume');
   else if(s.phase==='plan')actions=modern?`<div class="rescue-actions">${info.animals.map(a=>button(a.emoji+' '+a.name+' first','plan',`data-card="${a.position}"`)).join('')}</div>`:`<div class="rescue-plan">${s.plan.length?'1. 🔑 Key → 2. ?':'1. ? → 2. ?'}</div><div class="rescue-actions">${button(info.emoji+' Friend','plan','data-card="friend"')}${button('🔑 Key','plan','data-card="key"'+(s.plan.length?' disabled':''))}</div>`;
-  else if(s.phase==='rook')actions=button('♜ Rook, open the gate','rook');
+  else if(s.phase==='rook')actions=button('🧩 Rook, open the gate','rook');
   else if(s.phase==='reroute')actions=button('🌿 Use the garden path','reroute');
-  else if(lever)actions=`<div class="rescue-rook-action">${button(`♜ Rook: open ${colors[lever.color]} bridge ${lever.color+1}`,'rook')}</div>`;
+  else if(lever)actions=`<div class="rescue-rook-action">${button(`🧩 Rook: open ${colors[lever.color]} bridge ${lever.color+1}`,'rook')}</div>`;
   else if(s.phase==='done')actions=rescueFinishView(s,info,busy);
   const ordered=modern&&s.plan.length?s.plan.map(n=>info.animals.find(a=>a.position===n)).filter(Boolean):info.animals;
   const progress=modern?`<p class="rescue-note">${s.type==='switches'?b.bridges.map((_,i)=>`${colors[i]}${i+1} ${s.opened.includes(i)?'✓':'locked'}`).join(' · '):s.type==='blocks'?`📦 ${b.pads.filter(n=>s.crates.includes(n)).length}/${b.pads.length} on ◇ pads`:`${ordered.map(a=>a.emoji+(s.rescued.includes(a.position)?' ✓':'')).join(' → ')}`}</p>`:'';
