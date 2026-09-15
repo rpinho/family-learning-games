@@ -2,6 +2,7 @@
 // to app + player; authoritative progress stays in the original app servers.
 (() => {
   const { game, player, prefix } = document.currentScript.dataset;
+  document.documentElement.dataset.familyGame = game;
   const keys = new Set([
     "letter-quest-player",
     "word-arcade-player",

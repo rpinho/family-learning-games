@@ -1,0 +1,17 @@
+/* The hub already identifies the player above the embedded activity. Keep the
+   standalone app's banner, but reclaim its space when playing through Games. */
+html[data-family-game="letter-quest"] body {
+  padding-top: 0;
+}
+html[data-family-game="letter-quest"] .active-player-banner {
+  display: none;
+}
+html[data-family-game="letter-quest"] body .maze-shell {
+  height: 100dvh;
+}
+@media (min-width: 651px) {
+  html[data-family-game="letter-quest"] .sidebar {
+    top: 0;
+    height: 100dvh;
+  }
+}

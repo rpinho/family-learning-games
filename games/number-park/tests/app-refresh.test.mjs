@@ -12,8 +12,8 @@ test('refresh navigates to fresh app with selected player/tab/sound and never wr
  const f=setup();assert.equal(await f.client.refresh(),true);const u=new URL(f.urls[0]);assert.equal(u.searchParams.get('player'),'beginner');assert.equal(u.searchParams.get('tab'),'reading');assert.equal(u.searchParams.get('quiet'),'1');assert.equal(u.searchParams.get('custom'),'keep');assert.ok(u.searchParams.has('_refresh'));assert.equal(f.calls[0][0],'/health');assert.equal(f.calls[0][1].cache,'no-store');assert.equal(f.calls[0][1].method,undefined);assert.equal(f.client.busy,true);
  await f.client.refresh();assert.equal(f.urls.length,1);
 });
-test('preserves active math round, draw and reward locations',()=>{
- for(const tab of ['play','draw','rewards']){const u=new URL(refreshURL(initial.href,{...initial,tab,open:true,sound:true},123));assert.equal(u.searchParams.get('tab'),tab);assert.equal(u.searchParams.get('resume'),'1');assert.equal(u.searchParams.get('quiet'),'0');assert.equal(u.searchParams.get('_refresh'),'123');}
+test('preserves active math round, draw and planning locations',()=>{
+ for(const tab of ['play','draw','planning']){const u=new URL(refreshURL(initial.href,{...initial,tab,open:true,sound:true},123));assert.equal(u.searchParams.get('tab'),tab);assert.equal(u.searchParams.get('resume'),'1');assert.equal(u.searchParams.get('quiet'),'0');assert.equal(u.searchParams.get('_refresh'),'123');}
 });
 test('pending save blocks refresh before any network or confirmation',async()=>{
  const f=setup();f.state.saving=true;assert.equal(await f.client.refresh(),false);assert.equal(f.calls.length,0);assert.equal(f.urls.length,0);

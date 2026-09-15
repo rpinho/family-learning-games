@@ -617,6 +617,36 @@ input {
 .live-soccer .coach-panel .small {
   font-size: 14px;
 }
+/* Portrait has room below the pitch, not beside it. Preserve the canvas's
+   coordinate ratio so touch targets and the replay physics still agree. */
+@media (orientation: portrait) {
+  #main .live-soccer .match {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  #main .live-soccer .pitch-wrap {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 800/620;
+  }
+  .live-soccer .coach-panel {
+    order: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+  }
+  .live-soccer .coach-panel > h2,
+  .live-soccer .coach-panel > p,
+  .live-soccer .coach-panel > details {
+    display: none;
+  }
+  .live-soccer .coach-buttons,
+  .live-soccer .live-actions {
+    margin: 0;
+  }
+}
 @media (min-width: 901px) {
   .live-soccer .match {
     grid-template-columns: minmax(0, 760px) minmax(220px, 1fr);

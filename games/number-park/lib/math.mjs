@@ -7,7 +7,7 @@ import {advanced,EXPLORER_GAMES,challengeQuestion} from './explorer.mjs';
 import {readingAction} from './reading.mjs';
 import {artAction} from './art.mjs';
 import {planningAction} from './planning.mjs';
-export const VERSION='number-park-2026-09-12-trace-1000';
+export const VERSION='number-park-2026-09-15-menu-cleanup';
 export const GAMES=[
  {id:'mix',icon:'🎲',title:'Little sums',description:'A mix just like the first unit.'},
  {id:'line',icon:'📏',title:'Number hop',description:'Slide to the missing number.'},

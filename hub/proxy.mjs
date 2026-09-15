@@ -27,7 +27,7 @@ export function proxy(req,res,{port,prefix,path,player,players,game},log){
   r.on('end',()=>{try{
    let b=Buffer.concat(chunks);if(h['content-encoding']==='gzip')b=gunzipSync(b);else if(h['content-encoding']==='br')b=brotliDecompressSync(b);else if(h['content-encoding']==='deflate')b=inflateSync(b);delete h['content-encoding'];
    let body=b.toString();if(/html|javascript|css|json/.test(type))body=rewriteText(body,prefix);
-   if(/html/.test(type))body=body.replace(/<head([^>]*)>/i,`<head$1><script src="/bridge.mjs" data-game="${game}" data-player="${player}" data-prefix="${prefix}"></script>`);
+   if(/html/.test(type))body=body.replace(/<head([^>]*)>/i,`<head$1><script src="/bridge.mjs" data-game="${game}" data-player="${player}" data-prefix="${prefix}"></script><link rel="stylesheet" href="/embedded.css">`);
    res.writeHead(r.statusCode,h);res.end(body);
   }catch(e){log({type:'proxy_error',game,player,detail:e.message});if(!res.headersSent)res.writeHead(502);res.end('Could not load this game. Return to Games and try again.');}});
  });

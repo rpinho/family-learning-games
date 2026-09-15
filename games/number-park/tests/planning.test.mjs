@@ -40,6 +40,6 @@ test('Invalid cards and requests do not mutate progress, finite narration covers
 });
 test('Prominent identity precedes app header; planning is addressable and refresh preserves its tab',()=>{
  const page=readFileSync(new URL('../app/page.tsx',import.meta.url),'utf8');assert.ok(page.indexOf('className="player-identity"')<page.indexOf('<header className="top"'));
- assert.match(page,/value="planning"/);assert.match(page,/'rewards','planning'/);
+ assert.match(page,/value="planning"/);assert.match(page,/\[[^\]]*'planning'[^\]]*\]\.includes\(tab\)/);
  const view=readFileSync(new URL('../app/planning.tsx',import.meta.url),'utf8');assert.match(view,/document.visibilityState/);assert.match(view,/s\.paused/);assert.match(view,/\|\|speaking/);assert.match(view,/sent.current===token/);
 });
