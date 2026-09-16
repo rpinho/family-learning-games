@@ -98,7 +98,7 @@ test("Every lesson in both bands completes; checkpoints actually interleave and 
           if (p.session.ply === 0) {
             const hinted = JSON.parse(JSON.stringify(p));
             for (let step = 0; step < 3; step++) {
-              await action(hinted, "hint");
+              await action(hinted, "hint", {}, {now: 10000 + step * 5000});
               assert.ok(
                 spokenLines.has(hinted.session.feedback.voice),
                 "A hint must have a Rook clip: " +

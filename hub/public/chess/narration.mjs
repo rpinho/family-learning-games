@@ -3,7 +3,7 @@ import { VOICE } from './curriculum.mjs';
 // Coaching is requested at task boundaries and by the learner, not after every move.
 export function narrationFor(action, profile, cue) {
   if (action === 'hint') return { text: profile.session?.feedback?.voice, kind: 'hint' };
-  if (action === 'game-hint') return { text: VOICE.gameHint, kind: 'hint' };
+  if (action === 'game-hint') return { text: profile.game?.hint?.voice || VOICE.gameHint, kind: 'hint' };
   if (action === 'begin' || action === 'next') return {
     text: profile.session?.phase === 'summary' ? VOICE.checkpoint : cue,
     kind: 'automatic',

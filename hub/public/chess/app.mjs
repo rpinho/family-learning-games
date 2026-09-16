@@ -30,7 +30,8 @@ export function mountChess(root, { player, name, event = () => {} }) {
     captions = false,
     reaction = "idle",
     finishTimer = null,
-    completedNotice = "";
+    completedNotice = "",
+    receivedAt = Date.now();
   const priorScrollRestoration = history.scrollRestoration;
   history.scrollRestoration = "manual";
   const endpoint = "/api/chess?player=" + encodeURIComponent(player);
@@ -101,6 +102,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
       const r = await fetch(endpoint);
       if (!r.ok) throw Error("The chess server is unavailable.");
       profile = (await r.json()).profile;
+      receivedAt = Date.now();
       const active = profile.session;
       if (profile.current === "game" && profile.game) {
         view = "game";
@@ -174,6 +176,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
         }
         const newlyCompleted = body.type === "next" && profile.session?.lesson !== "review" && !profile.completed[profile.session?.lesson];
         profile = data.profile;
+        receivedAt = Date.now();
         pending = null;
         if (!alive) return;
         if (body.type === "start" || body.type === "begin") view = "lesson";
@@ -205,7 +208,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
             body.type === "move" && profile.session?.phase === "solved",
           );
         const narration = narrationFor(body.type, profile, currentUnit().cue);
-        if (narration) say(narration.text, { kind: narration.kind });
+        if (narration && data.result?.advanced !== false) say(narration.text, { kind: narration.kind });
         event("chess_action", body.type);
       } catch (e) {
         if (preview) await preview.catch(() => {});
@@ -236,6 +239,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
     }
     root.innerHTML = `<div class="academy" style="--unit:${UNITS[unit].color}">${nav()}${error ? `<div class="ac-error" role="alert"><strong>${esc(error)}</strong>${btn("Retry save", "retry", "primary")}${btn("Reload progress", "reload")}</div>` : ""}<div class="ac-content" ${busy ? 'aria-busy="true"' : ""}>${view === "lesson" ? lessonView() : view === "game" ? gameView() : view === "play" ? playView() : view === "notebook" ? notebookView() : pathView()}</div><div class="ac-saving" role="status">${busy ? "Saving your move…" : ""}</div></div>`;
     bind();
+    updateHintClock();
     if (clip && !clip.paused)
       root.querySelector(".academy-coach")?.classList.add("talking");
     const mount = root.querySelector("#chess-board");
@@ -333,9 +337,50 @@ export function mountChess(root, { player, name, event = () => {} }) {
     const s = profile.session;
     if (s?.phase === "solved") return "You found it!";
     if (s?.feedback?.kind === "incorrect") return "Try again";
-    if (s?.hints >= 3) return "Follow the arrow";
-    if (s?.hints === 2) return "Try this piece";
+    if (s?.hint?.stage >= 3) return "Follow the arrow";
+    if (s?.hint?.stage === 2) return "Tap this piece";
     return s?.ply > 0 ? "Keep going" : currentUnit().task;
+  }
+  function hintControls(inGame = false) {
+    const h = inGame ? profile.game?.hint : profile.session?.hint;
+    const stage = h?.stage ?? (inGame && h ? 3 : 0);
+    return `<div class="hint-control">${stage >= 3
+      ? btn('▶<span>Show me</span>', 'demonstrate', 'hint-button', 'aria-label="Watch the suggested move"')
+      : btn(glyph('hint') + '<span>Hint</span>', inGame ? 'game-hint' : 'hint', 'hint-button', 'data-paced-hint aria-label="Get a hint"')}
+      <span class="hint-dots" aria-label="${stage} of 3 hint stages">${[1,2,3].map(n=>`<i class="${stage >= n ? 'on' : ''}"></i>`).join('')}</span></div>`;
+  }
+  function updateHintClock() {
+    if (!alive || !profile) return;
+    const h = view === 'game' ? profile.game?.hint : profile.session?.hint;
+    const left = Math.max(0, (h?.waitMs || 0) - (Date.now() - receivedAt));
+    const button = root.querySelector('[data-paced-hint]');
+    if (!button) return;
+    button.disabled = busy || !!pending || left > 0;
+    const label = left > 0 ? `${Math.ceil(left/1000)}s` : h?.stage ? 'More help' : 'Hint';
+    button.querySelector('span').textContent = label;
+    button.setAttribute('aria-label', left > 0 ? `Next hint in ${Math.ceil(left/1000)} seconds. You can still move or replay Rook.` : label);
+  }
+  const hintClock = setInterval(updateHintClock, 200);
+  async function demonstrate() {
+    const s = profile.session, g = profile.game, inGame = view === 'game';
+    const from = inGame ? g.hint?.from : s.hintFrom;
+    const to = inGame ? g.hint?.to : s.hintTo;
+    if (!from || !to || busy || pending || !boardDispose) return;
+    const board = boardDispose;
+    busy = true;
+    root.querySelectorAll('[data-do]').forEach(el => el.disabled = true);
+    board.lock(true);
+    try {
+      const position = new Chess(inGame ? g.fen : s.puzzle.fen);
+      const promotion = (inGame ? g.hint?.promotion : s.hintPromotion) || position.moves({verbose:true}).find(m => m.from === from && m.to === to)?.promotion || '';
+      say(inGame ? VOICE.gameHint : VOICE.hintMove, {force:true});
+      await board.preview(from + to + promotion);
+      await new Promise(resolve => setTimeout(resolve, 650));
+      if (alive) await board.rollback();
+    } finally {
+      busy = false;
+      if (alive) render();
+    }
   }
   function arenaHead(status, mood = "idle") {
     return `<div class="arena-coach"><button class="rook-replay" data-do="hear" aria-label="Hear Rook again">${coach(mood)}<span class="speaker-badge" aria-hidden="true">${glyph("hear")}</span></button><div class="arena-prompt" aria-live="polite"><span class="feedback-symbol" aria-hidden="true">${mood === "happy" ? "✓" : mood === "thinking" ? "↶" : ""}</span><h1>${esc(status)}</h1></div><div class="caption-control">${iconButton("captions", "captions", captions ? "Hide captions" : "Show captions", `aria-pressed="${captions}"`)}</div></div>${captions ? `<div class="spoken-caption" aria-live="polite">${esc(spokenText())}</div>` : `<div class="sr-only" aria-live="polite">${esc(spokenText())}</div>`}`;
@@ -372,7 +417,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
       return `<section class="lesson-summary">${coach("happy")}<h1>Lesson complete!</h1><div class="summary-stars" aria-label="${s.results.length} positions completed, ${s.results.filter((r) => r.independent).length} without help">${s.results.map((r) => r.independent ? "★" : "☆").join(" ")}</div>${btn("Continue ➜", "path", "primary large")}<details><summary>Practice notes</summary><p>${s.results.filter((r) => r.independent).length} of ${s.results.length} without hints.</p><p>${u.idea}</p></details></section>`;
     const f = s.feedback,
       solved = s.phase === "solved";
-    return `<section class="chess-lesson"><header class="lesson-header">${iconButton("close", "path", "Back to lesson path")}<div class="lesson-progress" role="progressbar" aria-label="Lesson progress" aria-valuenow="${s.index + (solved ? 1 : 0)}" aria-valuemin="0" aria-valuemax="${s.total}"><span style="width:${((s.index + (solved ? 1 : 0)) / s.total) * 100}%"></span></div>${btn(glyph(profile.settings.sound ? "hear" : "muted"), "sound", "sound", `aria-label="${profile.settings.sound ? "Mute coaching" : "Enable coaching"}"`)}</header><div class="play-table ${solved ? "solved" : ""}">${arenaHead(shortPrompt(), solved ? "happy" : f?.kind === "incorrect" ? "thinking" : "idle")}<div id="chess-board"></div><div id="board-selection" class="sr-only" aria-live="polite"></div><footer class="board-controls">${iconButton("undo", "restart", "Restart this position", solved ? "disabled" : "")}${solved ? btn("➜", "next", "primary next-puzzle", `aria-label="${s.index + 1 === s.total ? "Finish lesson" : "Next position"}"`) : `<div class="hint-control">${btn(glyph("hint") + "<span>Hint</span>", "hint", "hint-button", s.hints >= 3 ? 'disabled aria-label="All hints shown"' : 'aria-label="Get a hint"')}<span class="hint-dots" aria-label="${s.hints} of 3 hints used">${[1, 2, 3].map((n) => `<i class="${s.hints >= n ? "on" : ""}"></i>`).join("")}</span></div>`}<details class="board-more"><summary aria-label="More options">•••</summary><div>${f?.refutation ? btn(analysisView ? "Back to puzzle" : "See the reply", "explain", "text") : ""}<p>${esc(title)}</p><p>${esc(s.puzzle.goal)}</p>${solved ? `<ol>${s.solution.map((m) => `<li>${esc(m.text)}</li>`).join("")}</ol>` : ""}<small>Lichess ${s.puzzle.id} · CC0</small></div></details></footer></div></section>`;
+    return `<section class="chess-lesson"><header class="lesson-header">${iconButton("close", "path", "Back to lesson path")}<div class="lesson-progress" role="progressbar" aria-label="Lesson progress" aria-valuenow="${s.index + (solved ? 1 : 0)}" aria-valuemin="0" aria-valuemax="${s.total}"><span style="width:${((s.index + (solved ? 1 : 0)) / s.total) * 100}%"></span></div>${btn(glyph(profile.settings.sound ? "hear" : "muted"), "sound", "sound", `aria-label="${profile.settings.sound ? "Mute coaching" : "Enable coaching"}"`)}</header><div class="play-table ${solved ? "solved" : ""}">${arenaHead(shortPrompt(), solved ? "happy" : f?.kind === "incorrect" ? "thinking" : "idle")}<div id="chess-board"></div><div id="board-selection" class="sr-only" aria-live="polite"></div><footer class="board-controls">${iconButton("undo", "restart", "Restart this position", solved ? "disabled" : "")}${solved ? btn("➜", "next", "primary next-puzzle", `aria-label="${s.index + 1 === s.total ? "Finish lesson" : "Next position"}"`) : hintControls()}<details class="board-more"><summary aria-label="More options">•••</summary><div>${f?.refutation ? btn(analysisView ? "Back to puzzle" : "See the reply", "explain", "text") : ""}<p>${esc(title)}</p><p>${esc(s.puzzle.goal)}</p>${solved ? `<ol>${s.solution.map((m) => `<li>${esc(m.text)}</li>`).join("")}</ol>` : ""}<small>Lichess ${s.puzzle.id} · CC0</small></div></details></footer></div></section>`;
   }
   function miniBoard(fen) {
     const board = new Chess(fen);
@@ -391,7 +436,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
   function gameView() {
     const g = profile.game;
     if (!g) return playView();
-    return `<section class="chess-lesson practice-game"><header class="lesson-header">${iconButton("close", "play", "Back to practice games")}<span class="game-title">${g.mode === "position" ? `${g.turns} / ${g.target}` : "Rook"}</span>${btn(glyph(profile.settings.sound ? "hear" : "muted"), "sound", "sound", `aria-label="${profile.settings.sound ? "Mute coaching" : "Enable coaching"}"`)}</header><div class="play-table">${arenaHead(g.result || "Your move", g.result ? "happy" : "idle")}<div id="chess-board"></div><div id="board-selection" class="sr-only" aria-live="polite"></div><footer class="board-controls">${iconButton("undo", "game-undo", "Take back a turn", g.turns < 1 ? "disabled" : "")}${g.result ? btn("➜", "play", "primary next-puzzle", 'aria-label="Choose another game"') : btn(glyph("hint") + "<span>Hint</span>", "game-hint", "hint-button", 'aria-label="Get a hint"')}<details class="board-more"><summary aria-label="More options">•••</summary><div>${btn("Choose another game", "play", "text")}<p>${gameNotation(g)}</p><p>${esc(g.assessment || "")}</p></div></details></footer></div></section>`;
+    return `<section class="chess-lesson practice-game"><header class="lesson-header">${iconButton("close", "play", "Back to practice games")}<span class="game-title">${g.mode === "position" ? `${g.turns} / ${g.target}` : "Rook"}</span>${btn(glyph(profile.settings.sound ? "hear" : "muted"), "sound", "sound", `aria-label="${profile.settings.sound ? "Mute coaching" : "Enable coaching"}"`)}</header><div class="play-table">${arenaHead(g.result || (g.hint?.stage === 3 ? "Follow the arrow" : g.hint?.stage === 2 ? "Tap this piece" : "Your move"), g.result ? "happy" : "idle")}<div id="chess-board"></div><div id="board-selection" class="sr-only" aria-live="polite"></div><footer class="board-controls">${iconButton("undo", "game-undo", "Take back a turn", g.turns < 1 ? "disabled" : "")}${g.result ? btn("➜", "play", "primary next-puzzle", 'aria-label="Choose another game"') : hintControls(true)}<details class="board-more"><summary aria-label="More options">•••</summary><div>${btn("Choose another game", "play", "text")}<p>${gameNotation(g)}</p><p>${esc(g.assessment || "")}</p></div></details></footer></div></section>`;
   }
   function gameNotation(g) {
     try {
@@ -411,7 +456,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
     }
   }
   function notebookView() {
-    return `<section class="academy-notebook"><span class="ac-eyebrow">YOUR CHESS NOTEBOOK</span><h1>Ideas you can come back to.</h1><p>Your best independent result stays recorded when you review a lesson.</p><div class="notebook-grid">${UNITS.map(
+    return `<section class="academy-notebook"><span class="ac-eyebrow">YOUR CHESS NOTEBOOK</span><h1>Ideas you can come back to.</h1><p>Your best independent result stays recorded when you review a lesson.</p>${profile.checkHistory?.length ? `<p>Fresh-position checks: ${profile.checkHistory.filter(c => c.independent).length}/${profile.checkHistory.length} without help. These use a different position with a familiar idea.</p>` : ""}<div class="notebook-grid">${UNITS.map(
       (u, i) => {
         const ls = LESSONS.filter((l) => l.unit === i),
           n = ls.filter((l) => profile.completed[l.id]).length;
@@ -478,12 +523,13 @@ export function mountChess(root, { player, name, event = () => {} }) {
             say(UNITS[arg === undefined ? unit : +arg].idea, { force: true });
             return;
           }
+          if (action === "demonstrate") { await demonstrate(); return; }
           if (action === "hear") {
             say(
               analysisView
                 ? VOICE.alternative
                 : view === "game"
-                  ? (profile.game?.hint ? VOICE.gameHint : null) ||
+                  ? (profile.game?.hint?.voice || (profile.game?.hint ? VOICE.gameHint : null)) ||
                     "What is your opponent threatening? Check that before choosing your next move."
                   : profile.session?.feedback?.voice || currentUnit().cue,
               { force: true },
@@ -565,6 +611,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
     history.scrollRestoration = priorScrollRestoration;
     alive = false;
     clearTimeout(finishTimer);
+    clearInterval(hintClock);
     boardDispose?.();
     utterance();
   };

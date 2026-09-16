@@ -25,6 +25,47 @@ export const PUZZLES = Object.fromEntries(
 const fail = (text, status = 400) => {
   throw Object.assign(Error(text), { status });
 };
+export const HINT_PAUSE_MS = 5000;
+// Stage belongs to this decision, while assistance belongs to the whole attempt.
+function puzzleHint(s) {
+  return s.hint === undefined
+    ? { stage: Math.min(3, s.hints || 0), readyAt: 0 }
+    : s.hint?.ply === s.ply ? s.hint : { stage: 0, readyAt: 0 };
+}
+function hintPublic(h, now) {
+  return { stage: h.stage, waitMs: Math.max(0, (h.readyAt || 0) - now) };
+}
+function queueCheck(p, s, id, now) {
+  // One pending check per theme and band, not an ever-growing homework queue.
+  p.checks ??= [];
+  const theme = PUZZLES[id].theme;
+  if (!p.checks.some(c => c.theme === theme && c.band === s.band))
+    p.checks.push({ source: id, theme, band: s.band, at: now });
+}
+function addFreshCheck(p, ids, band) {
+  const pending = (p.checks || []).filter(c => c.band === band);
+  // Old saves with assisted practice are eligible too, without migrating saves on read.
+  if (!pending.length) for (const [id, r] of Object.entries(p.review)) {
+    if (r.needsPractice && bandPuzzleIds(band).has(id))
+      pending.push({ source: id, theme: PUZZLES[id].theme, band });
+  }
+  const seenFens = new Set([...Object.keys(p.review), ...(p.seenPositions || []), ...(p.session?.ids || []), ...ids].map(id => PUZZLES[id]?.fen));
+  for (const c of pending) {
+    const source = PUZZLES[c.source];
+    const candidate = Object.values(band === 'guided' ? GUIDED : GROUPS).flat()
+      .filter(x => x.theme === c.theme && !ids.includes(x.id) && !p.review[x.id] &&
+        x.id !== c.source && !seenFens.has(x.fen) && x.fen !== source.fen &&
+        !p.session?.ids.includes(x.id))
+      .sort((a,b) => Math.abs(a.rating-source.rating)-Math.abs(b.rating-source.rating))[0];
+    if (candidate) {
+      const index = Math.min(2, ids.length - 1);
+      if (ids.length < 5) ids.splice(index + 1, 0, candidate.id);
+      else ids[index] = candidate.id;
+      return { [candidate.id]: c.source };
+    }
+  }
+  return {};
+}
 export const freshChess = () => ({
   schema: 1,
   revision: 0,
@@ -92,10 +133,18 @@ function specificFeedback(b, m) {
     return `Your pawn promotes to a ${NAMES[m.promotion]}. The promotion changes the position.`;
   return `${moveWords(m)}. You kept the plan working.`;
 }
+function rememberPosition(p) {
+  const id = p.session?.ids[p.session.index];
+  if (!id) return;
+  p.seenPositions ??= [];
+  if (!p.seenPositions.includes(id)) p.seenPositions.push(id);
+}
 function advancePuzzle(p) {
   const s = p.session;
+  rememberPosition(p);
   s.ply = 0;
   s.hints = 0;
+  s.hint = null;
   s.errors = 0;
   s.feedback = null;
   s.finalFen = null;
@@ -108,10 +157,23 @@ function finishPuzzle(p, now) {
   s.results.push({
     id,
     independent,
+    checkOf: s.checkOf?.[id] || null,
     hints: s.hints,
     errors: s.errors,
     at: now,
   });
+  const checkOf = s.checkOf?.[id];
+  if (checkOf) {
+    p.checkHistory ??= [];
+    p.checkHistory.push({ source: checkOf, id, band: s.band, independent, hints: s.hints, errors: s.errors, at: now });
+    p.checkHistory = p.checkHistory.slice(-100);
+    p.checks = (p.checks || []).filter(c => c.source !== checkOf);
+    if (independent && p.review[checkOf]) {
+      p.review[checkOf].needsPractice = false;
+      p.review[checkOf].due = now + 86400000;
+    }
+  }
+  if (!independent) queueCheck(p, s, id, now);
   const previous = p.review[id];
   p.review[id] = {
     successes: (previous?.successes || 0) + (independent ? 1 : 0),
@@ -165,7 +227,7 @@ function finishLesson(p, now) {
   });
   p.history = p.history.slice(-100);
 }
-export function publicChess(p) {
+export function publicChess(p, now = Date.now()) {
   const s = p.session, reviewIds = bandPuzzleIds(p.settings.band);
   let session = null;
   if (s) {
@@ -181,6 +243,8 @@ export function publicChess(p) {
       results: s.results,
       ply: s.ply,
       hints: s.hints,
+      hint: hintPublic(puzzleHint(s), now),
+      freshCheck: !!s.checkOf?.[puzzle?.id],
       errors: s.errors,
       feedback: s.feedback,
       unit: unit.id,
@@ -213,10 +277,11 @@ export function publicChess(p) {
         check: b.isCheck(),
         rating: puzzle.rating,
       };
-      if (s.hints >= 2) {
+      const stage = puzzleHint(s).stage;
+      if (stage >= 2) {
         const next = puzzle.line[s.ply];
         session.hintFrom = next?.slice(0, 2);
-        if (s.hints >= 3) session.hintTo = next?.slice(2, 4);
+        if (stage >= 3) { session.hintTo = next?.slice(2, 4); session.hintPromotion = next?.[4]; }
       }
     }
   }
@@ -230,7 +295,10 @@ export function publicChess(p) {
     ).length,
     history: p.history.slice(-20),
     session,
-    game: p.game,
+    checkHistory: (p.checkHistory || []).slice(-20),
+    game: p.game ? { ...p.game, coaching: undefined, hint: p.game.hint ? {
+      ...p.game.hint, ...hintPublic(p.game.hint, now),
+    } : null } : null,
     settings: p.settings,
   };
 }
@@ -246,6 +314,7 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
     fail("Another tab has newer progress. Refresh to continue.", 409);
   let result = {};
   const s = p.session;
+  if (s?.phase === "puzzle") rememberPosition(p);
   if (input.type === "start") {
     let ids = lessonPuzzles(input.lesson, p.settings.band);
     if (input.lesson === "review") {
@@ -268,7 +337,9 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
     }
     if ((ids.length !== 5 && input.lesson !== "review") || !ids.length)
       fail("Choose a lesson on the path.");
+    const checkOf = addFreshCheck(p, ids, p.settings.band);
     p.session = {
+      checkOf,
       id: randomUUID(),
       lesson: input.lesson,
       band: p.settings.band || "stretch",
@@ -299,15 +370,20 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
   } else if (input.type === "hint") {
     if (!s || s.phase !== "puzzle")
       fail("Hints are available during a puzzle.");
-    s.hints = Math.min(3, s.hints + 1);
+    const prior = puzzleHint(s);
+    const waiting = now < prior.readyAt;
+    const stage = waiting ? prior.stage : Math.min(3, prior.stage + 1);
+    if (stage > prior.stage) s.hints++;
+    s.hint = { ply: s.ply, stage, readyAt: stage > prior.stage ? now + HINT_PAUSE_MS : prior.readyAt };
+    result = { hint: stage, advanced: stage > prior.stage, waiting };
     const u = UNITS.find((u) => u.theme === PUZZLES[s.ids[s.index]].theme);
     const puzzle = PUZZLES[s.ids[s.index]],
       next = puzzle.line[s.ply],
       hintBoard = boardAt(s);
     const text =
-      s.hints === 1
+      stage === 1
         ? u.hints[0]
-        : s.hints === 2
+        : stage === 2
           ? pieceHint(hintBoard.get(next.slice(0, 2)).type, next.slice(0, 2))
           : VOICE.hintMove;
     s.feedback = { kind: "hint", text, voice: text };
@@ -372,6 +448,7 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
       }
       s.feedback = { kind: "correct", text, voice: spoken, moves: accepted };
       result = { correct: true, moves: accepted };
+      s.hint = null;
       if (s.ply >= puzzle.line.length || b.isCheckmate()) {
         if (b.isCheckmate()) {
           s.finalFen = b.fen();
@@ -392,6 +469,7 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
       fail("Open a puzzle first.");
     if (s.phase === "solved") fail("Use Review to replay a finished puzzle.");
     s.ply = 0;
+    s.hint = null;
     s.hints = Math.max(1, s.hints);
     s.feedback = {
       kind: "hint",
@@ -443,7 +521,10 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
     } catch {
       fail("That move is not legal.");
     }
+    g.hintHistory ??= [];
+    g.hintHistory.push({ turn: g.turns, stage: g.hint?.stage || (g.hint ? 3 : 0), fen: g.fen });
     g.hint = null;
+    g.coaching = null;
     g.moves.push(m.from + m.to + (m.promotion || ""));
     g.turns++;
     let reply = null;
@@ -479,6 +560,7 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
     g.turns = Math.max(0, g.turns - 1);
     g.help++;
     g.hint = null;
+    g.coaching = null;
     g.result = null;
     g.assessment = null;
     g.fen = gameBoard(g).fen();
@@ -487,15 +569,27 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
     const g = p.game;
     if (!g || g.result) fail("Start a practice game first.");
     if (!engine) fail("Chess coach is unavailable.", 503);
-    const a = await engine.analyze(g.fen, { ms: 350 });
-    const b = new Chess(g.fen),
-      m = playUci(b, a.best);
-    g.help++;
-    g.hint = {
-      from: m.from,
-      to: m.to,
-      text: `Consider ${moveWords(m)}. What would the opponent do next?`,
-    };
+    const prior = g.hint || { stage: 0, readyAt: 0 };
+    const stageBefore = prior.stage ?? 3; // Legacy saved arrows stay available.
+    const waiting = now < (prior.readyAt || 0);
+    const stage = waiting ? stageBefore : Math.min(3, stageBefore + 1);
+    if (stage === stageBefore) {
+      result = { hint: stage, advanced: false, waiting };
+    } else {
+      if (stage === 1) { g.help++; g.hintedTurns = (g.hintedTurns || 0) + 1; }
+      if (stage >= 2 && !g.coaching) {
+        const a = await engine.analyze(g.fen, { ms: 350 });
+        const b = new Chess(g.fen), m = playUci(b, a.best);
+        g.coaching = { from: m.from, to: m.to, promotion: m.promotion, piece: m.piece };
+      }
+      const text = stage === 1
+        ? 'What is your opponent threatening? Check that before choosing your next move.'
+        : stage === 2 ? pieceHint(g.coaching.piece, g.coaching.from) : VOICE.gameHint;
+      g.hint = { stage, readyAt: now + HINT_PAUSE_MS, text, voice: text,
+        ...(stage >= 2 ? { from: g.coaching.from } : {}),
+        ...(stage >= 3 ? { to: g.coaching.to, promotion: g.coaching.promotion } : {}) };
+      result = { hint: stage, advanced: true, waiting: false };
+    }
   } else fail("Unknown chess action.");
   if (input.type.startsWith("game-")) p.current = "game";
   else if (

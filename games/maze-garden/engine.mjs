@@ -1,4 +1,4 @@
-export const VERSION = 'maze-garden-2026-09-12-single-level-steps';
+export const VERSION = 'maze-garden-2026-09-16-junction-hints';
 export const MAX_LEVEL = 27;
 export const baseline = player => player==='explorer'?12:player==='beginner'?6:6;
 export const gridSize = level => 9+2*(Math.max(1,Math.min(MAX_LEVEL,level))-1);
@@ -17,6 +17,22 @@ export function random(seed) {let a=seed>>>0;return()=>{a+=0x6D2B79F5;let t=a;t=
 const shuffle=(a,r)=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
 export function neighbors(m,id){const x=id%m.n,y=Math.floor(id/m.n);return [[x,y-1],[x+1,y],[x,y+1],[x-1,y]].filter(([a,b])=>a>=0&&b>=0&&a<m.n&&b<m.n).map(([a,b])=>b*m.n+a).filter(i=>m.cells[i]!==null);}
 export function route(m,start,goal){const queue=[start],prev=new Map([[start,null]]);for(let k=0;k<queue.length;k++){let v=queue[k];if(v===goal)break;for(const w of m.cells[v]||[]){if(!prev.has(w)){prev.set(w,v);queue.push(w);}}}if(!prev.has(goal))return [];let out=[];for(let v=goal;v!==null;v=prev.get(v))out.push(v);return out.reverse();}
+// One decision at a time: first locate a junction, then show its outgoing branch.
+export function decisionHint(a) {
+ const path=route(a,a.trail.at(-1),a.goal);
+ const index=path.findIndex(id=>a.cells[id].length>=3);
+ const at=index<0?path.length-1:index;
+ const junction=path[at];
+ return {junction,cells:path.slice(at,at+2)};
+}
+export function requestHint(a,now=Date.now()) {
+ const decision=decisionHint(a),key=String(decision.junction);
+ a.hintDecisions??={};
+ let hint=a.hintDecisions[key];
+ if(!hint){hint={stage:1,readyAt:now+5000};a.hintDecisions[key]=hint;a.hints++;}
+ else if(hint.stage===1&&now>=hint.readyAt)hint.stage=2;
+ a.hintCue={...hint,junction:decision.junction,cells:hint.stage===2?decision.cells:[decision.junction]};
+}
 function candidate(level,seed,shape){const r=random(seed),n=gridSize(level),mid=(n-1)/2;
  const active=(x,y)=>shape===1?Math.abs(x-mid)+Math.abs(y-mid)<=Math.floor(n*.76):shape===2?(Math.abs(x-mid)<=Math.floor(n*.34)||Math.abs(y-mid)<=Math.floor(n*.34)):shape===3?(Math.abs(x-mid)<=mid-Math.floor(Math.min(y,n-1-y)/3)):true;
  const cells=Array.from({length:n*n},(_,i)=>active(i%n,Math.floor(i/n))?[]:null);const m={n,cells,shape,seed};const first=cells.findIndex(c=>c!==null),seen=new Set([first]),stack=[first];
@@ -40,14 +56,14 @@ export function puzzleFor(player,seed,index){const r=random(seed+index*101),pick
 export function startMaze(p,seed=Date.now()>>>0){const maze=makeMaze(p.level,seed,p.completed===0?0:undefined);return {...maze,id:`${seed}-${p.completed}-${p.level}`,level:p.level,theme:p.completed%THEMES.length,mode:p.mode,trail:[maze.start],moves:0,hints:0,wrong:0,startedAt:Date.now(),finished:false,checkpoints:p.mode==='puzzles'?[.35,.7].map((f,i)=>({cell:maze.solution[Math.floor((maze.solution.length-1)*f)],solved:false,puzzle:puzzleFor(p.player,seed,i)})):[]};}
 export function pendingPuzzle(a){return a.checkpoints.find(c=>c.cell===a.trail.at(-1)&&!c.solved);}
 export function move(a,to){if(a.finished||pendingPuzzle(a))return false;const from=a.trail.at(-1);if(!a.cells[from]?.includes(to))return false;const prior=a.trail.indexOf(to);if(prior>=0)a.trail.length=prior+1;else a.trail.push(to);a.moves++;return true;}
-export function complete(p,now=Date.now()){const a=p.active;if(!a||a.finished||a.trail.at(-1)!==a.goal||a.checkpoints.some(c=>!c.solved))return false;a.finished=true;const ratio=a.moves/(a.solution.length-1),clean=a.hints===0&&ratio<=1.6;const difficult=a.hints>=2||ratio>3.5;
- p.completed++;p.stars+=a.hints?2:3;p.streak=clean?p.streak+1:0;p.struggles=difficult?p.struggles+1:0;
+export function complete(p,now=Date.now()){const a=p.active;if(!a||a.finished||a.trail.at(-1)!==a.goal||a.checkpoints.some(c=>!c.solved))return false;a.finished=true;const ratio=a.moves/(a.solution.length-1),clean=a.hints===0&&ratio<=1.6;const difficult=ratio>3.5;
+ p.completed++;p.stars+=3;p.streak=clean?p.streak+1:0;p.struggles=difficult?p.struggles+1:0;
  let change='same';if(clean&&p.level<MAX_LEVEL){p.level=Math.min(MAX_LEVEL,p.level+(ratio<=1.15?2:1));p.streak=0;p.struggles=0;change='up';}else if(p.struggles>=2&&p.level>1){p.level--;p.struggles=0;change='down';}
- p.history.push({id:a.id,level:a.level,theme:a.theme,mode:a.mode,moves:a.moves,optimal:a.solution.length-1,hints:a.hints,wrong:a.wrong,seconds:Math.round((now-a.startedAt)/1000),change,at:new Date(now).toISOString()});p.history=p.history.slice(-500);return true;}
+ p.history.push({id:a.id,level:a.level,theme:a.theme,mode:a.mode,moves:a.moves,optimal:a.solution.length-1,hints:a.hints,stars:3,independent:a.hints===0,wrong:a.wrong,seconds:Math.round((now-a.startedAt)/1000),change,at:new Date(now).toISOString()});p.history=p.history.slice(-500);return true;}
 export function action(p,input){const a=p.active;switch(input.type){case 'recalibrate':recalibrate(p,input.seed);break;case 'start':if(!a||a.finished)p.active=startMaze(p,input.seed);break;
  case 'moves':if(!a||input.maze!==a.id)throw Error('This maze has changed. Refresh to continue.');if(!Array.isArray(input.cells)||input.cells.length>1000)throw Error('Invalid trail');for(const id of input.cells){if(!Number.isInteger(id)||!move(a,id))throw Error('That trail crosses a wall or a puzzle stop.');}complete(p);break;
  case 'answer':{const c=pendingPuzzle(a);if(!c)throw Error('No puzzle here');if(String(input.answer)===c.puzzle.answer)c.solved=true;else a.wrong++;complete(p);break;}
- case 'hint':if(a&&!a.finished){a.hints++;}break;
+ case 'hint':if(a&&!a.finished){requestHint(a);}break;
  case 'mode':if(!['pure','puzzles'].includes(input.mode))throw Error('Invalid mode');p.mode=input.mode;break;
  case 'level':if(![-1,1].includes(input.delta))throw Error('Invalid level');p.level=Math.max(1,Math.min(MAX_LEVEL,p.level+input.delta));p.streak=0;p.struggles=0;break;
  case 'challenge':if(![-2,-1,1,2].includes(input.delta))throw Error('Invalid challenge');p.history.push({id:a?.id,type:input.delta>0?'requested-harder':'requested-easier',level:a?.level,at:new Date().toISOString()});p.history=p.history.slice(-500);p.level=Math.max(1,Math.min(MAX_LEVEL,p.level+Math.sign(input.delta)));p.streak=0;p.struggles=0;p.active=startMaze(p,input.seed);break;
