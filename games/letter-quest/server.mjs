@@ -31,11 +31,11 @@ for(const file of ['rescue.mjs','rescue-puzzles.mjs','rescue-view.mjs','rescue.c
 for(const file of ['story.mjs','story-ui.mjs','rook.mjs','story.css'])files['/'+file]=file;
 for(const file of ['maze.mjs','maze-view.mjs','maze-renderer.mjs','maze-themes.mjs','maze-learning.mjs','maze-curriculum.mjs','maze-skills.mjs','phonics.mjs','maze.css','league.mjs','league.css'])files['/'+file]=file;
 for(const file of ['soccer.mjs','soccer-view.mjs','soccer-audio.mjs','soccer.css'])files['/'+file]=file;
-for(const file of ['reading.mjs','reading-view.mjs','reading.css','foundation.mjs','guided-trace.mjs'])files['/'+file]=file;
+for(const file of ['reading-client.mjs','reading.mjs','reading-view.mjs','reading.css','foundation.mjs','guided-trace.mjs'])files['/'+file]=file;
 for(const version of [1,2])for(const size of [16,32,48,180,192,512])files[`/icons/app-${size}-v${version}.png`]=`icons/app-${size}-v${version}.png`;
 files['/icons/favicon-v1.ico']='icons/favicon-v1.ico';files['/icons/favicon-v2.ico']='icons/favicon-v2.ico';files['/favicon.ico']='icons/favicon-v2.ico';files['/manifest.webmanifest']='manifest.webmanifest';
 const mime={html:'text/html; charset=utf-8',mjs:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',svg:'image/svg+xml',png:'image/png',ico:'image/x-icon',webmanifest:'application/manifest+json'};
-function reply(res,status,body){if(status>=400)res.diagnosticReason=body.error;res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(body));}
+function reply(res,status,body){if(status>=400)res.diagnosticReason=body.error;res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(body.profile?{...body,serverNow:Date.now()}:body));}
 async function body(req){let data='';for await(const chunk of req){data+=chunk;if(data.length>200000)throw Object.assign(Error('Request too large'),{status:413});}try{return JSON.parse(data);}catch{throw Object.assign(Error('Invalid JSON'),{status:400});}}
 function validStrokes(strokes){return Array.isArray(strokes)&&strokes.length<=8&&strokes.every(s=>Array.isArray(s)&&s.length>=2&&s.length<=1000&&s.every(p=>Array.isArray(p)&&p.length===2&&p.every(v=>Number.isFinite(v)&&v>=-10&&v<=110)));}
 const telemetryRates=new Map(),badSockets=new WeakSet();

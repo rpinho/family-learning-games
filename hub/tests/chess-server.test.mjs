@@ -43,6 +43,7 @@ test("Chess API isolates players, serializes writes, recovers duplicate saves an
       403,
     );
     assert.equal((await fetch(base + "/api/chess?player=missing")).status, 400);
+    assert.equal((await fetch(base + "/chess/audio.mjs")).status, 200);
     for (const path of [
       "/chess-puzzles.json",
       "/chess-guided.json",

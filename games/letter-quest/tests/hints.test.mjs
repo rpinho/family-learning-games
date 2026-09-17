@@ -1,41 +1,45 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {hintState,useHint,wasHinted,HINT_REFILL_MS} from '../public/hints.mjs';
+import {useHint,wasHinted} from '../public/hints.mjs';
 import {freshProfile,nextChallenge,applyAttempt,expectedAnswer,startDuel,useMatchHint} from '../public/engine.mjs';
 import {soccerAction} from '../public/soccer.mjs';
-import {readingAction} from '../public/reading.mjs';
-import {soccerView} from '../public/soccer-view.mjs';
-test('Two hints persist across reload, refill one at a time, and do not accrue beyond two',()=>{
- let p=freshProfile('beginner');assert.equal(hintState(p,1000).tokens,2);
- useHint(p,'soccer:1',1000);useHint(p,'reading:1',2000);p=JSON.parse(JSON.stringify(p));
- assert.equal(hintState(p,2000).tokens,0);assert.throws(()=>useHint(p,'new',2000),/89 seconds/);
- assert.equal(useHint(p,'soccer:1',2000),false);assert.equal(hintState(p,2000).tokens,0);
- assert.equal(hintState(p,91000).tokens,1);useHint(p,'new',91000);assert.equal(hintState(p,91000).tokens,0);
- assert.equal(hintState(p,900000).tokens,2);useHint(p,'later',900000);assert.equal(hintState(p,900001).tokens,1);
- assert.equal(hintState(freshProfile('explorer'),2000).tokens,2);
+import {readingAction,readingHintState} from '../public/reading.mjs';
+
+test('Empty legacy balances never block help; grants survive reload and replay is deduplicated',()=>{
+ let p=freshProfile('admin');p.hintBank={tokens:0,at:Date.now(),grants:['old']};
+ for(let i=0;i<8;i++)assert.equal(useHint(p,'new:'+i),true);
+ p=JSON.parse(JSON.stringify(p));assert.equal(useHint(p,'new:7'),false);assert.ok(wasHinted(p,'old'));
 });
-test('Soccer cannot farm goals or XP with hints; refreshing and starting again cannot refill them',()=>{
- const p=freshProfile('beginner');soccerAction(p,{kind:'start'});
+test('Reading gives an immediate cue then a paced model; reload/spam cannot skip the pause',()=>{
+ let p=freshProfile('admin');readingAction(p,{kind:'start',focus:'decode'});
+ const input={kind:'help',help:'show',questionId:p.reading.question.id};
+ assert.equal(readingHintState(p).label,'Help me');
+ readingAction(p,input);assert.deepEqual(p.reading.help,['cue']);assert.equal(readingHintState(p).waitSeconds,5);
+ p=JSON.parse(JSON.stringify(p));const before=JSON.stringify(p);
+ assert.equal(readingAction(p,input).kind,'help-wait');assert.equal(JSON.stringify(p),before);
+ p.reading.hintReadyAt=Date.now()-1;readingAction(p,input);assert.deepEqual(p.reading.help,['cue','show']);
+ const revision=p.revision;readingAction(p,input);assert.equal(p.revision,revision);
+ const result=readingAction(p,{kind:'answer',questionId:p.reading.question.id,answer:p.reading.question.answer,durationMs:500});assert.equal(result.independent,false);
+ readingAction(p,{kind:'next'});assert.equal(readingHintState(p).label,'Help me');assert.equal(readingHintState(p).waitSeconds,0);
+});
+test('Read-aloud starts the same pause; repeating a cue never extends it',()=>{
+ const p=freshProfile('admin');readingAction(p,{kind:'start',focus:'story'});
+ const input={kind:'help',help:'read',questionId:p.reading.question.id};readingAction(p,input);
+ const at=p.reading.hintReadyAt;readingAction(p,input);assert.equal(p.reading.hintReadyAt,at);
+ assert.equal(readingAction(p,{...input,help:'show'}).kind,'help-wait');
+});
+test('All soccer kicks can receive help, still counted as supported practice',()=>{
+ const p=freshProfile('admin');soccerAction(p,{kind:'start'});
  for(let i=0;i<5;i++){
   soccerAction(p,{kind:'ready'});const q=p.soccer.question;
-  if(i<2){soccerAction(p,{kind:'hint',questionId:q.id});const rev=p.revision;soccerAction(p,{kind:'hint',questionId:q.id});assert.equal(p.revision,rev);}
-  else assert.throws(()=>soccerAction(p,{kind:'hint',questionId:q.id}),/No hints left/);
-  const r=soccerAction(p,{kind:'answer',questionId:q.id,answer:i<2?q.answer:q.options.find(a=>a!==q.answer),durationMs:1000});
-  assert.equal(r.goal,false);assert.equal(r.xp,0);if(i<2){assert.equal(r.kind,'practice');assert.match(soccerView(p),/Practice shot — no goal/);}
-  soccerAction(p,{kind:'next'});
+  soccerAction(p,{kind:'hint',questionId:q.id});const rev=p.revision;soccerAction(p,{kind:'hint',questionId:q.id});assert.equal(p.revision,rev);
+  const r=soccerAction(p,{kind:'answer',questionId:q.id,answer:q.answer,durationMs:1000});
+  assert.equal(r.goal,false);assert.equal(r.xp,0);assert.equal(r.kind,'practice');soccerAction(p,{kind:'next'});
  }
- assert.equal(p.xp,0);assert.equal(p.gems,0);assert.equal(p.soccer.stats.goals,0);
- soccerAction(p,{kind:'start'});assert.equal(hintState(p).tokens,0);
-});
-test('Hint allowance is shared by soccer, reading, and matches, not by browser or game',()=>{
- const p=freshProfile('beginner');soccerAction(p,{kind:'start'});soccerAction(p,{kind:'ready'});
- soccerAction(p,{kind:'hint',questionId:p.soccer.question.id});readingAction(p,{kind:'start',focus:'decode'});
- readingAction(p,{kind:'help',help:'read',questionId:p.reading.question.id});
- readingAction(p,{kind:'help',help:'show',questionId:p.reading.question.id});assert.equal(hintState(p).tokens,0);
- startDuel(p);assert.throws(()=>useMatchHint(p),/No hints left/);assert.equal(p.duel.rook,0);
+ assert.equal(p.xp,0);assert.equal(p.soccer.stats.goals,0);
+ startDuel(p);assert.doesNotThrow(()=>useMatchHint(p));
 });
 test('Server-owned lesson reveals cannot be cleared by lying about assistance',()=>{
- const p=freshProfile('beginner'),q=nextChallenge(p);useHint(p,`lesson:${q.id}`);
- assert.ok(wasHinted(p,`lesson:${q.id}`));applyAttempt(p,q,{answer:expectedAnswer(q),helped:false,durationMs:1000,strokes:q.paths});
- assert.equal(p.history.at(-1).helped,true);
+ const p=freshProfile('admin'),q=nextChallenge(p);useHint(p,`lesson:${q.id}`);
+ applyAttempt(p,q,{answer:expectedAnswer(q),helped:false,durationMs:1000,strokes:q.paths});assert.equal(p.history.at(-1).helped,true);
 });

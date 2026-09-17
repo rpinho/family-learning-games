@@ -61,6 +61,12 @@ const prompts={decode:'Read the word. Choose its picture.',act:'Read the instruc
 const objects=[{id:'red-hat',color:'#dc5f5b',thing:'hat',label:'red hat'},{id:'blue-hat',color:'#418bd2',thing:'hat',label:'blue hat'},{id:'red-cup',color:'#dc5f5b',thing:'cup',label:'red cup'},{id:'blue-cup',color:'#418bd2',thing:'cup',label:'blue cup'}];
 function random(seed){return ()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};}
 function shuffle(a,r){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+export const READING_HINT_PAUSE_MS=5000;
+export function readingHintState(p,now=Date.now()){
+ const s=readingState(p),shown=s.help.includes('show'),cued=s.help.includes('cue')||s.help.includes('read');
+ const waitSeconds=shown?0:Math.max(0,Math.ceil((((s.hintQuestion===s.question?.id?s.hintReadyAt:0)||0)-now)/1000));
+ return {waitSeconds:Math.ceil(waitSeconds),label:shown?'Answer shown':!cued?'Help me':waitSeconds>0?`Show me · ${Math.ceil(waitSeconds)}s`:'Show me'};
+}
 export function readingState(p){return p.reading||{run:0,step:0,phase:'lobby',focus:'mix',skills:{},question:null,help:[],mistakes:0,results:[],history:[],draft:[],ink:[]};}
 export function readingQuestion(p){
  const s=readingState(p);if(s.question)return s.question;
@@ -110,7 +116,17 @@ export function readingAction(p,input){
  if(s.phase!=='question'||input.questionId!==s.question.id)throw Error('This reading activity changed. Reload to continue.');const q=s.question;
  if(input.kind==='help'){
   if(!['read','show'].includes(input.help))throw Error('Choose a hint');
-  if(!s.help.includes(input.help)){if(!s.help.length)useHint(p,`reading:${q.id}`);s.help.push(input.help);p.revision++;}return {kind:'help',line:input.help==='read'?q.helpLine:READING_LINES.hint};
+  const now=Date.now(),cued=s.help.includes('cue')||s.help.includes('read');
+  if(input.help==='show'&&!s.help.includes('show')){
+   if(!cued){useHint(p,`reading:${q.id}`);s.help.push('cue');s.hintQuestion=q.id;s.hintReadyAt=now+READING_HINT_PAUSE_MS;p.revision++;return {kind:'help',line:q.helpLine};}
+   if(readingHintState(p,now).waitSeconds)return {kind:'help-wait',line:undefined};
+  }
+  if(!s.help.includes(input.help)){
+   useHint(p,`reading:${q.id}`);s.help.push(input.help);
+   if(input.help==='read'&&!cued){s.hintQuestion=q.id;s.hintReadyAt=now+READING_HINT_PAUSE_MS;}
+   p.revision++;
+  }
+  return {kind:'help',line:input.help==='read'?q.helpLine:READING_LINES.hint};
  }
  if(input.kind==='draft'){
   if(!Array.isArray(input.draft)||input.draft.length>20||!input.draft.every(n=>Number.isInteger(n)&&n>=0&&n<(q.tiles?.length||q.options?.length||0)))throw Error('Invalid reading tiles');

@@ -1,3 +1,5 @@
+import {exclusiveReadingAction} from './reading-client.mjs';
+import {readingHintState} from './reading.mjs';
 import {hintLabel,useHint,wasHinted} from './hints.mjs';
 import {GuidedTrace} from './guided-trace.mjs';
 import {KINGDOMS,freshProfile,nextChallenge,applyAttempt,leagueRows,questRating,taskPrompt,visibleTaskPrompt,startDuel,startAdventure,recommendedDuelLevel,claimQuest,questBoard,expectedAnswer,DUEL_LEVELS,useMatchHint} from './engine.mjs';
@@ -34,6 +36,7 @@ let mute=false,mazeClient=null,mazeMessage='',mazeStarted=Date.now(),mazeTaskId=
 let resetConfirmation=false;
 let saveError='';
 let soccerMessage='',soccerAnimating=false,soccerStarted=0,soccerQuestionId='';
+let readingServerOffset=0;
 let letterPractice=false,readingMessage='',readingStarted=0,readingId='',disposeReadingInk,readingInkQueue=Promise.resolve(),readingInkError='',readingInkDraft=[];
 const isAdmin=()=>id==='admin';
 function ratingBadge(){const r=questRating(profile);return `<span class="quest-rating" title="Practice level based on your letter and writing activities." aria-label="Practice level ${r.level}"><b>📖 Level ${r.level}</b></span>`;}
@@ -64,10 +67,26 @@ function chime(){if(mute||!profile.settings.sound)return;try{audio??=new AudioCo
 async function request(action='state',payload){
  if(demo){if(action==='state'){profile??=freshProfile('demo');}if(action==='attempt'){const result=applyAttempt(profile,challenge,payload);return {profile,challenge:nextChallenge(profile),result};}if(action==='settings')Object.assign(profile.settings,payload);if(action==='chest'&&profile.chests){profile.chests--;profile.gems+=25;}if(action==='promote'){const result=claimLeague(profile);if(!result)throw Error('Crown already collected');return {profile,challenge:nextChallenge(profile),result};}if(action==='advance'){const result=advanceLeague(profile);if(!result)throw Error('Claim your crown first');return {profile,challenge:nextChallenge(profile),result};}return {profile,challenge:nextChallenge(profile),result:{gems:25}};}
  let res;
- try{res=await fetch(`/api/${id}/${action}`,{method:payload?'POST':'GET',headers:{'Content-Type':'application/json','X-Letter-Quest-Session':telemetry.session},body:payload?JSON.stringify(payload):undefined,signal:AbortSignal.timeout(15000)});const data=await res.json();if(!res.ok)throw Error(data.error||'Connection interrupted');return data;}
+ try{res=await fetch(`/api/${id}/${action}`,{method:payload?'POST':'GET',headers:{'Content-Type':'application/json','X-Letter-Quest-Session':telemetry.session},body:payload?JSON.stringify(payload):undefined,signal:AbortSignal.timeout(15000)});const data=await res.json();if(!res.ok)throw Object.assign(Error(data.error||'Connection interrupted'),{status:res.status});return data;}
  catch(e){telemetry.record('api_error',{action,status:res?.status||0,requestId:res?.headers.get('x-request-id')||'',message:e.message,online:navigator.onLine});throw e;}
 }
-function accept(data){profile=data.profile;challenge=data.challenge;}
+function accept(data){profile=data.profile;challenge=data.challenge;if(Number.isFinite(data.serverNow))readingServerOffset=data.serverNow-Date.now();}
+async function readingRequest(payload){
+ try{return await request('reading',payload);}catch(error){
+  if(error.status===409){
+   // Never replay an answer automatically: another tab may already have scored it.
+   const fresh=await request();
+   const same=payload.questionId===fresh.profile.reading?.question?.id;
+   if(same){
+    accept(fresh);
+    if(fresh.profile.reading?.question?.type==='write')readingInkError='Writing kept here. Tap Save to try again.';
+    error.message='Progress refreshed. Your writing is kept here. Try again.';
+   }else error.message='This activity changed on another screen. Keep this page open to preserve your unsaved writing.';
+  }
+  throw error;
+ }
+}
+
 function frame(content){return `<div class="shell"><aside class="sidebar"><a class="brand" href="/${demo?'?demo':'?player='+id}"><span class="brand-icon"><img src="/icons/app-192-v2.png" alt="" width="42" height="42" style="border-radius:12px;vertical-align:middle"></span><span>letter<span class="brand-light">quest</span><small>WORDS OPEN WORLDS</small></span></a><nav aria-label="Main navigation">${navItems(tab,profile,{grouped:params.get('family')==='1'})}</nav><div class="sidebar-bottom"><img src="/rook.svg" alt=""><p>Your next rival<br>has a mustache.</p>${btn('⚙ Grown-ups','tab:parents','text-button parent-nav')}</div></aside><div class="workspace"><header class="topbar"><div class="player"><span class="avatar">${escape(profile.name[0])}</span><label class="sr-only" for="player">Player</label><select id="player" ${demo||busy?'disabled':''}><option value="explorer" ${id==='explorer'?'selected':''}>Explorer</option><option value="beginner" ${id==='beginner'?'selected':''}>Beginner</option><option value="admin" ${isAdmin()?'selected':''}>Admin · Admin</option>${demo?'<option selected>Explorer · demo</option>':''}</select></div><div class="stats">${ratingBadge()}<span title="Experience points">⚡ <b>${profile.xp}</b><small>XP</small></span><span title="Gems">◆ <b>${profile.gems}</b></span><span title="Crowns">👑 <b>${profile.crowns}</b></span>${btn(profile.settings.sound?'♪':'♩','sound','sound-button',`aria-label="${profile.settings.sound?'Mute sound':'Enable sound'}"`)}${btn('⚙','tab:parents','text-button parent-top','aria-label="Grown-ups"')}</div></header><main>${modeBanner()}${demo?'<div class="demo-banner">Practice preview · nothing is saved to the boys’ profiles</div>':''}${content}</main><footer>One word. A whole new world.</footer></div></div>`;}
 function render(){
  if(tab!=='rescue'&&rescueClient){rescueClient.dispose();rescueClient=null;}
@@ -83,10 +102,11 @@ function render(){
   if(mazeClient){mazeClient.dispose();mazeClient=null;}resizeObserver?.disconnect();document.body.classList.remove('maze-open','lesson-open');
   document.title='Letter Quest — '+profile.name+'’s Reading Missions';
   const s=readingState(profile);if(s.question&&readingId!==profile.id+s.question.id){readingId=profile.id+s.question.id;readingStarted=Date.now();readingInkDraft=s.ink;readingInkError='';}
-  app.innerHTML=readingView(profile,{busy,message:readingMessage});bind();
+  const visibleProfile=readingInkError&&s.question?.type==='write'?{...profile,reading:{...s,ink:readingInkDraft}}:profile;
+  app.innerHTML=readingView(visibleProfile,{busy,message:readingMessage,now:Date.now()+readingServerOffset});bind();
   const canvas=app.querySelector('#reading-ink');if(canvas){disposeReadingInk=mountReadingInk(canvas,readingInkError?readingInkDraft:s.ink,ink=>{
    if(busy||s.phase!=='question')return;readingInkDraft=ink;app.querySelector('[data-action="reading-check"]').disabled=false;app.querySelector('[data-action="reading-ink-undo"]').disabled=false;
-   const questionId=s.question.id;readingInkQueue=readingInkQueue.then(async()=>{try{const payload={kind:'ink',questionId,ink,revision:profile.revision};accept(demo?{profile,result:readingAction(profile,payload),challenge:nextChallenge(profile)}:await request('reading',payload));readingInkError='';}catch(e){readingInkError=e.message;notice('Writing not saved yet. Keep this page open and try Save again.');}});
+   const questionId=s.question.id;readingInkQueue=readingInkQueue.then(async()=>{try{const payload={kind:'ink',questionId,ink,revision:profile.revision};accept(demo?{profile,result:readingAction(profile,payload),challenge:nextChallenge(profile)}:await readingRequest(payload));readingInkError='';}catch(e){readingInkError=e.message;notice('Writing not saved yet. Keep this page open and try Save again.');}});
   },(kind,detail)=>telemetry.record(kind,detail));if(busy||s.phase!=='question'){canvas.onpointerdown=canvas.onpointermove=canvas.onpointerup=null;}}
   return;
  }
@@ -231,12 +251,13 @@ function rewardModal(title,gems,crown=false){
  dialog.innerHTML=`<div class="reward-sparkle" aria-hidden="true">${crown?'👑':'◆'}</div><div class="eyebrow">EARNED BY YOU</div><h2 id="reward-title">${escape(title)}</h2><p class="reward-amount">+${gems} gems${crown?' · +1 crown':''}</p><p>Your collection now has <strong>${profile.gems} gems.</strong></p><form method="dialog"><button class="button primary" autofocus>Awesome! →</button></form>`;
  dialog.addEventListener('close',()=>dialog.remove());document.body.append(dialog);dialog.showModal();
 }
+const runReading=exclusiveReadingAction(async(...args)=>{await readingInkQueue;return readingAct(...args);},value=>{busy=value;if(!value)render();});
 async function readingAct(kind,value){
  if(kind==='letters'){letterPractice=true;goTab('practice');return;}
  if(kind==='home'){await readingInkQueue;if(readingInkError){notice('Writing not saved yet. Keep this page open and try Save again.');return;}letterPractice=false;if(profile.id==='beginner'){goTab('reading');app.innerHTML=frame(readingHome(profile));bind();}else goTab('practice');return;}
  if(kind==='resume'){readingMessage='';goTab('reading');return;}
  if(kind==='repeat'){readingPrompt(readingState(profile).question,true);return;}
- await readingInkQueue;busy=true;if(!['tile','actor','position'].includes(kind))coachVoice.stop();
+ await readingInkQueue;if(!['tile','actor','position'].includes(kind))coachVoice.stop();
  const s=readingState(profile),q=s.question;let input;
  if(kind==='start'||kind==='choose'){const [focus,level]=value.split('|');input={kind:'start',focus,...(level?{level:Number(level)}:{}),replace:kind==='choose'};}
  else if(['read','show'].includes(kind))input={kind:'help',help:kind};
@@ -250,9 +271,9 @@ async function readingAct(kind,value){
  else {busy=false;return;}
  readingMessage='';render();
  try{
-  if(readingInkError&&q?.type==='write'){const retry={kind:'ink',questionId:q.id,ink:readingInkDraft,revision:profile.revision};accept(demo?{profile,result:readingAction(profile,retry),challenge:nextChallenge(profile)}:await request('reading',retry));readingInkError='';}
+  if(readingInkError&&q?.type==='write'){const retry={kind:'ink',questionId:q.id,ink:readingInkDraft,revision:profile.revision};accept(demo?{profile,result:readingAction(profile,retry),challenge:nextChallenge(profile)}:await readingRequest(retry));readingInkError='';}
   const payload={...input,questionId:q?.id,revision:profile.revision};
-  const data=demo?{profile,result:readingAction(profile,payload),challenge:nextChallenge(profile)}:await request('reading',payload);accept(data);readingMessage=data.result.line||'';
+  const data=demo?{profile,result:readingAction(profile,payload),challenge:nextChallenge(profile)}:await readingRequest(payload);accept(data);readingMessage=data.result.line||'';
   if(kind==='start'||kind==='choose')goTab('reading');
   if(['start','choose','next'].includes(kind)&&readingState(profile).phase==='question')readingPrompt(readingState(profile).question);
   else if(['read','show'].includes(kind)&&data.result.line)void coachVoice.speak(data.result.line);
@@ -326,7 +347,7 @@ async function rescueAct(input){
  finally{busy=false;if(tab==='rescue')render();}
 }
 async function act(action){telemetry.record('action',{action});if(busy)return;const [kind,value]=action.split(':');
- if(kind.startsWith('reading-')){await readingAct(kind.slice(8),value);return;}
+ if(kind.startsWith('reading-')){await runReading(kind.slice(8),value);return;}
  if(kind.startsWith('soccer-')){await soccerAct(kind.slice(7),value);return;}
  if(kind==='league-select'){const n=Number(value);if(Number.isInteger(n)&&n>=0&&n<=profile.league){leagueSelection=n;render();}return;}
  if(kind==='league-current'){leagueSelection=profile.league;render();return;}
@@ -403,5 +424,9 @@ async function act(action){telemetry.record('action',{action});if(busy)return;co
 }
 async function load(){try{accept(await request());view='map';render();}catch(e){app.innerHTML=`<div class="connection-error"><span>🔤</span><h1>Rook is waiting at home.</h1><p>${escape(e.message)}</p><p>Check that the server is on and you’re connected to home Wi-Fi.</p><button id="retry-load" class="button primary">Try again</button></div>`;document.querySelector('#retry-load').onclick=load;mountRefresh();}}
 // Update only hint labels: rebuilding the page here would erase live ink/drafts.
-setInterval(()=>{if(!profile)return;for(const button of document.querySelectorAll('[data-action="hint"],[data-action="soccer-hint"],[data-action="reading-show"],[data-maze="hint"]'))if(button.textContent.startsWith('Show me'))button.textContent=hintLabel(profile);},1000);
+setInterval(()=>{
+ if(!profile)return;
+ const button=app.querySelector('[data-action="reading-show"]');
+ if(button){const hint=readingHintState(profile,Date.now()+readingServerOffset);button.textContent=hint.label;button.disabled=busy||hint.waitSeconds>0;}
+},250);
 load();

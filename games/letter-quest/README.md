@@ -1,5 +1,11 @@
 # Letter Quest
 
+## September 16: reliable reading saves and accessible help
+
+Reading actions lock before pending ink saves finish, so repeated taps cannot submit competing answers. Revision conflicts refresh the same activity without automatically replaying an answer; pending handwriting stays available for a deliberate retry. Other-screen activity changes leave unsaved writing on its current page.
+
+The old shared reveal balance no longer blocks help. Reading offers a spoken cue immediately, then its answer model after five seconds; replay does not extend the pause, and a new question gets immediate help. Assistance remains separate from independent success. Other Letter Quest activities retain their existing supported-practice scoring and no longer exhaust a shared hint allowance. Older hint-budget notes below are historical.
+
 ## Literacy identity — September 15, 2026
 
 Letter Quest uses reading and word-game imagery throughout navigation, lesson paths, rewards and saved standings. The former Matches tab is labeled Word games; existing routes and progress remain compatible. The header shows the practice level without the old rating number. Rook and existing narration stay. Chess is a separate game in the family hub.

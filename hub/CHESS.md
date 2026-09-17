@@ -19,6 +19,10 @@ The final correct move in a lesson briefly celebrates, saves completion, returns
 
 Mistakes and hints mark a result as assisted. Assisted puzzles return in review; independent solves expand the interval up to fourteen days. A subsequent lesson or review includes at most one fresh check: an unseen position with the same theme and difficulty band, chosen near the source puzzle rating when available. It replaces one of five ordinary lesson positions rather than adding homework. Results are recorded separately in My notebook. Help is still available on that check; an independent solve clears the source’s immediate practice flag without erasing its assisted history. Replaying a lesson preserves the best result. There are no lives, point deductions, task time limits, purchases or claimed rating gains. The brief hint pause is adjustable design judgment, not a validated learning optimum.
 
+## Reliable coach playback
+
+Coach speech reuses one audio element, primed by a tap or key press. Moving, switching views or requesting another cue cancels the prior clip cleanly; delayed callbacks from it cannot stop the new coach animation or report a false failure. Actual failures retain the exception name, clip source and media error code in local diagnostics. The speaker button can retry a blocked clip. This does not change the voice assets or add device speech.
+
 ## Separate starting levels and quieter coaching
 
 The generic Beginner preset starts Guided with a Friendly opponent; Explorer starts Stretch with a Club opponent. A private install can specify `chess: {"band":"guided","strength":"friendly"}` on each player in its external configuration. These starting choices apply once; later manual selections stay in control. Existing lesson boards and games finish at their original settings. New lessons, reviews and practice games use the selected difficulty; earlier review evidence remains available when returning to its band.

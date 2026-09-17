@@ -1,3 +1,4 @@
+import { createCoachAudio } from './audio.mjs';
 import { UNITS, LESSONS, lessonFor, NAMES, VOICE } from "./curriculum.mjs";
 import { coach, piece } from "./art.mjs";
 import { mountBoard } from "./board.mjs";
@@ -26,7 +27,6 @@ export function mountChess(root, { player, name, event = () => {} }) {
     boardDispose = null,
     analysisView = false,
     voiceManifest = {},
-    clip = null,
     captions = false,
     reaction = "idle",
     finishTimer = null,
@@ -35,15 +35,15 @@ export function mountChess(root, { player, name, event = () => {} }) {
   const priorScrollRestoration = history.scrollRestoration;
   history.scrollRestoration = "manual";
   const endpoint = "/api/chess?player=" + encodeURIComponent(player);
-  const utterance = () => {
-    speechGeneration++;
-    clip?.pause();
-    clip = null;
-    root.querySelector(".academy-coach")?.classList.remove("talking");
-  };
+  const voice=createCoachAudio({event,talking:on=>root.querySelector('.academy-coach')?.classList.toggle('talking',on)});
+  const unlockVoice=()=>voice.unlock();
+  root.addEventListener('pointerdown',unlockVoice,{capture:true});
+  root.addEventListener('keydown',unlockVoice,{capture:true});
+  const utterance = () => {speechGeneration++;voice.stop();};
+  let manifestReady=false;
   let voiceReady = fetch("/chess-voice/manifest.json")
       .then((r) => (r.ok ? r.json() : {}))
-      .then((m) => (voiceManifest = m.clips || {}))
+      .then((m) => (voiceManifest = m.clips || {}, manifestReady=true))
       .catch(() => {}),
     speechGeneration = 0;
   const allowNarration = createNarrationGate();
@@ -52,35 +52,16 @@ export function mountChess(root, { player, name, event = () => {} }) {
     if (!allowNarration(text, { force, kind })) return;
     utterance();
     const generation = speechGeneration;
-    await voiceReady;
+    if(!manifestReady)await voiceReady;
     if (!alive || generation !== speechGeneration) return;
     const source = voiceManifest[text];
     if (!source) {
       event("chess_voice_unavailable", "missing original clip");
       return;
     }
-    const puppet = root.querySelector(".academy-coach");
-    clip = new Audio(source);
-    clip.preload = "auto";
-    const done = () =>
-      root.querySelector(".academy-coach")?.classList.remove("talking");
-    clip.onplaying = () => {
-      puppet?.classList.add("talking");
-      event("chess_voice_play", source);
-    };
-    clip.onended = () => {
-      done();
-      event("chess_voice_end", source);
-    };
-    clip.onerror = () => {
-      done();
-      event("chess_voice_unavailable", "clip playback failed");
-    };
-    clip.play().catch(() => {
-      done();
-      event("chess_voice_unavailable", "playback needs a tap");
-    });
+    voice.play(source);
   }
+
   function clickSound(win = false) {
     if (!profile?.settings.sound) return;
     try {
@@ -240,7 +221,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
     root.innerHTML = `<div class="academy" style="--unit:${UNITS[unit].color}">${nav()}${error ? `<div class="ac-error" role="alert"><strong>${esc(error)}</strong>${btn("Retry save", "retry", "primary")}${btn("Reload progress", "reload")}</div>` : ""}<div class="ac-content" ${busy ? 'aria-busy="true"' : ""}>${view === "lesson" ? lessonView() : view === "game" ? gameView() : view === "play" ? playView() : view === "notebook" ? notebookView() : pathView()}</div><div class="ac-saving" role="status">${busy ? "Saving your move…" : ""}</div></div>`;
     bind();
     updateHintClock();
-    if (clip && !clip.paused)
+    if (voice.isPlaying())
       root.querySelector(".academy-coach")?.classList.add("talking");
     const mount = root.querySelector("#chess-board");
     if (mount) {
@@ -613,6 +594,8 @@ export function mountChess(root, { player, name, event = () => {} }) {
     clearTimeout(finishTimer);
     clearInterval(hintClock);
     boardDispose?.();
+    root.removeEventListener('pointerdown',unlockVoice,{capture:true});
+    root.removeEventListener('keydown',unlockVoice,{capture:true});
     utterance();
   };
   dispose.busy = () => busy || !!pending;
