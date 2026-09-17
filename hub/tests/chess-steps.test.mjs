@@ -56,3 +56,7 @@ test('Same-value Guided setting repairs a legacy harder resumable lesson; small-
  await act(p,'settings',{band:'steps'});await act(p,'begin');await act(p,'hint');await move(p,PUZZLES[p.session.ids[0]].line[0]);assert.equal(p.session.results[0].independent,false);
  await act(p,'start',{lesson:'review'});assert.ok(p.session.ids.every(id=>PUZZLES[id].original));
 });
+
+test('Later Small steps placement highlights its lesson and leaves easier lessons available without awarding them',async()=>{
+ const p=freshChess();await act(p,'settings',{band:'steps'});await act(p,'start',{lesson:'steps-fork-1'});const path=pathProgress(p);assert.equal(path.find(l=>l.current).id,'steps-fork-1');assert.ok(path.slice(0,10).every(l=>!l.locked));assert.equal(path[10].locked,true);assert.deepEqual(p.completed,{});
+});
