@@ -1,5 +1,5 @@
 import { rookAvatar } from "./rook.mjs";
-import { PIECES } from "./pieces.mjs";
+import { PIECES } from "./tokens.mjs";
 export function piece(type, color) {
   return PIECES[color + type.toUpperCase()] || "";
 }

@@ -261,7 +261,9 @@ export function mountChess(root, { player, name, event = () => {} }) {
         onMotion: (kind) => {
           react(kind);
         },
-        onSelect: (text) => {
+        onSelect: (text, gaze) => {
+          const eyes = root.querySelector(".rook-eyes");
+          if (eyes && gaze) eyes.style.transform = `translate(${(gaze.x - .5) * 6}px, ${2 + gaze.y * 3}px)`;
           const el = root.querySelector("#board-selection");
           if (el) el.textContent = text;
         },
@@ -282,6 +284,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
     if (!kind || kind === "idle" || kind === "land") return;
     void puppet.getBoundingClientRect();
     puppet.classList.add("react-" + kind);
+    if (kind === "celebrate" && view === "lesson") void boardDispose?.celebrate?.();
   }
   const uiIcon = (paths) =>
     `<svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;

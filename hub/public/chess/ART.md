@@ -1,6 +1,6 @@
 # Academy artwork
 
-Rook is the established Letter Quest character: green jacket, gold tie, glasses, dark hair and moustache. `rook.mjs` preserves that identity with independently animated eyes, head, mouth, moustache and hand. The rook icon is an original SVG drawing in `icon.svg`. The current rounded chess pieces derive from RhosGFX’s CC0 set; [source, license and modifications](pieces/PROVENANCE.md).
+Rook is the established Letter Quest character: green jacket, gold tie, glasses, dark hair and moustache. `rook.mjs` preserves that identity with independently animated eyes, head, mouth, moustache and hand. The rook icon is an original SVG drawing in `icon.svg`. The current playing pieces in `tokens.mjs` are original vector drawings: round pawn, slotted bishop, horse, crenellated tower, queen crown and king cross. Both sides share geometry; layered fills and short highlights create depth without raster images or shared SVG IDs. The earlier RhosGFX CC0 source SVGs and compiled `pieces.mjs` are retained as historical assets; [source, license and modifications](pieces/PROVENANCE.md). The legacy builder only rebuilds that older set; it does not overwrite the current playing pieces.
 
 `academy-world.png` was created with the built-in image-generation tool on September 14, 2026. No third-party game artwork or character references were supplied. It is retained as a historical asset and is no longer displayed. The current path and play surface use plain backgrounds; the board, pieces and character reactions take priority.
 

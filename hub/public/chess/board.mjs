@@ -87,6 +87,7 @@ export function mountBoard(
       selected
         ? `${NAMES[p.type][0].toUpperCase() + NAMES[p.type].slice(1)} selected. Choose a marked square.`
         : "Choose a piece.",
+      selected ? { x: (squares.indexOf(selected) % 8) / 7, y: Math.floor(squares.indexOf(selected) / 8) / 7 } : null,
     );
   }
   function attempt(from, to) {
@@ -163,6 +164,13 @@ export function mountBoard(
       }
       ghost.style.left = e.clientX + "px";
       ghost.style.top = e.clientY + "px";
+      const rect = board.getBoundingClientRect();
+      const col = Math.floor((e.clientX - rect.left) / rect.width * 8);
+      const row = Math.floor((e.clientY - rect.top) / rect.height * 8);
+      const target = col >= 0 && col < 8 && row >= 0 && row < 8 ? squares[row * 8 + col] : null;
+      board.querySelectorAll('.drop-target').forEach(el=>el.classList.remove('drop-target'));
+      if (target && cell !== board.querySelector(`[data-square="${target}"]`))
+        board.querySelector(`[data-square="${target}"].legal`)?.classList.add('drop-target');
     }
   });
   board.addEventListener("pointerup", (e) => {
@@ -173,8 +181,8 @@ export function mountBoard(
     ghost = null;
     board.releasePointerCapture(e.pointerId);
     board
-      .querySelectorAll(".dragging")
-      .forEach((el) => el.classList.remove("dragging"));
+      .querySelectorAll(".dragging,.drop-target")
+      .forEach((el) => el.classList.remove("dragging", "drop-target"));
     const rect = board.getBoundingClientRect(),
       col = Math.floor(((e.clientX - rect.left) / rect.width) * 8),
       row = Math.floor(((e.clientY - rect.top) / rect.height) * 8),
@@ -195,8 +203,8 @@ export function mountBoard(
     ghost?.remove();
     ghost = null;
     board
-      .querySelectorAll(".dragging")
-      .forEach((el) => el.classList.remove("dragging"));
+      .querySelectorAll(".dragging,.drop-target")
+      .forEach((el) => el.classList.remove("dragging", "drop-target"));
   });
   board.addEventListener("keydown", (e) => {
     if (locked) return;
@@ -262,7 +270,7 @@ export function mountBoard(
     from,
     to,
     markup,
-    { reverse = false, capture = false, drop = null } = {},
+    { reverse = false, captureSquare = null, drop = null } = {},
   ) {
     const source = cell(from),
       target = cell(to);
@@ -286,15 +294,18 @@ export function mountBoard(
     source.querySelector("svg")?.style.setProperty("visibility", "hidden");
     const dx = b.x - start.x,
       dy = b.y - start.y;
-    const victim = capture ? target.querySelector("svg") : null;
+    const duration = reverse ? 300 : drop ? 170 : 330;
+    const victim = captureSquare ? cell(captureSquare)?.querySelector("svg") : null;
+    target.classList.add('move-arriving');
     const victimMotion = victim
       ? tween(
           victim,
           [
-            { opacity: 1, scale: 1 },
-            { opacity: 0, scale: 0.45, translate: "0 -12px" },
+            { opacity: 1, scale: 1, offset: 0 },
+            { opacity: 1, scale: 1, offset: .6 },
+            { opacity: 0, scale: .6, translate: "0 8px", offset: 1 },
           ],
-          { duration: 180, easing: "ease-in", fill: "forwards" },
+          { duration, easing: "ease-in", fill: "forwards" },
         )
       : Promise.resolve();
     await tween(
@@ -302,20 +313,21 @@ export function mountBoard(
       [
         { translate: "0 0", scale: 1, offset: 0 },
         {
-          translate: `${dx * 0.82}px ${dy * 0.82 - 5}px`,
-          scale: 1.08,
-          offset: 0.7,
+          translate: `${dx * 0.52}px ${dy * 0.52 - (reverse ? 2 : a.height * .18)}px`,
+          scale: reverse ? 1 : 1.12,
+          offset: 0.48,
         },
         { translate: `${dx}px ${dy}px`, scale: 0.95, offset: 0.9 },
         { translate: `${dx}px ${dy}px`, scale: 1, offset: 1 },
       ],
       {
-        duration: reverse ? 310 : drop ? 130 : 240,
+        duration,
         easing: "cubic-bezier(.2,.75,.3,1)",
         fill: "forwards",
       },
     );
     await victimMotion;
+    target.classList.remove("move-arriving");
     moving.remove();
     floating.delete(moving);
   }
@@ -341,7 +353,7 @@ export function mountBoard(
         );
       const journeys = [
         travel(from, to, piece(p.type, p.color), {
-          capture: !!m.captured,
+          captureSquare: m.captured ? (m.isEnPassant() ? to[0] + from[1] : to) : null,
           drop: droppedAt,
         }),
       ];
@@ -370,7 +382,7 @@ export function mountBoard(
           ],
           { duration: 180, easing: "ease-out" },
         );
-      if (m.captured) {
+      if (m.captured && !preview) {
         const ring = document.createElement("span");
         ring.className = "capture-ring";
         cell(to).append(ring);
@@ -397,6 +409,29 @@ export function mountBoard(
   dispose.lock = (value) => {
     locked = value;
     board.querySelectorAll("button").forEach((el) => (el.disabled = value));
+  };
+  // Called only after an accepted solve, never for speculative moves or examples.
+  dispose.celebrate = async () => {
+    const square = lastMoves.at(-1)?.slice(2, 4);
+    const target = square && cell(square);
+    if (!target || disposed) return;
+    target.classList.add('move-celebrating');
+    const badge = document.createElement('span');
+    badge.className = 'move-success'; badge.textContent = '✓';
+    badge.setAttribute('aria-hidden', 'true'); target.append(badge);
+    floating.add(badge);
+    if (reduced()) return;
+    const sparks = Array.from({length: 7}, (_, i) => {
+      const el = document.createElement('i'); el.className = 'move-spark';
+      el.setAttribute('aria-hidden','true'); target.append(el); floating.add(el);
+      const angle = Math.PI * 2 * i / 7, radius = target.clientWidth * .65;
+      return tween(el, [
+        {translate:'-50% -50%', scale:.2, opacity:0},
+        {opacity:1, offset:.15},
+        {translate:`${Math.cos(angle)*radius}px ${Math.sin(angle)*radius}px`, rotate:'100deg', scale:.4, opacity:0}
+      ], {duration:520,easing:'cubic-bezier(.15,.7,.3,1)'}).finally(()=>{el.remove();floating.delete(el);});
+    });
+    await Promise.all([tween(badge,[{scale:0,rotate:'-20deg'},{scale:1.18,rotate:'5deg',offset:.65},{scale:1,rotate:'0deg'}],{duration:360,easing:'ease-out'}),...sparks]);
   };
   dispose.animate = animateMoves;
   dispose.preview = async (u) => {
