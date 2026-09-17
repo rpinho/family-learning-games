@@ -1,3 +1,6 @@
+import {STEP_UNITS,STEP_LESSONS} from './steps-curriculum.mjs';
+export const unitsForBand=band=>band==='steps'?STEP_UNITS:UNITS;
+export const lessonsForBand=band=>band==='steps'?STEP_LESSONS:LESSONS;
 // Original coaching, sequenced around short positions instead of opening memorization.
 export const COURSE_VERSION = "rook-academy-1";
 export const UNITS = [
@@ -314,7 +317,7 @@ export const LESSONS = UNITS.flatMap((u, unit) =>
   })),
 );
 export const unitFor = (id) => UNITS.find((u) => u.id === id) || UNITS[0];
-export const lessonFor = (id) => LESSONS.find((l) => l.id === id);
+export const lessonFor = (id) => [...LESSONS,...STEP_LESSONS].find((l) => l.id === id);
 export const NAMES = {
   p: "pawn",
   n: "knight",

@@ -1,7 +1,8 @@
-import { LESSONS } from './curriculum.mjs';
+import { lessonsForBand } from './curriculum.mjs';
 
 export function pathProgress(profile) {
   // Older versions allowed out-of-order play: keep every reached lesson available.
+  const LESSONS=lessonsForBand(profile.settings?.band);
   const completed = profile.completed || {};
   const reached = Math.max(-1, ...LESSONS.map((l, i) => completed[l.id] ? i : -1));
   const active = profile.session?.phase !== 'summary' ? profile.session?.lesson : null;

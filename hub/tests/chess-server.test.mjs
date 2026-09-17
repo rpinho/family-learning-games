@@ -66,7 +66,7 @@ test("Chess API isolates players, serializes writes, recovers duplicate saves an
     }
     const beginner = (await (await fetch(base + "/api/chess?player=beginner")).json()).profile;
     const explorer = (await (await fetch(base + "/api/chess?player=explorer")).json()).profile;
-    assert.equal(beginner.settings.band, "guided");
+    assert.equal(beginner.settings.band, "steps");
     assert.equal(beginner.settings.strength, "friendly");
     assert.equal(explorer.settings.band, "stretch");
     assert.equal(explorer.settings.strength, "club");

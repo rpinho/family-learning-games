@@ -1,3 +1,5 @@
+import {STEPS,STEP_EXAMPLES,meetsStepGoal} from './chess-steps.mjs';
+import {STEP_UNITS,STEP_LESSONS,STEP_VOICE} from './public/chess/steps-curriculum.mjs';
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { Chess } from "./public/chess/rules.mjs";
@@ -10,6 +12,7 @@ import {
   COURSE_VERSION,
   VOICE,
   pieceHint,
+  lessonsForBand,
 } from "./public/chess/curriculum.mjs";
 export const GROUPS = JSON.parse(
   await readFile(new URL("./chess-puzzles.json", import.meta.url), "utf8"),
@@ -18,7 +21,7 @@ export const GUIDED = JSON.parse(
   await readFile(new URL("./chess-guided.json", import.meta.url), "utf8"),
 );
 export const PUZZLES = Object.fromEntries(
-  [...Object.values(GROUPS).flat(), ...Object.values(GUIDED).flat()].map(
+  [...Object.values(GROUPS).flat(), ...Object.values(GUIDED).flat(), ...Object.values(STEPS).flat()].map(
     (p) => [p.id, p],
   ),
 );
@@ -36,6 +39,7 @@ function hintPublic(h, now) {
   return { stage: h.stage, waitMs: Math.max(0, (h.readyAt || 0) - now) };
 }
 function queueCheck(p, s, id, now) {
+  if(s.band==='steps')return; // Small-step lessons already supply distinct practice boards.
   // One pending check per theme and band, not an ever-growing homework queue.
   p.checks ??= [];
   const theme = PUZZLES[id].theme;
@@ -43,6 +47,7 @@ function queueCheck(p, s, id, now) {
     p.checks.push({ source: id, theme, band: s.band, at: now });
 }
 function addFreshCheck(p, ids, band) {
+  if(band==='steps')return {};
   const pending = (p.checks || []).filter(c => c.band === band);
   // Old saves with assisted practice are eligible too, without migrating saves on read.
   if (!pending.length) for (const [id, r] of Object.entries(p.review)) {
@@ -81,7 +86,7 @@ export const freshChess = () => ({
 // Apply an install's explicit per-player starting choices once. Keep active boards intact.
 export function applyChessDefaults(p, defaults = {}) {
   if (p.settings.defaultsApplied) return p;
-  if (["guided", "stretch"].includes(defaults.band)) p.settings.band = defaults.band;
+  if (["steps", "guided", "stretch"].includes(defaults.band)) p.settings.band = defaults.band;
   if (["friendly", "club", "challenge"].includes(defaults.strength)) p.settings.strength = defaults.strength;
   p.settings.defaultsApplied = true;
   return p;
@@ -89,6 +94,11 @@ export function applyChessDefaults(p, defaults = {}) {
 export function lessonPuzzles(id, band = "stretch") {
   const l = lessonFor(id);
   if (!l) return [];
+  if(band==='steps'){
+    if(!STEP_LESSONS.some(x=>x.id===id))return [];
+    return STEPS[STEP_UNITS[l.unit].theme].slice(l.step*5,l.step*5+5).map(p=>p.id);
+  }
+  if(STEP_LESSONS.some(x=>x.id===id))return [];
   const groups = band === "guided" ? GUIDED : GROUPS;
   const own = groups[UNITS[l.unit].theme].slice(l.step * 5, l.step * 5 + 5);
   // Checkpoints interleave earlier ideas without revealing the motif first.
@@ -99,7 +109,7 @@ export function lessonPuzzles(id, band = "stretch") {
   return own.map((p) => p.id);
 }
 function bandPuzzleIds(band) {
-  return new Set(Object.values(band === "guided" ? GUIDED : GROUPS).flat().map(p => p.id));
+  return new Set(Object.values(band === "steps" ? STEPS : band === "guided" ? GUIDED : GROUPS).flat().map(p => p.id));
 }
 function boardAt(s) {
   const p = PUZZLES[s.ids[s.index]],
@@ -148,6 +158,7 @@ function advancePuzzle(p) {
   s.errors = 0;
   s.feedback = null;
   s.finalFen = null;
+  s.actualLine = null;
   s.phase = "puzzle";
 }
 function finishPuzzle(p, now) {
@@ -232,7 +243,7 @@ export function publicChess(p, now = Date.now()) {
   let session = null;
   if (s) {
     const puzzle = PUZZLES[s.ids[s.index]],
-      unit = UNITS.find((u) => u.theme === puzzle?.theme) || UNITS[0];
+      unit = [...UNITS,...STEP_UNITS].find((u) => u.theme === puzzle?.theme) || UNITS[0];
     session = {
       id: s.id,
       lesson: s.lesson,
@@ -248,10 +259,11 @@ export function publicChess(p, now = Date.now()) {
       errors: s.errors,
       feedback: s.feedback,
       unit: unit.id,
+      example: s.band==='steps' ? STEP_EXAMPLES[s.lesson] || null : null,
     };
     if (puzzle && ["solved", "summary"].includes(s.phase)) {
       const replay = new Chess(puzzle.fen);
-      session.solution = puzzle.line.map((uci, i) => ({
+      session.solution = (s.actualLine||puzzle.line).map((uci, i) => ({
         who: i % 2 ? "Opponent" : "You",
         text: moveWords(playUci(replay, uci)),
       }));
@@ -268,7 +280,7 @@ export function publicChess(p, now = Date.now()) {
             ? b.isCheckmate()
               ? "Checkmate. You found it!"
               : "Combination complete!"
-            : puzzle.terminal
+            : puzzle.original ? puzzle.goal : puzzle.terminal
               ? `Find checkmate in ${Math.ceil((puzzle.line.length - s.ply) / 2)} ${Math.ceil((puzzle.line.length - s.ply) / 2) === 1 ? "move" : "moves"}`
               : puzzle.theme === "defensiveMove"
                 ? "Find the best defense"
@@ -276,6 +288,8 @@ export function publicChess(p, now = Date.now()) {
         lastMoves: puzzle.line.slice(0, s.ply),
         check: b.isCheck(),
         rating: puzzle.rating,
+        original:!!puzzle.original,
+        task:puzzle.original ? s.ply>0?'Take the rook':puzzle.goal:null,
       };
       const stage = puzzleHint(s).stage;
       if (stage >= 2) {
@@ -333,7 +347,7 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
           .filter((x) => eligible.has(x.id) && p.review[x.id])
           .slice(-5)
           .map((x) => x.id);
-      if (!ids.length) ids = lessonPuzzles(LESSONS[0].id, p.settings.band);
+      if (!ids.length) ids = lessonPuzzles(lessonsForBand(p.settings.band)[0].id, p.settings.band);
     }
     if ((ids.length !== 5 && input.lesson !== "review") || !ids.length)
       fail("Choose a lesson on the path.");
@@ -354,9 +368,24 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
     };
   } else if (input.type === "settings") {
     if (input.band !== undefined) {
-      if (!["guided", "stretch"].includes(input.band))
+      if (!["steps", "guided", "stretch"].includes(input.band))
         fail("Choose a practice level.");
-      p.settings.band = input.band;
+      const changed=input.band!==p.settings.band || s&&s.band!==input.band;
+      if(changed){
+        p.pausedLessons??={};
+        if(s&&s.phase!=='summary')p.pausedLessons[s.band||'stretch']=structuredClone(s);
+        p.settings.band=input.band;
+        const saved=p.pausedLessons[input.band];
+        if(saved&&saved.phase!=='summary')p.session=structuredClone(saved);
+        else {
+          const lessons=lessonsForBand(input.band);
+          const same=lessons.find(l=>l.id===s?.lesson);
+          const lesson=same||lessons.find(l=>!p.completed[l.id])||lessons[0];
+          p.session={id:randomUUID(),lesson:lesson.id,band:input.band,ids:lessonPuzzles(lesson.id,input.band),index:0,ply:0,hints:0,errors:0,results:[],phase:'intro',feedback:null,checkOf:{}};
+        }
+        p.current='lesson';
+        result={levelChanged:true};
+      }else p.settings.band = input.band;
     }
     if (typeof input.sound === "boolean") p.settings.sound = input.sound;
     if (input.strength !== undefined) {
@@ -376,7 +405,7 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
     if (stage > prior.stage) s.hints++;
     s.hint = { ply: s.ply, stage, readyAt: stage > prior.stage ? now + HINT_PAUSE_MS : prior.readyAt };
     result = { hint: stage, advanced: stage > prior.stage, waiting };
-    const u = UNITS.find((u) => u.theme === PUZZLES[s.ids[s.index]].theme);
+    const u = [...UNITS,...STEP_UNITS].find((u) => u.theme === PUZZLES[s.ids[s.index]].theme);
     const puzzle = PUZZLES[s.ids[s.index]],
       next = puzzle.line[s.ply],
       hintBoard = boardAt(s);
@@ -402,14 +431,15 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
       fail("That move is not legal. Try another square.");
     }
     const uci = m.from + m.to + (m.promotion || "");
-    if (uci !== puzzle.line[s.ply] && !b.isCheckmate()) {
+    const stepSuccess=puzzle.original&&puzzle.line.length===1&&meetsStepGoal(puzzle,b,m);
+    if (puzzle.original ? !(puzzle.line.length===1?stepSuccess:uci===puzzle.line[s.ply]) : uci !== puzzle.line[s.ply] && !b.isCheckmate()) {
       s.errors++;
       s.feedback = {
         kind: "incorrect",
-        text: "A legal move, but there is a stronger continuation. Recheck the forcing moves.",
+        text: puzzle.original ? STEP_VOICE.again : "A legal move, but there is a stronger continuation. Recheck the forcing moves.",
         tried: uci,
       };
-      if (engine) {
+      if (engine && !puzzle.original) {
         try {
           const analysis = await engine.analyze(b.fen(), { ms: 180 });
           const reply = analysis.best;
@@ -422,7 +452,7 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
           /* The curated drill works even if optional analysis is unavailable. */
         }
       }
-      s.feedback.voice = VOICE.mistakes[(s.errors - 1) % VOICE.mistakes.length];
+      s.feedback.voice = puzzle.original ? STEP_VOICE.again : VOICE.mistakes[(s.errors - 1) % VOICE.mistakes.length];
       result = { correct: false, attempted: uci };
     } else {
       let text = specificFeedback(b, m);
@@ -439,6 +469,7 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
                 : VOICE.progress;
       text = text[0].toUpperCase() + text.slice(1);
       s.ply++;
+      if(stepSuccess)s.finalFen=b.fen();
       const accepted = [uci];
       if (s.ply < puzzle.line.length && !b.isCheckmate()) {
         const reply = playUci(b, puzzle.line[s.ply]);
@@ -446,6 +477,7 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
         accepted.push(puzzle.line[s.ply]);
         s.ply++;
       }
+      if(stepSuccess)s.actualLine=[uci];
       s.feedback = { kind: "correct", text, voice: spoken, moves: accepted };
       result = { correct: true, moves: accepted };
       s.hint = null;

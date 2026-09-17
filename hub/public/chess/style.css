@@ -1521,3 +1521,11 @@ body:has(.chess-lesson) > .top .home {
   .unit-heading { padding: 14px 16px; }
   .unit-heading h2 { font-size: 19px; }
 }
+
+.small-steps-path .path-track{height:285px;}
+.example-badge{font-weight:850;color:#268f87;}
+.example-lesson .board-controls{justify-content:space-between;gap:12px;}
+
+.chess-board .sq.demo-target{box-shadow:inset 0 0 0 5px #f2be3c; background:#ffe69a;}
+
+@media(min-width:651px) and (min-height:561px){.small-step-lesson .play-table{width:min(560px,calc(100dvh - 300px));}}

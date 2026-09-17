@@ -75,3 +75,8 @@ test('Easier review never pulls harder puzzles from an earlier band; old review 
   await action(p,'settings',{band:'stretch'});
   assert.equal(publicChess(p).reviewDue,1);
 });
+
+
+test('Small steps speaks the one necessary follow-up in a two-move fork, without routine move chatter',()=>{
+ const p={session:{band:'steps',phase:'puzzle',ply:2}};assert.match(narrationFor('move',p,'').text,/take the rook/);p.session.phase='solved';assert.equal(narrationFor('move',p,''),null);
+});

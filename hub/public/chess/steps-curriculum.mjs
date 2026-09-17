@@ -1,0 +1,9 @@
+// Original short lessons; separate IDs keep advanced-course achievements intact.
+export const STEP_UNITS=[
+ {id:'steps-take',theme:'stepsCapture',name:'Take a free piece',task:'Take a free piece',cue:'Take a piece that nobody protects.',idea:'Watch my capture. The other pieces cannot take me back.',hints:['Look for a piece you can take safely.'],color:'#268f87',lessons:['Watch, then capture','Find your own capture','Different pieces, same idea']},
+ {id:'steps-check',theme:'stepsCheck',name:'Check the king',task:'Give check',cue:'Make a safe move that checks the king.',idea:'Watch how my piece attacks the king. That is check.',hints:['Find a square where your piece attacks the king safely.'],color:'#507ccd',lessons:['Watch a check','Check from another square','Spot the safe check']},
+ {id:'steps-mate',theme:'stepsMate',name:'One move to mate',task:'Mate in one',cue:'Check the king and leave no escape.',idea:'My pieces work together. The king has nowhere safe to go.',hints:['Keep the kings apart. Use your other piece to close the escape squares.'],color:'#c17c36',lessons:['Watch checkmate','Close the escape squares','Find your own mate']},
+ {id:'steps-fork',theme:'stepsFork',name:'Two threats',task:'Make a fork',cue:'Use one piece to attack two valuable targets.',idea:'Watch the knight. It checks the king and attacks the rook.',hints:['A knight can attack the king and a rook at the same time.'],color:'#7964c5',lessons:['Watch a knight fork','Find another fork','Fork, then take the rook']},
+];
+export const STEP_LESSONS=STEP_UNITS.flatMap((u,unit)=>u.lessons.map((name,step)=>({id:`${u.id}-${step+1}`,unit,step,name,kind:step===0?'discover':'practice'})));
+export const STEP_VOICE={watch:'Watch me first. Then it is your turn.',turn:'Your turn. Try the same idea on this new board.',again:'That move is legal. Try the idea we just practiced.',collect:'Now take the rook with your knight.'};

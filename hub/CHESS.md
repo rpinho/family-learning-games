@@ -2,6 +2,14 @@
 
 Open **http://localhost:4810/#chess** after the normal collection setup. An original chess continuation for learners who already know the rules, basic tactics and checkmate. It uses a winding lesson path, short developed positions, a speaking animated coach, and occasional practice games. It is independent of Duolingo and has no connection to a Duolingo account.
 
+## Small steps
+
+For learners who find the advanced puzzles overwhelming, choose **Small steps** in Practice settings. Four units cover safe captures, safe checks, mate in one and knight forks, with three five-position lessons per unit. Each lesson opens with a separate animated example: watch Rook, then try five different boards. The 60 original practice positions contain only three to five pieces. Most need one move; the final fork lesson adds the opponent's reply and a second capture. Examples highlight the threatened targets and use the same optional original coach voice.
+
+Any legal move that meets the stated one-move goal is accepted, not only the authored example line. Wrong legal moves return to the board; after two mistakes a similar example is one tap away. Hints remain available and assisted success remains distinct from independent success. The example does not award progress. These are teaching exercises, not rated engine puzzles or measured player Elo. The finite position set includes reflected/rotated variations of authored patterns; it is not an unlimited adaptive curriculum. Progress never automatically switches a learner into the advanced course.
+
+Changing the challenge level takes effect in the active lesson immediately. The previous unfinished lesson is parked separately by level and can be restored by switching back; completed work and full games are retained. Small steps has its own path and completion IDs. A new generic Beginner installation starts here; existing profiles keep their settings until changed.
+
 ## Learning path
 
 Twelve units, six lessons per unit, five positions per lesson. Most positions require two to four learner moves, with the opponent's replies played automatically. Themes progress through forcing calculation, deflection, removing defenders, in-between moves, clearance, discovered attacks, mating nets, quiet threats, defense, passed pawns, rook endings and sacrifices. All units share one scrolling path. Portrait screens and narrow windows use one centered column with compact Rook/settings/review controls above it; wide landscape screens keep the side coach. The next lesson unlocks after completion; future steps show locks. Previously reached or active lessons remain available, including older out-of-order progress.
@@ -25,7 +33,7 @@ Coach speech reuses one audio element, primed by a tap or key press. Moving, swi
 
 ## Separate starting levels and quieter coaching
 
-The generic Beginner preset starts Guided with a Friendly opponent; Explorer starts Stretch with a Club opponent. A private install can specify `chess: {"band":"guided","strength":"friendly"}` on each player in its external configuration. These starting choices apply once; later manual selections stay in control. Existing lesson boards and games finish at their original settings. New lessons, reviews and practice games use the selected difficulty; earlier review evidence remains available when returning to its band.
+The generic Beginner preset starts Small steps with a Friendly opponent; Explorer starts Stretch with a Club opponent. A private install can specify `chess: {"band":"guided","strength":"friendly"}` on each player in its external configuration. These starting choices apply once; later manual selections stay in control. Changing lesson difficulty parks the previous board and immediately opens or restores the selected level. Existing full games keep their original opponent setting; new practice games use the selected strength; earlier review evidence remains available when returning to its band.
 
 Rook automatically gives short task cues, with repeated cues suppressed for 90 seconds and other automatic speech spaced at least 15 seconds apart. Routine correct moves, mistakes, restarts and assisted finishes use visual feedback without automatic commentary. Requested hints still speak; the same hint line is suppressed for 20 seconds. Tapping Rook always replays the guidance, including when coaching is muted. Lesson stars distinguish independent solves (filled) from assisted practice (outlined); hints never cost lives or block play.
 

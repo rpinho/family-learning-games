@@ -10,7 +10,7 @@ After setup, open **http://localhost:4810/**. Choose a player once; their name s
 
 ## Eight games. Eight different adventures.
 
-**[Rook Academy](hub/CHESS.md)** adds a chess continuation: 12 units, 72 short lessons, two difficulty bands, an original speaking coach, hints, review and local practice games. **Maze Garden** now gathers all three maze variants, and **Soccer Club** gathers all three soccer variants. Choose any version; existing progress is preserved.
+**[Rook Academy](hub/CHESS.md)** offers 12 Small steps lessons on sparse boards plus a 72-lesson advanced continuation in two difficulty bands, an original speaking coach, hints, review and local practice games. **Maze Garden** now gathers all three maze variants, and **Soccer Club** gathers all three soccer variants. Choose any version; existing progress is preserved.
 
 Drag, trace, steer, aim, and think ahead. Pick an activity and a manageable challenge, then play together.
 
