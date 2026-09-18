@@ -55,7 +55,7 @@ Spoken letter and word targets with adjustable motion and aiming difficulty. Set
 <td width="50%" valign="top">
 <a href="hub/CHESS.md"><img src="docs/media/chess.png" alt="Rook Academy: a tactical chess position with Rook and staged hints" width="100%"></a>
 <strong>Rook Academy — your next good move.</strong><br>
-Short tactical positions, a winding lesson path, two difficulty bands, review and practice games.
+Short tactical positions, a winding lesson path, a graduated short-lesson course, two advanced bands, review and practice games.
 </td>
 <td width="50%" valign="top">
 <a href="hub/README.md#dribble-duel"><img src="docs/media/dribble-duel.png" alt="Dribble Duel: a live soccer pitch with a defender, player, ball, and netted goal" width="100%"></a>

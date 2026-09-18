@@ -114,7 +114,7 @@ function bandPuzzleIds(band) {
 function boardAt(s) {
   const p = PUZZLES[s.ids[s.index]],
     b = new Chess(p.fen);
-  for (const u of p.line.slice(0, s.ply))
+  for (const u of (s.solutionLine || p.line).slice(0, s.ply))
     b.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u[4] });
   return b;
 }
@@ -159,6 +159,7 @@ function advancePuzzle(p) {
   s.feedback = null;
   s.finalFen = null;
   s.actualLine = null;
+  s.solutionLine = null;
   s.phase = "puzzle";
 }
 function finishPuzzle(p, now) {
@@ -263,7 +264,7 @@ export function publicChess(p, now = Date.now()) {
     };
     if (puzzle && ["solved", "summary"].includes(s.phase)) {
       const replay = new Chess(puzzle.fen);
-      session.solution = (s.actualLine||puzzle.line).map((uci, i) => ({
+      session.solution = (s.actualLine||s.solutionLine||puzzle.line).map((uci, i) => ({
         who: i % 2 ? "Opponent" : "You",
         text: moveWords(playUci(replay, uci)),
       }));
@@ -285,17 +286,17 @@ export function publicChess(p, now = Date.now()) {
               : puzzle.theme === "defensiveMove"
                 ? "Find the best defense"
                 : "Find the strongest continuation",
-        lastMoves: puzzle.line.slice(0, s.ply),
+        lastMoves: (s.solutionLine||puzzle.line).slice(0, s.ply),
         check: b.isCheck(),
         rating: puzzle.rating,
         original:!!puzzle.original,
-        task:puzzle.original ? s.ply>0?'Take the rook':puzzle.goal:null,
+        task:puzzle.original ? s.ply>0?(puzzle.followup||'Take the rook'):puzzle.goal:null,
       };
       const stage = puzzleHint(s).stage;
       if (puzzle.safeCheckLesson && stage >= 1 && s.phase === 'puzzle')
         session.hintKing = b.board().flat().find(piece=>piece?.type==='k' && piece.color!==b.turn())?.square;
       if (stage >= 2) {
-        const next = puzzle.line[s.ply];
+        const next = (s.solutionLine||puzzle.line)[s.ply];
         session.hintFrom = next?.slice(0, 2);
         if (stage >= 3) { session.hintTo = next?.slice(2, 4); session.hintPromotion = next?.[4]; }
       }
@@ -409,11 +410,11 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
     result = { hint: stage, advanced: stage > prior.stage, waiting };
     const u = [...UNITS,...STEP_UNITS].find((u) => u.theme === PUZZLES[s.ids[s.index]].theme);
     const puzzle = PUZZLES[s.ids[s.index]],
-      next = puzzle.line[s.ply],
+      next = (s.solutionLine||puzzle.line)[s.ply],
       hintBoard = boardAt(s);
     const text =
       stage === 1
-        ? puzzle.safeCheckLesson ? (hintBoard.get(next.slice(0,2)).type==='r' ? STEP_VOICE.safeRook : STEP_VOICE.safeBishop) : u.hints[0]
+        ? s.ply>0 && puzzle.nextLines ? (puzzle.theme==='stepsMateTwo'?STEP_VOICE.finishMate:STEP_VOICE.collectRook) : puzzle.safeCheckLesson ? (hintBoard.get(next.slice(0,2)).type==='r' ? STEP_VOICE.safeRook : STEP_VOICE.safeBishop) : u.hints[0]
         : stage === 2
           ? pieceHint(hintBoard.get(next.slice(0, 2)).type, next.slice(0, 2))
           : VOICE.hintMove;
@@ -434,7 +435,9 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
     }
     const uci = m.from + m.to + (m.promotion || "");
     const stepSuccess=puzzle.original&&puzzle.line.length===1&&meetsStepGoal(puzzle,b,m);
-    if (puzzle.original ? !(puzzle.line.length===1?stepSuccess:uci===puzzle.line[s.ply]) : uci !== puzzle.line[s.ply] && !b.isCheckmate()) {
+    const branch=puzzle.nextLines && (s.ply===0 ? puzzle.nextLines[uci] : puzzle.nextLines[s.solutionLine?.[0]]);
+    const continuationSuccess=!!branch && (s.ply===0 || branch.finishes.includes(uci));
+    if (puzzle.original ? !(puzzle.nextLines?continuationSuccess:puzzle.line.length===1?stepSuccess:uci===puzzle.line[s.ply]) : uci !== puzzle.line[s.ply] && !b.isCheckmate()) {
       s.errors++;
       s.feedback = {
         kind: "incorrect",
@@ -466,6 +469,11 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
       s.feedback.voice = s.feedback.reason==='unsafe-check' ? STEP_VOICE.unsafeCheck : puzzle.original ? STEP_VOICE.again : VOICE.mistakes[(s.errors - 1) % VOICE.mistakes.length];
       result = { correct: false, attempted: uci };
     } else {
+      if(puzzle.nextLines){
+        if(s.ply===0)s.solutionLine=[uci,branch.reply,branch.finishes[0]];
+        else s.solutionLine[s.ply]=uci;
+      }
+      const line=s.solutionLine||puzzle.line;
       let text = specificFeedback(b, m);
       const spoken = text.startsWith("A fork")
         ? VOICE.fork
@@ -483,13 +491,15 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
       if(stepSuccess)s.finalFen=b.fen();
       const accepted = [uci];
       if (s.ply < puzzle.line.length && !b.isCheckmate()) {
-        const reply = playUci(b, puzzle.line[s.ply]);
+        const reply = playUci(b, line[s.ply]);
         text += ` They answered ${moveWords(reply)}. What comes next?`;
-        accepted.push(puzzle.line[s.ply]);
+        accepted.push(line[s.ply]);
         s.ply++;
       }
       if(stepSuccess)s.actualLine=[uci];
-      s.feedback = { kind: "correct", text, voice: spoken, moves: accepted };
+      if(puzzle.nextLines&&s.ply>=line.length){s.actualLine=[...line];s.finalFen=b.fen();}
+      const followup=puzzle.nextLines&&s.ply<line.length ? (puzzle.theme==='stepsMateTwo'?STEP_VOICE.finishMate:STEP_VOICE.collectRook) : spoken;
+      s.feedback = { kind: "correct", text, voice: followup, moves: accepted };
       result = { correct: true, moves: accepted };
       s.hint = null;
       if (s.ply >= puzzle.line.length || b.isCheckmate()) {
@@ -512,6 +522,7 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
       fail("Open a puzzle first.");
     if (s.phase === "solved") fail("Use Review to replay a finished puzzle.");
     s.ply = 0;
+    s.solutionLine = null;
     s.hint = null;
     s.hints = Math.max(1, s.hints);
     s.feedback = {

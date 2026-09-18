@@ -3,7 +3,12 @@ import { VOICE } from './curriculum.mjs';
 
 // Coaching is requested at task boundaries and by the learner, not after every move.
 export function narrationFor(action, profile, cue) {
-  if(action==='move'&&profile.session?.band==='steps'&&profile.session.phase==='puzzle'&&profile.session.ply>0)return {text:STEP_VOICE.collect,kind:'automatic'};
+  if(action==='move'&&profile.session?.band==='steps'&&profile.session.phase==='puzzle'&&profile.session.ply>0){
+    const mate=profile.session.puzzle?.task==='Find checkmate';
+    const skewer=profile.session.lesson?.startsWith('steps-skewer');
+    if((mate||skewer)&&profile.session.feedback?.kind==='incorrect')return null;
+    return {text:mate?STEP_VOICE.finishMate:skewer?STEP_VOICE.collectRook:STEP_VOICE.collect,kind:mate||skewer?'continuation':'automatic'};
+  }
   if (action === 'hint') return { text: profile.session?.feedback?.voice, kind: 'hint' };
   if (action === 'game-hint') return { text: profile.game?.hint?.voice || VOICE.gameHint, kind: 'hint' };
   if (action === 'begin' || action === 'next') return {

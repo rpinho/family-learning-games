@@ -7,8 +7,8 @@ import {pathProgress} from '../public/chess/path.mjs';
 const act=(p,type,extra={})=>actChess(p,{type,...extra,revision:p.revision,requestId:crypto.randomUUID()});
 const move=(p,u)=>act(p,'move',{from:u.slice(0,2),to:u.slice(2,4)});
 test('All 60 original practice boards and 12 examples are sparse, legal and teach the stated goal',()=>{
- const practices=Object.values(STEPS).flat();assert.equal(practices.length,60);assert.equal(new Set(practices.map(p=>p.fen)).size,60);
- for(const p of [...practices,...Object.values(STEP_EXAMPLES)]){
+ const practices=Object.values(STEPS).flat().filter(p=>!p.id.startsWith("continuation-"));assert.equal(practices.length,60);assert.equal(new Set(practices.map(p=>p.fen)).size,60);
+ for(const p of [...practices,...Object.values(STEP_EXAMPLES).filter(p=>!p.id.startsWith("continuation-"))]){
   const b=new Chess(p.fen),pieces=b.board().flat().filter(Boolean);assert.ok(pieces.length<=5);
   assert.equal(b.isCheck(),false);assert.equal(b.isAttacked(pieces.find(x=>x.type==='k'&&x.color==='b').square,'w'),false);
   assert.ok([1,3].includes(p.line.length));
@@ -29,7 +29,7 @@ test('Every short lesson can be completed without help; examples never count as 
   }
   assert.equal(p.completed[l.id].best,5);assert.equal(p.history.at(-1).total,5);
  }
- assert.equal(p.history.length,12);assert.equal(pathProgress(p).filter(l=>l.complete).length,12);
+ assert.equal(p.history.length,STEP_LESSONS.length);assert.equal(pathProgress(p).filter(l=>l.complete).length,STEP_LESSONS.length);
 });
 test('All legal alternatives meeting the one-move goal succeed; other legal moves return without changing the board',async()=>{
  for(const puzzle of Object.values(STEPS).flat().filter(p=>p.line.length===1)){

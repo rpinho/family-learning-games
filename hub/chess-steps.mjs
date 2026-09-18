@@ -1,3 +1,5 @@
+import {readFile} from 'node:fs/promises';
+import {continuationGoal} from './continuation-goals.mjs';
 import {Chess} from './public/chess/rules.mjs';
 import {STEP_UNITS,STEP_LESSONS} from './public/chess/steps-curriculum.mjs';
 // Sparse, original teaching positions. No castling/pawns: square symmetries preserve rules.
@@ -30,7 +32,7 @@ function position(seed,variant){
  return {fen:b.fen(),line:seed.line.map(m=>square(m.slice(0,2),variant)+square(m.slice(2,4),variant))};
 }
 export const STEPS={},STEP_EXAMPLES={};
-for(const u of STEP_UNITS){
+for(const u of STEP_UNITS.slice(0,4)){
  const pool=seeds[u.theme].flatMap((seed,i)=>Array.from({length:8},(_,variant)=>{
   const p=position(seed,variant);
   return {...p,id:`small-${u.id}-${i}-${variant}`,theme:u.theme,goal:u.task,terminal:u.theme==='stepsMate',original:true,rating:null};
@@ -43,7 +45,14 @@ for(const u of STEP_UNITS){
   STEP_EXAMPLES[l.id]={...p,line:u.theme==='stepsFork'&&l.step===2?p.line:p.line.slice(0,1)};
  }
 }
+const continuation=JSON.parse(await readFile(new URL('./chess-continuation.json',import.meta.url),'utf8'));
+for(const u of STEP_UNITS.slice(4)){
+ const set=continuation.units[u.theme];
+ STEPS[u.theme]=set.practice;
+ for(const l of STEP_LESSONS.filter(l=>STEP_UNITS[l.unit]===u))STEP_EXAMPLES[l.id]=set.examples[l.step];
+}
 export function meetsStepGoal(puzzle,b,move){
+ if(puzzle.id.startsWith('continuation-'))return continuationGoal(puzzle,b,move,new Chess(puzzle.fen));
  if(puzzle.theme==='stepsMate')return b.isCheckmate();
  if(puzzle.theme==='stepsCapture')return !!move.captured&&!b.isAttacked(move.to,b.turn());
  if(puzzle.theme==='stepsCheck')return b.isCheck()&&!b.isAttacked(move.to,b.turn());
