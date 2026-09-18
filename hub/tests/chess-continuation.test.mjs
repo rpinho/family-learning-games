@@ -59,3 +59,11 @@ test('A changed two-move task can speak promptly, without repeating on every att
  let time=0;const gate=createNarrationGate(()=>time);assert(gate('Check the king.',{kind:'automatic'}));time=1000;assert(gate('Now find checkmate.',{kind:'continuation'}));time=2000;assert.equal(gate('Now find checkmate.',{kind:'continuation'}),false);
  const p={session:{band:'steps',phase:'puzzle',ply:2,lesson:'steps-mate-two-1',puzzle:{task:'Find checkmate'},feedback:{kind:'incorrect'}}};assert.equal(narrationFor('move',p,''),null);
 });
+
+test('A safe rook fork may include the king, including a capturing check',async()=>{
+ for(const [id,to] of [['continuation-steps-rook-fork-4','a3'],['continuation-steps-rook-fork-6','d4']]){
+  const puzzle=PUZZLES[id],b=new Chess(puzzle.fen);const candidate=b.moves({verbose:true}).find(m=>m.to===to&&m.piece==='r');assert(candidate);b.move(candidate);assert.equal(b.isCheck(),true);
+  const p=freshChess();p.settings.band='steps';p.session={id:'rook-fork-test',lesson:'steps-rook-fork-1',band:'steps',ids:[id],index:0,ply:0,hints:0,errors:0,results:[],phase:'puzzle'};
+  const r=await move(p,candidate.from+candidate.to);assert.equal(r.correct,true);assert.equal(p.session.phase,'solved');assert.equal(p.session.results[0].independent,true);
+ }
+});

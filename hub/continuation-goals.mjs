@@ -8,7 +8,7 @@ export function continuationGoal(p,b,m,before){
  if(p.theme==='stepsRescue')return m.piece===p.rescueType && before.isAttacked(m.from,b.turn())&&!b.isAttacked(m.to,b.turn());
  if(p.theme==='stepsPin')return !!m.captured&&before.isAttacked(m.to,b.turn())&&!canBeTaken(b,m.to)&&!b.isCheckmate();
  const type={stepsRookFork:'r',stepsBishopFork:'b',stepsQueenFork:'q'}[p.theme];
- if(p.theme==='stepsRookFork')return m.piece==='r'&&!b.isAttacked(m.to,b.turn())&&b.board().flat().filter(x=>x&&x.color!==m.color&&['n','b'].includes(x.type)&&!b.isAttacked(x.square,x.color)&&b.attackers(x.square,m.color).includes(m.to)).length>=2;
+ if(p.theme==='stepsRookFork')return m.piece==='r'&&!b.isAttacked(m.to,b.turn())&&b.board().flat().filter(x=>x&&x.color!==m.color&&((!p.requireLoosePair&&x.type==='k')||(['n','b'].includes(x.type)&&!b.isAttacked(x.square,x.color)))&&b.attackers(x.square,m.color).includes(m.to)).length>=2;
  if(type)return m.piece===type&&b.isCheck()&&!b.isAttacked(m.to,b.turn())&&b.board().flat().some(x=>x&&x.color!==m.color&&['r','q'].includes(x.type)&&b.attackers(x.square,m.color).includes(m.to));
  return false;
 }

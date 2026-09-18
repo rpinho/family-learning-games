@@ -53,7 +53,7 @@ for(const unit of STEP_UNITS.slice(4)){
   }else{
    const moves=b.moves({verbose:true}),good=[];let badCaptures=0;
    for(const m of moves.filter(m=>unit.theme==='stepsRookFork'?m.piece==='r':unit.theme.includes('Fork')?m.san.includes('+'):['stepsValue','stepsPin'].includes(unit.theme)?!!m.captured:m.piece===puzzle.rescueType&&b.isAttacked(m.from,'b'))){const after=new Chess(start);const played=after.move(m);
-    if(continuationGoal(puzzle,after,played,b))good.push(uci(m));else if(m.captured)badCaptures++;
+    if(continuationGoal({...puzzle,requireLoosePair:true},after,played,b))good.push(uci(m));else if(m.captured)badCaptures++;
    }
    if(!good.length||unit.theme==='stepsValue'&&!badCaptures||unit.theme!=='stepsRescue'&&good.length>4)continue;
    puzzle.line=[good[0]];
