@@ -50,3 +50,18 @@ export function meetsStepGoal(puzzle,b,move){
  if(puzzle.theme==='stepsFork')return b.board().flat().filter(p=>p&&p.color!==move.color&&['k','q','r'].includes(p.type)&&b.attackers(p.square,move.color).includes(move.to)).length>=2;
  return false;
 }
+
+// Preserve every saved FEN/ID. The final checking lesson adds explanation, not a reset.
+for (const puzzle of STEPS.stepsCheck.slice(10)) {
+ puzzle.safeCheckLesson = true;
+ puzzle.goal = 'Check safely';
+}
+const checkExample = STEP_EXAMPLES['steps-check-3'];
+checkExample.contrast = { line: ['b3g8', 'f8g8'] };
+
+// Show an actual legal capture, not merely a geometrical attack (pins can differ).
+export function checkingPieceCapture(board, move) {
+ if (!board.isCheck()) return null;
+ const replies = board.moves({verbose:true}).filter(reply=>reply.to===move.to && reply.captured);
+ return replies.find(reply=>reply.piece!=='k') || replies[0] || null;
+}

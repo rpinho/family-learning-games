@@ -1,4 +1,4 @@
-import {STEPS,STEP_EXAMPLES,meetsStepGoal} from './chess-steps.mjs';
+import {STEPS,STEP_EXAMPLES,meetsStepGoal,checkingPieceCapture} from './chess-steps.mjs';
 import {STEP_UNITS,STEP_LESSONS,STEP_VOICE} from './public/chess/steps-curriculum.mjs';
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
@@ -292,6 +292,8 @@ export function publicChess(p, now = Date.now()) {
         task:puzzle.original ? s.ply>0?'Take the rook':puzzle.goal:null,
       };
       const stage = puzzleHint(s).stage;
+      if (puzzle.safeCheckLesson && stage >= 1 && s.phase === 'puzzle')
+        session.hintKing = b.board().flat().find(piece=>piece?.type==='k' && piece.color!==b.turn())?.square;
       if (stage >= 2) {
         const next = puzzle.line[s.ply];
         session.hintFrom = next?.slice(0, 2);
@@ -411,7 +413,7 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
       hintBoard = boardAt(s);
     const text =
       stage === 1
-        ? u.hints[0]
+        ? puzzle.safeCheckLesson ? (hintBoard.get(next.slice(0,2)).type==='r' ? STEP_VOICE.safeRook : STEP_VOICE.safeBishop) : u.hints[0]
         : stage === 2
           ? pieceHint(hintBoard.get(next.slice(0, 2)).type, next.slice(0, 2))
           : VOICE.hintMove;
@@ -439,6 +441,15 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
         text: puzzle.original ? STEP_VOICE.again : "A legal move, but there is a stronger continuation. Recheck the forcing moves.",
         tried: uci,
       };
+      if (puzzle.safeCheckLesson) {
+        const capture = checkingPieceCapture(b, m);
+        if (capture) {
+          s.feedback.reason = 'unsafe-check';
+          s.feedback.text = STEP_VOICE.unsafeCheck;
+          s.feedback.refutation = [uci, capture.from + capture.to + (capture.promotion || '')];
+          s.feedback.reply = STEP_VOICE.unsafeCheck;
+        }
+      }
       if (engine && !puzzle.original) {
         try {
           const analysis = await engine.analyze(b.fen(), { ms: 180 });
@@ -452,7 +463,7 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
           /* The curated drill works even if optional analysis is unavailable. */
         }
       }
-      s.feedback.voice = puzzle.original ? STEP_VOICE.again : VOICE.mistakes[(s.errors - 1) % VOICE.mistakes.length];
+      s.feedback.voice = s.feedback.reason==='unsafe-check' ? STEP_VOICE.unsafeCheck : puzzle.original ? STEP_VOICE.again : VOICE.mistakes[(s.errors - 1) % VOICE.mistakes.length];
       result = { correct: false, attempted: uci };
     } else {
       let text = specificFeedback(b, m);

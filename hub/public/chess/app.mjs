@@ -254,6 +254,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
           analysisView || !!example ||
           (inGame ? !!g.result : s.phase !== "puzzle"),
         lastMoves,
+        hintKing: inGame || example ? null : s.hintKing,
         hintFrom: inGame ? g.hint?.from : example?example.line[0].slice(0,2):s.hintFrom,
         hintTo: inGame ? g.hint?.to : example?undefined:s.hintTo,
         onMove: (from, to, promotion) =>
@@ -326,6 +327,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
   function shortPrompt() {
     const s = profile.session;
     if (s?.phase === "solved") return "You found it!";
+    if (s?.feedback?.reason === "unsafe-check") return "Keep it safe";
     if (s?.feedback?.kind === "incorrect") return "Try again";
     if (s?.hint?.stage >= 3) return "Follow the arrow";
     if (s?.hint?.stage === 2) return "Tap this piece";
@@ -351,26 +353,73 @@ export function mountChess(root, { player, name, event = () => {} }) {
     button.setAttribute('aria-label', left > 0 ? `Next hint in ${Math.ceil(left/1000)} seconds. You can still move or replay Rook.` : label);
   }
   const hintClock = setInterval(updateHintClock, 200);
+  async function demonstrationBeat() {
+    // Let the requested sentence finish, without hanging if media fails or navigation cancels it.
+    const start = Date.now();
+    do { await new Promise(resolve=>setTimeout(resolve,150)); }
+    while (alive && (Date.now()-start < 750 || voice.isPlaying() && Date.now()-start < 8000));
+  }
+  function lockDemonstration() {
+    boardDispose?.lock(true);
+    root.querySelectorAll('[data-do]').forEach(el=>el.disabled=true);
+  }
+  function examplePrompt(title, words) {
+    root.querySelector('.arena-prompt h1').textContent=title;
+    const caption=root.querySelector('.spoken-caption, .arena-coach + .sr-only');
+    if(caption)caption.textContent=words;
+  }
   async function playExample(){
     if(busy||pending||!profile.session?.example)return;
-    exampleView=true;render();const board=boardDispose;
+    exampleView=true;render();let board=boardDispose;
     if(!board)return;
-    busy=true;board.lock(true);root.querySelectorAll('[data-do]').forEach(el=>el.disabled=true);
-    say(currentUnit().idea,{force:true});
+    busy=true;lockDemonstration();
+    const example=profile.session.example;
     try{
-      const exampleBoard=new Chess(profile.session.example.fen);
-      for(const move of profile.session.example.line){
+      if(example.contrast){
+        examplePrompt('Can they take it?',STEP_VOICE.unsafeExample);
+        await say(STEP_VOICE.unsafeExample,{force:true});
+        react("think");
+        for(const move of example.contrast.line){
+          await board.animate([move],{feedback:false});
+          if(!alive)return;
+          await new Promise(resolve=>setTimeout(resolve,450));
+        }
+        react("retry");
+        await demonstrationBeat();
+        if(!alive)return;
+        render();board=boardDispose;lockDemonstration();
+        examplePrompt('Check safely',STEP_VOICE.safeExample);
+        await say(STEP_VOICE.safeExample,{force:true});
+      }else await say(currentUnit().idea,{force:true});
+      const exampleBoard=new Chess(example.fen);
+      for(const move of example.line){
         const played=exampleBoard.move({from:move.slice(0,2),to:move.slice(2,4)});
         await board.animate([move]);
+        if(!alive)return;
         root.querySelectorAll('.demo-target').forEach(el=>el.classList.remove('demo-target'));
         if(played.color==='w')for(const target of exampleBoard.board().flat().filter(p=>p&&p.color==='b'&&['k','q','r'].includes(p.type)&&exampleBoard.attackers(p.square,'w').includes(played.to)))root.querySelector(`[data-square="${target.square}"]`)?.classList.add('demo-target');
-        await new Promise(resolve=>setTimeout(resolve,750));
-        if(!alive)break;
+        await demonstrationBeat();
       }
     }finally{
       busy=false;
       if(alive){root.querySelectorAll('[data-do]').forEach(el=>el.disabled=false);root.querySelector('.arena-prompt h1').textContent='Now you try';}
     }
+  }
+  async function explainUnsafeCheck() {
+    const line=profile.session?.feedback?.refutation;
+    if(busy||pending||!line)return;
+    busy=true;lockDemonstration();
+    try {
+      await say(STEP_VOICE.unsafeCheck,{force:true});
+      react("think");
+      for(const move of line){
+        await boardDispose.animate([move],{feedback:false});
+        if(!alive)return;
+        await new Promise(resolve=>setTimeout(resolve,450));
+      }
+      react("retry");
+      await demonstrationBeat();
+    }finally{busy=false;if(alive)render();}
   }
   async function demonstrate() {
     const s = profile.session, g = profile.game, inGame = view === 'game';
@@ -429,7 +478,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
       return `<section class="lesson-summary">${coach("happy")}<h1>Lesson complete!</h1><div class="summary-stars" aria-label="${s.results.length} positions completed, ${s.results.filter((r) => r.independent).length} without help">${s.results.map((r) => r.independent ? "★" : "☆").join(" ")}</div>${btn("Continue ➜", "path", "primary large")}<details><summary>Practice notes</summary><p>${s.results.filter((r) => r.independent).length} of ${s.results.length} without hints.</p><p>${u.idea}</p></details></section>`;
     const f = s.feedback,
       solved = s.phase === "solved";
-    return `<section class="chess-lesson ${s.band==='steps'?'small-step-lesson':''}"><header class="lesson-header">${iconButton("close", "path", "Back to lesson path")}<div class="lesson-progress" role="progressbar" aria-label="Lesson progress" aria-valuenow="${s.index + (solved ? 1 : 0)}" aria-valuemin="0" aria-valuemax="${s.total}"><span style="width:${((s.index + (solved ? 1 : 0)) / s.total) * 100}%"></span></div>${btn(glyph(profile.settings.sound ? "hear" : "muted"), "sound", "sound", `aria-label="${profile.settings.sound ? "Mute coaching" : "Enable coaching"}"`)}</header><div class="play-table ${solved ? "solved" : ""}">${arenaHead(shortPrompt(), solved ? "happy" : f?.kind === "incorrect" ? "thinking" : "idle")}<div id="chess-board"></div><div id="board-selection" class="sr-only" aria-live="polite"></div><footer class="board-controls">${iconButton("undo", "restart", "Restart this position", solved ? "disabled" : "")}${solved ? btn("➜", "next", "primary next-puzzle", `aria-label="${s.index + 1 === s.total ? "Finish lesson" : "Next position"}"`) : hintControls()}${!solved&&s.example&&s.errors>=2?btn("▶ Rook","example","text",'aria-label="Watch a similar example"'):""}<details class="board-more"><summary aria-label="More options">•••</summary><div>${f?.refutation ? btn(analysisView ? "Back to puzzle" : "See the reply", "explain", "text") : ""}<p>${esc(title)}</p><p>${esc(s.puzzle.goal)}</p>${solved ? `<ol>${s.solution.map((m) => `<li>${esc(m.text)}</li>`).join("")}</ol>` : ""}<small>${s.puzzle.original?"Original practice position":`Lichess ${s.puzzle.id} · CC0`}</small></div></details></footer></div></section>`;
+    return `<section class="chess-lesson ${s.band==='steps'?'small-step-lesson':''}"><header class="lesson-header">${iconButton("close", "path", "Back to lesson path")}<div class="lesson-progress" role="progressbar" aria-label="Lesson progress" aria-valuenow="${s.index + (solved ? 1 : 0)}" aria-valuemin="0" aria-valuemax="${s.total}"><span style="width:${((s.index + (solved ? 1 : 0)) / s.total) * 100}%"></span></div>${btn(glyph(profile.settings.sound ? "hear" : "muted"), "sound", "sound", `aria-label="${profile.settings.sound ? "Mute coaching" : "Enable coaching"}"`)}</header><div class="play-table ${solved ? "solved" : ""}">${arenaHead(shortPrompt(), solved ? "happy" : f?.kind === "incorrect" ? "thinking" : "idle")}<div id="chess-board"></div><div id="board-selection" class="sr-only" aria-live="polite"></div><footer class="board-controls">${iconButton("undo", "restart", "Restart this position", solved ? "disabled" : "")}${solved ? btn("➜", "next", "primary next-puzzle", `aria-label="${s.index + 1 === s.total ? "Finish lesson" : "Next position"}"`) : hintControls()}${!solved&&f?.reason==='unsafe-check'?btn("▶ Why?","unsafe-check","text unsafe-explain",'aria-label="Watch why this check is unsafe"'):!solved&&s.example&&s.errors>=2?btn("▶ Rook","example","text",'aria-label="Watch a similar example"'):""}<details class="board-more"><summary aria-label="More options">•••</summary><div>${f?.refutation ? btn(analysisView ? "Back to puzzle" : "See the reply", "explain", "text") : ""}<p>${esc(title)}</p><p>${esc(s.puzzle.goal)}</p>${solved ? `<ol>${s.solution.map((m) => `<li>${esc(m.text)}</li>`).join("")}</ol>` : ""}<small>${s.puzzle.original?"Original practice position":`Lichess ${s.puzzle.id} · CC0`}</small></div></details></footer></div></section>`;
   }
   function miniBoard(fen) {
     const board = new Chess(fen);
@@ -536,6 +585,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
             return;
           }
           if(action==='example'){await playExample();return;}
+          if(action==='unsafe-check'){await explainUnsafeCheck();return;}
           if(action==='example-done'){
             exampleView=false;
             if(profile.session.phase==='intro')await send('begin');else render();

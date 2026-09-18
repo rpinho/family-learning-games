@@ -60,3 +60,36 @@ test('Same-value Guided setting repairs a legacy harder resumable lesson; small-
 test('Later Small steps placement highlights its lesson and leaves easier lessons available without awarding them',async()=>{
  const p=freshChess();await act(p,'settings',{band:'steps'});await act(p,'start',{lesson:'steps-fork-1'});const path=pathProgress(p);assert.equal(path.find(l=>l.current).id,'steps-fork-1');assert.ok(path.slice(0,10).every(l=>!l.locked));assert.equal(path[10].locked,true);assert.deepEqual(p.completed,{});
 });
+
+test('Safe-check contrast demonstrates a legal capture, then a safe check on a separate example',()=>{
+ const e=STEP_EXAMPLES['steps-check-3'],b=new Chess(e.fen);
+ const bad=b.move({from:e.contrast.line[0].slice(0,2),to:e.contrast.line[0].slice(2,4)});
+ assert.equal(b.isCheck(),true);assert.equal(meetsStepGoal(e,b,bad),false);
+ const reply=b.move({from:e.contrast.line[1].slice(0,2),to:e.contrast.line[1].slice(2,4)});
+ assert.equal(reply.captured,'b');assert.equal(reply.to,bad.to);assert.equal(reply.piece,'r');
+ const safe=new Chess(e.fen),move=safe.move({from:e.line[0].slice(0,2),to:e.line[0].slice(2,4)});
+ assert.ok(meetsStepGoal(e,safe,move));
+ assert.ok(lessonPuzzles('steps-check-3','steps').every(id=>PUZZLES[id].fen!==e.fen));
+});
+test('First safe-check cue locates the opponent king without revealing the moving piece or destination',async()=>{
+ for(const id of lessonPuzzles('steps-check-3','steps')){
+  const p=freshChess();await act(p,'settings',{band:'steps'});await act(p,'start',{lesson:'steps-check-3'});await act(p,'begin');
+  p.session.ids=[id];const before=publicChess(p).session.puzzle.fen;
+  await act(p,'hint');const s=publicChess(p).session,b=new Chess(before);
+  assert.equal(s.puzzle.task,'Check safely');assert.equal(b.get(s.hintKing).type,'k');assert.notEqual(b.get(s.hintKing).color,b.turn());
+  assert.equal(s.hintFrom,undefined);assert.equal(s.hintTo,undefined);assert.equal(s.puzzle.line,undefined);assert.equal(s.puzzle.fen,before);
+  assert.match(s.feedback.voice,/Find their king/);assert.match(s.feedback.voice,/row or a column|diagonal/);
+  await move(p,PUZZLES[id].line[0]);assert.equal(p.session.results[0].independent,false);
+ }
+});
+test('An unsafe check explains a legal reply and preserves the starting board and existing achievements',async()=>{
+ const p=freshChess();await act(p,'settings',{band:'steps'});await act(p,'start',{lesson:'steps-check-3'});await act(p,'begin');
+ const id=lessonPuzzles('steps-check-3','steps')[1];p.session.ids=[id];p.completed['steps-check-1']={best:5,times:1};
+ const completed=structuredClone(p.completed),before=publicChess(p).session.puzzle.fen,b=new Chess(before);
+ const bad=b.moves({verbose:true}).find(m=>{const t=new Chess(before);t.move(m);return t.isCheck()&&!meetsStepGoal(PUZZLES[id],t,m);});
+ const result=await move(p,bad.from+bad.to);assert.equal(result.correct,false);
+ const s=publicChess(p).session;assert.equal(s.feedback.reason,'unsafe-check');assert.equal(s.puzzle.fen,before);assert.equal(s.errors,1);assert.equal(s.hints,0);assert.deepEqual(p.completed,completed);
+ for(const u of s.feedback.refutation)b.move({from:u.slice(0,2),to:u.slice(2,4)});
+ assert.equal(b.get(bad.to).color,'b');assert.equal(p.session.phase,'puzzle');
+ await move(p,PUZZLES[id].line[0]);assert.equal(p.session.phase,'solved');assert.equal(p.session.results[0].independent,false);
+});

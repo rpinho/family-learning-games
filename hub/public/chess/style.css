@@ -1596,3 +1596,9 @@ body:has(.chess-lesson) > .top .home {
 
 .academy .rook-replay:disabled { opacity: 1; }
 .sq.move-celebrating { z-index: 5; }
+
+/* First cue orients the learner; it never identifies a destination square. */
+.sq.hint-king::before { content: ''; position: absolute; inset: 4%; border: 3px dashed #b28219; background: #ffe5a54d; border-radius: 50%; pointer-events: none; }
+
+.board-controls:has(.unsafe-explain) { gap: 8px; }
+.academy .ac-button.unsafe-explain { white-space: nowrap; font-size: 16px; padding: 8px 4px; min-width: 68px; }

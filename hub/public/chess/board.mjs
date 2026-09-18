@@ -9,6 +9,7 @@ export function mountBoard(
     disabled = false,
     lastMoves = [],
     hintFrom,
+    hintKing,
     hintTo,
     onMove,
     onMotion = () => {},
@@ -40,7 +41,7 @@ export function mountBoard(
     .map((sq, i) => {
       const p = chess.get(sq),
         light = (+sq[1] + sq.charCodeAt(0)) % 2 !== 0;
-      return `<button type="button" class="sq ${light ? "light" : "dark"} ${marked.has(sq) ? "last" : ""} ${hintFrom === sq ? "hint-piece" : ""} ${hintTo === sq ? "hint-target" : ""} ${chess.isCheck() && p?.type === "k" && p.color === chess.turn() ? "in-check" : ""}" data-square="${sq}" aria-label="${p ? (p.color === "w" ? "White " : "Black ") + NAMES[p.type] + " on " : ""}${sq}" ${disabled ? "disabled" : ""}>${p ? piece(p.type, p.color) : ""}${i % 8 === 0 ? `<span class="rank">${sq[1]}</span>` : ""}${i >= 56 ? `<span class="file">${sq[0]}</span>` : ""}<span class="move-dot"></span></button>`;
+      return `<button type="button" class="sq ${light ? "light" : "dark"} ${marked.has(sq) ? "last" : ""} ${hintFrom === sq ? "hint-piece" : ""} ${hintKing === sq ? "hint-king" : ""} ${hintTo === sq ? "hint-target" : ""} ${chess.isCheck() && p?.type === "k" && p.color === chess.turn() ? "in-check" : ""}" data-square="${sq}" aria-label="${p ? (p.color === "w" ? "White " : "Black ") + NAMES[p.type] + " on " : ""}${sq}" ${disabled ? "disabled" : ""}>${p ? piece(p.type, p.color) : ""}${i % 8 === 0 ? `<span class="rank">${sq[1]}</span>` : ""}${i >= 56 ? `<span class="file">${sq[0]}</span>` : ""}<span class="move-dot"></span></button>`;
     })
     .join("")}</div></div>`;
   const board = root.querySelector(".chess-board");
@@ -331,7 +332,7 @@ export function mountBoard(
     moving.remove();
     floating.delete(moving);
   }
-  async function animateMoves(moves, { preview = false } = {}) {
+  async function animateMoves(moves, { preview = false, feedback = true } = {}) {
     for (const u of moves) {
       if (disposed) return;
       const from = u.slice(0, 2),
@@ -344,7 +345,7 @@ export function mountBoard(
       } catch {
         return;
       }
-      onMotion(p.color === side ? "nod" : "think");
+      if (feedback) onMotion(p.color === side ? "nod" : "think");
       root.querySelector(".hint-arrow")?.remove();
       board
         .querySelectorAll(".selected,.legal,.hint-piece,.hint-target")
@@ -382,7 +383,7 @@ export function mountBoard(
           ],
           { duration: 180, easing: "ease-out" },
         );
-      if (m.captured && !preview) {
+      if (m.captured && !preview && feedback) {
         const ring = document.createElement("span");
         ring.className = "capture-ring";
         cell(to).append(ring);
@@ -396,7 +397,7 @@ export function mountBoard(
         );
         ring.remove();
       }
-      if (!preview) onMotion(m.captured ? "capture" : "land");
+      if (!preview && feedback) onMotion(m.captured ? "capture" : "land");
     }
   }
   const dispose = () => {
