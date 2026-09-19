@@ -26,3 +26,53 @@ export function foundationGoal(p,b,m){
  if(p.theme==='learnFork')return m.piece==='n'&&b.board().flat().filter(x=>x&&x.color!==m.color&&['k','r'].includes(x.type)&&b.attackers(x.square,m.color).includes(m.to)).length===2;
  return false;
 }
+
+
+const legacyExamples={...FOUNDATION_EXAMPLES};
+
+// Keep every original ID/FEN available for saved sessions and review. New starts
+// use a short movement introduction followed by unmarked capture choices.
+const choiceSeeds={
+ learnRook:[
+  [{b2:'R',g3:'R',b5:'n'},'b2b5'],[{f2:'R',b4:'R',f6:'n'},'f2f6'],[{c3:'R',e2:'R',a3:'n'},'c3a3'],
+  [{d2:'R',a4:'R',d6:'b',h5:'n'},'d2d6'],[{g3:'R',b2:'R',g6:'n',e7:'b'},'g3g6'],[{c6:'R',f2:'R',c3:'n',h4:'b'},'c6c3'],
+  [{d3:'R',g2:'R',d6:'n'},'d3d6'],[{b4:'R',f2:'R',b7:'n',g6:'b'},'b4b7'],
+ ],
+ learnBishop:[
+  [{c2:'B',a3:'R',f5:'n'},'c2f5'],[{f2:'B',b3:'R',c5:'n'},'f2c5'],[{d2:'B',a4:'R',g5:'n'},'d2g5'],
+  [{b2:'B',d3:'R',f6:'n',h5:'b'},'b2f6'],[{g2:'B',c3:'R',d5:'n',a6:'n'},'g2d5'],[{c4:'B',b2:'R',f7:'n',a5:'n'},'c4f7'],
+  [{d3:'B',a4:'R',g6:'n'},'d3g6'],[{e2:'B',a4:'R',b5:'n',h6:'n'},'e2b5'],
+ ],
+ learnKnight:[
+  [{d3:'N',a2:'R',e5:'n'},'d3e5'],[{f3:'N',a2:'B',d4:'n'},'f3d4'],[{c3:'N',f2:'R',e4:'n'},'c3e4'],
+  [{e3:'N',a2:'B',f5:'n',h6:'b'},'e3f5'],[{g4:'N',c2:'R',e5:'n',a6:'b'},'g4e5'],[{d4:'N',b2:'B',f5:'n',h6:'b'},'d4f5'],
+  [{e4:'N',b2:'R',f6:'n'},'e4f6'],[{c4:'N',f2:'R',e5:'n',h6:'b'},'c4e5'],
+ ],
+};
+export const FOUNDATION_PRACTICE={};
+for(const u of FOUNDATION_UNITS){
+ const lessons=FOUNDATION_LESSONS.filter(l=>FOUNDATION_UNITS[l.unit]===u);
+ if(!choiceSeeds[u.theme]){for(const l of lessons)FOUNDATION_PRACTICE[l.id]=FOUNDATIONS[u.theme].slice(l.step*5,l.step*5+5).map(p=>p.id);continue;}
+ const choices=choiceSeeds[u.theme].map(([pieces,move],i)=>{
+  const b=new Chess();b.clear();for(const [square,piece] of Object.entries({a1:'K',h8:'k',...pieces}))b.put({type:piece.toLowerCase(),color:piece===piece.toUpperCase()?'w':'b'},square);
+  return {id:`foundation-${u.id}-choice-${i}`,theme:'learnCapture',fen:b.fen(),line:[move],goal:'Take a piece',original:true,rating:null};
+ });
+ FOUNDATIONS[u.theme+'Choices']=choices.slice(0,6);
+ FOUNDATION_PRACTICE[lessons[0].id]=FOUNDATIONS[u.theme].slice(0,3).map(p=>p.id);
+ for(const l of lessons.slice(1)){
+  FOUNDATION_PRACTICE[l.id]=choices.slice((l.step-1)*3,l.step*3).map(p=>p.id);
+  FOUNDATION_EXAMPLES[l.id]=choices[l.step+5];
+ }
+}
+export function foundationSessionTotal(s){
+ if(s.phase==='summary')return s.results.length||s.ids.length;
+ // Existing five-board movement sessions finish after their third board, without
+ // erasing results or changing the board already on screen (even a fourth/fifth).
+ if(s.band==='foundations'&&FOUNDATION_PRACTICE[s.lesson]?.length===3)
+  return Math.min(s.ids.length,Math.max(3,s.index+1));
+ return s.ids.length;
+}
+
+export function foundationExample(s){
+ return s.ids[0]?.includes('-choice-') ? FOUNDATION_EXAMPLES[s.lesson]||null : legacyExamples[s.lesson]||null;
+}

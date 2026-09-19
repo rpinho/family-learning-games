@@ -1,4 +1,4 @@
-import {FOUNDATIONS,FOUNDATION_EXAMPLES,foundationGoal} from './chess-foundations.mjs';
+import {FOUNDATIONS,FOUNDATION_PRACTICE,foundationSessionTotal,foundationExample,foundationGoal} from './chess-foundations.mjs';
 import {FOUNDATION_UNITS,FOUNDATION_LESSONS} from './public/chess/foundations-curriculum.mjs';
 import {STEPS,STEP_EXAMPLES,meetsStepGoal,checkingPieceCapture} from './chess-steps.mjs';
 import {STEP_UNITS,STEP_LESSONS,STEP_VOICE} from './public/chess/steps-curriculum.mjs';
@@ -96,7 +96,7 @@ export function applyChessDefaults(p, defaults = {}) {
 export function lessonPuzzles(id, band = "stretch") {
   const l = lessonFor(id);
   if (!l) return [];
-  if(band==='foundations')return FOUNDATION_LESSONS.some(x=>x.id===id)?FOUNDATIONS[FOUNDATION_UNITS[l.unit].theme].slice(l.step*5,l.step*5+5).map(p=>p.id):[];
+  if(band==='foundations')return [...(FOUNDATION_PRACTICE[id]||[])];
   if(FOUNDATION_LESSONS.some(x=>x.id===id))return [];
   if(band==='steps'){
     if(!STEP_LESSONS.some(x=>x.id===id))return [];
@@ -227,6 +227,7 @@ function finishLesson(p, now) {
     p.completed[s.lesson] = {
       times: (before?.times || 0) + 1,
       best: Math.max(before?.best || 0, clean),
+      bestTotal: before && before.best >= clean ? before.bestTotal || 5 : s.results.length,
       last: now,
       band: s.band,
       bestByBand: {
@@ -255,7 +256,7 @@ export function publicChess(p, now = Date.now()) {
       band: s.band,
       phase: s.phase,
       index: s.index,
-      total: s.ids.length,
+      total: foundationSessionTotal(s),
       results: s.results,
       ply: s.ply,
       hints: s.hints,
@@ -264,7 +265,7 @@ export function publicChess(p, now = Date.now()) {
       errors: s.errors,
       feedback: s.feedback,
       unit: unit.id,
-      example: s.band==='foundations'?FOUNDATION_EXAMPLES[s.lesson]||null:s.band==='steps' ? STEP_EXAMPLES[s.lesson] || null : null,
+      example: s.band==='foundations'?foundationExample(s):s.band==='steps' ? STEP_EXAMPLES[s.lesson] || null : null,
     };
     if (puzzle && ["solved", "summary"].includes(s.phase)) {
       const replay = new Chess(puzzle.fen);
@@ -357,7 +358,7 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
           .map((x) => x.id);
       if (!ids.length) ids = lessonPuzzles(lessonsForBand(p.settings.band)[0].id, p.settings.band);
     }
-    if ((ids.length !== 5 && input.lesson !== "review") || !ids.length)
+    if ((ids.length !== 5 && !(p.settings.band==='foundations'&&ids.length===3) && input.lesson !== "review") || !ids.length)
       fail("Choose a lesson on the path.");
     const checkOf = addFreshCheck(p, ids, p.settings.band);
     p.session = {
@@ -517,7 +518,7 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
     }
   } else if (input.type === "next") {
     if (!s || s.phase !== "solved") fail("Finish this puzzle first.");
-    if (s.index + 1 === s.ids.length) finishLesson(p, now);
+    if (s.index + 1 === foundationSessionTotal(s)) finishLesson(p, now);
     else {
       s.index++;
       advancePuzzle(p);
