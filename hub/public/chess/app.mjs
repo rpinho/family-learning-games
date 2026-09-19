@@ -61,7 +61,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
   const allowNarration = createNarrationGate();
   async function say(text, { force = false, kind = "automatic" } = {}) {
     if ((!profile?.settings.sound && !force) || !text) return;
-    if (!allowNarration(text, { force, kind })) return;
+    if (!allowNarration(text, { force, kind, scope: profile.session?.id || "practice" })) return;
     utterance();
     const generation = speechGeneration;
     if(!manifestReady)await voiceReady;

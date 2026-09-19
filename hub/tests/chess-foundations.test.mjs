@@ -22,8 +22,11 @@ test('First moves teaches legal sparse boards and separate demonstrations',async
 test('Changing to foundations preserves the older active lesson and achievements',async()=>{
  const p=freshChess();await act(p,'start',{lesson:'forcing-1'});await act(p,'begin');const prior=structuredClone(p.session);p.completed['forcing-2']={best:3,times:1};await act(p,'settings',{band:'foundations'});assert.deepEqual(p.pausedLessons.stretch,prior);assert.ok(p.completed['forcing-2']);await act(p,'settings',{band:'stretch'});assert.deepEqual(p.session,prior);
 });
-test('Task-boundary audio is never suppressed by the previous exercise; chatter still is',()=>{
- const gate=createNarrationGate(()=>100);assert.equal(gate('Move to the star.',{kind:'task'}),true);assert.equal(gate('Move to the star.',{kind:'task'}),true);
+test('New tasks and lessons speak; repeated task instructions stay quiet',()=>{
+ const gate=createNarrationGate(()=>100);assert.equal(gate('Move to the star.',{kind:'task',scope:'lesson-a'}),true);assert.equal(gate('Move to the star.',{kind:'task',scope:'lesson-a'}),false);
+ assert.equal(gate('Attack the king.',{kind:'task',scope:'lesson-a'}),true);
+ assert.equal(gate('Move to the star.',{kind:'task',scope:'lesson-a',force:true}),true);
+ assert.equal(gate('Move to the star.',{kind:'task',scope:'lesson-b'}),true);
  assert.equal(gate('Nice move.'),true);assert.equal(gate('Nice move.'),false);
  assert.equal(narrationFor('next',{session:{phase:'puzzle'}},'Make a fork.').kind,'task');
 });

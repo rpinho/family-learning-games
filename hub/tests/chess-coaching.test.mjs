@@ -23,7 +23,7 @@ test('Repeated task speech and hints stay quiet; explicit replay still works', (
   assert.equal(allow('Find two threats.'), true);
 });
 
-test('Each new position speaks its task while moves remain quiet', () => {
+test('Five repeated positions speak their task once while moves remain quiet', () => {
   const p = {session:{phase:'puzzle',feedback:{voice:'Try the knight.'}}};
   for (const action of ['start','move','game-move','retry-puzzle','game-undo','settings'])
     assert.equal(narrationFor(action,p,'Find two threats.'),null);
@@ -34,7 +34,7 @@ test('Each new position speaks its task while moves remain quiet', () => {
     if(allow(cue.text,{kind:cue.kind}))played++;
     time+=10000;
   }
-  assert.equal(played,5);
+  assert.equal(played,1);
   assert.equal(narrationFor('hint',p,'').text,'Try the knight.');
 });
 
@@ -79,4 +79,15 @@ test('Easier review never pulls harder puzzles from an earlier band; old review 
 
 test('Small steps speaks the one necessary follow-up in a two-move fork, without routine move chatter',()=>{
  const p={session:{band:'steps',phase:'puzzle',ply:2}};assert.match(narrationFor('move',p,'').text,/take the rook/);p.session.phase='solved';assert.equal(narrationFor('move',p,''),null);
+});
+
+
+test('Task repeats stay quiet after long pauses, while replay and next lesson remain available',()=>{
+ let time=0;const gate=createNarrationGate(()=>time);
+ assert(gate('Rook to the star.',{kind:'task',scope:'one'}));
+ time+=120000;assert.equal(gate('Rook to the star.',{kind:'task',scope:'one'}),false);
+ assert(gate('Rook to the star.',{force:true,scope:'one'}));
+ assert(gate('Now take the rook.',{kind:'continuation',scope:'one'}));
+ time+=120000;assert.equal(gate('Now take the rook.',{kind:'continuation',scope:'one'}),false);
+ assert(gate('Rook to the star.',{kind:'task',scope:'two'}));
 });

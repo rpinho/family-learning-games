@@ -22,12 +22,19 @@ export function narrationFor(action, profile, cue) {
 
 export function createNarrationGate(now = () => Date.now()) {
   const heard = new Map();
-  let lastAutomatic = -Infinity;
-  return (text, { force = false, kind = 'automatic' } = {}) => {
+  let lastAutomatic = -Infinity, lessonScope;
+  const taskHeard = new Set();
+  return (text, { force = false, kind = 'automatic', scope = '' } = {}) => {
     if (!text) return false;
+    if(scope !== lessonScope){lessonScope=scope;taskHeard.clear();}
+    const task = kind === 'task' || kind === 'continuation';
+    // Repeated boards do not need the same instruction again, even after a pause.
+    // A new lesson or a genuinely different task still gets its own spoken cue.
+    if(!force && task && taskHeard.has(text))return false;
     const at = now();
-    if (!force && kind !== 'task' && (at - (heard.get(text) ?? -Infinity) < (kind === 'hint' ? 20000 : 90000) ||
+    if (!force && !task && (at - (heard.get(text) ?? -Infinity) < (kind === 'hint' ? 20000 : 90000) ||
         kind === 'automatic' && at - lastAutomatic < 15000)) return false;
+    if(task)taskHeard.add(text);
     heard.set(text, at);
     if (!force && kind === 'automatic') lastAutomatic = at;
     return true;
