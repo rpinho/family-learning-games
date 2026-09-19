@@ -4,7 +4,7 @@ Open **http://localhost:4810/#chess** after the normal collection setup. Origina
 
 ## First moves
 
-Choose **First moves** (`foundations`) for 18 short lessons: rook, bishop and knight movement, capture, check, then the meaning of a fork. Each lesson offers a separate narrated demonstration before five practice boards. Movement tasks have a visible star; knight demonstrations trace an L. Fork demonstrations briefly show a real fork, then draw two attack paths from the knight to the actual targets. Prompts are short and spoken, with visual feedback and optional captions. This course has 90 practice positions, using square symmetries of original sparse patterns. Demonstrations do not award progress. Switching courses parks the previous unfinished lesson and preserves achievements.
+Choose **First moves** (`foundations`) for 18 short lessons: rook, bishop and knight movement, capture, check, then the meaning of a fork. Each lesson offers a separate narrated demonstration before five practice boards. Movement tasks have a visible star; knight demonstrations trace an L. Fork demonstrations draw one connected two-pronged fork from the attacking piece to the two actual targets. A small matching two-pronged icon accompanies the persistent “Fork · two targets” title above the board; no floating central symbol obscures the position. Prompts are short and spoken, with visual feedback and optional captions. This course has 90 practice positions, using square symmetries of original sparse patterns. Demonstrations do not award progress. Switching courses parks the previous unfinished lesson and preserves achievements.
 
 ## Small steps
 

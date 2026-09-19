@@ -1,5 +1,5 @@
 import {FOUNDATION_UNITS,FOUNDATION_VOICE} from './foundations-curriculum.mjs';
-import {drawTeachingOverlay} from './teaching.mjs';
+import {drawTeachingOverlay,forkTitleIcon} from './teaching.mjs';
 import {STEP_UNITS,STEP_VOICE} from './steps-curriculum.mjs';
 import { createCoachAudio } from './audio.mjs';
 import { UNITS, LESSONS, lessonFor, NAMES, VOICE, unitsForBand } from "./curriculum.mjs";
@@ -413,7 +413,8 @@ export function mountChess(root, { player, name, event = () => {} }) {
       }
     }finally{
       busy=false;
-      if(alive){await say(FOUNDATION_VOICE.yourTurn,{kind:'task'});root.querySelectorAll('[data-do]').forEach(el=>el.disabled=false);root.querySelector('.arena-prompt h1').textContent='Now you try';}
+      if(alive){await say(FOUNDATION_VOICE.yourTurn,{kind:'task'});root.querySelectorAll('[data-do]').forEach(el=>el.disabled=false);const title=root.querySelector('.arena-prompt h1');
+        if(root.querySelector('.fork-diagram')){title.innerHTML=forkTitleIcon()+'Fork · two targets';}else title.textContent='Now you try';}
     }
   }
   async function explainUnsafeCheck() {
