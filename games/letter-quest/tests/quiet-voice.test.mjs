@@ -51,3 +51,12 @@ test('Slower letter taps all speak, and delayed manifests cannot resurrect cance
  assert.deepEqual(player.played,['a','b','c']);
  assert.equal(briefLine('Build cat. Tap the letters in order.'),'Build cat.');
 });
+test('Rapid sound-building taps play every phoneme in order',async t=>{
+ const {voice,player}=harness(t);
+ const h=voice.phoneme('A');await tick();
+ const a=voice.phoneme('B'),tSound=voice.phoneme('C');await tick();
+ assert.deepEqual(player.played,['a']);
+ player.dispatchEvent(new Event('ended'));await tick();assert.deepEqual(player.played,['a','b']);
+ player.dispatchEvent(new Event('ended'));await tick();assert.deepEqual(player.played,['a','b','c']);
+ player.dispatchEvent(new Event('ended'));await Promise.all([h,a,tSound]);
+});

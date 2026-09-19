@@ -12,7 +12,7 @@ import {useInkTools} from './ink-tools';
 import {drawingIdeasFor,drawingModes,initialDrawingMode} from '@/lib/drawing-ideas.mjs';
 type Point=[number,number];
 type Practice='guided'|'copy';
-export function Drawing({player,traceNext,shapeNext,saved,savedSpace,onSave,onTrace,onShape,onSpeak,report,busy,art,act,studio=false}:{player:string,traceNext?:string,shapeNext?:string,saved?:Point[][],savedSpace?:string,onSave:(ink:Point[][])=>Promise<void>,onTrace:(digit:string,ink:Point[][],practice:Practice)=>Promise<void>,onShape:(shape:string,ink:Point[][],practice:Practice)=>Promise<void>,onSpeak:(text:string)=>void,report:(name:string,detail:string)=>void,busy:boolean,art:any,act:(input:any)=>Promise<any>,studio?:boolean}){
+export function Drawing({player,traceNext,shapeNext,saved,savedSpace,onSave,onTrace,onShape,onSpeak,report,busy,art,act,studio=false}:{player:string,traceNext?:string,shapeNext?:string,saved?:Point[][],savedSpace?:string,onSave:(ink:Point[][])=>Promise<void>,onTrace:(digit:string,ink:Point[][],practice:Practice)=>Promise<void>,onShape:(shape:string,ink:Point[][],practice:Practice)=>Promise<void>,onSpeak:(text:string|string[])=>void,report:(name:string,detail:string)=>void,busy:boolean,art:any,act:(input:any)=>Promise<any>,studio?:boolean}){
  const [mode,setMode]=useState(()=>studio?'free':initialDrawingMode()),[shape,setShape]=useState(()=>startingShape(shapeNext)),[digit,setDigit]=useState(()=>startingTraceNumber(traceNext)),[idea,setIdea]=useState(-1);
  const [ink,setInk]=useState<Point[][]>(()=>wideDrawingInk(saved,savedSpace)),[draft,setDraft]=useState<Point[]>([]),[attempt,setAttempt]=useState<Point[][]>([]);
  const inkTools=useInkTools(ink,setInk);

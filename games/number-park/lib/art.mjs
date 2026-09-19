@@ -39,7 +39,7 @@ export function artAction(p,input,now,services={}){
   a.lastGuess={id:`${p.revision}:${now}`,strokes:input.strokes,...result,mode,childLabel:null};record({kind:'guess',...result,mode});
  }else if(input.kind==='art_label'){
   const g=a.lastGuess;if(!g||g.id!==input.guessId||g.childLabel)fail('Make a new guess first.');
-  if(!validArtLabel(input.label))fail('Choose a letter, number from 0 to 100, or drawing label.');
+  if(!validArtLabel(input.label))fail('Choose a letter, word, number up to 999,999, or drawing label.');
   g.childLabel=input.label;record({kind:'child_label',guessId:g.id,guess:g.label,label:input.label});
  }else if(input.kind==='art_start'){
   if(a.mission&&!a.mission.complete)fail('Finish this drawing first.');

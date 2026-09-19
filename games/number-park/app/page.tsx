@@ -28,7 +28,7 @@ export default function Home(){
  const locked=useRef(false),live=useRef({p,player}),lastVoice=useRef(''),client=useRef<any>(null);live.current={p,player};
  const event=(kind:string,name='',detail='')=>{void fetch('/api/'+live.current.player+'/events',{method:'POST',headers:{'Content-Type':'application/json',...client.current?.headers()},body:JSON.stringify({kind,name,detail})}).catch(()=>{});};
  if(!client.current)client.current=createSaveClient({fetch:(...args:Parameters<typeof fetch>)=>fetch(...args),apply:(data:any)=>{live.current.p=data;setP(data);},status:(s:any)=>{if('busy' in s){locked.current=s.busy;setBusy(s.busy);}if('error' in s)setError(s.error);if('notice' in s)setNotice(s.notice);},report:(name:string,detail:any)=>event('sync',name,JSON.stringify(detail))});
- const speak=(text:string)=>void say(text,e=>event('voice',text,e));
+ const speak=(text:string|string[])=>void say(text,e=>event('voice',Array.isArray(text)?text.join(' | '):text,e));
  refreshView.current={player,tab,open,sound,draft:tab==='draw'||tab==='reading'&&!!p?.reading?.session&&!p.reading.session.finished||tab==='play'&&open&&!!p?.session&&!p.session.finished&&!p.session.result};
  if(!appRefresh.current)appRefresh.current=createAppRefresh({read:()=>({...refreshView.current,href:location.href,saving:client.current.busy}),fetch:(...args:Parameters<typeof fetch>)=>fetch(...args),confirm:(message:string)=>window.confirm(message),navigate:(url:string)=>location.replace(url),stop:stopVoice,status:(s:any)=>{setRefreshing(s.busy);if('error' in s)setError(s.error);if('notice' in s)setNotice(s.notice);},report:(name:string,detail:any)=>event('sync',name,JSON.stringify(detail))});
  const refresh=()=>void appRefresh.current.refresh();

@@ -312,7 +312,7 @@ async function mazeAct(input){
  const audible=!mute&&profile.settings.sound;
  const tapLine=input.kind==='answer'?mazeTapLine(input.answer,mazeQuestion(profile)):input.kind==='sound'?soundLine(mazeQuestion(profile).word[input.index]):'';
  const manualSound=input.kind==='sound'||input.kind==='answer'&&mazeQuestion(profile).type==='blend';
- if(tapLine&&(manualSound||audible))void coachVoice.letter(tapLine);
+ if(tapLine&&(manualSound||audible))void (input.kind==='sound'?coachVoice.phoneme(tapLine):coachVoice.letter(tapLine));
  else if(['forward','next','retry'].includes(input.kind))coachVoice.stop();
  const payload={...input,revision:profile.revision,...(['answer','hint','retry','sound'].includes(input.kind)?{questionId:mazeQuestion(profile).id}:{}),...(input.kind==='answer'?{durationMs:Math.min(86400000,Date.now()-mazeStarted)}:{})};
  telemetry.record('action',{action:'maze:'+input.kind,...(input.answer?{answer:input.answer}:{})});

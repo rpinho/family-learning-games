@@ -23,7 +23,6 @@ export class CoachVoice {
     }catch(e){this.record('voice_error',{reason:'manifest',message:e.message});return null;}
   }
   stop(){
-    globalThis.speechSynthesis?.cancel();
     this.generation++;if(this.mode)this.lastSpeech=Date.now();this.mode=null;clearTimeout(this.promptTimer);this.promptTimer=null;
     this.cancelWait?.();this.cancelWait=null;
     this.tail=Promise.resolve();this.queued=false;
@@ -54,6 +53,13 @@ export class CoachVoice {
     if(this.mode!=='letter')this.stop();
     const task=this.enqueue(text,{latest:true});this.mode='letter';return task;
   }
+  phoneme(text){
+    // A sound-building door needs every tapped sound, in order. Letter-name
+    // exploration deliberately keeps only the newest pending tap, but doing
+    // that here silently drops the middle sound from words such as H-A-T.
+    if(this.mode!=='phoneme')this.stop();
+    const task=this.enqueue(text);this.mode='phoneme';return task;
+  }
   enqueue(text,{latest=false}={}){
     if(!this.queued){this.stop();this.queued=true;}
     const generation=this.generation,letterToken=latest?++this.latestLetter:0;
@@ -79,15 +85,7 @@ export class CoachVoice {
     // A new deployment can add clips while an older tab still holds its manifest.
     if(!clip&&manifest){this.ready=this.load();manifest=await this.ready;clip=manifest?.clips[text];}
     if(generation!==this.generation)return;
-
-    if(!clip){
-      if(!globalThis.speechSynthesis){this.mode=null;this.notify('Speech is unavailable on this device. Read the instruction together.');return;}
-      const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=.9;
-      const voices=speechSynthesis.getVoices();u.voice=voices.find(v=>v.lang==='en-US'&&v.localService)||voices.find(v=>v.lang==='en-US')||null;
-      await new Promise(resolve=>{let done=false;const finish=()=>{if(done)return;done=true;clearTimeout(timer);this.cancelWait=null;resolve();};const timer=setTimeout(finish,20000);this.cancelWait=finish;u.onend=finish;u.onerror=finish;speechSynthesis.speak(u);});
-      if(generation===this.generation){this.mode=null;this.lastSpeech=Date.now();}return false;
-    }
-
+    if(!clip){this.mode=null;this.record('voice_error',{reason:'missing_clip',message:text});this.notify('Rook’s voice is not ready. Try the speaker again in a moment.');return;}
     this.lastSpeech=Date.now();
     this.player.src=clip;
     this.player.dataset.voice=manifest.voice;
