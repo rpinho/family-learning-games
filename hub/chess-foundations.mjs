@@ -49,9 +49,29 @@ const choiceSeeds={
   [{e4:'N',b2:'R',f6:'n'},'e4f6'],[{c4:'N',f2:'R',e5:'n',h6:'b'},'c4e5'],
  ],
 };
+const captureDecisionSeeds=[
+ ['7k/3N4/5N2/1r1b4/6r1/8/8/K7 w - - 0 1','f6g4'],
+ ['7k/8/2rRn3/8/8/8/2B1r3/K7 w - - 0 1','d6c6'],
+ ['7k/3b4/4b3/8/3R4/8/1B1r4/K7 w - - 0 1','d4d2'],
+ ['7k/6r1/4r3/8/8/2B5/1R3b2/K7 w - - 0 1','b2f2'],
+ ['7k/5n2/5R2/3b4/1N2r3/8/8/K7 w - - 0 1','b4d5'],
+ ['7k/8/3b4/8/3n4/1bR1B3/8/K7 w - - 0 1','e3d4'],
+ ['7k/3r4/8/6n1/3N2R1/5b2/8/K7 w - - 0 1','g4g5'],
+ ['7k/8/3R4/3n4/8/6n1/3rN3/K7 w - - 0 1','e2g3'],
+ ['7k/1R6/3b4/1b6/1n6/1R6/8/K7 w - - 0 1','b7b5'],
+ ['7k/4N1r1/8/4Br2/8/8/3b4/K7 w - - 0 1','e7f5'],
+ ['7k/4B3/3n4/8/3r4/2B5/4b3/K7 w - - 0 1','c3d4'],
+ ['7k/5b2/8/6n1/5B2/3R1b2/8/K7 w - - 0 1','f4g5'],
+];
 export const FOUNDATION_PRACTICE={};
 for(const u of FOUNDATION_UNITS){
  const lessons=FOUNDATION_LESSONS.filter(l=>FOUNDATION_UNITS[l.unit]===u);
+ if(u.theme==='learnCapture'){
+  const decisions=captureDecisionSeeds.map(([fen,move],i)=>({id:`foundation-learn-capture-choice-${i}`,theme:'learnCapture',fen,line:[move],goal:'Take safely',original:true,rating:null}));
+  FOUNDATIONS.learnCaptureChoices=decisions;
+  for(const l of lessons){FOUNDATION_PRACTICE[l.id]=decisions.slice(l.step*3,l.step*3+3).map(p=>p.id);FOUNDATION_EXAMPLES[l.id]=decisions[9+l.step];}
+  continue;
+ }
  if(!choiceSeeds[u.theme]){for(const l of lessons)FOUNDATION_PRACTICE[l.id]=FOUNDATIONS[u.theme].slice(l.step*5,l.step*5+5).map(p=>p.id);continue;}
  const choices=choiceSeeds[u.theme].map(([pieces,move],i)=>{
   const b=new Chess();b.clear();for(const [square,piece] of Object.entries({a1:'K',h8:'k',...pieces}))b.put({type:piece.toLowerCase(),color:piece===piece.toUpperCase()?'w':'b'},square);

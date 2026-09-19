@@ -6,7 +6,7 @@ import {Chess} from '../public/chess/rules.mjs';
 import {createNarrationGate,narrationFor} from '../public/chess/narration.mjs';
 const act=(p,type,x={})=>actChess(p,{type,...x,revision:p.revision,requestId:crypto.randomUUID()});
 test('First moves teaches legal sparse boards and separate demonstrations',async()=>{
- assert.equal(Object.values(FOUNDATIONS).flat().length,108);
+ assert.equal(Object.values(FOUNDATIONS).flat().length,120);
  for(const puzzle of [...Object.values(FOUNDATIONS).flat(),...Object.values(FOUNDATION_EXAMPLES)]){
   const b=new Chess(puzzle.fen),king=b.board().flat().find(x=>x?.type==='k'&&x.color==='b');
   assert.equal(b.isCheck(),false,puzzle.id);assert.equal(b.isAttacked(king.square,'w'),false,puzzle.id);
@@ -45,6 +45,16 @@ test('Movement intros have three targets, then unmarked capture choices with a d
   }
  }
  assert.equal(lessonPuzzles('learn-fork-1','foundations').length,5);
+});
+test('Capture lessons hide answer circles and require choosing the one safe capture',async()=>{
+ for(const lesson of FOUNDATION_LESSONS.filter(x=>x.id.startsWith('learn-capture-'))){
+  const ids=lessonPuzzles(lesson.id,'foundations');assert.equal(ids.length,3);
+  for(const id of ids){const puzzle=PUZZLES[id],moves=new Chess(puzzle.fen).moves({verbose:true}).filter(m=>m.captured&&m.captured!=='k');
+   assert(moves.length>=2,id);const outcomes=moves.map(move=>{const b=new Chess(puzzle.fen),played=b.move(move);return foundationGoal(puzzle,b,played);});assert.equal(outcomes.filter(Boolean).length,1,id);assert(outcomes.includes(false),id);
+  }
+ }
+ const p=freshChess();await act(p,'settings',{band:'foundations'});await act(p,'start',{lesson:'learn-capture-1'});await act(p,'begin');const pub=publicChess(p);
+ assert.equal(pub.session.puzzle.theme,'learnCapture');assert.equal(pub.session.puzzle.concealLegalMoves,true);assert.equal(pub.session.puzzle.target,undefined);
 });
 test('Existing three solved movement boards finish naturally, preserve history, and unlock capture choice',async()=>{
  const p=freshChess();await act(p,'settings',{band:'foundations'});await act(p,'start',{lesson:'learn-bishop-1'});

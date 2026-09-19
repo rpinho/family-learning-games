@@ -12,6 +12,7 @@ export function mountBoard(
     hintKing,
     hintTo,
     target,
+    showLegalMoves = true,
     onMove,
     onMotion = () => {},
     onSelect = () => {},
@@ -79,7 +80,7 @@ export function mountBoard(
       el.classList.toggle("selected", el.dataset.square === selected);
       el.classList.toggle(
         "legal",
-        legal.some((m) => m.to === el.dataset.square),
+        showLegalMoves && legal.some((m) => m.to === el.dataset.square),
       );
       el.classList.toggle("capture", !!chess.get(el.dataset.square));
       el.setAttribute("aria-pressed", String(el.dataset.square === selected));
@@ -87,7 +88,7 @@ export function mountBoard(
     if (selected) onMotion("select");
     onSelect(
       selected
-        ? `${NAMES[p.type][0].toUpperCase() + NAMES[p.type].slice(1)} selected. Choose a marked square.`
+        ? `${NAMES[p.type][0].toUpperCase() + NAMES[p.type].slice(1)} selected. ${showLegalMoves?'Choose a marked square.':'Choose where it should move.'}`
         : "Choose a piece.",
       selected ? { x: (squares.indexOf(selected) % 8) / 7, y: Math.floor(squares.indexOf(selected) / 8) / 7 } : null,
     );

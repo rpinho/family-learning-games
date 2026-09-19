@@ -271,6 +271,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
         hintFrom: inGame ? g.hint?.from : example?example.line[0].slice(0,2):s.hintFrom,
         hintTo: inGame ? g.hint?.to : example?undefined:s.hintTo,
         target: example?example.target:s.puzzle?.target,
+        showLegalMoves: inGame || !!example || !s.puzzle?.concealLegalMoves,
         onMove: (from, to, promotion) =>
           send(inGame ? "game-move" : "move", { from, to, promotion }),
         onMotion: (kind) => {

@@ -296,6 +296,8 @@ export function publicChess(p, now = Date.now()) {
         rating: puzzle.rating,
         original:!!puzzle.original,
         target:puzzle.target,
+        theme:puzzle.theme,
+        concealLegalMoves:s.band==='foundations'&&puzzle.theme==='learnCapture',
         task:puzzle.original ? s.ply>0?(puzzle.followup||'Take the rook'):puzzle.goal:null,
       };
       const stage = puzzleHint(s).stage;
