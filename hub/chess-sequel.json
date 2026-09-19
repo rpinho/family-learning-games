@@ -1,0 +1,2210 @@
+{
+  "version": 1,
+  "units": {
+    "stepsKnightWin": {
+      "practice": [
+        {
+          "id": "continuation-steps-knight-win-1",
+          "theme": "stepsKnightWin",
+          "fen": "3r4/2K1k3/8/8/1N6/8/8/8 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "b4c6": {
+              "reply": "e7e6",
+              "finishes": [
+                "c6d8"
+              ]
+            }
+          },
+          "line": [
+            "b4c6",
+            "e7e6",
+            "c6d8"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-knight-win-2",
+          "theme": "stepsKnightWin",
+          "fen": "8/8/2r3k1/8/8/3N4/8/1K6 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "d3e5": {
+              "reply": "g6f5",
+              "finishes": [
+                "e5c6"
+              ]
+            }
+          },
+          "line": [
+            "d3e5",
+            "g6f5",
+            "e5c6"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-knight-win-3",
+          "theme": "stepsKnightWin",
+          "fen": "1k6/8/8/2N1r3/8/K7/8/8 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "c5d7": {
+              "reply": "b8a7",
+              "finishes": [
+                "d7e5"
+              ]
+            }
+          },
+          "line": [
+            "c5d7",
+            "b8a7",
+            "d7e5"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-knight-win-4",
+          "theme": "stepsKnightWin",
+          "fen": "8/7K/8/8/5r2/8/5N2/6k1 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "f2h3": {
+              "reply": "g1f1",
+              "finishes": [
+                "h3f4"
+              ]
+            }
+          },
+          "line": [
+            "f2h3",
+            "g1f1",
+            "h3f4"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-knight-win-5",
+          "theme": "stepsKnightWin",
+          "fen": "8/8/6K1/2k5/8/8/3r4/N7 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "a1b3": {
+              "reply": "c5b4",
+              "finishes": [
+                "b3d2"
+              ]
+            }
+          },
+          "line": [
+            "a1b3",
+            "c5b4",
+            "b3d2"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-knight-win-6",
+          "theme": "stepsKnightWin",
+          "fen": "2n5/6K1/3k4/8/8/2r5/3N4/8 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "d2e4": {
+              "reply": "d6c6",
+              "finishes": [
+                "e4c3"
+              ]
+            }
+          },
+          "line": [
+            "d2e4",
+            "d6c6",
+            "e4c3"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-knight-win-7",
+          "theme": "stepsKnightWin",
+          "fen": "7K/8/8/8/1k5n/2N1r3/8/8 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "c3d5": {
+              "reply": "b4a3",
+              "finishes": [
+                "d5e3"
+              ]
+            }
+          },
+          "line": [
+            "c3d5",
+            "b4a3",
+            "d5e3"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-knight-win-8",
+          "theme": "stepsKnightWin",
+          "fen": "8/8/8/1r1N4/8/8/k7/3K1n2 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "d5c3": {
+              "reply": "a2a1",
+              "finishes": [
+                "c3b5"
+              ]
+            }
+          },
+          "line": [
+            "d5c3",
+            "a2a1",
+            "c3b5"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-knight-win-9",
+          "theme": "stepsKnightWin",
+          "fen": "8/4r3/3n4/k7/3N4/8/1K6/8 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "d4c6": {
+              "reply": "a5a4",
+              "finishes": [
+                "c6e7"
+              ]
+            }
+          },
+          "line": [
+            "d4c6",
+            "a5a4",
+            "c6e7"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-knight-win-10",
+          "theme": "stepsKnightWin",
+          "fen": "8/6K1/8/8/6k1/3N4/8/6nr w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "d3f2": {
+              "reply": "g4f3",
+              "finishes": [
+                "f2h1"
+              ]
+            }
+          },
+          "line": [
+            "d3f2",
+            "g4f3",
+            "f2h1"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-knight-win-11",
+          "theme": "stepsKnightWin",
+          "fen": "8/8/8/8/6r1/K2k2n1/2b5/3N4 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "d1f2": {
+              "reply": "d3c3",
+              "finishes": [
+                "f2g4"
+              ]
+            }
+          },
+          "line": [
+            "d1f2",
+            "d3c3",
+            "f2g4"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-knight-win-12",
+          "theme": "stepsKnightWin",
+          "fen": "8/8/8/2b1K3/2N5/1r6/3n4/5k2 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "c4d2": {
+              "reply": "f1e1",
+              "finishes": [
+                "d2b3"
+              ]
+            }
+          },
+          "line": [
+            "c4d2",
+            "f1e1",
+            "d2b3"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-knight-win-13",
+          "theme": "stepsKnightWin",
+          "fen": "3n4/1b1r1N2/8/8/K1k5/8/8/8 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "f7e5": {
+              "reply": "c4c3",
+              "finishes": [
+                "e5d7"
+              ]
+            }
+          },
+          "line": [
+            "f7e5",
+            "c4c3",
+            "e5d7"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-knight-win-14",
+          "theme": "stepsKnightWin",
+          "fen": "8/1k6/8/4n3/2N5/1r6/K7/5b2 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "c4a5": {
+              "reply": "b7a6",
+              "finishes": [
+                "a5b3"
+              ]
+            }
+          },
+          "line": [
+            "c4a5",
+            "b7a6",
+            "a5b3"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-knight-win-15",
+          "theme": "stepsKnightWin",
+          "fen": "8/b6k/4r1N1/6K1/8/n7/8/8 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "g6f8": {
+              "reply": "h7g7",
+              "finishes": [
+                "f8e6"
+              ]
+            }
+          },
+          "line": [
+            "g6f8",
+            "h7g7",
+            "f8e6"
+          ],
+          "followup": "Take the rook"
+        }
+      ],
+      "examples": [
+        {
+          "id": "continuation-steps-knight-win-16",
+          "theme": "stepsKnightWin",
+          "fen": "8/3N1k2/2r5/8/8/K3b3/8/5n2 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "d7e5": {
+              "reply": "f7e6",
+              "finishes": [
+                "e5c6"
+              ]
+            }
+          },
+          "line": [
+            "d7e5",
+            "f7e6",
+            "e5c6"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-knight-win-17",
+          "theme": "stepsKnightWin",
+          "fen": "3r4/8/6nk/4N3/8/1K6/8/b7 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "e5f7": {
+              "reply": "h6g7",
+              "finishes": [
+                "f7d8"
+              ]
+            }
+          },
+          "line": [
+            "e5f7",
+            "h6g7",
+            "f7d8"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-knight-win-18",
+          "theme": "stepsKnightWin",
+          "fen": "8/8/8/7k/2K5/5b2/8/1n3r1N w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "h1g3": {
+              "reply": "h5g4",
+              "finishes": [
+                "g3f1"
+              ]
+            }
+          },
+          "line": [
+            "h1g3",
+            "h5g4",
+            "g3f1"
+          ],
+          "followup": "Take the rook"
+        }
+      ]
+    },
+    "stepsBishopWin": {
+      "practice": [
+        {
+          "id": "continuation-steps-bishop-win-1",
+          "theme": "stepsBishopWin",
+          "fen": "8/7K/r7/8/8/3B4/k7/8 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "d3c4": {
+              "reply": "a2a1",
+              "finishes": [
+                "c4a6"
+              ]
+            }
+          },
+          "line": [
+            "d3c4",
+            "a2a1",
+            "c4a6"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-bishop-win-2",
+          "theme": "stepsBishopWin",
+          "fen": "5K2/8/8/8/1k3B2/6r1/8/8 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "f4d6": {
+              "reply": "b4a4",
+              "finishes": [
+                "d6g3"
+              ]
+            }
+          },
+          "line": [
+            "f4d6",
+            "b4a4",
+            "d6g3"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-bishop-win-3",
+          "theme": "stepsBishopWin",
+          "fen": "6r1/8/8/2K2B2/8/8/k7/8 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "f5e6": {
+              "reply": "a2a1",
+              "finishes": [
+                "e6g8"
+              ]
+            }
+          },
+          "line": [
+            "f5e6",
+            "a2a1",
+            "e6g8"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-bishop-win-4",
+          "theme": "stepsBishopWin",
+          "fen": "6k1/K7/8/1B6/8/1r6/8/8 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "b5c4": {
+              "reply": "g8f8",
+              "finishes": [
+                "c4b3"
+              ]
+            }
+          },
+          "line": [
+            "b5c4",
+            "g8f8",
+            "c4b3"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-bishop-win-5",
+          "theme": "stepsBishopWin",
+          "fen": "5K2/5B2/8/8/8/1r5k/8/8 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "f7e6": {
+              "reply": "h3g2",
+              "finishes": [
+                "e6b3"
+              ]
+            }
+          },
+          "line": [
+            "f7e6",
+            "h3g2",
+            "e6b3"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-bishop-win-6",
+          "theme": "stepsBishopWin",
+          "fen": "5K2/8/7r/2k5/5B2/8/8/2n5 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "f4e3": {
+              "reply": "c5b4",
+              "finishes": [
+                "e3h6"
+              ]
+            }
+          },
+          "line": [
+            "f4e3",
+            "c5b4",
+            "e3h6"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-bishop-win-7",
+          "theme": "stepsBishopWin",
+          "fen": "3k4/6B1/8/8/2K2n1r/8/8/8 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "g7f6": {
+              "reply": "d8c7",
+              "finishes": [
+                "f6h4"
+              ]
+            }
+          },
+          "line": [
+            "g7f6",
+            "d8c7",
+            "f6h4"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-bishop-win-8",
+          "theme": "stepsBishopWin",
+          "fen": "8/8/3K2nr/8/3B4/8/8/2k5 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "d4e3": {
+              "reply": "c1b1",
+              "finishes": [
+                "e3h6"
+              ]
+            }
+          },
+          "line": [
+            "d4e3",
+            "c1b1",
+            "e3h6"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-bishop-win-9",
+          "theme": "stepsBishopWin",
+          "fen": "k5K1/8/8/n7/8/8/4B3/3r4 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "e2f3": {
+              "reply": "a5b7",
+              "finishes": [
+                "f3d1"
+              ]
+            }
+          },
+          "line": [
+            "e2f3",
+            "a5b7",
+            "f3d1"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-bishop-win-10",
+          "theme": "stepsBishopWin",
+          "fen": "5k2/8/8/8/K6n/2B5/3r4/8 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "c3b4": {
+              "reply": "d2d6",
+              "finishes": [
+                "b4d6"
+              ]
+            }
+          },
+          "line": [
+            "c3b4",
+            "d2d6",
+            "b4d6"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-bishop-win-11",
+          "theme": "stepsBishopWin",
+          "fen": "3B1r2/3b4/8/2k5/8/3n4/2K5/8 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "d8e7": {
+              "reply": "c5b5",
+              "finishes": [
+                "e7f8"
+              ]
+            }
+          },
+          "line": [
+            "d8e7",
+            "c5b5",
+            "e7f8"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-bishop-win-12",
+          "theme": "stepsBishopWin",
+          "fen": "2k5/4n3/7K/8/2B5/3r4/6b1/8 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "c4a6": {
+              "reply": "c8b8",
+              "finishes": [
+                "a6d3"
+              ]
+            }
+          },
+          "line": [
+            "c4a6",
+            "c8b8",
+            "a6d3"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-bishop-win-13",
+          "theme": "stepsBishopWin",
+          "fen": "5k2/B4b2/8/8/1r6/5n2/6K1/8 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "a7c5": {
+              "reply": "f8e8",
+              "finishes": [
+                "c5b4"
+              ]
+            }
+          },
+          "line": [
+            "a7c5",
+            "f8e8",
+            "c5b4"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-bishop-win-14",
+          "theme": "stepsBishopWin",
+          "fen": "k7/8/4b3/8/8/2n4B/2K5/5r2 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "h3g2": {
+              "reply": "a8a7",
+              "finishes": [
+                "g2f1"
+              ]
+            }
+          },
+          "line": [
+            "h3g2",
+            "a8a7",
+            "g2f1"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-bishop-win-15",
+          "theme": "stepsBishopWin",
+          "fen": "8/4k3/1n6/8/8/r7/5B2/b4K2 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "f2c5": {
+              "reply": "e7d7",
+              "finishes": [
+                "c5a3"
+              ]
+            }
+          },
+          "line": [
+            "f2c5",
+            "e7d7",
+            "c5a3"
+          ],
+          "followup": "Take the rook"
+        }
+      ],
+      "examples": [
+        {
+          "id": "continuation-steps-bishop-win-16",
+          "theme": "stepsBishopWin",
+          "fen": "4n3/1r6/K1B3k1/8/8/8/5b2/8 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "c6e4": {
+              "reply": "g6f6",
+              "finishes": [
+                "e4b7"
+              ]
+            }
+          },
+          "line": [
+            "c6e4",
+            "g6f6",
+            "e4b7"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-bishop-win-17",
+          "theme": "stepsBishopWin",
+          "fen": "8/8/1K2b2n/2B5/5r2/8/8/2k5 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "c5e3": {
+              "reply": "c1b1",
+              "finishes": [
+                "e3f4"
+              ]
+            }
+          },
+          "line": [
+            "c5e3",
+            "c1b1",
+            "e3f4"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-bishop-win-18",
+          "theme": "stepsBishopWin",
+          "fen": "8/8/2r1n1K1/5B2/8/6b1/8/7k w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "f5e4": {
+              "reply": "h1g1",
+              "finishes": [
+                "e4c6"
+              ]
+            }
+          },
+          "line": [
+            "f5e4",
+            "h1g1",
+            "e4c6"
+          ],
+          "followup": "Take the rook"
+        }
+      ]
+    },
+    "stepsQueenWin": {
+      "practice": [
+        {
+          "id": "continuation-steps-queen-win-1",
+          "theme": "stepsQueenWin",
+          "fen": "8/7K/2r5/7k/8/Q7/8/8 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "a3f3": {
+              "reply": "h5g5",
+              "finishes": [
+                "f3c6"
+              ]
+            }
+          },
+          "line": [
+            "a3f3",
+            "h5g5",
+            "f3c6"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-queen-win-2",
+          "theme": "stepsQueenWin",
+          "fen": "7r/1K6/8/8/6Q1/8/5k2/8 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "g4d4": {
+              "reply": "f2e1",
+              "finishes": [
+                "d4h8"
+              ]
+            }
+          },
+          "line": [
+            "g4d4",
+            "f2e1",
+            "d4h8"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-queen-win-3",
+          "theme": "stepsQueenWin",
+          "fen": "8/8/8/8/8/6QK/8/k3r3 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "g3c3": {
+              "reply": "a1a2",
+              "finishes": [
+                "c3e1"
+              ]
+            }
+          },
+          "line": [
+            "g3c3",
+            "a1a2",
+            "c3e1"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-queen-win-4",
+          "theme": "stepsQueenWin",
+          "fen": "8/8/1Q6/3r4/1K6/8/2k5/8 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "b6c6": {
+              "reply": "c2b1",
+              "finishes": [
+                "c6d5"
+              ]
+            }
+          },
+          "line": [
+            "b6c6",
+            "c2b1",
+            "c6d5"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-queen-win-5",
+          "theme": "stepsQueenWin",
+          "fen": "5k2/8/8/8/1KQ5/4r3/8/8 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "c4f4": {
+              "reply": "f8e7",
+              "finishes": [
+                "f4e3"
+              ]
+            }
+          },
+          "line": [
+            "c4f4",
+            "f8e7",
+            "f4e3"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-queen-win-6",
+          "theme": "stepsQueenWin",
+          "fen": "8/8/r7/8/8/2n2k2/1QK5/8 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "b2b7": {
+              "reply": "a6c6",
+              "finishes": [
+                "b7c6"
+              ]
+            }
+          },
+          "line": [
+            "b2b7",
+            "a6c6",
+            "b7c6"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-queen-win-7",
+          "theme": "stepsQueenWin",
+          "fen": "8/6k1/8/8/7K/8/5Q2/6rn w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "f2d4": {
+              "reply": "g7f7",
+              "finishes": [
+                "d4g1"
+              ]
+            },
+            "f2a7": {
+              "reply": "g7f6",
+              "finishes": [
+                "a7g1"
+              ]
+            }
+          },
+          "line": [
+            "f2d4",
+            "g7f7",
+            "d4g1"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-queen-win-8",
+          "theme": "stepsQueenWin",
+          "fen": "8/8/6r1/8/3K2n1/6Q1/8/3k4 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "g3d3": {
+              "reply": "d1c1",
+              "finishes": [
+                "d3g6"
+              ]
+            }
+          },
+          "line": [
+            "g3d3",
+            "d1c1",
+            "d3g6"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-queen-win-9",
+          "theme": "stepsQueenWin",
+          "fen": "4k3/1K6/3Q4/8/2r5/8/8/1n6 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "d6e6": {
+              "reply": "e8d8",
+              "finishes": [
+                "e6c4"
+              ]
+            }
+          },
+          "line": [
+            "d6e6",
+            "e8d8",
+            "e6c4"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-queen-win-10",
+          "theme": "stepsQueenWin",
+          "fen": "6K1/1k6/3Q4/8/4r3/8/8/n7 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "d6d5": {
+              "reply": "b7a6",
+              "finishes": [
+                "d5e4"
+              ]
+            }
+          },
+          "line": [
+            "d6d5",
+            "b7a6",
+            "d5e4"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-queen-win-11",
+          "theme": "stepsQueenWin",
+          "fen": "5b2/6n1/8/6k1/8/7K/5r2/5Q2 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "f1g1": {
+              "reply": "f2g2",
+              "finishes": [
+                "g1g2"
+              ]
+            }
+          },
+          "line": [
+            "f1g1",
+            "f2g2",
+            "g1g2"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-queen-win-12",
+          "theme": "stepsQueenWin",
+          "fen": "8/6r1/8/n7/8/K7/3b3Q/4k3 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "h2e5": {
+              "reply": "d2e3",
+              "finishes": [
+                "e5g7"
+              ]
+            }
+          },
+          "line": [
+            "h2e5",
+            "d2e3",
+            "e5g7"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-queen-win-13",
+          "theme": "stepsQueenWin",
+          "fen": "8/2n5/5K2/r5Q1/3k4/8/8/6b1 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "g5d2": {
+              "reply": "d4c4",
+              "finishes": [
+                "d2a5"
+              ]
+            }
+          },
+          "line": [
+            "g5d2",
+            "d4c4",
+            "d2a5"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-queen-win-14",
+          "theme": "stepsQueenWin",
+          "fen": "4K2k/2b5/8/3n4/8/8/6Q1/5r2 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "g2h3": {
+              "reply": "h8g7",
+              "finishes": [
+                "h3f1"
+              ]
+            }
+          },
+          "line": [
+            "g2h3",
+            "h8g7",
+            "h3f1"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-queen-win-15",
+          "theme": "stepsQueenWin",
+          "fen": "3r4/K7/8/8/7Q/2n5/4k2b/8 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "h4e7": {
+              "reply": "c3e4",
+              "finishes": [
+                "e7d8"
+              ]
+            }
+          },
+          "line": [
+            "h4e7",
+            "c3e4",
+            "e7d8"
+          ],
+          "followup": "Take the rook"
+        }
+      ],
+      "examples": [
+        {
+          "id": "continuation-steps-queen-win-16",
+          "theme": "stepsQueenWin",
+          "fen": "8/8/6k1/K2Qb3/8/7r/8/1n6 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "d5e6": {
+              "reply": "e5f6",
+              "finishes": [
+                "e6h3"
+              ]
+            }
+          },
+          "line": [
+            "d5e6",
+            "e5f6",
+            "e6h3"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-queen-win-17",
+          "theme": "stepsQueenWin",
+          "fen": "8/8/b7/7r/2k5/K5Q1/8/n7 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "g3g4": {
+              "reply": "c4b5",
+              "finishes": [
+                "g4h5"
+              ]
+            }
+          },
+          "line": [
+            "g3g4",
+            "c4b5",
+            "g4h5"
+          ],
+          "followup": "Take the rook"
+        },
+        {
+          "id": "continuation-steps-queen-win-18",
+          "theme": "stepsQueenWin",
+          "fen": "8/4K3/5n2/7Q/8/3r4/8/b5k1 w - - 0 1",
+          "goal": "Fork, then win a rook",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "nextLines": {
+            "h5g6": {
+              "reply": "d3g3",
+              "finishes": [
+                "g6g3"
+              ]
+            }
+          },
+          "line": [
+            "h5g6",
+            "d3g3",
+            "g6g3"
+          ],
+          "followup": "Take the rook"
+        }
+      ]
+    },
+    "stepsDiscovered": {
+      "practice": [
+        {
+          "id": "continuation-steps-discovered-1",
+          "theme": "stepsDiscovered",
+          "fen": "8/1k6/8/8/1B6/8/8/1R5K w - - 0 1",
+          "goal": "Uncover a check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "b4a5"
+          ]
+        },
+        {
+          "id": "continuation-steps-discovered-2",
+          "theme": "stepsDiscovered",
+          "fen": "8/6k1/8/8/8/6B1/6R1/K7 w - - 0 1",
+          "goal": "Uncover a check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "g3f4"
+          ]
+        },
+        {
+          "id": "continuation-steps-discovered-3",
+          "theme": "stepsDiscovered",
+          "fen": "8/4k3/4B3/8/8/8/4R3/7K w - - 0 1",
+          "goal": "Uncover a check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "e6c8"
+          ]
+        },
+        {
+          "id": "continuation-steps-discovered-4",
+          "theme": "stepsDiscovered",
+          "fen": "8/3k4/8/3B4/8/8/8/3R3K w - - 0 1",
+          "goal": "Uncover a check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "d5b7"
+          ]
+        },
+        {
+          "id": "continuation-steps-discovered-5",
+          "theme": "stepsDiscovered",
+          "fen": "4k3/8/8/8/4B3/8/8/K3R3 w - - 0 1",
+          "goal": "Uncover a check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "e4d5"
+          ]
+        },
+        {
+          "id": "continuation-steps-discovered-6",
+          "theme": "stepsDiscovered",
+          "fen": "4k3/8/7n/8/4B3/8/8/4R2K w - - 0 1",
+          "goal": "Uncover a check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "e4d5"
+          ]
+        },
+        {
+          "id": "continuation-steps-discovered-7",
+          "theme": "stepsDiscovered",
+          "fen": "8/4k3/7n/4B3/8/8/4R3/K7 w - - 0 1",
+          "goal": "Uncover a check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "e5c7"
+          ]
+        },
+        {
+          "id": "continuation-steps-discovered-8",
+          "theme": "stepsDiscovered",
+          "fen": "8/6k1/7n/6B1/8/8/8/K5R1 w - - 0 1",
+          "goal": "Uncover a check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "g5e7"
+          ]
+        },
+        {
+          "id": "continuation-steps-discovered-9",
+          "theme": "stepsDiscovered",
+          "fen": "8/1k6/7n/8/1B6/8/1R6/7K w - - 0 1",
+          "goal": "Uncover a check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "b4a5"
+          ]
+        },
+        {
+          "id": "continuation-steps-discovered-10",
+          "theme": "stepsDiscovered",
+          "fen": "8/2k5/2B4n/8/8/8/2R5/K7 w - - 0 1",
+          "goal": "Uncover a check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "c6a8"
+          ]
+        },
+        {
+          "id": "continuation-steps-discovered-11",
+          "theme": "stepsDiscovered",
+          "fen": "8/2k5/1r5n/8/8/2B5/8/K1R5 w - - 0 1",
+          "goal": "Uncover a check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "c3a5"
+          ]
+        },
+        {
+          "id": "continuation-steps-discovered-12",
+          "theme": "stepsDiscovered",
+          "fen": "2k5/8/1r5n/8/8/2B5/2R5/K7 w - - 0 1",
+          "goal": "Uncover a check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "c3a5"
+          ]
+        },
+        {
+          "id": "continuation-steps-discovered-13",
+          "theme": "stepsDiscovered",
+          "fen": "8/5k2/1r5n/8/8/5B2/5R2/7K w - - 0 1",
+          "goal": "Uncover a check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "f3e4"
+          ]
+        },
+        {
+          "id": "continuation-steps-discovered-14",
+          "theme": "stepsDiscovered",
+          "fen": "8/5k2/1r5n/8/5B2/8/5R2/K7 w - - 0 1",
+          "goal": "Uncover a check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "f4e5"
+          ]
+        },
+        {
+          "id": "continuation-steps-discovered-15",
+          "theme": "stepsDiscovered",
+          "fen": "4k3/8/1r5n/4B3/8/8/8/K3R3 w - - 0 1",
+          "goal": "Uncover a check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "e5c7"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "id": "continuation-steps-discovered-16",
+          "theme": "stepsDiscovered",
+          "fen": "8/2k5/1r5n/8/2B5/8/8/K1R5 w - - 0 1",
+          "goal": "Uncover a check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "c4d5"
+          ]
+        },
+        {
+          "id": "continuation-steps-discovered-17",
+          "theme": "stepsDiscovered",
+          "fen": "8/3k4/1r5n/8/8/3B4/3R4/7K w - - 0 1",
+          "goal": "Uncover a check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "d3c4"
+          ]
+        },
+        {
+          "id": "continuation-steps-discovered-18",
+          "theme": "stepsDiscovered",
+          "fen": "8/4k3/1r5n/8/4B3/8/4R3/7K w - - 0 1",
+          "goal": "Uncover a check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "e4d5"
+          ]
+        }
+      ]
+    },
+    "stepsDoubleCheck": {
+      "practice": [
+        {
+          "id": "continuation-steps-double-check-1",
+          "theme": "stepsDoubleCheck",
+          "fen": "1k6/8/8/8/1B6/8/1R6/K7 w - - 0 1",
+          "goal": "Give double check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "b4d6"
+          ]
+        },
+        {
+          "id": "continuation-steps-double-check-2",
+          "theme": "stepsDoubleCheck",
+          "fen": "6k1/8/8/8/6B1/8/8/6RK w - - 0 1",
+          "goal": "Give double check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "g4e6"
+          ]
+        },
+        {
+          "id": "continuation-steps-double-check-3",
+          "theme": "stepsDoubleCheck",
+          "fen": "1k6/8/1B6/8/8/8/1R6/K7 w - - 0 1",
+          "goal": "Give double check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "b6a7"
+          ]
+        },
+        {
+          "id": "continuation-steps-double-check-4",
+          "theme": "stepsDoubleCheck",
+          "fen": "8/2k5/8/2B5/8/8/8/2R4K w - - 0 1",
+          "goal": "Give double check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "c5b6"
+          ]
+        },
+        {
+          "id": "continuation-steps-double-check-5",
+          "theme": "stepsDoubleCheck",
+          "fen": "8/5k2/8/8/8/5B2/5R2/7K w - - 0 1",
+          "goal": "Give double check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "f3d5"
+          ]
+        },
+        {
+          "id": "continuation-steps-double-check-6",
+          "theme": "stepsDoubleCheck",
+          "fen": "8/5k2/7n/5B2/8/8/8/5R1K w - - 0 1",
+          "goal": "Give double check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "f5e6"
+          ]
+        },
+        {
+          "id": "continuation-steps-double-check-7",
+          "theme": "stepsDoubleCheck",
+          "fen": "3k4/8/3B3n/8/8/8/3R4/K7 w - - 0 1",
+          "goal": "Give double check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "d6c7"
+          ]
+        },
+        {
+          "id": "continuation-steps-double-check-8",
+          "theme": "stepsDoubleCheck",
+          "fen": "5k2/8/7n/8/5B2/8/8/5R1K w - - 0 1",
+          "goal": "Give double check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "f4d6"
+          ]
+        },
+        {
+          "id": "continuation-steps-double-check-9",
+          "theme": "stepsDoubleCheck",
+          "fen": "8/1k6/7n/8/8/1B6/8/1R5K w - - 0 1",
+          "goal": "Give double check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "b3d5"
+          ]
+        },
+        {
+          "id": "continuation-steps-double-check-10",
+          "theme": "stepsDoubleCheck",
+          "fen": "2k5/8/7n/8/2B5/8/2R5/K7 w - - 0 1",
+          "goal": "Give double check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "c4a6"
+          ]
+        },
+        {
+          "id": "continuation-steps-double-check-11",
+          "theme": "stepsDoubleCheck",
+          "fen": "8/5k2/1r5n/5B2/8/8/8/5R1K w - - 0 1",
+          "goal": "Give double check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "f5e6"
+          ]
+        },
+        {
+          "id": "continuation-steps-double-check-12",
+          "theme": "stepsDoubleCheck",
+          "fen": "8/6k1/1r5n/8/8/6B1/8/K5R1 w - - 0 1",
+          "goal": "Give double check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "g3e5"
+          ]
+        },
+        {
+          "id": "continuation-steps-double-check-13",
+          "theme": "stepsDoubleCheck",
+          "fen": "4k3/8/1r2B2n/8/8/8/8/K3R3 w - - 0 1",
+          "goal": "Give double check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "e6d7"
+          ]
+        },
+        {
+          "id": "continuation-steps-double-check-14",
+          "theme": "stepsDoubleCheck",
+          "fen": "4k3/8/1r2B2n/8/8/8/4R3/7K w - - 0 1",
+          "goal": "Give double check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "e6d7"
+          ]
+        },
+        {
+          "id": "continuation-steps-double-check-15",
+          "theme": "stepsDoubleCheck",
+          "fen": "8/2k5/1r5n/2B5/8/8/2R5/7K w - - 0 1",
+          "goal": "Give double check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "c5b6"
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "id": "continuation-steps-double-check-16",
+          "theme": "stepsDoubleCheck",
+          "fen": "8/4k3/1r5n/4B3/8/8/4R3/K7 w - - 0 1",
+          "goal": "Give double check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "e5d6"
+          ]
+        },
+        {
+          "id": "continuation-steps-double-check-17",
+          "theme": "stepsDoubleCheck",
+          "fen": "2k5/8/1rB4n/8/8/8/2R5/7K w - - 0 1",
+          "goal": "Give double check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "c6b7"
+          ]
+        },
+        {
+          "id": "continuation-steps-double-check-18",
+          "theme": "stepsDoubleCheck",
+          "fen": "8/3k4/1r5n/8/8/3B4/8/3R3K w - - 0 1",
+          "goal": "Give double check",
+          "original": true,
+          "rating": null,
+          "terminal": false,
+          "line": [
+            "d3b5"
+          ]
+        }
+      ]
+    },
+    "stepsMateNet": {
+      "practice": [
+        {
+          "id": "continuation-steps-mate-net-1",
+          "theme": "stepsMateNet",
+          "fen": "n7/8/8/2Q5/8/5K2/7k/8 w - - 0 1",
+          "goal": "Check, then mate",
+          "original": true,
+          "rating": null,
+          "terminal": true,
+          "nextLines": {
+            "c5f2": {
+              "reply": "h2h1",
+              "finishes": [
+                "f2g2"
+              ]
+            },
+            "c5c2": {
+              "reply": "h2g1",
+              "finishes": [
+                "c2g2"
+              ]
+            }
+          },
+          "line": [
+            "c5f2",
+            "h2h1",
+            "f2g2"
+          ],
+          "followup": "Find checkmate"
+        },
+        {
+          "id": "continuation-steps-mate-net-2",
+          "theme": "stepsMateNet",
+          "fen": "7k/5K2/8/8/6n1/3Q4/8/8 w - - 0 1",
+          "goal": "Check, then mate",
+          "original": true,
+          "rating": null,
+          "terminal": true,
+          "nextLines": {
+            "d3h3": {
+              "reply": "g4h6",
+              "finishes": [
+                "h3h6"
+              ]
+            }
+          },
+          "line": [
+            "d3h3",
+            "g4h6",
+            "h3h6"
+          ],
+          "followup": "Find checkmate"
+        },
+        {
+          "id": "continuation-steps-mate-net-3",
+          "theme": "stepsMateNet",
+          "fen": "8/7Q/8/8/8/K4n2/8/k7 w - - 0 1",
+          "goal": "Check, then mate",
+          "original": true,
+          "rating": null,
+          "terminal": true,
+          "nextLines": {
+            "h7h8": {
+              "reply": "a1b1",
+              "finishes": [
+                "h8b2"
+              ]
+            },
+            "h7h1": {
+              "reply": "f3e1",
+              "finishes": [
+                "h1e1"
+              ]
+            },
+            "h7g7": {
+              "reply": "a1b1",
+              "finishes": [
+                "g7b2"
+              ]
+            }
+          },
+          "line": [
+            "h7h8",
+            "a1b1",
+            "h8b2"
+          ],
+          "followup": "Find checkmate"
+        },
+        {
+          "id": "continuation-steps-mate-net-4",
+          "theme": "stepsMateNet",
+          "fen": "n7/7k/5K2/8/3Q4/8/8/8 w - - 0 1",
+          "goal": "Check, then mate",
+          "original": true,
+          "rating": null,
+          "terminal": true,
+          "nextLines": {
+            "d4d7": {
+              "reply": "h7g8",
+              "finishes": [
+                "d7g7"
+              ]
+            }
+          },
+          "line": [
+            "d4d7",
+            "h7g8",
+            "d7g7"
+          ],
+          "followup": "Find checkmate"
+        },
+        {
+          "id": "continuation-steps-mate-net-5",
+          "theme": "stepsMateNet",
+          "fen": "6k1/8/5K2/8/3n4/Q7/8/8 w - - 0 1",
+          "goal": "Check, then mate",
+          "original": true,
+          "rating": null,
+          "terminal": true,
+          "nextLines": {
+            "a3g3": {
+              "reply": "g8f8",
+              "finishes": [
+                "g3b8"
+              ]
+            }
+          },
+          "line": [
+            "a3g3",
+            "g8f8",
+            "g3b8"
+          ],
+          "followup": "Find checkmate"
+        },
+        {
+          "id": "continuation-steps-mate-net-6",
+          "theme": "stepsMateNet",
+          "fen": "8/8/8/5Q2/8/K5n1/8/k7 w - - 0 1",
+          "goal": "Check, then mate",
+          "original": true,
+          "rating": null,
+          "terminal": true,
+          "nextLines": {
+            "f5f6": {
+              "reply": "a1b1",
+              "finishes": [
+                "f6b2"
+              ]
+            },
+            "f5e5": {
+              "reply": "a1b1",
+              "finishes": [
+                "e5b2"
+              ]
+            }
+          },
+          "line": [
+            "f5f6",
+            "a1b1",
+            "f6b2"
+          ],
+          "followup": "Find checkmate"
+        },
+        {
+          "id": "continuation-steps-mate-net-7",
+          "theme": "stepsMateNet",
+          "fen": "7k/n7/6K1/8/8/1Q6/8/8 w - - 0 1",
+          "goal": "Check, then mate",
+          "original": true,
+          "rating": null,
+          "terminal": true,
+          "nextLines": {
+            "b3b8": {
+              "reply": "a7c8",
+              "finishes": [
+                "b8c8"
+              ]
+            },
+            "b3c3": {
+              "reply": "h8g8",
+              "finishes": [
+                "c3g7"
+              ]
+            },
+            "b3b2": {
+              "reply": "h8g8",
+              "finishes": [
+                "b2g7"
+              ]
+            }
+          },
+          "line": [
+            "b3b8",
+            "a7c8",
+            "b8c8"
+          ],
+          "followup": "Find checkmate"
+        },
+        {
+          "id": "continuation-steps-mate-net-8",
+          "theme": "stepsMateNet",
+          "fen": "8/8/8/8/7n/2Q5/5K1k/8 w - - 0 1",
+          "goal": "Check, then mate",
+          "original": true,
+          "rating": null,
+          "terminal": true,
+          "nextLines": {
+            "c3g3": {
+              "reply": "h2h1",
+              "finishes": [
+                "g3h4",
+                "g3h3",
+                "g3g1"
+              ]
+            }
+          },
+          "line": [
+            "c3g3",
+            "h2h1",
+            "g3h4"
+          ],
+          "followup": "Find checkmate"
+        },
+        {
+          "id": "continuation-steps-mate-net-9",
+          "theme": "stepsMateNet",
+          "fen": "1k1n4/8/1K6/8/1Q6/8/8/8 w - - 0 1",
+          "goal": "Check, then mate",
+          "original": true,
+          "rating": null,
+          "terminal": true,
+          "nextLines": {
+            "b4d6": {
+              "reply": "b8a8",
+              "finishes": [
+                "d6d8"
+              ]
+            }
+          },
+          "line": [
+            "b4d6",
+            "b8a8",
+            "d6d8"
+          ],
+          "followup": "Find checkmate"
+        },
+        {
+          "id": "continuation-steps-mate-net-10",
+          "theme": "stepsMateNet",
+          "fen": "1k6/8/1K6/8/8/6n1/8/6Q1 w - - 0 1",
+          "goal": "Check, then mate",
+          "original": true,
+          "rating": null,
+          "terminal": true,
+          "nextLines": {
+            "g1g3": {
+              "reply": "b8a8",
+              "finishes": [
+                "g3g8"
+              ]
+            }
+          },
+          "line": [
+            "g1g3",
+            "b8a8",
+            "g3g8"
+          ],
+          "followup": "Find checkmate"
+        },
+        {
+          "id": "continuation-steps-mate-net-11",
+          "theme": "stepsMateNet",
+          "fen": "k7/2K5/8/1b6/8/8/4Q3/8 w - - 0 1",
+          "goal": "Check, then mate",
+          "original": true,
+          "rating": null,
+          "terminal": true,
+          "nextLines": {
+            "e2a2": {
+              "reply": "b5a4",
+              "finishes": [
+                "a2a4"
+              ]
+            }
+          },
+          "line": [
+            "e2a2",
+            "b5a4",
+            "a2a4"
+          ],
+          "followup": "Find checkmate"
+        },
+        {
+          "id": "continuation-steps-mate-net-12",
+          "theme": "stepsMateNet",
+          "fen": "6k1/b7/5K2/8/8/8/8/3Q4 w - - 0 1",
+          "goal": "Check, then mate",
+          "original": true,
+          "rating": null,
+          "terminal": true,
+          "nextLines": {
+            "d1g4": {
+              "reply": "g8f8",
+              "finishes": [
+                "g4c8"
+              ]
+            }
+          },
+          "line": [
+            "d1g4",
+            "g8f8",
+            "g4c8"
+          ],
+          "followup": "Find checkmate"
+        },
+        {
+          "id": "continuation-steps-mate-net-13",
+          "theme": "stepsMateNet",
+          "fen": "8/7k/5K2/1Q6/8/8/3b4/8 w - - 0 1",
+          "goal": "Check, then mate",
+          "original": true,
+          "rating": null,
+          "terminal": true,
+          "nextLines": {
+            "b5b7": {
+              "reply": "h7g8",
+              "finishes": [
+                "b7g7"
+              ]
+            },
+            "b5d7": {
+              "reply": "h7g8",
+              "finishes": [
+                "d7g7"
+              ]
+            }
+          },
+          "line": [
+            "b5b7",
+            "h7g8",
+            "b7g7"
+          ],
+          "followup": "Find checkmate"
+        },
+        {
+          "id": "continuation-steps-mate-net-14",
+          "theme": "stepsMateNet",
+          "fen": "8/8/3Q4/8/8/5K2/b7/6k1 w - - 0 1",
+          "goal": "Check, then mate",
+          "original": true,
+          "rating": null,
+          "terminal": true,
+          "nextLines": {
+            "d6g3": {
+              "reply": "g1f1",
+              "finishes": [
+                "g3f2"
+              ]
+            }
+          },
+          "line": [
+            "d6g3",
+            "g1f1",
+            "g3f2"
+          ],
+          "followup": "Find checkmate"
+        },
+        {
+          "id": "continuation-steps-mate-net-15",
+          "theme": "stepsMateNet",
+          "fen": "7k/5b2/7K/1Q6/8/8/8/8 w - - 0 1",
+          "goal": "Check, then mate",
+          "original": true,
+          "rating": null,
+          "terminal": true,
+          "nextLines": {
+            "b5b8": {
+              "reply": "f7e8",
+              "finishes": [
+                "b8e8"
+              ]
+            },
+            "b5e5": {
+              "reply": "h8g8",
+              "finishes": [
+                "e5g7"
+              ]
+            },
+            "b5b2": {
+              "reply": "h8g8",
+              "finishes": [
+                "b2g7"
+              ]
+            }
+          },
+          "line": [
+            "b5b8",
+            "f7e8",
+            "b8e8"
+          ],
+          "followup": "Find checkmate"
+        }
+      ],
+      "examples": [
+        {
+          "id": "continuation-steps-mate-net-16",
+          "theme": "stepsMateNet",
+          "fen": "8/7Q/8/8/8/1K2b3/8/k7 w - - 0 1",
+          "goal": "Check, then mate",
+          "original": true,
+          "rating": null,
+          "terminal": true,
+          "nextLines": {
+            "h7h1": {
+              "reply": "e3c1",
+              "finishes": [
+                "h1c1"
+              ]
+            }
+          },
+          "line": [
+            "h7h1",
+            "e3c1",
+            "h1c1"
+          ],
+          "followup": "Find checkmate"
+        },
+        {
+          "id": "continuation-steps-mate-net-17",
+          "theme": "stepsMateNet",
+          "fen": "7k/1b6/Q5K1/8/8/8/8/8 w - - 0 1",
+          "goal": "Check, then mate",
+          "original": true,
+          "rating": null,
+          "terminal": true,
+          "nextLines": {
+            "a6f6": {
+              "reply": "h8g8",
+              "finishes": [
+                "f6d8",
+                "f6g7"
+              ]
+            },
+            "a6a1": {
+              "reply": "h8g8",
+              "finishes": [
+                "a1g7"
+              ]
+            }
+          },
+          "line": [
+            "a6f6",
+            "h8g8",
+            "f6d8"
+          ],
+          "followup": "Find checkmate"
+        },
+        {
+          "id": "continuation-steps-mate-net-18",
+          "theme": "stepsMateNet",
+          "fen": "k7/4b3/1K6/8/7Q/8/8/8 w - - 0 1",
+          "goal": "Check, then mate",
+          "original": true,
+          "rating": null,
+          "terminal": true,
+          "nextLines": {
+            "h4h8": {
+              "reply": "e7d8",
+              "finishes": [
+                "h8d8"
+              ]
+            },
+            "h4h1": {
+              "reply": "a8b8",
+              "finishes": [
+                "h1b7"
+              ]
+            },
+            "h4e4": {
+              "reply": "a8b8",
+              "finishes": [
+                "e4b7"
+              ]
+            }
+          },
+          "line": [
+            "h4h8",
+            "e7d8",
+            "h8d8"
+          ],
+          "followup": "Find checkmate"
+        }
+      ]
+    }
+  }
+}

@@ -19,7 +19,7 @@ export function chessService({ data, players, log, settingsFor = {} }) {
     }
   }
   return {
-    close: () => engine.close(),
+    close: async () => { await Promise.allSettled([...queues.values()]); engine.close(); },
     async handle(req, res, u) {
       const player = u.searchParams.get("player");
       if (!players.includes(player))

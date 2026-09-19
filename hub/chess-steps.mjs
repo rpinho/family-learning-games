@@ -46,8 +46,9 @@ for(const u of STEP_UNITS.slice(0,4)){
  }
 }
 const continuation=JSON.parse(await readFile(new URL('./chess-continuation.json',import.meta.url),'utf8'));
+const sequel=JSON.parse(await readFile(new URL('./chess-sequel.json',import.meta.url),'utf8'));
 for(const u of STEP_UNITS.slice(4)){
- const set=continuation.units[u.theme];
+ const set=continuation.units[u.theme]||sequel.units[u.theme];
  STEPS[u.theme]=set.practice;
  for(const l of STEP_LESSONS.filter(l=>STEP_UNITS[l.unit]===u))STEP_EXAMPLES[l.id]=set.examples[l.step];
 }

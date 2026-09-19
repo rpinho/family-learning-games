@@ -10,7 +10,7 @@ After setup, open **http://localhost:4810/**. Choose a player once; their name s
 
 ## Eight games. Eight different adventures.
 
-**[Rook Academy](hub/CHESS.md)** offers 12 Small steps lessons on sparse boards plus a 72-lesson advanced continuation in two difficulty bands, an original speaking coach, hints, review and local practice games. **Maze Garden** now gathers all three maze variants, and **Soccer Club** gathers all three soccer variants. Choose any version; existing progress is preserved.
+**[Rook Academy](hub/CHESS.md)** offers 18 First moves lessons, 54 Small steps lessons on sparse boards and a 72-lesson advanced continuation in two difficulty bands, an original speaking coach, hints, review and local practice games. **Maze Garden** now gathers all three maze variants, and **Soccer Club** gathers all three soccer variants. Choose any version; existing progress is preserved.
 
 Drag, trace, steer, aim, and think ahead. Pick an activity and a manageable challenge, then play together.
 
@@ -85,7 +85,7 @@ Choose live dribbling, feint puzzles, or word penalties. Existing saves stay sep
 | [Maze Garden](games/maze-garden) | Tracing mazes, 3D letter labyrinths and obstacle rescues | http://localhost:4810/#maze-garden |
 | [Three in a Row](games/three-in-a-row) | Tic-tac-toe against Rook and one-move practice puzzles | http://localhost:4810/#three-in-a-row |
 | [Target Trail](games/target-trail) | Moving targets, adjustable aiming difficulty and spoken letters/words | http://localhost:4810/#target-trail |
-| [Rook Academy](hub/CHESS.md) | 72 short chess lessons, review and local practice games | http://localhost:4810/#chess |
+| [Rook Academy](hub/CHESS.md) | 144 lessons across beginner and advanced paths, review and local practice games | http://localhost:4810/#chess |
 | [Soccer Club](hub/README.md#dribble-duel) | Live dribbling, feint puzzles and word penalties | http://localhost:4810/#dribble-duel |
 
 ## Run on your computer

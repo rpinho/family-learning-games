@@ -1,6 +1,6 @@
 import {validInk} from './copy-practice.mjs';
-export const DOODLES=['tree','house','flower','sun','triangle','square','circle','star'];
-export const DOODLE_ICONS={tree:'🌳',house:'🏠',flower:'🌼',sun:'☀️',triangle:'🔺',square:'🟦',circle:'🔵',star:'⭐'};
+export const DOODLES=['tree','house','flower','sun','triangle','square','circle','star','person','face'];
+export const DOODLE_ICONS={tree:'🌳',house:'🏠',flower:'🌼',sun:'☀️',triangle:'🔺',square:'🟦',circle:'🔵',star:'⭐',person:'🧍',face:'🙂'};
 export function inkStats(ink){
  if(!validInk(ink))return null;
  const points=ink.flat();if(!points.length)return null;
@@ -26,7 +26,7 @@ export function recognizeDrawing(ink,model){
  const norm=Math.sqrt(vector.reduce((n,x)=>n+x*x,0)),scores=[];
  for(const e of model.examples){let dot=0;for(let i=0;i<vector.length;i++)dot+=vector[i]*e.vector[i];scores.push({label:e.label,score:dot/(norm*e.norm)});}
  scores.sort((a,b)=>b.score-a.score);
- const byLabel=DOODLES.map(label=>{const top=scores.filter(x=>x.label===label).slice(0,3);return {label,score:top.reduce((n,x)=>n+x.score,0)/top.length};}).sort((a,b)=>b.score-a.score);
+ const byLabel=DOODLES.map(label=>{const top=scores.filter(x=>x.label===label).slice(0,3);return {label,score:top.length?top.reduce((n,x)=>n+x.score,0)/top.length:0};}).sort((a,b)=>b.score-a.score);
  const best=byLabel[0],margin=best.score-byLabel[1].score;
  const certain=best.score>=.65&&margin>=.025&&bounds.length/Math.max(bounds.w,bounds.h)<30;
  return {label:certain?best.label:null,candidates:byLabel.slice(0,3).map(x=>x.label),candidateScores:byLabel.slice(0,3),reason:certain?'guess':'unsure',similarity:Math.round(best.score*1000)/1000,margin:Math.round(margin*1000)/1000,model:model.version};

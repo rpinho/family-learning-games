@@ -37,7 +37,7 @@ function candidate(theme,index){
  return randomBoard(index<5?['K','k',piece,'r']:index<10?['K','k',piece,'r','n']:['K','k',piece,'r','b','n']);
 }
 const output={version:1,units:{}};const seen=new Set();
-for(const unit of STEP_UNITS.slice(4)){
+for(const unit of STEP_UNITS.slice(4,12)){
  const boards=[];let attempts=0;
  while(boards.length<18){
   if(++attempts>250000)throw Error('No sufficient boards: '+unit.theme+' '+boards.length);

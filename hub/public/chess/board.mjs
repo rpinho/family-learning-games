@@ -11,6 +11,7 @@ export function mountBoard(
     hintFrom,
     hintKing,
     hintTo,
+    target,
     onMove,
     onMotion = () => {},
     onSelect = () => {},
@@ -41,7 +42,7 @@ export function mountBoard(
     .map((sq, i) => {
       const p = chess.get(sq),
         light = (+sq[1] + sq.charCodeAt(0)) % 2 !== 0;
-      return `<button type="button" class="sq ${light ? "light" : "dark"} ${marked.has(sq) ? "last" : ""} ${hintFrom === sq ? "hint-piece" : ""} ${hintKing === sq ? "hint-king" : ""} ${hintTo === sq ? "hint-target" : ""} ${chess.isCheck() && p?.type === "k" && p.color === chess.turn() ? "in-check" : ""}" data-square="${sq}" aria-label="${p ? (p.color === "w" ? "White " : "Black ") + NAMES[p.type] + " on " : ""}${sq}" ${disabled ? "disabled" : ""}>${p ? piece(p.type, p.color) : ""}${i % 8 === 0 ? `<span class="rank">${sq[1]}</span>` : ""}${i >= 56 ? `<span class="file">${sq[0]}</span>` : ""}<span class="move-dot"></span></button>`;
+      return `<button type="button" class="sq ${light ? "light" : "dark"} ${marked.has(sq) ? "last" : ""} ${hintFrom === sq ? "hint-piece" : ""} ${hintKing === sq ? "hint-king" : ""} ${hintTo === sq ? "hint-target" : ""} ${chess.isCheck() && p?.type === "k" && p.color === chess.turn() ? "in-check" : ""}" data-square="${sq}" aria-label="${p ? (p.color === "w" ? "White " : "Black ") + NAMES[p.type] + " on " : ""}${sq}" ${disabled ? "disabled" : ""}>${p ? piece(p.type, p.color) : ""}${target===sq?'<span class="teaching-star" aria-hidden="true">★</span>':''}${i % 8 === 0 ? `<span class="rank">${sq[1]}</span>` : ""}${i >= 56 ? `<span class="file">${sq[0]}</span>` : ""}<span class="move-dot"></span></button>`;
     })
     .join("")}</div></div>`;
   const board = root.querySelector(".chess-board");

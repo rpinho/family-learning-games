@@ -65,3 +65,23 @@ export function sunFeatures(ink){
  }
  return null;
 }
+
+// A bare tree: a tall closed trunk plus several branches on BOTH sides.
+// Corroborates a model guess; rejects combs, letters and ladder rungs.
+export function bareTreeFeatures(ink){
+ const whole=inkStats(ink);if(!whole||whole.points>5000||whole.h<20||whole.w<20)return null;
+ const candidates=ink.map(s=>({parts:[s],closed:Math.hypot(s[0]?.[0]-s.at(-1)?.[0],s[0]?.[1]-s.at(-1)?.[1])<whole.h*.25}));
+ const long=ink.filter(s=>inkStats([s])?.h>whole.h*.6).slice(0,20);
+ for(let i=0;i<long.length;i++)for(let j=i+1;j<long.length;j++){const a=[long[i][0],long[i].at(-1)].sort((a,b)=>a[1]-b[1]),z=[long[j][0],long[j].at(-1)].sort((a,b)=>a[1]-b[1]);if(a.every((p,k)=>Math.hypot(p[0]-z[k][0],p[1]-z[k][1])<whole.h*.35))candidates.push({parts:[long[i],long[j]],closed:true});}
+ for(const trunk of candidates){const b=inkStats(trunk.parts);if(!b||!trunk.closed||b.h<whole.h*.65||b.w<whole.w*.10||b.w>whole.w*.46)continue;
+  const branches=[];
+  for(const s of ink){if(trunk.parts.includes(s)||s.length<2)continue;const ends=[s[0],s.at(-1)];
+   for(const [a,z] of [ends,ends.toReversed()])if(a[0]>=b.x-b.w*.25&&a[0]<=b.x+b.w*1.25&&a[1]>=b.y&&a[1]<=b.y+b.h&&Math.abs(z[1]-a[1])<whole.h*.28){
+    if(z[0]<b.x-whole.w*.18)branches.push({side:'left',y:a[1]});
+    if(z[0]>b.x+b.w+whole.w*.18)branches.push({side:'right',y:a[1]});
+   }
+  }
+  if(['left','right'].every(side=>{const ys=branches.filter(x=>x.side===side).map(x=>x.y);return ys.length>=2&&Math.max(...ys)-Math.min(...ys)>b.h*.28;}))return {kind:'bare-tree',branches:branches.length};
+ }
+ return null;
+}

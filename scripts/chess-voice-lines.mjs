@@ -5,7 +5,9 @@ import {
   NAMES,
 } from "../hub/public/chess/curriculum.mjs";
 import {STEP_UNITS,STEP_VOICE} from '../hub/public/chess/steps-curriculum.mjs';
+import {FOUNDATION_UNITS,FOUNDATION_VOICE} from '../hub/public/chess/foundations-curriculum.mjs';
 const lines = [
+ ...FOUNDATION_UNITS.flatMap(u=>[u.idea,u.cue,...u.hints]),...Object.values(FOUNDATION_VOICE),
   ...STEP_UNITS.flatMap(u=>[u.idea,u.cue,...u.hints]),...Object.values(STEP_VOICE),
   ...UNITS.flatMap((u) => [u.idea, u.question, u.cue, ...u.hints]),
   ...Object.values(VOICE).flat(),

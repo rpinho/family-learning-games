@@ -1,3 +1,5 @@
+import {FOUNDATION_UNITS,FOUNDATION_VOICE} from './foundations-curriculum.mjs';
+import {drawTeachingOverlay} from './teaching.mjs';
 import {STEP_UNITS,STEP_VOICE} from './steps-curriculum.mjs';
 import { createCoachAudio } from './audio.mjs';
 import { UNITS, LESSONS, lessonFor, NAMES, VOICE, unitsForBand } from "./curriculum.mjs";
@@ -38,7 +40,13 @@ export function mountChess(root, { player, name, event = () => {} }) {
   history.scrollRestoration = "manual";
   const endpoint = "/api/chess?player=" + encodeURIComponent(player);
   const voice=createCoachAudio({event,talking:on=>root.querySelector('.academy-coach')?.classList.toggle('talking',on)});
-  const unlockVoice=()=>voice.unlock();
+  let entryCuePending=true;
+  const unlockVoice=(event)=>{
+    voice.unlock();
+    if(!entryCuePending||!profile)return;
+    entryCuePending=false;
+    if(view==='lesson'&&!event.target.closest('[data-do]'))queueMicrotask(()=>say(profile.session?.phase==='intro'?FOUNDATION_VOICE.ready:currentUnit().cue,{kind:'task'}));
+  };
   root.addEventListener('pointerdown',unlockVoice,{capture:true});
   root.addEventListener('keydown',unlockVoice,{capture:true});
   const utterance = () => {speechGeneration++;voice.stop();};
@@ -193,6 +201,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
           );
         const narration = narrationFor(body.type, profile, currentUnit().cue);
         if (narration && data.result?.advanced !== false) say(narration.text, { kind: narration.kind });
+        if(profile.session?.phase==='intro'&&['start','settings'].includes(body.type))say(FOUNDATION_VOICE.ready,{kind:'task'});
         event("chess_action", body.type);
       } catch (e) {
         if (preview) await preview.catch(() => {});
@@ -208,7 +217,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
   }
   function courseUnits(){return unitsForBand(profile?.settings.band);}
   function currentUnit() {
-    return [...UNITS,...STEP_UNITS].find((u) => u.id === profile?.session?.unit) || courseUnits()[unit] || courseUnits()[0];
+    return [...UNITS,...STEP_UNITS,...FOUNDATION_UNITS].find((u) => u.id === profile?.session?.unit) || courseUnits()[unit] || courseUnits()[0];
   }
   function showingExample(){return view==='lesson'&&profile.session?.example&&(exampleView||profile.session.phase==='intro');}
   function nav() {
@@ -257,6 +266,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
         hintKing: inGame || example ? null : s.hintKing,
         hintFrom: inGame ? g.hint?.from : example?example.line[0].slice(0,2):s.hintFrom,
         hintTo: inGame ? g.hint?.to : example?undefined:s.hintTo,
+        target: example?example.target:s.puzzle?.target,
         onMove: (from, to, promotion) =>
           send(inGame ? "game-move" : "move", { from, to, promotion }),
         onMotion: (kind) => {
@@ -397,12 +407,13 @@ export function mountChess(root, { player, name, event = () => {} }) {
         await board.animate([move]);
         if(!alive)return;
         root.querySelectorAll('.demo-target').forEach(el=>el.classList.remove('demo-target'));
+        if(played.color==='w')drawTeachingOverlay(root,exampleBoard,played,example);
         if(played.color==='w')for(const target of exampleBoard.board().flat().filter(p=>p&&p.color==='b'&&['k','q','r'].includes(p.type)&&exampleBoard.attackers(p.square,'w').includes(played.to)))root.querySelector(`[data-square="${target.square}"]`)?.classList.add('demo-target');
         await demonstrationBeat();
       }
     }finally{
       busy=false;
-      if(alive){root.querySelectorAll('[data-do]').forEach(el=>el.disabled=false);root.querySelector('.arena-prompt h1').textContent='Now you try';}
+      if(alive){await say(FOUNDATION_VOICE.yourTurn,{kind:'task'});root.querySelectorAll('[data-do]').forEach(el=>el.disabled=false);root.querySelector('.arena-prompt h1').textContent='Now you try';}
     }
   }
   async function explainUnsafeCheck() {
@@ -463,7 +474,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
   }
   function pathView() {
     const progress = pathProgress(profile);
-    return `<div class="academy-layout continuous-layout ${profile.settings.band==='steps'?'small-steps-path':''}"><section class="academy-path" aria-label="Chess learning path">${profile.session && profile.session.phase !== "summary" ? `<div class="resume-strip">${btn("Continue ➜", "resume", "primary")}</div>` : progress.some(l=>l.current) ? `<div class="resume-strip">${btn("Continue ➜", "lesson:"+progress.find(l=>l.current).id, "primary")}</div>` : ""}${courseUnits().map((u, ui) => `<section class="path-unit" data-unit="${ui}" aria-label="Unit ${ui + 1}: ${esc(u.name)}" style="--unit-color:${u.color}"><header class="unit-heading"><div><small>UNIT ${ui + 1}</small><h2>${esc(u.name)}</h2></div>${btn(glyph("hear"), "hear-unit:" + ui, "text", `aria-label="Hear unit ${ui + 1}"`)}</header><div class="lesson-path">${profile.settings.band==='steps'?'<svg viewBox="0 0 440 330" preserveAspectRatio="none" aria-hidden="true" class="path-track"><path d="M220 50C380 80 375 165 235 174S70 240 148 280"/></svg>':'<svg viewBox="0 0 440 660" preserveAspectRatio="none" aria-hidden="true" class="path-track"><path d="M220 50C380 80 375 165 235 174S70 240 148 280S360 340 270 405S70 460 157 516S285 575 220 620"/></svg>'}${progress.filter(l => l.unit === ui).map((l, i) => `<div class="path-stop stop-${i} ${l.current ? "current" : ""}"><button class="path-node ${l.complete ? "complete" : ""} ${l.current ? "current" : ""} ${l.locked ? "locked" : ""}" data-do="lesson:${l.id}" ${l.locked ? "disabled" : ""} ${l.current ? 'aria-current="step"' : ""} aria-label="${l.locked ? "Locked" : l.complete ? "Review" : "Start"} ${esc(l.name)}"><span>${l.locked ? glyph("lock") : l.complete ? "✓" : l.kind === "checkpoint" ? "♜" : "★"}</span></button><div class="node-label"><strong>${esc(l.name)}</strong>${l.complete ? `<span>${"●".repeat(l.complete.best)}${"○".repeat(5 - l.complete.best)}</span>` : l.current ? `<span class="next-ready">${completedNotice ? "Unlocked!" : "Start here"}</span>` : ""}</div></div>`).join("")}</div></section>`).join("")}<div class="course-finish">${btn("↻ Review", "review", "primary")}</div></section><aside class="academy-sidebar"><div class="path-rook">${coach()}${btn(glyph("hear"), "hear-unit", "text", 'aria-label="Hear Rook explain this unit"')}</div><details class="practice-level"><summary>Practice settings</summary><label for="chess-band">Challenge</label><select id="chess-band"><option value="steps" ${profile.settings.band === "steps" ? "selected" : ""}>Small steps</option><option value="stretch" ${profile.settings.band === "stretch" ? "selected" : ""}>Stretch</option><option value="guided" ${profile.settings.band === "guided" ? "selected" : ""}>Guided</option></select></details>${btn("↻ Review", "review")}</aside></div>`;
+    return `<div class="academy-layout continuous-layout ${['steps','foundations'].includes(profile.settings.band)?'small-steps-path':''}"><section class="academy-path" aria-label="Chess learning path">${profile.session && profile.session.phase !== "summary" ? `<div class="resume-strip">${btn("Continue ➜", "resume", "primary")}</div>` : progress.some(l=>l.current) ? `<div class="resume-strip">${btn("Continue ➜", "lesson:"+progress.find(l=>l.current).id, "primary")}</div>` : ""}${courseUnits().map((u, ui) => `<section class="path-unit" data-unit="${ui}" aria-label="Unit ${ui + 1}: ${esc(u.name)}" style="--unit-color:${u.color}"><header class="unit-heading"><div><small>UNIT ${ui + 1}</small><h2>${esc(u.name)}</h2></div>${btn(glyph("hear"), "hear-unit:" + ui, "text", `aria-label="Hear unit ${ui + 1}"`)}</header><div class="lesson-path">${['steps','foundations'].includes(profile.settings.band)?'<svg viewBox="0 0 440 330" preserveAspectRatio="none" aria-hidden="true" class="path-track"><path d="M220 50C380 80 375 165 235 174S70 240 148 280"/></svg>':'<svg viewBox="0 0 440 660" preserveAspectRatio="none" aria-hidden="true" class="path-track"><path d="M220 50C380 80 375 165 235 174S70 240 148 280S360 340 270 405S70 460 157 516S285 575 220 620"/></svg>'}${progress.filter(l => l.unit === ui).map((l, i) => `<div class="path-stop stop-${i} ${l.current ? "current" : ""}"><button class="path-node ${l.complete ? "complete" : ""} ${l.current ? "current" : ""} ${l.locked ? "locked" : ""}" data-do="lesson:${l.id}" ${l.locked ? "disabled" : ""} ${l.current ? 'aria-current="step"' : ""} aria-label="${l.locked ? "Locked" : l.complete ? "Review" : "Start"} ${esc(l.name)}"><span>${l.locked ? glyph("lock") : l.complete ? "✓" : l.kind === "checkpoint" ? "♜" : "★"}</span></button><div class="node-label"><strong>${esc(l.name)}</strong>${l.complete ? `<span>${"●".repeat(l.complete.best)}${"○".repeat(5 - l.complete.best)}</span>` : l.current ? `<span class="next-ready">${completedNotice ? "Unlocked!" : "Start here"}</span>` : ""}</div></div>`).join("")}</div></section>`).join("")}<div class="course-finish">${btn("↻ Review", "review", "primary")}</div></section><aside class="academy-sidebar"><div class="path-rook">${coach()}${btn(glyph("hear"), "hear-unit", "text", 'aria-label="Hear Rook explain this unit"')}</div><details class="practice-level"><summary>Practice settings</summary><label for="chess-band">Challenge</label><select id="chess-band"><option value="foundations" ${profile.settings.band === "foundations" ? "selected" : ""}>First moves</option><option value="steps" ${profile.settings.band === "steps" ? "selected" : ""}>Small steps</option><option value="stretch" ${profile.settings.band === "stretch" ? "selected" : ""}>Stretch</option><option value="guided" ${profile.settings.band === "guided" ? "selected" : ""}>Guided</option></select></details>${btn("↻ Review", "review")}</aside></div>`;
   }
   function lessonView() {
     const s = profile.session;
@@ -478,7 +489,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
       return `<section class="lesson-summary">${coach("happy")}<h1>Lesson complete!</h1><div class="summary-stars" aria-label="${s.results.length} positions completed, ${s.results.filter((r) => r.independent).length} without help">${s.results.map((r) => r.independent ? "★" : "☆").join(" ")}</div>${btn("Continue ➜", "path", "primary large")}<details><summary>Practice notes</summary><p>${s.results.filter((r) => r.independent).length} of ${s.results.length} without hints.</p><p>${u.idea}</p></details></section>`;
     const f = s.feedback,
       solved = s.phase === "solved";
-    return `<section class="chess-lesson ${s.band==='steps'?'small-step-lesson':''}"><header class="lesson-header">${iconButton("close", "path", "Back to lesson path")}<div class="lesson-progress" role="progressbar" aria-label="Lesson progress" aria-valuenow="${s.index + (solved ? 1 : 0)}" aria-valuemin="0" aria-valuemax="${s.total}"><span style="width:${((s.index + (solved ? 1 : 0)) / s.total) * 100}%"></span></div>${btn(glyph(profile.settings.sound ? "hear" : "muted"), "sound", "sound", `aria-label="${profile.settings.sound ? "Mute coaching" : "Enable coaching"}"`)}</header><div class="play-table ${solved ? "solved" : ""}">${arenaHead(shortPrompt(), solved ? "happy" : f?.kind === "incorrect" ? "thinking" : "idle")}<div id="chess-board"></div><div id="board-selection" class="sr-only" aria-live="polite"></div><footer class="board-controls">${iconButton("undo", "restart", "Restart this position", solved ? "disabled" : "")}${solved ? btn("➜", "next", "primary next-puzzle", `aria-label="${s.index + 1 === s.total ? "Finish lesson" : "Next position"}"`) : hintControls()}${!solved&&f?.reason==='unsafe-check'?btn("▶ Why?","unsafe-check","text unsafe-explain",'aria-label="Watch why this check is unsafe"'):!solved&&s.example&&s.errors>=2?btn("▶ Rook","example","text",'aria-label="Watch a similar example"'):""}<details class="board-more"><summary aria-label="More options">•••</summary><div>${f?.refutation ? btn(analysisView ? "Back to puzzle" : "See the reply", "explain", "text") : ""}<p>${esc(title)}</p><p>${esc(s.puzzle.goal)}</p>${solved ? `<ol>${s.solution.map((m) => `<li>${esc(m.text)}</li>`).join("")}</ol>` : ""}<small>${s.puzzle.original?"Original practice position":`Lichess ${s.puzzle.id} · CC0`}</small></div></details></footer></div></section>`;
+    return `<section class="chess-lesson ${['steps','foundations'].includes(s.band)?'small-step-lesson':''}"><header class="lesson-header">${iconButton("close", "path", "Back to lesson path")}<div class="lesson-progress" role="progressbar" aria-label="Lesson progress" aria-valuenow="${s.index + (solved ? 1 : 0)}" aria-valuemin="0" aria-valuemax="${s.total}"><span style="width:${((s.index + (solved ? 1 : 0)) / s.total) * 100}%"></span></div>${btn(glyph(profile.settings.sound ? "hear" : "muted"), "sound", "sound", `aria-label="${profile.settings.sound ? "Mute coaching" : "Enable coaching"}"`)}</header><div class="play-table ${solved ? "solved" : ""}">${arenaHead(shortPrompt(), solved ? "happy" : f?.kind === "incorrect" ? "thinking" : "idle")}<div id="chess-board"></div><div id="board-selection" class="sr-only" aria-live="polite"></div><footer class="board-controls">${iconButton("undo", "restart", "Restart this position", solved ? "disabled" : "")}${solved ? btn("➜", "next", "primary next-puzzle", `aria-label="${s.index + 1 === s.total ? "Finish lesson" : "Next position"}"`) : hintControls()}${!solved&&f?.reason==='unsafe-check'?btn("▶ Why?","unsafe-check","text unsafe-explain",'aria-label="Watch why this check is unsafe"'):!solved&&s.example&&s.errors>=2?btn("▶ Rook","example","text",'aria-label="Watch a similar example"'):""}<details class="board-more"><summary aria-label="More options">•••</summary><div>${f?.refutation ? btn(analysisView ? "Back to puzzle" : "See the reply", "explain", "text") : ""}<p>${esc(title)}</p><p>${esc(s.puzzle.goal)}</p>${solved ? `<ol>${s.solution.map((m) => `<li>${esc(m.text)}</li>`).join("")}</ol>` : ""}<small>${s.puzzle.original?"Original practice position":`Lichess ${s.puzzle.id} · CC0`}</small></div></details></footer></div></section>`;
   }
   function miniBoard(fen) {
     const board = new Chess(fen);
@@ -531,7 +542,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
             .slice(0, 10)
             .map(
               (h) =>
-                `<div><span>${esc(lessonFor(h.lesson)?.name || "Review")} · ${h.band === "steps" ? "Small steps" : h.band === "guided" ? "Guided" : "Stretch"}</span><strong>${h.independent}/${h.total} without help</strong></div>`,
+                `<div><span>${esc(lessonFor(h.lesson)?.name || "Review")} · ${h.band === "foundations" ? "First moves" : h.band === "steps" ? "Small steps" : h.band === "guided" ? "Guided" : "Stretch"}</span><strong>${h.independent}/${h.total} without help</strong></div>`,
             )
             .join("")
         : "<p>Your first lesson will appear here.</p>"
@@ -565,6 +576,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
           if (action === "resume") {
             view = "lesson";
             render();
+            say(profile.session?.phase==='intro'?FOUNDATION_VOICE.ready:currentUnit().cue,{kind:'task'});
             window.scrollTo(0, 0);
             return;
           }
@@ -588,7 +600,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
           if(action==='unsafe-check'){await explainUnsafeCheck();return;}
           if(action==='example-done'){
             exampleView=false;
-            if(profile.session.phase==='intro')await send('begin');else render();
+            if(profile.session.phase==='intro')await send('begin');else {render();say(currentUnit().cue,{kind:'task'});}
             return;
           }
           if (action === "demonstrate") { await demonstrate(); return; }
@@ -606,6 +618,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
           }
           if (action === "sound") {
             await send("settings", { sound: !profile.settings.sound });
+            if(profile.settings.sound)say(currentUnit().cue,{kind:"task"});
             return;
           }
           if (action === "explain") {

@@ -21,8 +21,8 @@ const send=(res,status,obj)=>{res.writeHead(status,{'Content-Type':'application/
 async function load(player){try{return JSON.parse(await readFile(join(data,player+'.json'),'utf8'));}catch(e){if(e.code==='ENOENT')return fresh(player,config.players.find(x=>x.id===player).level||1);throw e;}}
 const icons={'letter-quest':'games/letter-quest/public/icons/app-192-v2.png','word-arcade':'games/word-arcade/public/icons/app-192-v1.png','number-park':'games/number-park/public/icons/number-park-192.png','maze-garden':'games/maze-garden/public/icon-192.png','three-in-a-row':'games/three-in-a-row/dist/icon-192.png','target-trail':'games/target-trail/dist/icon-192.png'};
 const types={'.html':'text/html','.mjs':'text/javascript','.css':'text/css','.jpg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml','.webmanifest':'application/manifest+json','.woff2':'font/woff2'};
-const files=['chess/tokens.mjs','chess/steps-curriculum.mjs','chess/audio.mjs','menu-options.mjs','soccer-logo.svg','chess/path.mjs','chess/narration.mjs','chess/pieces.mjs','chess/academy-world.png','catalog.mjs','letter-book.svg','chess/rook.mjs','chess/app.mjs','chess/style.css','chess/art.mjs','chess/board.mjs','chess/rules.mjs','chess/curriculum.mjs','chess/icon.svg','chess/CHESS-JS-LICENSE.txt','index.html','hub.mjs','style.css','embedded.css','bridge.mjs','dribble-ui.mjs','dribble-classic.mjs','soccer-mode.mjs','dribble-live.mjs','dribble-live-v1.mjs','dribble-live-v2.mjs','reading-reward.mjs','live-pitch.mjs','pitch.mjs','save-request.mjs','icon.svg','icon-192.png','icon-512.png','manifest.webmanifest'];
-const HUB_VERSION='family-games-2026-09-18-rook-forks-2';
+const files=['chess/tokens.mjs','chess/steps-curriculum.mjs','chess/foundations-curriculum.mjs','chess/sequel-curriculum.mjs','chess/teaching.mjs','chess/audio.mjs','menu-options.mjs','soccer-logo.svg','chess/path.mjs','chess/narration.mjs','chess/pieces.mjs','chess/academy-world.png','catalog.mjs','letter-book.svg','chess/rook.mjs','chess/app.mjs','chess/style.css','chess/art.mjs','chess/board.mjs','chess/rules.mjs','chess/curriculum.mjs','chess/icon.svg','chess/CHESS-JS-LICENSE.txt','index.html','hub.mjs','style.css','embedded.css','bridge.mjs','dribble-ui.mjs','dribble-classic.mjs','soccer-mode.mjs','dribble-live.mjs','dribble-live-v1.mjs','dribble-live-v2.mjs','reading-reward.mjs','live-pitch.mjs','pitch.mjs','save-request.mjs','icon.svg','icon-192.png','icon-512.png','manifest.webmanifest'];
+const HUB_VERSION='family-games-2026-09-19-teach-and-grow';
 const menu=menuOrderService({players,sources:{...Object.fromEntries(ids.map(id=>[id,join(config.gameData?.[id]||join(data,'..',id),'logs')])),hub:join(data,'logs')}});
 const chess=chessService({data,players,log,settingsFor:Object.fromEntries(config.players.map(p=>[p.id,p.chess||{}]))});
 const server=http.createServer(async(req,res)=>{
@@ -59,5 +59,13 @@ const server=http.createServer(async(req,res)=>{
   const bytes=await readFile(file);res.writeHead(200,{'Content-Type':types[extname(file)]||'application/octet-stream','Content-Length':bytes.length});res.end(req.method==='HEAD'?undefined:bytes);
  }catch(e){await log({type:'error',detail:e.message});send(res,e.code==='ENOENT'?404:500,{error:'Could not load. Try Refresh.'});}
 });
-process.on('SIGTERM',()=>{server.close(async()=>{chess.close();await queue;process.exit(0);});});
+let stopping=false;
+for(const signal of ['SIGTERM','SIGINT'])process.on(signal,()=>{
+ if(stopping)return;stopping=true;
+ // A tablet can retain a connection after the listener closes. Drain saved actions
+ // before exiting, and bound idle/streaming socket shutdown during local updates.
+ const timer=setTimeout(()=>server.closeAllConnections(),2000);timer.unref();
+ server.close(async()=>{clearTimeout(timer);await Promise.allSettled([chess.close(),queue]);process.exit(0);});
+ server.closeIdleConnections();
+});
 server.requestTimeout=20000;server.headersTimeout=20000;server.listen(Number(process.env.PORT||base-1),process.env.HOST||'127.0.0.1',()=>console.log(`Family Learning Games: http://localhost:${server.address().port}`));

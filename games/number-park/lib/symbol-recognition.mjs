@@ -1,5 +1,5 @@
 import {drawingVector,inkStats,recognizeDrawing,DOODLES} from './doodle.mjs';
-import {sunFeatures,flowerFeatures} from './picture-features.mjs';
+import {sunFeatures,flowerFeatures,bareTreeFeatures} from './picture-features.mjs';
 export const GUESS_MODES=['auto','letters','numbers','pictures'];
 export const UPPER=[...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'],LOWER=UPPER.map(x=>x.toLowerCase()),DIGITS=[...'0123456789'];
 export const validArtLabel=x=>typeof x==='string'&&(DOODLES.includes(x)||x==='something else'||/^[A-Za-z]$/.test(x)||/^\d{1,3}$/.test(x)&&Number(x)<=100&&String(Number(x))===x);
@@ -23,9 +23,11 @@ export function digitGroups(ink){
 }
 export function recognizeArt(ink,pictureModel,symbolModel,mode='auto'){
  if(!GUESS_MODES.includes(mode))throw Error('Choose a guessing mode.');
- const version='art-symbols-4',b=inkStats(ink);
+ const version='art-symbols-5',b=inkStats(ink);
  if(!b||!drawingVector(ink))return {label:null,candidates:[],reason:'more-ink',model:version,mode};
  const picture=mode==='auto'||mode==='pictures'?recognizeDrawing(ink,pictureModel):null;
+ const tree=picture?.candidateScores?.[0]?.label==='tree'&&picture.candidateScores[0].score>=.75&&bareTreeFeatures(ink);
+ if(tree)return {label:'tree',candidates:['tree'],reason:'guess',model:version,mode,evidence:tree,similarity:picture.similarity};
  const flower=picture?.candidateScores?.find(x=>x.label==='flower'&&x.score>=.70&&x.score>=picture.candidateScores[0].score-.05)&&flowerFeatures(ink);
  if(flower)return {label:'flower',candidates:['flower'],reason:'guess',model:version,mode,evidence:flower,similarity:picture.similarity};
  const sun=picture?.candidateScores?.find(x=>x.label==='sun'&&x.score>=.62)&&sunFeatures(ink);

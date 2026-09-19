@@ -23,7 +23,7 @@ test('Repeated task speech and hints stay quiet; explicit replay still works', (
   assert.equal(allow('Find two threats.'), true);
 });
 
-test('A five-position lesson never narrates every move or repeats the long introduction', () => {
+test('Each new position speaks its task while moves remain quiet', () => {
   const p = {session:{phase:'puzzle',feedback:{voice:'Try the knight.'}}};
   for (const action of ['start','move','game-move','retry-puzzle','game-undo','settings'])
     assert.equal(narrationFor(action,p,'Find two threats.'),null);
@@ -34,7 +34,7 @@ test('A five-position lesson never narrates every move or repeats the long intro
     if(allow(cue.text,{kind:cue.kind}))played++;
     time+=10000;
   }
-  assert.equal(played,1);
+  assert.equal(played,5);
   assert.equal(narrationFor('hint',p,'').text,'Try the knight.');
 });
 
