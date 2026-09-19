@@ -17,9 +17,9 @@ test('eraser splits real ink, sweeps fast moves, preserves untouched strokes and
  assert.deepEqual(eraseInk([[[50,50],[50,50]]],[50,50]),[]);
  const p=freshProfile('admin');action(p,{kind:'drawing',revision:0,strokes:erased,space:FREE_DRAWING_SPACE});assert.deepEqual(JSON.parse(JSON.stringify(p)).drawing,erased);assert.equal(p.drawingSpace,FREE_DRAWING_SPACE);assert.equal(p.xp,0);
 });
-test('legacy square drawings expand across the wide studio exactly once',()=>{
+test('legacy square drawings stay square and center in the wide studio exactly once',()=>{
  const old=[[[0,10],[50,20],[100,30]]];
- assert.deepEqual(wideDrawingInk(old),[[[0,10],[80,20],[160,30]]]);
+ assert.deepEqual(wideDrawingInk(old),[[[30,10],[80,20],[130,30]]]);
  assert.deepEqual(wideDrawingInk(old,FREE_DRAWING_SPACE),old);
 });
 test('device launch remembers each child without a player dropdown; explicit parent links can configure it',()=>{

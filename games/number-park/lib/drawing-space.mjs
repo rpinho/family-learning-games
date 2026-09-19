@@ -22,5 +22,6 @@ export const safeFreeInk=ink=>validFreeInk(ink)?ink:[];
 export function wideDrawingInk(ink,space){
  const safe=safeFreeInk(ink);
  if(space===FREE_DRAWING_SPACE)return safe;
- return safe.map(stroke=>stroke.map(([x,y])=>[x*FREE_DRAWING_WIDTH/100,y]));
+ const inset=(FREE_DRAWING_WIDTH-FREE_DRAWING_HEIGHT)/2;
+ return safe.map(stroke=>stroke.map(([x,y])=>[x+inset,y]));
 }
