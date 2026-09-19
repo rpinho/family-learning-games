@@ -1,3 +1,5 @@
+import {createMenuCache} from './menu-cache.mjs';
+import {fetchJSON} from './save-request.mjs';
 import { mountSoccer } from "./soccer-mode.mjs";
 import { CATALOG, FAMILIES, destination, movedRoute } from "./catalog.mjs";
 import { mountChess } from "./chess/app.mjs";
@@ -10,9 +12,10 @@ let config,
   dispose = null,
   gate = null,
   gateAttempts = 0,
-  statusResolver,
-  renderVersion = 0;
-const menuOrders = new Map();
+  statusResolver;
+let storage;try{storage=localStorage;}catch{}
+const menuOrders = createMenuCache({storage});
+let leaveCheck=null;
 const games = CATALOG.map((g) => [g.id, g.name, g.description, g.color]);
 const esc = (s) =>
   String(s).replace(
@@ -30,15 +33,17 @@ export function event(kind, detail = "") {
       body: JSON.stringify({ kind, detail }),
     }).catch(() => {});
 }
-async function safeLeave() {
+function safeLeave(){
+  return leaveCheck ||= checkLeave().finally(()=>{leaveCheck=null;});
+}
+async function checkLeave() {
   if (dispose?.prepareLeave) {
     try {
-      await dispose.prepareLeave();
+      let timer;
+      try{await Promise.race([dispose.prepareLeave(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('The game is taking too long to confirm its save.')),6000);})]);}
+      finally{clearTimeout(timer);}
     } catch (e) {
-      alert(
-        e.message || "The last move has not saved. Try again before leaving.",
-      );
-      return false;
+      return confirm((e.message || 'The last move could not be confirmed saved.')+'\nLeave or refresh anyway? The last unsaved action may be lost.');
     }
   }
   if (dispose?.busy?.())
@@ -74,14 +79,13 @@ function stop() {
   speechSynthesis.cancel();
 }
 function choose() {
-  renderVersion++;
   stop();
   main.innerHTML = `<section class="choose"><h1>Who is playing?</h1><p>Choose once for this device.</p>${config.players.map((p) => `<button data-choose="${p.id}">${esc(p.name)}</button>`).join("")}</section>`;
   main.querySelectorAll("[data-choose]").forEach(
     (b) =>
       (b.onclick = () => {
         player = b.dataset.choose;
-        localStorage.setItem("family-games-player", player);
+        try{storage?.setItem("family-games-player", player);}catch{}
         const u = new URL(location.href);
         u.searchParams.set("player", player);
         u.hash = "";
@@ -91,7 +95,6 @@ function choose() {
   );
 }
 async function render() {
-  const version = ++renderVersion;
   stop();
   window.scrollTo(0, 0);
   const p = config.players.find((x) => x.id === player);
@@ -134,24 +137,14 @@ async function render() {
     event("open_game", game + (dest.mode ? "/" + dest.mode.id : ""));
     return;
   }
-  // Resolve before showing the cards; never shuffle a menu under a finger.
-  const selectedPlayer = player;
-  main.innerHTML = '<section class="catalog"><h1>Opening your games…</h1></section>';
-  let order = menuOrders.get(player) || [];
-  try {
-    const response = await fetch('/api/menu?player=' + player, { signal: AbortSignal.timeout(5000) });
-    if (response.ok) {
-      const result = await response.json();
-      if (Array.isArray(result.order)) order = result.order;
-    }
-  } catch {} // A missing log must never prevent play.
-  if (version !== renderVersion || selectedPlayer !== player) return;
-  menuOrders.set(player, order);
+  // Paint immediately. Updated preferences apply only on the NEXT menu visit.
+  const order = menuOrders.current(player);
+  void menuOrders.refresh(player);
   const orderedGames = [...CATALOG].sort((a, b) => {
     const rank = id => order.includes(id) ? order.indexOf(id) : order.length + CATALOG.findIndex(g => g.id === id);
     return rank(a.id) - rank(b.id);
   });
-  const style = menuStyle(player, p.menuStyle, localStorage);
+  const style = menuStyle(player, p.menuStyle, storage);
   main.innerHTML = `<section class="catalog menu-${style}"><h1>What shall we play?</h1><p>Your games. Your next adventure.</p><div class="cards">${orderedGames.map(item => { const art = gameArtwork(item, style); return `<a class="card" href="#${item.id}" data-game="${item.id}" style="--tint:${item.color}"><img class="${art.className}" src="${art.src}" alt="" width="${style === "logos" ? 192 : 640}" height="${style === "logos" ? 192 : 400}"><h2>${item.name}</h2><p>${item.description}</p></a>`; }).join("")}</div><footer><span>One app · Your progress stays with you.</span><button id="grown-ups">Grown-ups</button></footer></section>`;
   $("#grown-ups").onclick = () => {
     gateAttempts = 0;
@@ -204,8 +197,9 @@ $("#menu-style").onchange = () => {
 };
 $("#home").onclick = async () => {
   if (!(await safeLeave())) return;
-  location.hash = "";
-  render();
+  if(!config?.players?.length)return location.reload();
+  if(location.hash)location.hash = "";
+  else render();
 };
 $("#refresh").onclick = async () => {
   if (!(await safeLeave())) return;
@@ -241,17 +235,16 @@ window.addEventListener("unhandledrejection", (e) =>
   event("error", String(e.reason)),
 );
 try {
-  const r = await fetch("/api/config");
-  if (!r.ok) throw Error("Could not reach your game server.");
-  config = await r.json();
-  const requested = new URL(location.href).searchParams.get("player"),
-    saved = localStorage.getItem("family-games-player");
+  config = await fetchJSON('/api/config',{},8000);
+  if(!Array.isArray(config.players)||!config.players.length)throw Error('Could not read your game settings.');
+  const requested = new URL(location.href).searchParams.get("player");
+  let saved;try{saved=storage?.getItem("family-games-player");}catch{}
   player = config.players.some((p) => p.id === requested)
     ? requested
     : config.players.some((p) => p.id === saved)
       ? saved
       : null;
-  if (player) localStorage.setItem("family-games-player", player);
+  if (player){try{storage?.setItem("family-games-player", player);}catch{}void menuOrders.refresh(player);}
   render();
 } catch (e) {
   main.innerHTML = `<section class="error"><h1>Let’s reconnect.</h1><p>${esc(e.message)}</p><p>Make sure your game server is on, then tap Refresh.</p></section>`;

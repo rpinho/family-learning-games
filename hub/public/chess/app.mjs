@@ -1,3 +1,4 @@
+import {fetchJSON} from '../save-request.mjs';
 import {FOUNDATION_UNITS,FOUNDATION_VOICE} from './foundations-curriculum.mjs';
 import {drawTeachingOverlay,forkTitleIcon} from './teaching.mjs';
 import {STEP_UNITS,STEP_VOICE} from './steps-curriculum.mjs';
@@ -90,9 +91,9 @@ export function mountChess(root, { player, name, event = () => {} }) {
   }
   async function load() {
     try {
-      const r = await fetch(endpoint);
-      if (!r.ok) throw Error("The chess server is unavailable.");
-      profile = (await r.json()).profile;
+      const data = await fetchJSON(endpoint,{},8000);
+      if(!alive)return;
+      profile = data.profile;
       receivedAt = Date.now();
       const active = profile.session;
       if (profile.current === "game" && profile.game) {
@@ -110,6 +111,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
       else window.scrollTo(0, 0);
       queueLessonFinish();
     } catch (e) {
+      if(!alive)return;
       error = e.message;
       render();
     }
