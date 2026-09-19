@@ -1,14 +1,14 @@
 # Family Learning Games
 
-![Family Learning Games — gameplay previews of all eight games](docs/media/social-preview.png)
+![Family Learning Games — gameplay previews from the collection](docs/media/social-preview.png)
 
-**One app. Eight ways to play.** A single game-picker home screen brings together eight games for reading, numbers, drawing, mazes, chess, strategy, and soccer. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, not a public online classroom or hosted play service.
+**One app. Nine ways to play.** A single game-picker home screen brings together nine destinations for reading, numbers, free drawing, mazes, chess, strategy, and soccer. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, not a public online classroom or hosted play service.
 
 After setup, open **http://localhost:4810/**. Choose a player once; their name stays large at the top and their progress stays separate. Use **Games** to return home, **Refresh** to reload, and **Grown-ups** to change the device's player or switch the main menu between gameplay screenshots and illustrated logos. The artwork choice is saved for that player on that device; activity-variant menus retain their gameplay previews. Main-menu order adapts per player from recent local play sessions, including older activities that now belong to Maze Garden or Soccer Club. The menu opens immediately using its last known order (or the default), updates preferences in the background for the next visit, and stays still while choosing.
 
-[Install in one command](#one-command-first-run) · [Let an agent install it](#let-a-coding-agent-install-it) · [Explore the games](#eight-games-eight-different-adventures) · [Privacy](PRIVACY.md)
+[Install in one command](#one-command-first-run) · [Let an agent install it](#let-a-coding-agent-install-it) · [Explore the games](#nine-games-nine-different-adventures) · [Privacy](PRIVACY.md)
 
-## Eight games. Eight different adventures.
+## Nine games. Nine different adventures.
 
 **[Rook Academy](hub/CHESS.md)** offers 18 First moves lessons, 54 Small steps lessons on sparse boards and a 72-lesson advanced continuation in two difficulty bands, an original speaking coach, hints, review and local practice games. **Maze Garden** now gathers all three maze variants, and **Soccer Club** gathers all three soccer variants. Choose any version; existing progress is preserved.
 
@@ -31,7 +31,7 @@ Spaceship challenges, word building, rhyme hunts, sorting, and flashcards. Pract
 <td width="50%" valign="top">
 <a href="games/number-park"><img src="docs/media/number-park.png" alt="Number Park: draggable groups of five and four stars for a hands-on addition activity" width="100%"></a>
 <strong>Number Park — math you can move.</strong><br>
-Count objects, combine groups, take away, continue patterns, draw, trace, and explore reading or harder math.
+Count objects, combine groups, take away, continue patterns, trace numbers and shapes, and explore reading or harder math.
 </td>
 <td width="50%" valign="top">
 <a href="games/maze-garden"><img src="docs/media/maze-garden.png" alt="Maze Garden: a 19-by-19 tracing maze with a rabbit, a carrot and adjustable difficulty" width="100%"></a>
@@ -65,6 +65,8 @@ Choose live dribbling, feint puzzles, or word penalties. Existing saves stay sep
 </tr>
 </table>
 
+**Guess My Drawing — a canvas of its own.** Draw across a wide canvas, ask the local picture model to guess, choose another idea, and correct a guess without losing points. Number Park keeps number and shape tracing while drawings continue using the same saved profile.
+
 *Actual gameplay from an isolated, generic Admin demo. Click a card for its game guide. No children's profiles or drawings are shown; screenshots are not evidence of learning outcomes.*
 
 ### Made for playing together
@@ -72,7 +74,7 @@ Choose live dribbling, feint puzzles, or word penalties. Existing saves stay sep
 - **Touch-friendly:** drag objects, trace paths, steer a spaceship, and aim with a finger.
 - **Choose the challenge:** separate Beginner and Explorer presets; adjustable or adaptive challenges vary by game.
 - **Keep progress local:** saved rounds and diagnostics live on your own server. No ads or game-owned analytics.
-- **One icon:** one installed home screen for all eight games; no separate installs needed.
+- **One icon:** one installed home screen for all nine destinations; no separate installs needed.
 - **Easy to start:** one setup command for the whole collection. No AI API key required.
 
 ## Pick a game
@@ -81,7 +83,8 @@ Choose live dribbling, feint puzzles, or word penalties. Existing saves stay sep
 | --- | --- | --- |
 | [Letter Quest](games/letter-quest) | Letter tracing, reading practice and stories | http://localhost:4810/#letter-quest |
 | [Word Arcade](games/word-arcade) | Moving spaceship challenges, word building, rhymes and flashcards | http://localhost:4810/#word-arcade |
-| [Number Park](games/number-park) | Counting, patterns, manipulatives, drawing, reading and harder math | http://localhost:4810/#number-park |
+| [Number Park](games/number-park) | Counting, patterns, manipulatives, tracing, reading and harder math | http://localhost:4810/#number-park |
+| [Guess My Drawing](games/number-park) | Wide free drawing, local picture guesses and varied drawing ideas | http://localhost:4810/#drawing-studio |
 | [Maze Garden](games/maze-garden) | Tracing mazes, 3D letter labyrinths and obstacle rescues | http://localhost:4810/#maze-garden |
 | [Three in a Row](games/three-in-a-row) | Tic-tac-toe against Rook and one-move practice puzzles | http://localhost:4810/#three-in-a-row |
 | [Target Trail](games/target-trail) | Moving targets, adjustable aiming difficulty and spoken letters/words | http://localhost:4810/#target-trail |
@@ -106,7 +109,7 @@ If you download the repository ZIP instead, unzip it, open a terminal in its fol
 
 Give your agent this request:
 
-> Install and run https://github.com/rpinho/family-learning-games locally. Read its AGENTS.md and README first. Check Node/npm, use a new folder, run npm run play, verify all eight games through the hub, and give me the single home-screen link. Keep it private and preserve any existing saves.
+> Install and run https://github.com/rpinho/family-learning-games locally. Read its AGENTS.md and README first. Check Node/npm, use a new folder, run npm run play, verify all nine destinations through the hub, and give me the single home-screen link. Keep it private and preserve any existing saves.
 
 [AGENTS.md](AGENTS.md) contains the installation, verification, data-preservation and privacy instructions. No API key or paid AI service is needed to run the games.
 

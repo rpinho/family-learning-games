@@ -1,10 +1,11 @@
-import {validInk} from './copy-practice.mjs';
+import {validFreeInk} from './drawing-space.mjs';
 export const DOODLES=['tree','house','flower','sun','triangle','square','circle','star','person','face'];
-export const DOODLE_ICONS={tree:'🌳',house:'🏠',flower:'🌼',sun:'☀️',triangle:'🔺',square:'🟦',circle:'🔵',star:'⭐',person:'🧍',face:'🙂'};
+export const PICTURE_LABELS=[...DOODLES,'family picture','two people','family portrait'];
+export const DOODLE_ICONS={tree:'🌳',house:'🏠',flower:'🌼',sun:'☀️',triangle:'🔺',square:'🟦',circle:'🔵',star:'⭐',person:'🧍',face:'🙂','family picture':'👨‍👩‍👧','two people':'🧑‍🤝‍🧑','family portrait':'🖼️'};
 export function inkStats(ink){
- if(!validInk(ink))return null;
+ if(!validFreeInk(ink))return null;
  const points=ink.flat();if(!points.length)return null;
- let x=100,y=100,right=0,bottom=0;for(const p of points){x=Math.min(x,p[0]);y=Math.min(y,p[1]);right=Math.max(right,p[0]);bottom=Math.max(bottom,p[1]);}const w=right-x,h=bottom-y;
+ let x=Infinity,y=Infinity,right=-Infinity,bottom=-Infinity;for(const p of points){x=Math.min(x,p[0]);y=Math.min(y,p[1]);right=Math.max(right,p[0]);bottom=Math.max(bottom,p[1]);}const w=right-x,h=bottom-y;
  let length=0;for(const s of ink)for(let i=1;i<s.length;i++)length+=Math.hypot(s[i][0]-s[i-1][0],s[i][1]-s[i-1][1]);
  return {x,y,w,h,length,points:points.length};
 }

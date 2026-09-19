@@ -257,7 +257,7 @@ test("Families keep all choices and legacy storage ownership; soccer stays last"
   assert.equal(movedRoute("letter-quest", "soccer-menu"), "dribble-duel");
   assert.equal(movedRoute("letter-quest", "maze-menu"), "maze-garden");
   assert.equal(movedRoute("letter-quest", "letter-home"), "letter-quest");
-  assert.equal(CATALOG.length, 8);
+  assert.equal(CATALOG.length, 9);
   assert.equal(CATALOG.at(-1).id, "dribble-duel");
   for (const [family, modes] of Object.entries(FAMILIES)) {
     assert.equal(destination(family).type, "family");
@@ -268,6 +268,10 @@ test("Families keep all choices and legacy storage ownership; soccer stays last"
         assert.equal(movedRoute(mode.game, mode.route), family + "/" + mode.id);
     }
   }
+  const drawing = destination("drawing-studio");
+  assert.equal(drawing.type, "frame");
+  assert.equal(drawing.game, "number-park");
+  assert.equal(drawing.query, "studio=1");
   assert.equal(destination("chess").type, "chess");
   assert.equal(destination("unknown").type, "home");
 });

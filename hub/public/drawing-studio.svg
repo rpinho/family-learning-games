@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="Guess My Drawing">
+  <rect x="16" y="16" width="160" height="160" rx="42" fill="#fff5d8"/>
+  <circle cx="50" cy="48" r="14" fill="#ffbf35"/>
+  <circle cx="142" cy="48" r="10" fill="#ff835f"/>
+  <path d="M35 125C51 73 78 153 96 94S131 137 156 67" fill="none" stroke="#087f83" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M43 147H149" fill="none" stroke="#6d4cc7" stroke-width="10" stroke-linecap="round"/>
+</svg>

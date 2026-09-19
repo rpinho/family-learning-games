@@ -127,7 +127,7 @@ async function render() {
     return;
   }
   if (dest.type === "frame") {
-    main.innerHTML = `<div id="activity-toolbar"></div><section class="frame-wrap"><iframe title="${esc(dest.mode?.name || item.name)}" allow="autoplay; fullscreen" src="/g/${dest.game}/${player}/?player=${player}&family=1${dest.route ? "#" + dest.route : ""}"></iframe><div class="loading-note">Opening ${esc(dest.mode?.name || item.name)}…</div></section>`;
+    main.innerHTML = `<div id="activity-toolbar"></div><section class="frame-wrap"><iframe title="${esc(dest.mode?.name || item.name)}" allow="autoplay; fullscreen" src="/g/${dest.game}/${player}/?player=${player}&family=1${dest.query ? "&" + dest.query : ""}${dest.route ? "#" + dest.route : ""}"></iframe><div class="loading-note">Opening ${esc(dest.mode?.name || item.name)}…</div></section>`;
     if (dest.mode) activityToolbar(item);
     frame = main.querySelector("iframe");
     setTimeout(() => {

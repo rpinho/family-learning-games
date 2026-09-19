@@ -85,3 +85,20 @@ export function bareTreeFeatures(ink){
  }
  return null;
 }
+
+// Two or more separate head-like loops are evidence for a group portrait. This
+// stays deliberately broad: geometry can suggest people together, never infer
+// who they are or their relationship.
+export function peopleGroupFeatures(ink){
+ const whole=inkStats(ink);if(!whole||whole.points>5000||whole.w<24||whole.h<16)return null;
+ const loops=ink.map((s,index)=>({s,index,b:inkStats([s])})).filter(({s,b})=>{
+  if(!b||s.length<9)return false;const size=Math.max(b.w,b.h),closed=Math.hypot(s[0][0]-s.at(-1)[0],s[0][1]-s.at(-1)[1]);
+  return Math.min(b.w,b.h)>=Math.min(whole.w,whole.h)*.1&&b.w/b.h>=.42&&b.w/b.h<=1.8&&closed<=size*.28&&b.y+b.h/2<=whole.y+whole.h*.72;
+ }).map(x=>({...x,cx:x.b.x+x.b.w/2,cy:x.b.y+x.b.h/2})).sort((a,b)=>b.b.w*b.b.h-a.b.w*a.b.h).slice(0,6);
+ const heads=[];
+ for(const loop of loops)if(heads.every(h=>Math.abs(h.cx-loop.cx)>Math.min(h.b.w,loop.b.w)*.65))heads.push(loop);
+ if(heads.length<2)return null;
+ const sizes=heads.map(h=>Math.max(h.b.w,h.b.h));
+ if(Math.max(...sizes)/Math.min(...sizes)>3.2)return null;
+ return {feature:'separate-people-loops-1',people:Math.min(6,heads.length)};
+}

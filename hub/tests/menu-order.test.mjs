@@ -19,6 +19,10 @@ test('Old storage routes follow the refactored families; hints, voices and setti
   assert.equal(activityFor('hub',{type:'client',kind:'chess_voice_play'}),null);
   assert.equal(activityFor('hub',{type:'chess',action:'hint'}),null);
   assert.equal(activityFor('hub',{type:'chess',action:'game-move'}),'chess');
+  assert.equal(activityFor('number-park',{type:'action',input:{kind:'art_guess'}}),'drawing-studio');
+  assert.equal(activityFor('number-park',{type:'action',input:{kind:'drawing'}}),'drawing-studio');
+  assert.equal(activityFor('number-park',{type:'action',input:{kind:'trace'}}),'number-park');
+  assert.equal(activityFor('number-park',{type:'action',input:{kind:'art_part'}}),'number-park');
   assert.equal(activityFor('target-trail',{type:'rejected',input:{type:'shot'}}),null);
   assert.equal(activityFor('three-in-a-row',{type:'action',input:{type:'bot'}}),null);
 });
@@ -31,7 +35,7 @@ test('Frequency uses distinct sessions, not click volume, and keeps the players 
   assert.equal(ranked.order[0],'chess');
   assert.equal(rankPlay(events,'explorer',NOW).order[0],'number-park');
   assert.equal(JSON.stringify(events),before);
-  assert.equal(new Set(ranked.order).size,8);
+  assert.equal(new Set(ranked.order).size,9);
 });
 test('Recent visits outweigh old play, stale/future rows expire, ties are stable and daily repeats capped', () => {
   const events=[point('chess',1),point('maze-garden',12*1440),point('maze-garden',13*1440),point('word-arcade',15*1440),point('target-trail',-1)];

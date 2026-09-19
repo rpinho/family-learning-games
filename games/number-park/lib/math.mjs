@@ -1,13 +1,14 @@
 import {SHAPES,validGuidedShape,nextShape} from './shapes.mjs';
 import {validNumberTrace,nextTraceNumber,traceNumber,numberPaths,TRACE_MAX} from './number-trace.mjs';
-import {validInk,checkCopy} from './copy-practice.mjs';
+import {checkCopy} from './copy-practice.mjs';
+import {FREE_DRAWING_SPACE,validFreeInk} from './drawing-space.mjs';
 import {countingQuestion,countingOptions} from './counting.mjs';
 import {patternQuestion} from './play-practice.mjs';
 import {advanced,EXPLORER_GAMES,challengeQuestion} from './explorer.mjs';
 import {readingAction} from './reading.mjs';
 import {artAction} from './art.mjs';
 import {planningAction} from './planning.mjs';
-export const VERSION='number-park-2026-09-19-picture-guesses';
+export const VERSION='number-park-2026-09-19-drawing-studio';
 export const GAMES=[
  {id:'mix',icon:'🎲',title:'Little sums',description:'A mix just like the first unit.'},
  {id:'line',icon:'📏',title:'Number hop',description:'Slide to the missing number.'},
@@ -84,8 +85,10 @@ export function action(p,input,now=Date.now(),services={}){
   if(s.round===5){s.finished=true;p.lessons++;p.completed[s.game]=(p.completed[s.game]||0)+1;}
   else{s.round++;s.question=makeQuestion(p,s.game,s.round);s.helped=false;s.result=null;s.started=now;}
  }else if(input.kind==='drawing'){
-  if(!validInk(input.strokes))fail('Drawing is too large or invalid.');
+  if(!validFreeInk(input.strokes))fail('Drawing is too large or invalid.');
+  if(input.space!==undefined&&input.space!==FREE_DRAWING_SPACE)fail('Drawing space is invalid.');
   p.drawing=input.strokes;
+  p.drawingSpace=input.space||'square-100';
  }else if(input.kind==='trace'){
   if(input.practice!==undefined&&!['guided','copy'].includes(input.practice))fail('Choose a practice mode.');
   if(input.practice==='copy'?(!traceNumber(input.digit)||!checkCopy(numberPaths(input.digit),input.strokes).ok):!validNumberTrace(input.digit,input.strokes))fail('Finish tracing the number first.');

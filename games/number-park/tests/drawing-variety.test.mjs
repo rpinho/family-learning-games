@@ -5,6 +5,7 @@ import {checkCopy,safeInk} from '../lib/copy-practice.mjs';
 import {SHAPES,nextShape,startingShape} from '../lib/shapes.mjs';
 import {numberPaths} from '../lib/number-trace.mjs';
 import {freshProfile,action,makeQuestion} from '../lib/math.mjs';
+import {drawingPoint,validFreeInk,FREE_DRAWING_WIDTH} from '../lib/drawing-space.mjs';
 test('copy practice accepts wobble on all shapes and numbers but not taps, missing parts or scribbles',()=>{
  for(const paths of [...Object.values(SHAPES).map(s=>s.paths),...['1','8','13','14','99','100'].map(numberPaths)]){
   assert.ok(checkCopy(paths,paths.map(p=>p.map(([x,y])=>[x+3,y+2]))).ok);
@@ -30,4 +31,11 @@ test('pointer coordinates are read synchronously, never in deferred React state 
  const source=readFileSync(new URL('../app/drawing.tsx',import.meta.url),'utf8');
  assert.doesNotMatch(source,/set(?:Ink|Draft)\([^\n;]*point\(e\)/);
  assert.match(source,/const p=point\(e\)/);assert.match(source,/draftRef\.current/);
+});
+test('the wide free canvas uses its full width and does not flatten off-edge strokes',()=>{
+ const rect={x:20,y:10,width:800,height:500};
+ assert.deepEqual(drawingPoint(20,10,rect,true),[0,0]);
+ assert.deepEqual(drawingPoint(820,510,rect,true),[FREE_DRAWING_WIDTH,100]);
+ const outside=drawingPoint(10,260,rect,true);assert.ok(outside[0]<0);assert.notEqual(outside[0],0);
+ assert.ok(validFreeInk([[outside,[0,50],[FREE_DRAWING_WIDTH,50]]]));
 });

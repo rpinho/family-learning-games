@@ -1,10 +1,10 @@
-import {drawingVector,inkStats,recognizeDrawing,DOODLES} from './doodle.mjs';
-import {sunFeatures,flowerFeatures,bareTreeFeatures} from './picture-features.mjs';
+import {drawingVector,inkStats,recognizeDrawing,DOODLES,PICTURE_LABELS} from './doodle.mjs';
+import {sunFeatures,flowerFeatures,bareTreeFeatures,peopleGroupFeatures} from './picture-features.mjs';
 export const GUESS_MODES=['auto','letters','numbers','pictures'];
 export const UPPER=[...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'],LOWER=UPPER.map(x=>x.toLowerCase()),DIGITS=[...'0123456789'];
-export const validArtLabel=x=>typeof x==='string'&&(DOODLES.includes(x)||x==='something else'||/^[A-Za-z]$/.test(x)||/^\d{1,3}$/.test(x)&&Number(x)<=100&&String(Number(x))===x);
+export const validArtLabel=x=>typeof x==='string'&&(PICTURE_LABELS.includes(x)||x==='something else'||/^[A-Za-z]$/.test(x)||/^\d{1,3}$/.test(x)&&Number(x)<=100&&String(Number(x))===x);
 export const labelName=x=>/^[A-Z]$/.test(x)?'Uppercase '+x:/^[a-z]$/.test(x)?'Lowercase '+x:/^\d{1,3}$/.test(x)?'Number '+x:x;
-export const guessLine=x=>/^[A-Za-z]$/.test(x)?'Is it the letter '+x.toUpperCase()+'?':/^\d{1,3}$/.test(x)?'Is it '+x+'?':'Is it a '+x+'?';
+export const guessLine=x=>/^[A-Za-z]$/.test(x)?'Is it the letter '+x.toUpperCase()+'?':/^\d{1,3}$/.test(x)?'Is it '+x+'?':x==='two people'?'Are they two people?':'Is it a '+x+'?';
 export const labelLine=x=>/^[A-Za-z]$/.test(x)?'The letter '+x.toUpperCase()+'.':/^\d{1,3}$/.test(x)?x:'Thanks for telling me!';
 export const symbolVoiceLines=()=>[...UPPER.flatMap(x=>[guessLine(x),labelLine(x)]),...Array.from({length:101},(_,n)=>guessLine(String(n))),'Could it be one of these?','Try a number from zero to one hundred.'];
 export function symbolScores(ink,model,mode='auto'){
@@ -23,9 +23,11 @@ export function digitGroups(ink){
 }
 export function recognizeArt(ink,pictureModel,symbolModel,mode='auto'){
  if(!GUESS_MODES.includes(mode))throw Error('Choose a guessing mode.');
- const version='art-symbols-5',b=inkStats(ink);
+ const version='art-symbols-6',b=inkStats(ink);
  if(!b||!drawingVector(ink))return {label:null,candidates:[],reason:'more-ink',model:version,mode};
  const picture=mode==='auto'||mode==='pictures'?recognizeDrawing(ink,pictureModel):null;
+ const group=picture&&peopleGroupFeatures(ink);
+ if(group)return {label:'family picture',candidates:['family picture','two people','family portrait'],reason:'guess',model:version,mode,evidence:group,similarity:picture.similarity};
  const tree=picture?.candidateScores?.[0]?.label==='tree'&&picture.candidateScores[0].score>=.75&&bareTreeFeatures(ink);
  if(tree)return {label:'tree',candidates:['tree'],reason:'guess',model:version,mode,evidence:tree,similarity:picture.similarity};
  const flower=picture?.candidateScores?.find(x=>x.label==='flower'&&x.score>=.70&&x.score>=picture.candidateScores[0].score-.05)&&flowerFeatures(ink);

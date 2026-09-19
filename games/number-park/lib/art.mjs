@@ -1,5 +1,5 @@
-import {validInk} from './copy-practice.mjs';
-import {DOODLES,inkStats} from './doodle.mjs';
+import {validFreeInk} from './drawing-space.mjs';
+import {PICTURE_LABELS,inkStats} from './doodle.mjs';
 import {GUESS_MODES,validArtLabel,symbolVoiceLines} from './symbol-recognition.mjs';
 import {checkPart,cleanMissionInk} from './shape-check.mjs';
 import {DRAWING_IDEAS} from './drawing-ideas.mjs';
@@ -25,10 +25,10 @@ export function fitInk(ink,box=[15,15,70,70]){
  const b=inkStats(ink);if(!b)return [];
  return ink.map(s=>s.map(([x,y])=>[box[0]+(b.w?(x-b.x)/b.w:.5)*box[2],box[1]+(b.h?(y-b.y)/b.h:.5)*box[3]]));
 }
-export const artVoiceLines=()=>[...new Set([...DRAWING_IDEAS,...Object.values(PARTS).map(p=>p.prompt),...DOODLES.map(x=>'Is it a '+x+'?'),...symbolVoiceLines(),'What did you draw?','I am not sure yet. What did you draw?','Thanks for telling me!','Drawing complete!','Your shape is connected!','There is your stem!','Bring the ends together. Small gaps are okay.','Add a little more drawing first.','Try a clear outline. Wobbles are okay.','Try a line from top to bottom. Wobbles are okay.','Try three sides. Wobbles are okay.','Try three sides, with a point at the top.','Try four sides, with a corner at each turn.','Try going around in a round loop.'])];
+export const artVoiceLines=()=>[...new Set([...DRAWING_IDEAS,...Object.values(PARTS).map(p=>p.prompt),...PICTURE_LABELS.map(x=>x==='two people'?'Are they two people?':'Is it a '+x+'?'),...symbolVoiceLines(),'What did you draw?','I am not sure yet. What did you draw?','Thanks for telling me!','Drawing complete!','Your shape is connected!','There is your stem!','Bring the ends together. Small gaps are okay.','Add a little more drawing first.','Try a clear outline. Wobbles are okay.','Try a line from top to bottom. Wobbles are okay.','Try three sides. Wobbles are okay.','Try three sides, with a point at the top.','Try four sides, with a corner at each turn.','Try going around in a round loop.'])];
 export function artAction(p,input,now,services={}){
  const fail=m=>{throw Object.assign(Error(m),{status:400});};
- const valid=ink=>validInk(ink)&&ink.reduce((n,s)=>n+s.length,0)<=5000;
+ const valid=ink=>validFreeInk(ink)&&ink.reduce((n,s)=>n+s.length,0)<=5000;
  const a=p.art??={history:[],mission:null,lastGuess:null,completed:0};
  const record=row=>{a.history=[...a.history,{at:new Date(now).toISOString(),...row}].slice(-100);};
  if(input.kind==='art_guess'){

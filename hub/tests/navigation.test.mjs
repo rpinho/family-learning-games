@@ -35,7 +35,7 @@ test('Adult gate requires reading and reversing letters rather than solving a si
   assert.equal(parentAnswerMatches(gate,answer.split('').join(' ')),true);
   assert.notEqual(parentChallenge(()=>.1).answer,parentChallenge(()=>.8).answer);
 });
-test('Artwork preference stays per player and device, with all eight destinations retained',()=>{
+test('Artwork preference stays per player and device, with all nine destinations retained',()=>{
   const store=new Map([['family-games-menu-style:beginner','logos']]);
   const storage={getItem:key=>store.get(key)};
   assert.equal(menuStyle('beginner',null,storage),'logos');
@@ -44,5 +44,5 @@ test('Artwork preference stays per player and device, with all eight destination
   store.set('family-games-menu-style:explorer','screenshots');
   assert.equal(menuStyle('explorer','logos',storage),'screenshots');
   assert.equal(menuStyle('beginner','logos',{getItem(){throw Error('blocked');}}),'logos');
-  for(const item of CATALOG){assert.match(gameArtwork(item,'logos').src,/\.(png|svg)$/);assert.equal(gameArtwork(item,'screenshots').src,`/previews/${item.id}.jpg`);}
+  for(const item of CATALOG){assert.match(gameArtwork(item,'logos').src,/\.(png|svg)$/);assert.equal(gameArtwork(item,'screenshots').src,`/previews/${item.preview||item.id}.jpg`);}
 });

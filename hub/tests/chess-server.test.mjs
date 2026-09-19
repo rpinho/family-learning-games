@@ -52,7 +52,7 @@ test("Chess API isolates players, serializes writes, recovers duplicate saves an
     ])
       assert.equal((await fetch(base + path)).status, 404);
     for (const name of new Set([
-      ...CATALOG.map((x) => x.id),
+      ...CATALOG.map((x) => x.preview || x.id),
       ...Object.values(FAMILIES)
         .flat()
         .map((x) => x.preview),

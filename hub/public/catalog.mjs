@@ -17,8 +17,18 @@ export const CATALOG = [
   {
     id: "number-park",
     name: "Number Park",
-    description: "Count, move, draw and find patterns.",
+    description: "Count, move, trace numbers and find patterns.",
     color: "#b9eaf8",
+  },
+  {
+    id: "drawing-studio",
+    name: "Guess My Drawing",
+    description: "Draw freely, ask for a guess and try a new idea.",
+    color: "#ffd7a8",
+    icon: "/drawing-studio.svg",
+    preview: "number-park",
+    game: "number-park",
+    query: "studio=1",
   },
   {
     id: "maze-garden",
@@ -123,7 +133,7 @@ export function destination(hash) {
         }
       : { type: "family", item, modes: FAMILIES[family] };
   }
-  return { type: "frame", item, game: family, route: "" };
+  return { type: "frame", item, game: item.game || family, route: "", query: item.query || "" };
 }
 export function movedRoute(game, route) {
   return game === "letter-quest"

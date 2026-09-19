@@ -19,5 +19,5 @@ export function menuStyle(player, configured, storage) {
 export function gameArtwork(item, style) {
   return style === 'logos'
     ? {className:'game-logo',src:item.icon || '/game-icons/' + item.id + '.png'}
-    : {className:'game-preview',src:'/previews/' + item.id + '.jpg'};
+    : {className:'game-preview',src:'/previews/' + (item.preview || item.id) + '.jpg'};
 }

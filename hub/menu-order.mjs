@@ -28,8 +28,9 @@ export function activityFor(source, row) {
   if (source === 'maze-garden') return ['moves', 'answer', 'challenge'].includes(row.event) ? source : null;
   if (row.type !== 'action') return null;
   const action = row.input?.kind || row.input?.type;
+  if(source === 'number-park'&&['art_guess','art_label','drawing'].includes(action))return 'drawing-studio';
   const play = {
-    'number-park': ['trace', 'answer', 'plan_cards', 'plan_step', 'plan_run', 'art_guess', 'art_label', 'art_part', 'shape', 'reading_answer', 'drawing'],
+    'number-park': ['trace', 'answer', 'plan_cards', 'plan_step', 'plan_run', 'art_part', 'shape', 'reading_answer'],
     'word-arcade': ['answer', 'draft', 'art'],
     'three-in-a-row': ['move'],
     'target-trail': ['shot', 'reading'],
