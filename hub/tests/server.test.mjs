@@ -5,6 +5,7 @@ import {mkdtemp,readFile,readdir} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {once} from 'node:events';
+import {RULES} from '../dribble.mjs';
 
 test('Hub persists only the chosen profile, rejects replay/foreign origins, and scopes runtime imports',async()=>{
  const data=await mkdtemp(join(tmpdir(),'family-hub-test-'));
@@ -12,7 +13,7 @@ test('Hub persists only the chosen profile, rejects replay/foreign origins, and 
  try{
   const output=await new Promise((resolve,reject)=>{child.stdout.once('data',x=>resolve(String(x)));child.once('error',reject);child.once('exit',c=>reject(Error('Server exited '+c)));});
   const base='http://127.0.0.1:'+output.match(/localhost:(\d+)/)[1];
-  const request=(a)=>fetch(base+'/api/dribble?player=admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rulesVersion:2,...a})});
+  const request=(a)=>fetch(base+'/api/dribble?player=admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rulesVersion:RULES,...a})});
   assert.equal((await fetch(base+'/health',{headers:{Origin:'https://untrusted.example'}})).status,403);
   assert.equal((await fetch(base+'/config.json')).status,404);
   assert.equal((await fetch(base+'/api/dribble?player=unknown')).status,400);
