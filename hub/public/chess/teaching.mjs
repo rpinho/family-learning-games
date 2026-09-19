@@ -12,4 +12,3 @@ export function drawTeachingOverlay(root, board, move, example){
  if(fork){const heading=root.querySelector('.arena-prompt h1');if(heading)heading.innerHTML=forkTitleIcon()+'Fork · two targets';}
 }
 export function forkTitleIcon(){return '<svg class="fork-title-icon" viewBox="0 0 32 40" aria-hidden="true"><path d="M16 36V22M6 4V15Q6 24 16 24Q26 24 26 15V4"/></svg>';}
-
