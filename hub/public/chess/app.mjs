@@ -1,4 +1,5 @@
 import {fetchJSON} from '../save-request.mjs';
+import {requestChess} from './request.mjs';
 import {FOUNDATION_UNITS,FOUNDATION_VOICE} from './foundations-curriculum.mjs';
 import {drawTeachingOverlay,forkTitleIcon} from './teaching.mjs';
 import {STEP_UNITS,STEP_VOICE} from './steps-curriculum.mjs';
@@ -102,6 +103,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
         view = "lesson";
         unit = lessonFor(active.lesson)?.unit || 0;
       } else {
+        view = "path";
         const next = pathProgress(profile).find((l) => l.current);
         unit = next?.unit || 0;
       }
@@ -148,17 +150,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
     } else render();
     inflight = (async () => {
       try {
-        const r = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-          signal: AbortSignal.timeout(18000),
-        });
-        const data = await r.json();
-        if (!r.ok)
-          throw Object.assign(Error(data.error || "The move did not save."), {
-            status: r.status,
-          });
+        const data = await requestChess(endpoint, body, profile, {active:()=>alive});
         if (preview) await preview;
         if (alive && data.result?.correct === false && data.result.attempted) {
           react("retry");
@@ -209,8 +201,18 @@ export function mountChess(root, { player, name, event = () => {} }) {
         if (preview) await preview.catch(() => {});
         if (!alive) return;
         error = e.message;
+        if(e.latestProfile){
+          profile=e.latestProfile;
+          receivedAt=Date.now();
+          pending=null;
+          view=profile.current==='game'&&profile.game?'game':profile.session&&profile.session.phase!=='summary'?'lesson':'path';
+          error='Progress updated. Your saved game is ready.';
+        }
         busy = false;
         render();
+        if(e.latestProfile){
+          if(view==='path')scrollPath();else window.scrollTo(0,0);
+        }
       } finally {
         busy = false;
       }
@@ -234,7 +236,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
       bind();
       return;
     }
-    root.innerHTML = `<div class="academy" style="--unit:${(courseUnits()[unit]||courseUnits()[0]).color}">${nav()}${error ? `<div class="ac-error" role="alert"><strong>${esc(error)}</strong>${btn("Retry save", "retry", "primary")}${btn("Reload progress", "reload")}</div>` : ""}<div class="ac-content" ${busy ? 'aria-busy="true"' : ""}>${view === "lesson" ? lessonView() : view === "game" ? gameView() : view === "play" ? playView() : view === "notebook" ? notebookView() : pathView()}</div><div class="ac-saving" role="status">${busy ? "Saving your move…" : ""}</div></div>`;
+    root.innerHTML = `<div class="academy" style="--unit:${(courseUnits()[unit]||courseUnits()[0]).color}">${nav()}${error ? `<div class="ac-error" role="alert"><strong>${esc(error)}</strong>${pending ? btn("Retry save", "retry", "primary") + btn("Reload progress", "reload") : btn("Continue", "dismiss-error", "primary")}</div>` : ""}<div class="ac-content" ${busy ? 'aria-busy="true"' : ""}>${view === "lesson" ? lessonView() : view === "game" ? gameView() : view === "play" ? playView() : view === "notebook" ? notebookView() : pathView()}</div><div class="ac-saving" role="status">${busy ? "Saving your move…" : ""}</div></div>`;
     bind();
     updateHintClock();
     if (voice.isPlaying())
@@ -559,6 +561,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
           if (busy) return;
           const [action, arg] = el.dataset.do.split(":");
           if (pending && !["retry", "reload", "hear"].includes(action)) return;
+          if (action === "dismiss-error") { error="";render();return; }
           if (action === "reload") {
             pending = null;
             await load();

@@ -187,8 +187,16 @@
   font-size: 14px;
 }
 .ac-error {
+  position: fixed;
+  z-index: 50;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  left: 12px;
+  right: 12px;
   max-width: 700px;
-  margin: 12px auto;
+  max-height: 40dvh;
+  overflow: auto;
+  margin: 0 auto;
+  box-shadow: 0 6px 24px #112e4226;
   background: #fff1e5;
   border: 2px solid #eab58e;
   border-radius: 12px;
