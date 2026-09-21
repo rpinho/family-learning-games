@@ -1,7 +1,7 @@
 import {fetchJSON} from '../save-request.mjs';
 import {requestChess} from './request.mjs';
 import {FOUNDATION_UNITS,FOUNDATION_VOICE} from './foundations-curriculum.mjs';
-import {drawTeachingOverlay,forkTitleIcon} from './teaching.mjs';
+import {drawTeachingOverlay,forkTitleIcon,demonstrationMoves} from './teaching.mjs';
 import {STEP_UNITS,STEP_VOICE} from './steps-curriculum.mjs';
 import { createCoachAudio } from './audio.mjs';
 import { UNITS, LESSONS, lessonFor, NAMES, VOICE, unitsForBand } from "./curriculum.mjs";
@@ -260,7 +260,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
       }
       boardDispose = mountBoard(mount, {
         fen,
-        side: inGame ? g.side : s.puzzle.side,
+        side: inGame ? g.side : example ? new Chess(example.fen).turn() : s.puzzle.side,
         disabled:
           busy ||
           !!pending ||
@@ -406,14 +406,12 @@ export function mountChess(root, { player, name, event = () => {} }) {
         examplePrompt('Check safely',STEP_VOICE.safeExample);
         await say(STEP_VOICE.safeExample,{force:true});
       }else await say(currentUnit().idea,{force:true});
-      const exampleBoard=new Chess(example.fen);
-      for(const move of example.line){
-        const played=exampleBoard.move({from:move.slice(0,2),to:move.slice(2,4)});
+      for(const {uci:move,board:exampleBoard,move:played,learner} of demonstrationMoves(example)){
         await board.animate([move]);
         if(!alive)return;
         root.querySelectorAll('.demo-target').forEach(el=>el.classList.remove('demo-target'));
-        if(played.color==='w')drawTeachingOverlay(root,exampleBoard,played,example);
-        if(played.color==='w')for(const target of exampleBoard.board().flat().filter(p=>p&&p.color==='b'&&['k','q','r'].includes(p.type)&&exampleBoard.attackers(p.square,'w').includes(played.to)))root.querySelector(`[data-square="${target.square}"]`)?.classList.add('demo-target');
+        if(learner)drawTeachingOverlay(root,exampleBoard,played,example);
+        if(learner)for(const target of exampleBoard.board().flat().filter(p=>p&&p.color!==played.color&&['k','q','r'].includes(p.type)&&exampleBoard.attackers(p.square,played.color).includes(played.to)))root.querySelector(`[data-square="${target.square}"]`)?.classList.add('demo-target');
         await demonstrationBeat();
       }
     }finally{

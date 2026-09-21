@@ -1,5 +1,6 @@
 import {SEQUEL_UNITS} from './sequel-curriculum.mjs';
 import {BRIDGE_UNITS} from './bridge-curriculum.mjs';
+import {PRACTICE_UNITS} from './practice-curriculum.mjs';
 // Original short lessons; separate IDs keep advanced-course achievements intact.
 export const STEP_UNITS=[
  {id:'steps-take',theme:'stepsCapture',name:'Take a free piece',task:'Take a free piece',cue:'Take a piece that nobody protects.',idea:'Watch my capture. The other pieces cannot take me back.',hints:['Look for a piece you can take safely.'],color:'#268f87',lessons:['Watch, then capture','Find your own capture','Different pieces, same idea']},
@@ -16,6 +17,7 @@ export const STEP_UNITS=[
  {"id": "steps-mate-two", "theme": "stepsMateTwo", "name": "Think two moves ahead", "task": "Check, then mate", "cue": "Give check, watch the reply, then find checkmate.", "idea": "I look at the king escape before my first check. Then I can finish with mate.", "hints": ["Try a check and imagine every square the king can escape to."], "color": "#7964c5", "lessons": ["See the king escape", "Plan your second move", "Two-move checkpoint"]},
 ];
 STEP_UNITS.push(...SEQUEL_UNITS);
+STEP_UNITS.push(...PRACTICE_UNITS);
 STEP_UNITS.push(...BRIDGE_UNITS);
 export const STEP_LESSONS=STEP_UNITS.flatMap((u,unit)=>u.lessons.map((name,step)=>({id:`${u.id}-${step+1}`,unit,step,name,kind:step===0?'discover':'practice'})));
-export const STEP_VOICE={watch:'Watch me first. Then it is your turn.',turn:'Your turn. Try the same idea on this new board.',again:'That move is legal. Try the idea we just practiced.',collect:'Now take the rook with your knight.',collectRook:'Now take the rook safely.',finishMate:'Now find checkmate.',safeRook:'Find their king. A rook checks along a row or a column. Stay out of reach.',safeBishop:'Find their king. A bishop checks along a diagonal. Stay out of reach.',unsafeCheck:'That is check, but your piece can be taken.',unsafeExample:'That is check, but the rook can take our bishop.',safeExample:'This checks the king, and our bishop cannot be taken.'};
+export const STEP_VOICE={continueLine:'Find your next move. Check their threats before you choose.',watch:'Watch me first. Then it is your turn.',turn:'Your turn. Try the same idea on this new board.',again:'That move is legal. Try the idea we just practiced.',collect:'Now take the rook with your knight.',collectRook:'Now take the rook safely.',finishMate:'Now find checkmate.',safeRook:'Find their king. A rook checks along a row or a column. Stay out of reach.',safeBishop:'Find their king. A bishop checks along a diagonal. Stay out of reach.',unsafeCheck:'That is check, but your piece can be taken.',unsafeExample:'That is check, but the rook can take our bishop.',safeExample:'This checks the king, and our bishop cannot be taken.'};

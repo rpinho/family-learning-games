@@ -6,6 +6,11 @@ import { VOICE } from './curriculum.mjs';
 export function narrationFor(action, profile, cue) {
   if(action==='move'&&profile.session?.phase==='solved'&&profile.session?.band==='foundations'&&profile.session?.unit==='learn-fork')return {text:FOUNDATION_VOICE.fork,kind:'task'};
   if(action==='move'&&profile.session?.band==='steps'&&profile.session.phase==='puzzle'&&profile.session.ply>0){
+    // Real-board tactics are not all the original knight-and-rook exercise.
+    if(profile.session.puzzle?.original===false){
+      if(profile.session.feedback?.kind==='incorrect')return null;
+      return {text:profile.session.puzzle.goal==='Find checkmate in 1 move'?STEP_VOICE.finishMate:STEP_VOICE.continueLine,kind:'continuation'};
+    }
     const mate=profile.session.puzzle?.task==='Find checkmate';
     const skewer=profile.session.puzzle?.task==='Take the rook';
     if((mate||skewer)&&profile.session.feedback?.kind==='incorrect')return null;

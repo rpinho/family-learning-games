@@ -11,7 +11,7 @@ const play=(b,u)=>b.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});
 const move=(p,u)=>act(p,'move',{from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});
 const extra=Object.values(STEPS).flat().filter(p=>p.id.startsWith('continuation-'));
 test('Fourteen sparse continuation units remain intact ahead of the full-board bridge',()=>{
- assert.equal(STEP_UNITS.length,36);assert.equal(STEP_LESSONS.length,108);assert.equal(extra.length,210);
+ assert.equal(STEP_UNITS.length,54);assert.equal(STEP_LESSONS.length,162);assert.equal(extra.length,210);
  const examples=Object.values(STEP_EXAMPLES).filter(p=>p.id.startsWith('continuation-'));
  assert.equal(examples.length,42);const all=[...extra,...examples];assert.equal(new Set(all.map(p=>p.fen)).size,252);
  for(const p of all){const b=new Chess(p.fen);assert.equal(b.isCheck(),false);const pieces=b.board().flat().filter(Boolean);assert(pieces.length<=7);
@@ -23,7 +23,7 @@ test('Fourteen sparse continuation units remain intact ahead of the full-board b
 test('A learner who finished the original course gets unit 5 immediately, with old work untouched',()=>{
  const p=freshChess();p.settings.band='steps';for(const l of STEP_LESSONS.slice(0,12))p.completed[l.id]={times:1,best:4};
  p.session={lesson:'review',phase:'summary'};const before=structuredClone(p);const path=pathProgress(p);
- assert.equal(path.find(x=>x.current).id,'steps-value-1');assert.equal(path.filter(x=>x.complete).length,12);assert.equal(path.filter(x=>x.locked).length,95);assert.deepEqual(p,before);
+ assert.equal(path.find(x=>x.current).id,'steps-value-1');assert.equal(path.filter(x=>x.complete).length,12);assert.equal(path.filter(x=>x.locked).length,STEP_LESSONS.length-13);assert.deepEqual(p,before);
 });
 test('Two-move drills force their goal against EVERY legal reply, with no immediate mate shortcut',()=>{
  for(const p of [...extra,...Object.values(STEP_EXAMPLES)].filter(p=>p.nextLines)){

@@ -1,4 +1,14 @@
 // Instructional board diagrams, drawn from the actual legal position.
+import {Chess} from './rules.mjs';
+
+export function* demonstrationMoves(example){
+ const board=new Chess(example.fen),side=board.turn();
+ for(const uci of example.line){
+  const move=board.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]});
+  yield {uci,board,move,learner:move.color===side};
+ }
+}
+
 export function drawTeachingOverlay(root, board, move, example){
  root.querySelector('.teaching-overlay')?.remove();
  const host=root.querySelector('.board-coordinates');if(!host)return;
@@ -6,7 +16,7 @@ export function drawTeachingOverlay(root, board, move, example){
  const from=point(move.from),to=point(move.to);if(!from||!to)return;
  const route=(a,b,knight)=>`M${a.join(' ')} ${knight?`L${a[0]} ${b[1]} `:''}L${b.join(' ')}`;
  const targets=board.board().flat().filter(p=>p&&p.color!==move.color&&['k','q','r'].includes(p.type)&&board.attackers(p.square,move.color).includes(move.to));
- const fork=targets.length>=2&&move.color==='w';
+ const fork=targets.length>=2;
  const paths=fork?targets.map(p=>route(to,point(p.square),move.piece==='n')):[route(from,to,move.piece==='n')];
  host.insertAdjacentHTML('beforeend',`<svg class="teaching-overlay ${fork?'fork-diagram':''}" viewBox="0 0 800 800" role="img" aria-label="${fork?'One piece attacks two targets. A fork.':move.piece==='n'?'Two squares then one sideways. A knight jump.':'Follow the move.'}"><defs><marker id="teach-tip" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto"><path d="M0 0L5 2.5L0 5Z" fill="#ffbf36"/></marker></defs>${paths.map(d=>`<path class="teaching-route" d="${d}" pathLength="1" marker-end="url(#teach-tip)"/>`).join('')}</svg>`);
  if(fork){const heading=root.querySelector('.arena-prompt h1');if(heading)heading.innerHTML=forkTitleIcon()+'Fork · two targets';}

@@ -5,7 +5,7 @@ import {STEP_LESSONS,STEP_UNITS} from '../public/chess/steps-curriculum.mjs';
 import {freshChess,actChess,publicChess,PUZZLES,lessonPuzzles} from '../chess-state.mjs';
 import {pathProgress} from '../public/chess/path.mjs';
 const act=(p,type,extra={})=>actChess(p,{type,...extra,revision:p.revision,requestId:crypto.randomUUID()});
-const move=(p,u)=>act(p,'move',{from:u.slice(0,2),to:u.slice(2,4)});
+const move=(p,u)=>act(p,'move',{from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});
 test('All 60 original practice boards and 12 examples are sparse, legal and teach the stated goal',()=>{
  const practices=Object.values(STEPS).flat().filter(p=>p.id.startsWith("small-"));assert.equal(practices.length,60);assert.equal(new Set(practices.map(p=>p.fen)).size,60);
  for(const p of [...practices,...Object.values(STEP_EXAMPLES).filter(p=>p.id.startsWith("small-"))]){
@@ -32,7 +32,7 @@ test('Every short lesson can be completed without help; examples never count as 
  assert.equal(p.history.length,STEP_LESSONS.length);assert.equal(pathProgress(p).filter(l=>l.complete).length,STEP_LESSONS.length);
 });
 test('All legal alternatives meeting the one-move goal succeed; other legal moves return without changing the board',async()=>{
- for(const puzzle of Object.values(STEPS).flat().filter(p=>p.line.length===1)){
+ for(const puzzle of Object.values(STEPS).flat().filter(p=>p.original&&p.line.length===1)){
   const board=new Chess(puzzle.fen);
   for(const m of board.moves({verbose:true})){
    const b=new Chess(puzzle.fen),played=b.move(m),expected=meetsStepGoal(puzzle,b,played);

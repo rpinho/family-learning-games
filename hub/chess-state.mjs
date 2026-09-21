@@ -295,6 +295,7 @@ export function publicChess(p, now = Date.now()) {
         lastMoves: (s.solutionLine||puzzle.line).slice(0, s.ply),
         check: b.isCheck(),
         rating: puzzle.rating,
+        sourceId: puzzle.sourceId || (puzzle.original ? undefined : puzzle.id),
         original:!!puzzle.original,
         target:puzzle.target,
         theme:puzzle.theme,
@@ -513,6 +514,8 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
       s.hint = null;
       if (s.ply >= puzzle.line.length || b.isCheckmate()) {
         if (b.isCheckmate()) {
+          // A different legal mate is accepted; replay the move actually played.
+          s.actualLine = [...line.slice(0, s.ply - 1), uci];
           s.finalFen = b.fen();
           s.ply = puzzle.line.length;
         }
