@@ -242,7 +242,8 @@ function finishLesson(p, now) {
     independent: clean,
     total: s.results.length,
   });
-  p.history = p.history.slice(-100);
+  // Retain at least one result for every lesson in the expanded 108-step path.
+  p.history = p.history.slice(-240);
 }
 export function publicChess(p, now = Date.now()) {
   const s = p.session, reviewIds = bandPuzzleIds(p.settings.band);
