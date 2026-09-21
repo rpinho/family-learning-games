@@ -298,7 +298,7 @@ export function publicChess(p, now = Date.now()) {
         original:!!puzzle.original,
         target:puzzle.target,
         theme:puzzle.theme,
-        concealLegalMoves:s.band==='foundations'&&puzzle.theme==='learnCapture',
+        concealLegalMoves:s.band==='foundations'&&(puzzle.theme==='learnCapture'||!!puzzle.concealLegalMoves),
         task:puzzle.original ? s.ply>0?(puzzle.followup||'Take the rook'):puzzle.goal:null,
       };
       const stage = puzzleHint(s).stage;

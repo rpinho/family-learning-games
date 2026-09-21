@@ -6,10 +6,11 @@ import {Chess} from '../public/chess/rules.mjs';
 import {createNarrationGate,narrationFor} from '../public/chess/narration.mjs';
 const act=(p,type,x={})=>actChess(p,{type,...x,revision:p.revision,requestId:crypto.randomUUID()});
 test('First moves teaches legal sparse boards and separate demonstrations',async()=>{
- assert.equal(Object.values(FOUNDATIONS).flat().length,120);
+ assert.equal(FOUNDATION_LESSONS.length,36);
+ assert.equal(Object.values(FOUNDATIONS).flat().length,186);
  for(const puzzle of [...Object.values(FOUNDATIONS).flat(),...Object.values(FOUNDATION_EXAMPLES)]){
   const b=new Chess(puzzle.fen),king=b.board().flat().find(x=>x?.type==='k'&&x.color==='b');
-  assert.equal(b.isCheck(),false,puzzle.id);assert.equal(b.isAttacked(king.square,'w'),false,puzzle.id);
+  assert.equal(b.isCheck(),!!puzzle.startInCheck,puzzle.id);assert.equal(b.isAttacked(king.square,'w'),false,puzzle.id);
   const m=b.move({from:puzzle.line[0].slice(0,2),to:puzzle.line[0].slice(2)});assert.ok(foundationGoal(puzzle,b,m),puzzle.id);
  }
  const p=freshChess();await act(p,'settings',{band:'foundations'});
@@ -33,7 +34,7 @@ test('New tasks and lessons speak; repeated task instructions stay quiet',()=>{
 
 
 test('Movement intros have three targets, then unmarked capture choices with a distinct demonstration',async()=>{
- for(const piece of ['rook','bishop','knight']){
+ for(const piece of ['rook','bishop','knight','queen']){
   const intro=lessonPuzzles(`learn-${piece}-1`,'foundations');assert.equal(intro.length,3);assert(intro.every(id=>PUZZLES[id].target));
   for(const step of [2,3]){
    const id=`learn-${piece}-${step}`,ids=lessonPuzzles(id,'foundations');assert.equal(ids.length,3);
@@ -45,6 +46,14 @@ test('Movement intros have three targets, then unmarked capture choices with a d
   }
  }
  assert.equal(lessonPuzzles('learn-fork-1','foundations').length,5);
+});
+test('The added beginner runway teaches each new idea in short spoken-ready lessons',()=>{
+ for(const unit of ['pawn','king','save','escape','mate'])for(const step of [1,2,3])assert.equal(lessonPuzzles(`learn-${unit}-${step}`,'foundations').length,3);
+ assert(lessonPuzzles('learn-pawn-1','foundations').every(id=>PUZZLES[id].target&&PUZZLES[id].piece==='p'));
+ assert(lessonPuzzles('learn-pawn-2','foundations').every(id=>PUZZLES[id].goalType==='pawnCapture'&&PUZZLES[id].concealLegalMoves));
+ assert(lessonPuzzles('learn-save-3','foundations').every(id=>PUZZLES[id].goalType==='savePiece'&&PUZZLES[id].from));
+ assert(lessonPuzzles('learn-escape-1','foundations').every(id=>new Chess(PUZZLES[id].fen).isCheck()));
+ for(const id of lessonPuzzles('learn-mate-3','foundations')){const puzzle=PUZZLES[id],b=new Chess(puzzle.fen),u=puzzle.line[0];b.move({from:u.slice(0,2),to:u.slice(2)});assert(b.isCheckmate(),id);}
 });
 test('Capture lessons hide answer circles and require choosing the one safe capture',async()=>{
  for(const lesson of FOUNDATION_LESSONS.filter(x=>x.id.startsWith('learn-capture-'))){
