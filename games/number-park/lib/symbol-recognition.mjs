@@ -5,7 +5,9 @@ export const UPPER=[...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'],LOWER=UPPER.map(x=>x.toLowe
 export const MAX_GUESS_NUMBER=999999;
 export const KNOWN_WORDS=['ROOK','CASTLE'];
 const numberLabel=x=>/^\d{1,6}$/.test(x)&&Number(x)<=MAX_GUESS_NUMBER&&String(Number(x))===x;
-const wordLabel=x=>/^[A-Za-z]{2,12}$/.test(x);
+// Picture labels are lowercase; recognized printed words are uppercase.
+// A shape name must not turn a picture guess into a spelling exercise.
+const wordLabel=x=>/^[A-Za-z]{2,12}$/.test(x)&&!PICTURE_LABELS.includes(x);
 const prettyWord=x=>x[0].toUpperCase()+x.slice(1).toLowerCase();
 const prettyNumber=x=>Number(x).toLocaleString('en-US');
 export const validArtLabel=x=>typeof x==='string'&&(PICTURE_LABELS.includes(x)||x==='something else'||/^[A-Za-z]$/.test(x)||wordLabel(x)||numberLabel(x));

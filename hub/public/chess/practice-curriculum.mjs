@@ -11,9 +11,9 @@ const patterns = [
   {key:'two-mate',sourceTheme:'mateIn2',name:'One reply, then mate',task:'Mate in two',cue:'Find your first move, watch their reply, then finish checkmate.',idea:'Picture the opponent’s best reply before choosing. Your next move must still be mate.',hints:['Compare forcing moves. After their best defense, where is your final check?'],color:'#9c6898',lessons:['Picture one reply','Keep the mating threat','Find the final check']},
 ];
 
-export const PRACTICE_UNITS = [0,1].flatMap(pass=>patterns.map(p=>({
-  ...p, id:`steps-board-${p.key}${pass?'-practice':''}`,
-  theme:`board-${p.key}${pass?'-practice':''}`, pass,
-  name:pass?`${p.name}: fresh positions`:p.name,
-  lessons:pass?['Recognize it somewhere new','Check their best reply','Put the idea to work']:p.lessons,
+export const PRACTICE_UNITS = [0,1,2].flatMap(pass=>patterns.map(p=>({
+  ...p, id:`steps-board-${p.key}${['','-practice','-check'][pass]}`,
+  theme:`board-${p.key}${['','-practice','-check'][pass]}`, pass,
+  name:pass?`${p.name}: ${pass===1?'fresh positions':'another look'}`:p.name,
+  lessons:pass===2?['Spot the familiar idea','Look for their answer','Finish the plan']:pass?['Recognize it somewhere new','Check their best reply','Put the idea to work']:p.lessons,
 })));

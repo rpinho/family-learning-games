@@ -38,10 +38,10 @@ test('A Black learner gets the same two-target teaching diagram as White',()=>{
  assert.match(svg,/fork-diagram/);assert.match(heading.innerHTML,/two targets/);
 });
 
-test('Short real-board practice supplies 54 lessons with new, bounded, validated positions',()=>{
- assert.equal(PRACTICE_UNITS.length,18);assert.equal(lessons.length,54);
+test('Short real-board practice supplies 81 lessons with new, bounded, validated positions',()=>{
+ assert.equal(PRACTICE_UNITS.length,27);assert.equal(lessons.length,81);
  const all=[...PRACTICE_UNITS.flatMap(u=>STEPS[u.theme]),...lessons.map(l=>STEP_EXAMPLES[l.id])];
- assert.equal(all.length,324);
+ assert.equal(all.length,486);
  const old=new Set([...Object.values(STEPS).flat(),...Object.values(STEP_EXAMPLES)]
    .filter(p=>!p.id.startsWith('practice-')).map(p=>p.fen.split(' ')[0]));
  const layouts=new Set(),sources=new Set();

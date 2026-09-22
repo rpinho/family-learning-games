@@ -11,7 +11,7 @@ const play=(b,u)=>b.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});
 const move=(p,u)=>act(p,'move',{from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});
 const extra=Object.values(STEPS).flat().filter(p=>p.id.startsWith('continuation-'));
 test('Fourteen sparse continuation units remain intact ahead of the full-board bridge',()=>{
- assert.equal(STEP_UNITS.length,54);assert.equal(STEP_LESSONS.length,162);assert.equal(extra.length,210);
+ assert.equal(STEP_UNITS.length,63);assert.equal(STEP_LESSONS.length,189);assert.equal(extra.length,210);
  const examples=Object.values(STEP_EXAMPLES).filter(p=>p.id.startsWith('continuation-'));
  assert.equal(examples.length,42);const all=[...extra,...examples];assert.equal(new Set(all.map(p=>p.fen)).size,252);
  for(const p of all){const b=new Chess(p.fen);assert.equal(b.isCheck(),false);const pieces=b.board().flat().filter(Boolean);assert(pieces.length<=7);

@@ -1484,6 +1484,8 @@ body:has(.chess-lesson) > .top .home {
 .path-node.locked svg { width:28px; height:28px; }
 .academy .path-node:disabled { opacity:.8; }
 .node-label .next-ready { color:#348a36; font-size:13px; letter-spacing:0; font-weight:800; }
+.path-stop:has(.short-practice) { height:160px; }
+.node-label .short-practice { width:100%; min-height:44px; padding:8px; margin-top:5px; font-size:13px; line-height:1.2; }
 .course-finish { text-align:center; padding:20px; }
 .continuous-layout .academy-sidebar { position:sticky; top:84px; align-self:start; }
 .practice-level summary { cursor:pointer; color:var(--muted); font-size:14px; }

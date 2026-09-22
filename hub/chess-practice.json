@@ -13869,6 +13869,6963 @@
           "goal": "Mate in two"
         }
       ]
+    },
+    "board-loose-check": {
+      "practice": [
+        {
+          "sourceId": "0ejq7",
+          "setupFen": "7r/ppp2rk1/8/3q3p/6bR/2Q3P1/1K4P1/4R3 b - - 1 33",
+          "setupMove": "g7f8",
+          "fen": "5k1r/ppp2r2/8/3q3p/6bR/2Q3P1/1K4P1/4R3 w - - 2 34",
+          "line": [
+            "c3h8"
+          ],
+          "rating": 878,
+          "tags": [
+            "hangingPiece",
+            "mate",
+            "mateIn1",
+            "middlegame",
+            "oneMove"
+          ],
+          "popularity": 96,
+          "plays": 1462,
+          "deviation": 84,
+          "san": [
+            "Qxh8#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-loose-check-1",
+          "theme": "board-loose-check",
+          "goal": "Win the loose piece"
+        },
+        {
+          "sourceId": "1Mkzu",
+          "setupFen": "8/3Pk3/1N6/5ppp/3B4/2P3PK/3r3P/8 w - - 1 50",
+          "setupMove": "d4f6",
+          "fen": "8/3Pk3/1N3B2/5ppp/8/2P3PK/3r3P/8 b - - 2 50",
+          "line": [
+            "e7f6",
+            "d7d8q",
+            "d2d8"
+          ],
+          "rating": 878,
+          "tags": [
+            "advantage",
+            "endgame",
+            "hangingPiece",
+            "short"
+          ],
+          "popularity": 95,
+          "plays": 722,
+          "deviation": 81,
+          "san": [
+            "Kxf6",
+            "d8=Q+",
+            "Rxd8"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300014,
+              "score": 474,
+              "gap": 1113
+            },
+            {
+              "depth": 18,
+              "nodes": 300011,
+              "score": 496,
+              "gap": 1452
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-loose-check-2",
+          "theme": "board-loose-check",
+          "goal": "Win the loose piece"
+        },
+        {
+          "sourceId": "0lxnN",
+          "setupFen": "1k1r1r2/pppN3p/8/5Q2/2P5/3P3P/P2q2P1/6RK b - - 6 28",
+          "setupMove": "d8d7",
+          "fen": "1k3r2/pppr3p/8/5Q2/2P5/3P3P/P2q2P1/6RK w - - 0 29",
+          "line": [
+            "f5f8",
+            "d7d8",
+            "f8d8"
+          ],
+          "rating": 879,
+          "tags": [
+            "endgame",
+            "hangingPiece",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 98,
+          "plays": 749,
+          "deviation": 79,
+          "san": [
+            "Qxf8+",
+            "Rd8",
+            "Qxd8#"
+          ],
+          "checks": [
+            {
+              "depth": 20,
+              "nodes": 300335,
+              "score": 99998,
+              "gap": 99954
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-loose-check-3",
+          "theme": "board-loose-check",
+          "goal": "Win the loose piece"
+        },
+        {
+          "sourceId": "09MTi",
+          "setupFen": "6r1/p1p4k/3pPQ2/3P3p/8/7P/r3qPP1/R4R1K w - - 0 38",
+          "setupMove": "a1a2",
+          "fen": "6r1/p1p4k/3pPQ2/3P3p/8/7P/R3qPP1/5R1K b - - 0 38",
+          "line": [
+            "e2f1",
+            "h1h2",
+            "f1g2"
+          ],
+          "rating": 882,
+          "tags": [
+            "endgame",
+            "hangingPiece",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 491,
+          "deviation": 75,
+          "san": [
+            "Qxf1+",
+            "Kh2",
+            "Qxg2#"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300057,
+              "score": 99998,
+              "gap": 100475
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-loose-check-4",
+          "theme": "board-loose-check",
+          "goal": "Win the loose piece"
+        },
+        {
+          "sourceId": "10HYg",
+          "setupFen": "8/4Pb2/8/3K4/7p/1k6/R7/8 w - - 0 59",
+          "setupMove": "d5d6",
+          "fen": "8/4Pb2/3K4/8/7p/1k6/R7/8 b - - 1 59",
+          "line": [
+            "b3a2",
+            "d6e5",
+            "h4h3"
+          ],
+          "rating": 884,
+          "tags": [
+            "crushing",
+            "endgame",
+            "hangingPiece",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 452,
+          "deviation": 76,
+          "san": [
+            "Kxa2",
+            "Ke5",
+            "h3"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300316,
+              "score": 838,
+              "gap": 1306
+            },
+            {
+              "depth": 16,
+              "nodes": 300288,
+              "score": 726,
+              "gap": 693
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-loose-check-5",
+          "theme": "board-loose-check",
+          "goal": "Win the loose piece"
+        },
+        {
+          "sourceId": "0skEg",
+          "setupFen": "8/8/3k2Np/1p1p3P/2p4r/2P1K3/8/8 b - - 5 52",
+          "setupMove": "d6c5",
+          "fen": "8/8/6Np/1pkp3P/2p4r/2P1K3/8/8 w - - 6 53",
+          "line": [
+            "g6h4",
+            "b5b4",
+            "c3b4"
+          ],
+          "rating": 895,
+          "tags": [
+            "crushing",
+            "endgame",
+            "hangingPiece",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 484,
+          "deviation": 76,
+          "san": [
+            "Nxh4",
+            "b4",
+            "cxb4+"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300103,
+              "score": 334,
+              "gap": 875
+            },
+            {
+              "depth": 16,
+              "nodes": 300228,
+              "score": 417,
+              "gap": 405
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-loose-check-6",
+          "theme": "board-loose-check",
+          "goal": "Win the loose piece"
+        },
+        {
+          "sourceId": "1dNQO",
+          "setupFen": "8/p7/p4n2/8/2P2k2/3K1pp1/8/5N1B w - - 0 44",
+          "setupMove": "h1f3",
+          "fen": "8/p7/p4n2/8/2P2k2/3K1Bp1/8/5N2 b - - 0 44",
+          "line": [
+            "f4f3",
+            "f1g3",
+            "f3g3"
+          ],
+          "rating": 901,
+          "tags": [
+            "crushing",
+            "endgame",
+            "hangingPiece",
+            "short"
+          ],
+          "popularity": 91,
+          "plays": 396,
+          "deviation": 84,
+          "san": [
+            "Kxf3",
+            "Nxg3",
+            "Kxg3"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300228,
+              "score": 471,
+              "gap": 417
+            },
+            {
+              "depth": 19,
+              "nodes": 300085,
+              "score": 436,
+              "gap": 416
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-loose-check-7",
+          "theme": "board-loose-check",
+          "goal": "Win the loose piece"
+        },
+        {
+          "sourceId": "0dm3n",
+          "setupFen": "8/3Qbpk1/6p1/4q2n/1PN2p2/5P2/6PP/3r1B1K w - - 0 43",
+          "setupMove": "c4e5",
+          "fen": "8/3Qbpk1/6p1/4N2n/1P3p2/5P2/6PP/3r1B1K b - - 0 43",
+          "line": [
+            "d1f1"
+          ],
+          "rating": 904,
+          "tags": [
+            "backRankMate",
+            "endgame",
+            "hangingPiece",
+            "master",
+            "mate",
+            "mateIn1",
+            "oneMove"
+          ],
+          "popularity": 95,
+          "plays": 2254,
+          "deviation": 85,
+          "san": [
+            "Rxf1#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-loose-check-8",
+          "theme": "board-loose-check",
+          "goal": "Win the loose piece"
+        },
+        {
+          "sourceId": "09vi3",
+          "setupFen": "1k3r2/1p2Q3/p1q4b/3p4/3P1P2/2P1N3/1P1K4/8 b - - 2 37",
+          "setupMove": "h6f4",
+          "fen": "1k3r2/1p2Q3/p1q5/3p4/3P1b2/2P1N3/1P1K4/8 w - - 0 38",
+          "line": [
+            "e7f8",
+            "b8a7",
+            "f8f4"
+          ],
+          "rating": 908,
+          "tags": [
+            "crushing",
+            "endgame",
+            "fork",
+            "hangingPiece",
+            "master",
+            "short"
+          ],
+          "popularity": 94,
+          "plays": 2019,
+          "deviation": 79,
+          "san": [
+            "Qxf8+",
+            "Ka7",
+            "Qxf4"
+          ],
+          "checks": [
+            {
+              "depth": 16,
+              "nodes": 300010,
+              "score": 433,
+              "gap": 999
+            },
+            {
+              "depth": 19,
+              "nodes": 300081,
+              "score": 463,
+              "gap": 381
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-loose-check-9",
+          "theme": "board-loose-check",
+          "goal": "Win the loose piece"
+        },
+        {
+          "sourceId": "17i4x",
+          "setupFen": "r6r/pp1R2k1/5pp1/2p5/4Bn2/8/PP3P2/1K5R b - - 2 29",
+          "setupMove": "g7f8",
+          "fen": "r4k1r/pp1R4/5pp1/2p5/4Bn2/8/PP3P2/1K5R w - - 3 30",
+          "line": [
+            "h1h8"
+          ],
+          "rating": 910,
+          "tags": [
+            "endgame",
+            "hangingPiece",
+            "mate",
+            "mateIn1",
+            "oneMove"
+          ],
+          "popularity": 98,
+          "plays": 906,
+          "deviation": 76,
+          "san": [
+            "Rxh8#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-loose-check-10",
+          "theme": "board-loose-check",
+          "goal": "Win the loose piece"
+        },
+        {
+          "sourceId": "0HfhW",
+          "setupFen": "2k4r/4R3/1p2p3/1Pp1n3/q4b2/3b1P2/1Q5p/3R3K b - - 3 48",
+          "setupMove": "e5f3",
+          "fen": "2k4r/4R3/1p2p3/1Pp5/q4b2/3b1n2/1Q5p/3R3K w - - 0 49",
+          "line": [
+            "b2h8"
+          ],
+          "rating": 914,
+          "tags": [
+            "hangingPiece",
+            "mate",
+            "mateIn1",
+            "middlegame",
+            "oneMove"
+          ],
+          "popularity": 100,
+          "plays": 673,
+          "deviation": 77,
+          "san": [
+            "Qxh8#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-loose-check-11",
+          "theme": "board-loose-check",
+          "goal": "Win the loose piece"
+        },
+        {
+          "sourceId": "1aRI6",
+          "setupFen": "6k1/p1q2p1p/1p2p1p1/8/5r2/P6R/6PP/3Q3K b - - 3 31",
+          "setupMove": "f4d4",
+          "fen": "6k1/p1q2p1p/1p2p1p1/8/3r4/P6R/6PP/3Q3K w - - 4 32",
+          "line": [
+            "d1d4",
+            "c7c1",
+            "d4g1"
+          ],
+          "rating": 916,
+          "tags": [
+            "advantage",
+            "endgame",
+            "hangingPiece",
+            "short"
+          ],
+          "popularity": 91,
+          "plays": 357,
+          "deviation": 78,
+          "san": [
+            "Qxd4",
+            "Qc1+",
+            "Qg1"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300274,
+              "score": 476,
+              "gap": 995
+            },
+            {
+              "depth": 18,
+              "nodes": 300129,
+              "score": 474,
+              "gap": 100473
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-loose-check-12",
+          "theme": "board-loose-check",
+          "goal": "Win the loose piece"
+        },
+        {
+          "sourceId": "1nDpm",
+          "setupFen": "3r1k2/2p5/2Q2Bpq/3P4/2P2P2/P5p1/6P1/4RR1K w - - 1 29",
+          "setupMove": "f6h4",
+          "fen": "3r1k2/2p5/2Q3pq/3P4/2P2P1B/P5p1/6P1/4RR1K b - - 2 29",
+          "line": [
+            "h6h4",
+            "h1g1",
+            "h4h2"
+          ],
+          "rating": 916,
+          "tags": [
+            "endgame",
+            "hangingPiece",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 92,
+          "plays": 305,
+          "deviation": 79,
+          "san": [
+            "Qxh4+",
+            "Kg1",
+            "Qh2#"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300355,
+              "score": 99998,
+              "gap": 100570
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-loose-check-13",
+          "theme": "board-loose-check",
+          "goal": "Win the loose piece"
+        },
+        {
+          "sourceId": "0GePL",
+          "setupFen": "8/Pb6/8/8/6k1/4Q1p1/7p/7K w - - 2 66",
+          "setupMove": "e3e4",
+          "fen": "8/Pb6/8/8/4Q1k1/6p1/7p/7K b - - 3 66",
+          "line": [
+            "b7e4"
+          ],
+          "rating": 924,
+          "tags": [
+            "endgame",
+            "hangingPiece",
+            "master",
+            "mate",
+            "mateIn1",
+            "oneMove"
+          ],
+          "popularity": 97,
+          "plays": 1230,
+          "deviation": 83,
+          "san": [
+            "Bxe4#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-loose-check-14",
+          "theme": "board-loose-check",
+          "goal": "Win the loose piece"
+        },
+        {
+          "sourceId": "00hbV",
+          "setupFen": "8/pk1r1bR1/1p6/8/2P2N2/1P6/1K6/8 b - - 21 60",
+          "setupMove": "f7e6",
+          "fen": "8/pk1r2R1/1p2b3/8/2P2N2/1P6/1K6/8 w - - 22 61",
+          "line": [
+            "f4e6",
+            "d7g7",
+            "e6g7"
+          ],
+          "rating": 928,
+          "tags": [
+            "crushing",
+            "endgame",
+            "hangingPiece",
+            "master",
+            "short"
+          ],
+          "popularity": 96,
+          "plays": 1753,
+          "deviation": 77,
+          "san": [
+            "Nxe6",
+            "Rxg7",
+            "Nxg7"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300249,
+              "score": 430,
+              "gap": 421
+            },
+            {
+              "depth": 19,
+              "nodes": 300204,
+              "score": 432,
+              "gap": 635
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-loose-check-15",
+          "theme": "board-loose-check",
+          "goal": "Win the loose piece"
+        }
+      ],
+      "examples": [
+        {
+          "sourceId": "0eh3O",
+          "setupFen": "8/8/8/5K2/k7/2B5/1P6/6r1 b - - 31 72",
+          "setupMove": "g1e1",
+          "fen": "8/8/8/5K2/k7/2B5/1P6/4r3 w - - 32 73",
+          "line": [
+            "c3e1",
+            "a4b3",
+            "e1c3"
+          ],
+          "rating": 936,
+          "tags": [
+            "crushing",
+            "defensiveMove",
+            "endgame",
+            "hangingPiece",
+            "short"
+          ],
+          "popularity": 90,
+          "plays": 314,
+          "deviation": 78,
+          "san": [
+            "Bxe1",
+            "Kb3",
+            "Bc3"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300108,
+              "score": 844,
+              "gap": 844
+            },
+            {
+              "depth": 14,
+              "nodes": 300198,
+              "score": 987,
+              "gap": 952
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-loose-check-example-1",
+          "theme": "board-loose-check",
+          "goal": "Win the loose piece"
+        },
+        {
+          "sourceId": "1E7XS",
+          "setupFen": "7Q/5p2/1k1p4/2pPp3/2BnP1P1/PK2n3/2r5/7R w - - 3 47",
+          "setupMove": "b3a4",
+          "fen": "7Q/5p2/1k1p4/2pPp3/K1BnP1P1/P3n3/2r5/7R b - - 4 47",
+          "line": [
+            "c2c4"
+          ],
+          "rating": 938,
+          "tags": [
+            "endgame",
+            "hangingPiece",
+            "master",
+            "mate",
+            "mateIn1",
+            "oneMove"
+          ],
+          "popularity": 95,
+          "plays": 1335,
+          "deviation": 82,
+          "san": [
+            "Rxc4#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-loose-check-example-2",
+          "theme": "board-loose-check",
+          "goal": "Win the loose piece"
+        },
+        {
+          "sourceId": "0RjO3",
+          "setupFen": "5r1k/2b2p1p/p3b3/7n/1Q3P1q/8/PP3RP1/6K1 b - - 1 34",
+          "setupMove": "c7f4",
+          "fen": "5r1k/5p1p/p3b3/7n/1Q3b1q/8/PP3RP1/6K1 w - - 0 35",
+          "line": [
+            "b4f8"
+          ],
+          "rating": 941,
+          "tags": [
+            "hangingPiece",
+            "mate",
+            "mateIn1",
+            "middlegame",
+            "oneMove"
+          ],
+          "popularity": 100,
+          "plays": 482,
+          "deviation": 84,
+          "san": [
+            "Qxf8#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-loose-check-example-3",
+          "theme": "board-loose-check",
+          "goal": "Win the loose piece"
+        }
+      ]
+    },
+    "board-one-mate-check": {
+      "practice": [
+        {
+          "sourceId": "01UaM",
+          "setupFen": "8/8/p4nk1/Pp2Br2/8/2P3PK/1P2Qr1P/8 w - - 5 46",
+          "setupMove": "e2e1",
+          "fen": "8/8/p4nk1/Pp2Br2/8/2P3PK/1P3r1P/4Q3 b - - 6 46",
+          "line": [
+            "f5h5"
+          ],
+          "rating": 903,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn1",
+            "oneMove"
+          ],
+          "popularity": 100,
+          "plays": 466,
+          "deviation": 77,
+          "san": [
+            "Rh5#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-one-mate-check-1",
+          "theme": "board-one-mate-check",
+          "goal": "Mate in one"
+        },
+        {
+          "sourceId": "08PpV",
+          "setupFen": "2R5/kp5p/6q1/p2p4/P2Pn3/1P1Q4/6KP/3R4 w - - 1 44",
+          "setupMove": "g2h1",
+          "fen": "2R5/kp5p/6q1/p2p4/P2Pn3/1P1Q4/7P/3R3K b - - 2 44",
+          "line": [
+            "e4f2"
+          ],
+          "rating": 904,
+          "tags": [
+            "cornerMate",
+            "endgame",
+            "mate",
+            "mateIn1",
+            "oneMove"
+          ],
+          "popularity": 100,
+          "plays": 383,
+          "deviation": 78,
+          "san": [
+            "Nf2#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-one-mate-check-2",
+          "theme": "board-one-mate-check",
+          "goal": "Mate in one"
+        },
+        {
+          "sourceId": "0Ckyp",
+          "setupFen": "2rk3r/6Rp/R4p2/P5p1/5p2/7P/6P1/6K1 b - - 0 35",
+          "setupMove": "h8e8",
+          "fen": "2rkr3/6Rp/R4p2/P5p1/5p2/7P/6P1/6K1 w - - 1 36",
+          "line": [
+            "a6d6"
+          ],
+          "rating": 907,
+          "tags": [
+            "endgame",
+            "epauletteMate",
+            "mate",
+            "mateIn1",
+            "oneMove",
+            "rookEndgame"
+          ],
+          "popularity": 98,
+          "plays": 543,
+          "deviation": 76,
+          "san": [
+            "Rd6#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-one-mate-check-3",
+          "theme": "board-one-mate-check",
+          "goal": "Mate in one"
+        },
+        {
+          "sourceId": "0EMGo",
+          "setupFen": "8/8/2p3p1/3b2pk/3Q4/5PK1/r5P1/8 b - - 3 44",
+          "setupMove": "h5h6",
+          "fen": "8/8/2p3pk/3b2p1/3Q4/5PK1/r5P1/8 w - - 4 45",
+          "line": [
+            "d4h8"
+          ],
+          "rating": 907,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn1",
+            "oneMove"
+          ],
+          "popularity": 100,
+          "plays": 548,
+          "deviation": 76,
+          "san": [
+            "Qh8#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-one-mate-check-4",
+          "theme": "board-one-mate-check",
+          "goal": "Mate in one"
+        },
+        {
+          "sourceId": "0A0OX",
+          "setupFen": "7R/p4p2/1p2pkp1/7p/3Q4/8/PP3KNr/7q b - - 17 36",
+          "setupMove": "f6f5",
+          "fen": "7R/p4p2/1p2p1p1/5k1p/3Q4/8/PP3KNr/7q w - - 18 37",
+          "line": [
+            "d4f4"
+          ],
+          "rating": 908,
+          "tags": [
+            "endgame",
+            "master",
+            "mate",
+            "mateIn1",
+            "oneMove",
+            "swallowstailMate"
+          ],
+          "popularity": 100,
+          "plays": 386,
+          "deviation": 78,
+          "san": [
+            "Qf4#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-one-mate-check-5",
+          "theme": "board-one-mate-check",
+          "goal": "Mate in one"
+        },
+        {
+          "sourceId": "0G6Rr",
+          "setupFen": "4Q1k1/5q1p/5P1Q/p1n1p3/2Pp3B/1P5P/2n4K/8 b - - 0 38",
+          "setupMove": "f7e8",
+          "fen": "4q1k1/7p/5P1Q/p1n1p3/2Pp3B/1P5P/2n4K/8 w - - 0 39",
+          "line": [
+            "h6g7"
+          ],
+          "rating": 909,
+          "tags": [
+            "endgame",
+            "master",
+            "masterVsMaster",
+            "mate",
+            "mateIn1",
+            "oneMove"
+          ],
+          "popularity": 98,
+          "plays": 1926,
+          "deviation": 78,
+          "san": [
+            "Qg7#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-one-mate-check-6",
+          "theme": "board-one-mate-check",
+          "goal": "Mate in one"
+        },
+        {
+          "sourceId": "0AAnQ",
+          "setupFen": "6k1/5p2/3Q3p/5q1K/2P3p1/P4PP1/3R1B1P/1r6 w - - 0 40",
+          "setupMove": "h5h4",
+          "fen": "6k1/5p2/3Q3p/5q2/2P3pK/P4PP1/3R1B1P/1r6 b - - 1 40",
+          "line": [
+            "f5g5"
+          ],
+          "rating": 911,
+          "tags": [
+            "endgame",
+            "master",
+            "mate",
+            "mateIn1",
+            "oneMove"
+          ],
+          "popularity": 100,
+          "plays": 481,
+          "deviation": 76,
+          "san": [
+            "Qg5#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-one-mate-check-7",
+          "theme": "board-one-mate-check",
+          "goal": "Mate in one"
+        },
+        {
+          "sourceId": "0FHEz",
+          "setupFen": "4R3/p1p2k2/2p3pp/2q5/5Pb1/8/P1P4P/4Q2K w - - 2 34",
+          "setupMove": "e8e5",
+          "fen": "8/p1p2k2/2p3pp/2q1R3/5Pb1/8/P1P4P/4Q2K b - - 3 34",
+          "line": [
+            "g4f3"
+          ],
+          "rating": 914,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn1",
+            "oneMove"
+          ],
+          "popularity": 94,
+          "plays": 441,
+          "deviation": 80,
+          "san": [
+            "Bf3#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-one-mate-check-8",
+          "theme": "board-one-mate-check",
+          "goal": "Mate in one"
+        },
+        {
+          "sourceId": "01zHy",
+          "setupFen": "8/3r2pp/R7/3pkP2/6P1/4K3/7P/8 b - - 0 42",
+          "setupMove": "h7h5",
+          "fen": "8/3r2p1/R7/3pkP1p/6P1/4K3/7P/8 w - - 0 43",
+          "line": [
+            "a6e6"
+          ],
+          "rating": 925,
+          "tags": [
+            "endgame",
+            "epauletteMate",
+            "master",
+            "mate",
+            "mateIn1",
+            "oneMove",
+            "rookEndgame"
+          ],
+          "popularity": 96,
+          "plays": 335,
+          "deviation": 85,
+          "san": [
+            "Re6#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-one-mate-check-9",
+          "theme": "board-one-mate-check",
+          "goal": "Mate in one"
+        },
+        {
+          "sourceId": "00AfZ",
+          "setupFen": "2r3kR/Q7/5q2/1brpN3/5Pp1/4P1P1/6K1/1B6 b - - 2 43",
+          "setupMove": "f6h8",
+          "fen": "2r3kq/Q7/8/1brpN3/5Pp1/4P1P1/6K1/1B6 w - - 0 44",
+          "line": [
+            "a7f7"
+          ],
+          "rating": 926,
+          "tags": [
+            "master",
+            "mate",
+            "mateIn1",
+            "middlegame",
+            "oneMove"
+          ],
+          "popularity": 100,
+          "plays": 563,
+          "deviation": 77,
+          "san": [
+            "Qf7#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-one-mate-check-10",
+          "theme": "board-one-mate-check",
+          "goal": "Mate in one"
+        },
+        {
+          "sourceId": "02Pxu",
+          "setupFen": "6k1/R7/6K1/7P/8/6p1/8/7r b - - 3 58",
+          "setupMove": "g3g2",
+          "fen": "6k1/R7/6K1/7P/8/8/6p1/7r w - - 0 59",
+          "line": [
+            "a7a8"
+          ],
+          "rating": 929,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn1",
+            "oneMove",
+            "rookEndgame"
+          ],
+          "popularity": 96,
+          "plays": 3822,
+          "deviation": 80,
+          "san": [
+            "Ra8#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-one-mate-check-11",
+          "theme": "board-one-mate-check",
+          "goal": "Mate in one"
+        },
+        {
+          "sourceId": "0C552",
+          "setupFen": "r6k/3R1Qp1/2p4p/1p4P1/p6P/3P3K/8/6q1 b - - 8 38",
+          "setupMove": "a4a3",
+          "fen": "r6k/3R1Qp1/2p4p/1p4P1/7P/p2P3K/8/6q1 w - - 0 39",
+          "line": [
+            "f7g7"
+          ],
+          "rating": 933,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn1",
+            "oneMove"
+          ],
+          "popularity": 100,
+          "plays": 508,
+          "deviation": 75,
+          "san": [
+            "Qxg7#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-one-mate-check-12",
+          "theme": "board-one-mate-check",
+          "goal": "Mate in one"
+        },
+        {
+          "sourceId": "00fDM",
+          "setupFen": "3rrbk1/2p3R1/1p2q2Q/3p4/1P6/2B4P/6P1/3R2K1 b - - 0 33",
+          "setupMove": "f8g7",
+          "fen": "3rr1k1/2p3b1/1p2q2Q/3p4/1P6/2B4P/6P1/3R2K1 w - - 0 34",
+          "line": [
+            "h6g7"
+          ],
+          "rating": 937,
+          "tags": [
+            "mate",
+            "mateIn1",
+            "middlegame",
+            "oneMove"
+          ],
+          "popularity": 99,
+          "plays": 890,
+          "deviation": 77,
+          "san": [
+            "Qxg7#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-one-mate-check-13",
+          "theme": "board-one-mate-check",
+          "goal": "Mate in one"
+        },
+        {
+          "sourceId": "05jQI",
+          "setupFen": "R7/P7/8/5p2/5k1p/8/6PK/r7 w - - 10 69",
+          "setupMove": "h2h3",
+          "fen": "R7/P7/8/5p2/5k1p/7K/6P1/r7 b - - 11 69",
+          "line": [
+            "a1h1"
+          ],
+          "rating": 940,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn1",
+            "oneMove",
+            "rookEndgame"
+          ],
+          "popularity": 97,
+          "plays": 417,
+          "deviation": 79,
+          "san": [
+            "Rh1#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-one-mate-check-14",
+          "theme": "board-one-mate-check",
+          "goal": "Mate in one"
+        },
+        {
+          "sourceId": "07wTU",
+          "setupFen": "8/6R1/7p/3n3k/8/4P1PK/1r3P1P/8 b - - 1 46",
+          "setupMove": "b2f2",
+          "fen": "8/6R1/7p/3n3k/8/4P1PK/5r1P/8 w - - 0 47",
+          "line": [
+            "g3g4"
+          ],
+          "rating": 940,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn1",
+            "oneMove"
+          ],
+          "popularity": 98,
+          "plays": 1130,
+          "deviation": 77,
+          "san": [
+            "g4#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-one-mate-check-15",
+          "theme": "board-one-mate-check",
+          "goal": "Mate in one"
+        }
+      ],
+      "examples": [
+        {
+          "sourceId": "0DmSJ",
+          "setupFen": "6k1/1b3p1p/p3q1p1/1p6/3B1P1Q/P1P4P/6PK/8 b - - 2 32",
+          "setupMove": "e6f5",
+          "fen": "6k1/1b3p1p/p5p1/1p3q2/3B1P1Q/P1P4P/6PK/8 w - - 3 33",
+          "line": [
+            "h4d8"
+          ],
+          "rating": 940,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn1",
+            "oneMove"
+          ],
+          "popularity": 95,
+          "plays": 1018,
+          "deviation": 83,
+          "san": [
+            "Qd8#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-one-mate-check-example-1",
+          "theme": "board-one-mate-check",
+          "goal": "Mate in one"
+        },
+        {
+          "sourceId": "05P6M",
+          "setupFen": "1Q6/8/p3qppk/p2p3p/8/2P1rNN1/6K1/8 b - - 3 39",
+          "setupMove": "h5h4",
+          "fen": "1Q6/8/p3qppk/p2p4/7p/2P1rNN1/6K1/8 w - - 0 40",
+          "line": [
+            "b8h8"
+          ],
+          "rating": 943,
+          "tags": [
+            "endgame",
+            "master",
+            "mate",
+            "mateIn1",
+            "oneMove"
+          ],
+          "popularity": 97,
+          "plays": 1177,
+          "deviation": 85,
+          "san": [
+            "Qh8#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-one-mate-check-example-2",
+          "theme": "board-one-mate-check",
+          "goal": "Mate in one"
+        },
+        {
+          "sourceId": "050re",
+          "setupFen": "6k1/5pp1/R3p2p/4N3/4PK2/P4P2/2n3rP/8 w - - 2 34",
+          "setupMove": "a3a4",
+          "fen": "6k1/5pp1/R3p2p/4N3/P3PK2/5P2/2n3rP/8 b - - 0 34",
+          "line": [
+            "g7g5"
+          ],
+          "rating": 944,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn1",
+            "oneMove"
+          ],
+          "popularity": 91,
+          "plays": 577,
+          "deviation": 79,
+          "san": [
+            "g5#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-one-mate-check-example-3",
+          "theme": "board-one-mate-check",
+          "goal": "Mate in one"
+        }
+      ]
+    },
+    "board-forks-check": {
+      "practice": [
+        {
+          "sourceId": "0Mia5",
+          "setupFen": "8/5p1k/5N1p/6p1/8/3q1BP1/5PKP/8 b - - 2 37",
+          "setupMove": "h7g6",
+          "fen": "8/5p2/5Nkp/6p1/8/3q1BP1/5PKP/8 w - - 3 38",
+          "line": [
+            "f3e4",
+            "d3e4",
+            "f6e4"
+          ],
+          "rating": 876,
+          "tags": [
+            "advantage",
+            "endgame",
+            "fork",
+            "short"
+          ],
+          "popularity": 97,
+          "plays": 2088,
+          "deviation": 82,
+          "san": [
+            "Be4+",
+            "Qxe4+",
+            "Nxe4"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300122,
+              "score": 454,
+              "gap": 554
+            },
+            {
+              "depth": 18,
+              "nodes": 300345,
+              "score": 457,
+              "gap": 1235
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-forks-check-1",
+          "theme": "board-forks-check",
+          "goal": "Find the fork"
+        },
+        {
+          "sourceId": "01NVd",
+          "setupFen": "8/1K3Npk/5n2/R6p/7r/p7/8/8 b - - 1 48",
+          "setupMove": "h4h3",
+          "fen": "8/1K3Npk/5n2/R6p/8/p6r/8/8 w - - 2 49",
+          "line": [
+            "f7g5",
+            "h7g6",
+            "g5h3"
+          ],
+          "rating": 886,
+          "tags": [
+            "advantage",
+            "endgame",
+            "fork",
+            "master",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 631,
+          "deviation": 77,
+          "san": [
+            "Ng5+",
+            "Kg6",
+            "Nxh3"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300123,
+              "score": 226,
+              "gap": 653
+            },
+            {
+              "depth": 18,
+              "nodes": 300371,
+              "score": 260,
+              "gap": 732
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-forks-check-2",
+          "theme": "board-forks-check",
+          "goal": "Find the fork"
+        },
+        {
+          "sourceId": "01tZS",
+          "setupFen": "r5k1/p4pp1/2pB4/6P1/2p3np/P1N5/BPP5/5K2 w - - 0 26",
+          "setupMove": "a2c4",
+          "fen": "r5k1/p4pp1/2pB4/6P1/2B3np/P1N5/1PP5/5K2 b - - 0 26",
+          "line": [
+            "g4e3",
+            "f1f2",
+            "e3c4"
+          ],
+          "rating": 887,
+          "tags": [
+            "advantage",
+            "endgame",
+            "fork",
+            "short"
+          ],
+          "popularity": 99,
+          "plays": 890,
+          "deviation": 78,
+          "san": [
+            "Ne3+",
+            "Kf2",
+            "Nxc4"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300253,
+              "score": 475,
+              "gap": 483
+            },
+            {
+              "depth": 18,
+              "nodes": 300214,
+              "score": 479,
+              "gap": 546
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-forks-check-3",
+          "theme": "board-forks-check",
+          "goal": "Find the fork"
+        },
+        {
+          "sourceId": "09IyZ",
+          "setupFen": "2b5/5k1p/p4P2/1p6/2n5/P6r/1P3R2/4R1K1 b - - 1 34",
+          "setupMove": "c8b7",
+          "fen": "8/1b3k1p/p4P2/1p6/2n5/P6r/1P3R2/4R1K1 w - - 2 35",
+          "line": [
+            "e1e7",
+            "f7f8",
+            "e7b7"
+          ],
+          "rating": 892,
+          "tags": [
+            "advantage",
+            "endgame",
+            "fork",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 736,
+          "deviation": 79,
+          "san": [
+            "Re7+",
+            "Kf8",
+            "Rxb7"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300047,
+              "score": 405,
+              "gap": 571
+            },
+            {
+              "depth": 19,
+              "nodes": 300105,
+              "score": 406,
+              "gap": 418
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-forks-check-4",
+          "theme": "board-forks-check",
+          "goal": "Find the fork"
+        },
+        {
+          "sourceId": "00Gvp",
+          "setupFen": "8/2kn1p2/8/3P4/R7/2P1N3/1r2K3/8 w - - 13 70",
+          "setupMove": "e2d3",
+          "fen": "8/2kn1p2/8/3P4/R7/2PKN3/1r6/8 b - - 14 70",
+          "line": [
+            "d7c5",
+            "d3d4",
+            "c5a4"
+          ],
+          "rating": 896,
+          "tags": [
+            "advantage",
+            "endgame",
+            "fork",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 381,
+          "deviation": 75,
+          "san": [
+            "Nc5+",
+            "Kd4",
+            "Nxa4"
+          ],
+          "checks": [
+            {
+              "depth": 15,
+              "nodes": 300108,
+              "score": 376,
+              "gap": 461
+            },
+            {
+              "depth": 18,
+              "nodes": 300114,
+              "score": 380,
+              "gap": 495
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-forks-check-5",
+          "theme": "board-forks-check",
+          "goal": "Find the fork"
+        },
+        {
+          "sourceId": "0FoiC",
+          "setupFen": "4r2k/p4R1p/1p3p2/8/8/2q5/P4PPP/3Q2K1 w - - 0 29",
+          "setupMove": "g2g3",
+          "fen": "4r2k/p4R1p/1p3p2/8/8/2q3P1/P4P1P/3Q2K1 b - - 0 29",
+          "line": [
+            "e8e1",
+            "d1e1",
+            "c3e1"
+          ],
+          "rating": 901,
+          "tags": [
+            "crushing",
+            "endgame",
+            "fork",
+            "short"
+          ],
+          "popularity": 91,
+          "plays": 500,
+          "deviation": 82,
+          "san": [
+            "Re1+",
+            "Qxe1",
+            "Qxe1+"
+          ],
+          "checks": [
+            {
+              "depth": 15,
+              "nodes": 300218,
+              "score": 485,
+              "gap": 604
+            },
+            {
+              "depth": 16,
+              "nodes": 300326,
+              "score": 528,
+              "gap": 1179
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-forks-check-6",
+          "theme": "board-forks-check",
+          "goal": "Find the fork"
+        },
+        {
+          "sourceId": "0EFPa",
+          "setupFen": "1q6/6pk/p2pQ1pp/B3p3/1p6/7P/P4PP1/5K2 w - - 0 37",
+          "setupMove": "e6b3",
+          "fen": "1q6/6pk/p2p2pp/B3p3/1p6/1Q5P/P4PP1/5K2 b - - 1 37",
+          "line": [
+            "b8b5",
+            "f1g1",
+            "b5a5"
+          ],
+          "rating": 903,
+          "tags": [
+            "advantage",
+            "endgame",
+            "fork",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 902,
+          "deviation": 76,
+          "san": [
+            "Qb5+",
+            "Kg1",
+            "Qxa5"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300309,
+              "score": 377,
+              "gap": 619
+            },
+            {
+              "depth": 18,
+              "nodes": 300393,
+              "score": 399,
+              "gap": 594
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-forks-check-7",
+          "theme": "board-forks-check",
+          "goal": "Find the fork"
+        },
+        {
+          "sourceId": "0HeCz",
+          "setupFen": "8/2r4p/p5p1/2BK4/8/1PP2k1P/8/8 b - - 2 42",
+          "setupMove": "f3g3",
+          "fen": "8/2r4p/p5p1/2BK4/8/1PP3kP/8/8 w - - 3 43",
+          "line": [
+            "c5d6",
+            "g3h4",
+            "d6c7"
+          ],
+          "rating": 904,
+          "tags": [
+            "crushing",
+            "endgame",
+            "fork",
+            "master",
+            "short"
+          ],
+          "popularity": 99,
+          "plays": 1240,
+          "deviation": 75,
+          "san": [
+            "Bd6+",
+            "Kh4",
+            "Bxc7"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300045,
+              "score": 635,
+              "gap": 687
+            },
+            {
+              "depth": 17,
+              "nodes": 300083,
+              "score": 648,
+              "gap": 732
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-forks-check-8",
+          "theme": "board-forks-check",
+          "goal": "Find the fork"
+        },
+        {
+          "sourceId": "0MWTb",
+          "setupFen": "8/8/4kp2/7p/2q1BN2/5PK1/6P1/8 b - - 4 42",
+          "setupMove": "e6f7",
+          "fen": "8/5k2/5p2/7p/2q1BN2/5PK1/6P1/8 w - - 5 43",
+          "line": [
+            "e4d5",
+            "c4d5",
+            "f4d5"
+          ],
+          "rating": 914,
+          "tags": [
+            "crushing",
+            "endgame",
+            "fork",
+            "short"
+          ],
+          "popularity": 91,
+          "plays": 1609,
+          "deviation": 84,
+          "san": [
+            "Bd5+",
+            "Qxd5",
+            "Nxd5"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300201,
+              "score": 670,
+              "gap": 773
+            },
+            {
+              "depth": 18,
+              "nodes": 300393,
+              "score": 705,
+              "gap": 1204
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-forks-check-9",
+          "theme": "board-forks-check",
+          "goal": "Find the fork"
+        },
+        {
+          "sourceId": "07nGX",
+          "setupFen": "5bk1/3N1p2/4p3/r3P1pp/2R5/6P1/5P1P/6K1 b - - 2 36",
+          "setupMove": "a5d5",
+          "fen": "5bk1/3N1p2/4p3/3rP1pp/2R5/6P1/5P1P/6K1 w - - 3 37",
+          "line": [
+            "d7f6",
+            "g8g7",
+            "f6d5"
+          ],
+          "rating": 919,
+          "tags": [
+            "advantage",
+            "endgame",
+            "fork",
+            "master",
+            "short"
+          ],
+          "popularity": 96,
+          "plays": 1585,
+          "deviation": 84,
+          "san": [
+            "Nf6+",
+            "Kg7",
+            "Nxd5"
+          ],
+          "checks": [
+            {
+              "depth": 16,
+              "nodes": 300023,
+              "score": 450,
+              "gap": 442
+            },
+            {
+              "depth": 17,
+              "nodes": 300177,
+              "score": 443,
+              "gap": 427
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-forks-check-10",
+          "theme": "board-forks-check",
+          "goal": "Find the fork"
+        },
+        {
+          "sourceId": "08gHo",
+          "setupFen": "8/8/8/2r2pkP/6P1/R4PK1/8/8 w - - 0 63",
+          "setupMove": "a3e3",
+          "fen": "8/8/8/2r2pkP/6P1/4RPK1/8/8 b - - 1 63",
+          "line": [
+            "f5f4",
+            "g3f2",
+            "f4e3"
+          ],
+          "rating": 920,
+          "tags": [
+            "crushing",
+            "endgame",
+            "fork",
+            "rookEndgame",
+            "short"
+          ],
+          "popularity": 97,
+          "plays": 467,
+          "deviation": 77,
+          "san": [
+            "f4+",
+            "Kf2",
+            "fxe3+"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300331,
+              "score": 481,
+              "gap": 482
+            },
+            {
+              "depth": 19,
+              "nodes": 300195,
+              "score": 473,
+              "gap": 731
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-forks-check-11",
+          "theme": "board-forks-check",
+          "goal": "Find the fork"
+        },
+        {
+          "sourceId": "05rdh",
+          "setupFen": "3q3k/6bp/4B1p1/p1p5/1p6/P6P/1PQ3P1/4R1K1 w - - 0 29",
+          "setupMove": "c2c5",
+          "fen": "3q3k/6bp/4B1p1/p1Q5/1p6/P6P/1P4P1/4R1K1 b - - 0 29",
+          "line": [
+            "g7d4",
+            "c5d4",
+            "d8d4"
+          ],
+          "rating": 921,
+          "tags": [
+            "advantage",
+            "endgame",
+            "fork",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 347,
+          "deviation": 76,
+          "san": [
+            "Bd4+",
+            "Qxd4+",
+            "Qxd4+"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300316,
+              "score": 306,
+              "gap": 698
+            },
+            {
+              "depth": 19,
+              "nodes": 300315,
+              "score": 294,
+              "gap": 100293
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-forks-check-12",
+          "theme": "board-forks-check",
+          "goal": "Find the fork"
+        },
+        {
+          "sourceId": "09yh3",
+          "setupFen": "8/4npk1/4b3/R3K2P/6P1/8/8/8 w - - 5 50",
+          "setupMove": "g4g5",
+          "fen": "8/4npk1/4b3/R3K1PP/8/8/8/8 b - - 0 50",
+          "line": [
+            "e7c6",
+            "e5e4",
+            "c6a5"
+          ],
+          "rating": 922,
+          "tags": [
+            "crushing",
+            "endgame",
+            "fork",
+            "master",
+            "masterVsMaster",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 806,
+          "deviation": 77,
+          "san": [
+            "Nc6+",
+            "Ke4",
+            "Nxa5"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300249,
+              "score": 396,
+              "gap": 396
+            },
+            {
+              "depth": 17,
+              "nodes": 300366,
+              "score": 476,
+              "gap": 480
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-forks-check-13",
+          "theme": "board-forks-check",
+          "goal": "Find the fork"
+        },
+        {
+          "sourceId": "06IQw",
+          "setupFen": "8/8/p3k2p/5R1b/5K2/8/8/8 b - - 0 46",
+          "setupMove": "h5e2",
+          "fen": "8/8/p3k2p/5R2/5K2/8/4b3/8 w - - 1 47",
+          "line": [
+            "f5e5",
+            "e6d6",
+            "e5e2"
+          ],
+          "rating": 930,
+          "tags": [
+            "crushing",
+            "endgame",
+            "fork",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 391,
+          "deviation": 77,
+          "san": [
+            "Re5+",
+            "Kd6",
+            "Rxe2"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300179,
+              "score": 474,
+              "gap": 429
+            },
+            {
+              "depth": 18,
+              "nodes": 300085,
+              "score": 474,
+              "gap": 460
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-forks-check-14",
+          "theme": "board-forks-check",
+          "goal": "Find the fork"
+        },
+        {
+          "sourceId": "0M9mc",
+          "setupFen": "8/p3b3/5p2/2pNpk1p/2P5/2K2P1P/PP4r1/4R3 b - - 5 30",
+          "setupMove": "e7d8",
+          "fen": "3b4/p7/5p2/2pNpk1p/2P5/2K2P1P/PP4r1/4R3 w - - 6 31",
+          "line": [
+            "d5e3",
+            "f5f4",
+            "e3g2"
+          ],
+          "rating": 930,
+          "tags": [
+            "advantage",
+            "endgame",
+            "fork",
+            "master",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 427,
+          "deviation": 81,
+          "san": [
+            "Ne3+",
+            "Kf4",
+            "Nxg2+"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300272,
+              "score": 463,
+              "gap": 440
+            },
+            {
+              "depth": 17,
+              "nodes": 300338,
+              "score": 479,
+              "gap": 663
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-forks-check-15",
+          "theme": "board-forks-check",
+          "goal": "Find the fork"
+        }
+      ],
+      "examples": [
+        {
+          "sourceId": "03yAU",
+          "setupFen": "8/5ppk/4n2p/1R6/4K3/8/6PP/8 w - - 3 42",
+          "setupMove": "e4f5",
+          "fen": "8/5ppk/4n2p/1R3K2/8/8/6PP/8 b - - 4 42",
+          "line": [
+            "e6d4",
+            "f5e5",
+            "d4b5"
+          ],
+          "rating": 933,
+          "tags": [
+            "advantage",
+            "endgame",
+            "fork",
+            "short"
+          ],
+          "popularity": 99,
+          "plays": 741,
+          "deviation": 77,
+          "san": [
+            "Nd4+",
+            "Ke5",
+            "Nxb5"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300372,
+              "score": 489,
+              "gap": 544
+            },
+            {
+              "depth": 18,
+              "nodes": 300205,
+              "score": 501,
+              "gap": 405
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-forks-check-example-1",
+          "theme": "board-forks-check",
+          "goal": "Find the fork"
+        },
+        {
+          "sourceId": "0Dep4",
+          "setupFen": "3r2k1/5p2/p4Pp1/4N1P1/7R/1pP3n1/1P4P1/2K5 w - - 0 33",
+          "setupMove": "h4d4",
+          "fen": "3r2k1/5p2/p4Pp1/4N1P1/3R4/1pP3n1/1P4P1/2K5 b - - 1 33",
+          "line": [
+            "g3e2",
+            "c1d2",
+            "e2d4"
+          ],
+          "rating": 933,
+          "tags": [
+            "advantage",
+            "endgame",
+            "fork",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 500,
+          "deviation": 80,
+          "san": [
+            "Ne2+",
+            "Kd2",
+            "Nxd4"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300000,
+              "score": 476,
+              "gap": 485
+            },
+            {
+              "depth": 18,
+              "nodes": 300088,
+              "score": 472,
+              "gap": 607
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-forks-check-example-2",
+          "theme": "board-forks-check",
+          "goal": "Find the fork"
+        },
+        {
+          "sourceId": "0LHoi",
+          "setupFen": "8/5p2/2R1b1k1/8/8/1r2n2P/6PK/3R4 w - - 4 49",
+          "setupMove": "d1d2",
+          "fen": "8/5p2/2R1b1k1/8/8/1r2n2P/3R2PK/8 b - - 5 49",
+          "line": [
+            "e3f1",
+            "h2g1",
+            "f1d2"
+          ],
+          "rating": 936,
+          "tags": [
+            "advantage",
+            "endgame",
+            "fork",
+            "short"
+          ],
+          "popularity": 98,
+          "plays": 599,
+          "deviation": 78,
+          "san": [
+            "Nf1+",
+            "Kg1",
+            "Nxd2"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300276,
+              "score": 521,
+              "gap": 488
+            },
+            {
+              "depth": 18,
+              "nodes": 300058,
+              "score": 503,
+              "gap": 480
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-forks-check-example-3",
+          "theme": "board-forks-check",
+          "goal": "Find the fork"
+        }
+      ]
+    },
+    "board-pins-check": {
+      "practice": [
+        {
+          "sourceId": "1gPum",
+          "setupFen": "8/pp4rk/3P3p/5bq1/1P6/P4Q1P/7K/5R2 b - - 3 32",
+          "setupMove": "g5g6",
+          "fen": "8/pp4rk/3P2qp/5b2/1P6/P4Q1P/7K/5R2 w - - 4 33",
+          "line": [
+            "f3f5",
+            "g6f5",
+            "f1f5"
+          ],
+          "rating": 945,
+          "tags": [
+            "crushing",
+            "endgame",
+            "master",
+            "pin",
+            "short"
+          ],
+          "popularity": 97,
+          "plays": 1063,
+          "deviation": 78,
+          "san": [
+            "Qxf5",
+            "Qxf5",
+            "Rxf5"
+          ],
+          "checks": [
+            {
+              "depth": 16,
+              "nodes": 300204,
+              "score": 262,
+              "gap": 818
+            },
+            {
+              "depth": 18,
+              "nodes": 300289,
+              "score": 301,
+              "gap": 100298
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-pins-check-1",
+          "theme": "board-pins-check",
+          "goal": "Use the pin"
+        },
+        {
+          "sourceId": "17nXQ",
+          "setupFen": "r7/6k1/6p1/p1p2p2/1p3P2/1P1Pr1N1/PKP5/6R1 b - - 3 32",
+          "setupMove": "a8h8",
+          "fen": "7r/6k1/6p1/p1p2p2/1p3P2/1P1Pr1N1/PKP5/6R1 w - - 4 33",
+          "line": [
+            "g3f5",
+            "g7f6",
+            "f5e3"
+          ],
+          "rating": 949,
+          "tags": [
+            "crushing",
+            "endgame",
+            "pin",
+            "short"
+          ],
+          "popularity": 92,
+          "plays": 1041,
+          "deviation": 83,
+          "san": [
+            "Nxf5+",
+            "Kf6",
+            "Nxe3"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300301,
+              "score": 538,
+              "gap": 912
+            },
+            {
+              "depth": 18,
+              "nodes": 300359,
+              "score": 543,
+              "gap": 648
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-pins-check-2",
+          "theme": "board-pins-check",
+          "goal": "Use the pin"
+        },
+        {
+          "sourceId": "0gzNE",
+          "setupFen": "8/8/2kp4/4p1R1/3nP3/5P1P/3r2PK/4R3 w - - 2 44",
+          "setupMove": "g5g8",
+          "fen": "6R1/8/2kp4/4p3/3nP3/5P1P/3r2PK/4R3 b - - 3 44",
+          "line": [
+            "d4f3",
+            "h2g3",
+            "f3e1"
+          ],
+          "rating": 950,
+          "tags": [
+            "advantage",
+            "endgame",
+            "pin",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 1069,
+          "deviation": 77,
+          "san": [
+            "Nxf3+",
+            "Kg3",
+            "Nxe1"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300111,
+              "score": 300,
+              "gap": 716
+            },
+            {
+              "depth": 18,
+              "nodes": 300206,
+              "score": 340,
+              "gap": 725
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-pins-check-3",
+          "theme": "board-pins-check",
+          "goal": "Use the pin"
+        },
+        {
+          "sourceId": "0JTxv",
+          "setupFen": "8/1R3p2/3Npk2/4n1p1/P6p/2P4P/1P3rPK/8 w - - 0 39",
+          "setupMove": "a4a5",
+          "fen": "8/1R3p2/3Npk2/P3n1p1/7p/2P4P/1P3rPK/8 b - - 0 39",
+          "line": [
+            "e5f3",
+            "h2h1",
+            "f2f1"
+          ],
+          "rating": 951,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn2",
+            "pin",
+            "short"
+          ],
+          "popularity": 96,
+          "plays": 1334,
+          "deviation": 81,
+          "san": [
+            "Nf3+",
+            "Kh1",
+            "Rf1#"
+          ],
+          "checks": [
+            {
+              "depth": 22,
+              "nodes": 51228,
+              "score": 99998,
+              "gap": 99998
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-pins-check-4",
+          "theme": "board-pins-check",
+          "goal": "Use the pin"
+        },
+        {
+          "sourceId": "0UUS7",
+          "setupFen": "r5k1/pq3pp1/4p3/6Q1/4N3/1P6/r4PPP/4R1K1 b - - 0 26",
+          "setupMove": "b7b3",
+          "fen": "r5k1/p4pp1/4p3/6Q1/4N3/1q6/r4PPP/4R1K1 w - - 0 27",
+          "line": [
+            "e4f6",
+            "g8h8",
+            "g5h5"
+          ],
+          "rating": 951,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn2",
+            "pin",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 620,
+          "deviation": 78,
+          "san": [
+            "Nf6+",
+            "Kh8",
+            "Qh5#"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300290,
+              "score": 99998,
+              "gap": 100236
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-pins-check-5",
+          "theme": "board-pins-check",
+          "goal": "Use the pin"
+        },
+        {
+          "sourceId": "08cOZ",
+          "setupFen": "4rr2/pp4pk/7p/8/P7/1q1P1NP1/3QP1K1/7R b - - 1 33",
+          "setupMove": "b3e6",
+          "fen": "4rr2/pp4pk/4q2p/8/P7/3P1NP1/3QP1K1/7R w - - 2 34",
+          "line": [
+            "f3g5",
+            "h7h8",
+            "g5e6"
+          ],
+          "rating": 952,
+          "tags": [
+            "crushing",
+            "endgame",
+            "pin",
+            "short"
+          ],
+          "popularity": 94,
+          "plays": 944,
+          "deviation": 81,
+          "san": [
+            "Ng5+",
+            "Kh8",
+            "Nxe6"
+          ],
+          "checks": [
+            {
+              "depth": 16,
+              "nodes": 300073,
+              "score": 465,
+              "gap": 831
+            },
+            {
+              "depth": 17,
+              "nodes": 300353,
+              "score": 448,
+              "gap": 594
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-pins-check-6",
+          "theme": "board-pins-check",
+          "goal": "Use the pin"
+        },
+        {
+          "sourceId": "14Si8",
+          "setupFen": "8/2R3pk/1p5p/p2Pp1p1/4N1P1/3PK2P/q7/8 b - - 2 45",
+          "setupMove": "a2d5",
+          "fen": "8/2R3pk/1p5p/p2qp1p1/4N1P1/3PK2P/8/8 w - - 0 46",
+          "line": [
+            "e4f6",
+            "h7g6",
+            "f6d5"
+          ],
+          "rating": 959,
+          "tags": [
+            "crushing",
+            "endgame",
+            "pin",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 464,
+          "deviation": 78,
+          "san": [
+            "Nf6+",
+            "Kg6",
+            "Nxd5"
+          ],
+          "checks": [
+            {
+              "depth": 16,
+              "nodes": 300104,
+              "score": 712,
+              "gap": 1104
+            },
+            {
+              "depth": 18,
+              "nodes": 300242,
+              "score": 671,
+              "gap": 1033
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-pins-check-7",
+          "theme": "board-pins-check",
+          "goal": "Use the pin"
+        },
+        {
+          "sourceId": "1gokK",
+          "setupFen": "8/2pR1ppk/1p5p/pB5q/P7/6P1/5P2/5K2 b - - 3 33",
+          "setupMove": "h5f5",
+          "fen": "8/2pR1ppk/1p5p/pB3q2/P7/6P1/5P2/5K2 w - - 4 34",
+          "line": [
+            "b5d3",
+            "f5d3",
+            "d7d3"
+          ],
+          "rating": 960,
+          "tags": [
+            "crushing",
+            "endgame",
+            "pin",
+            "short"
+          ],
+          "popularity": 99,
+          "plays": 560,
+          "deviation": 78,
+          "san": [
+            "Bd3",
+            "Qxd3+",
+            "Rxd3"
+          ],
+          "checks": [
+            {
+              "depth": 15,
+              "nodes": 300031,
+              "score": 477,
+              "gap": 769
+            },
+            {
+              "depth": 18,
+              "nodes": 300197,
+              "score": 494,
+              "gap": 1495
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-pins-check-8",
+          "theme": "board-pins-check",
+          "goal": "Use the pin"
+        },
+        {
+          "sourceId": "0Qgcw",
+          "setupFen": "6RR/3rp1kp/p4p2/1b1rpPp1/1P4P1/8/5K2/8 b - - 1 44",
+          "setupMove": "g7h6",
+          "fen": "6RR/3rp2p/p4p1k/1b1rpPp1/1P4P1/8/5K2/8 w - - 2 45",
+          "line": [
+            "g8g6"
+          ],
+          "rating": 968,
+          "tags": [
+            "endgame",
+            "master",
+            "mate",
+            "mateIn1",
+            "oneMove",
+            "pin"
+          ],
+          "popularity": 96,
+          "plays": 438,
+          "deviation": 84,
+          "san": [
+            "Rg6#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-pins-check-9",
+          "theme": "board-pins-check",
+          "goal": "Use the pin"
+        },
+        {
+          "sourceId": "1GlBh",
+          "setupFen": "6rk/8/5p1p/1Q2p3/R1Pq4/6r1/5P1P/5RK1 w - - 0 39",
+          "setupMove": "h2g3",
+          "fen": "6rk/8/5p1p/1Q2p3/R1Pq4/6P1/5P2/5RK1 b - - 0 39",
+          "line": [
+            "g8g3",
+            "g1h2",
+            "d4h4"
+          ],
+          "rating": 971,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn2",
+            "pin",
+            "short"
+          ],
+          "popularity": 96,
+          "plays": 1820,
+          "deviation": 79,
+          "san": [
+            "Rxg3+",
+            "Kh2",
+            "Qh4#"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300387,
+              "score": 99998,
+              "gap": 100462
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-pins-check-10",
+          "theme": "board-pins-check",
+          "goal": "Use the pin"
+        },
+        {
+          "sourceId": "0HC4g",
+          "setupFen": "6R1/1P3p2/N4k2/4n1p1/7p/5P1P/3r2PK/8 w - - 4 43",
+          "setupMove": "b7b8q",
+          "fen": "1Q4R1/5p2/N4k2/4n1p1/7p/5P1P/3r2PK/8 b - - 0 43",
+          "line": [
+            "e5f3",
+            "h2h1",
+            "d2d1"
+          ],
+          "rating": 972,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn2",
+            "pin",
+            "short"
+          ],
+          "popularity": 96,
+          "plays": 2069,
+          "deviation": 77,
+          "san": [
+            "Nxf3+",
+            "Kh1",
+            "Rd1#"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300273,
+              "score": 99998,
+              "gap": 100793
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-pins-check-11",
+          "theme": "board-pins-check",
+          "goal": "Use the pin"
+        },
+        {
+          "sourceId": "06UQ4",
+          "setupFen": "8/5Rpk/7p/p3p2P/1pn1N1P1/2P5/r7/2K5 b - - 0 29",
+          "setupMove": "b4b3",
+          "fen": "8/5Rpk/7p/p3p2P/2n1N1P1/1pP5/r7/2K5 w - - 0 30",
+          "line": [
+            "e4f6",
+            "h7h8",
+            "f7f8"
+          ],
+          "rating": 977,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn2",
+            "pin",
+            "short"
+          ],
+          "popularity": 96,
+          "plays": 324,
+          "deviation": 81,
+          "san": [
+            "Nf6+",
+            "Kh8",
+            "Rf8#"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300151,
+              "score": 99998,
+              "gap": 100500
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-pins-check-12",
+          "theme": "board-pins-check",
+          "goal": "Use the pin"
+        },
+        {
+          "sourceId": "0hn46",
+          "setupFen": "2R5/4kpQ1/4p2p/3pn3/6rP/4P3/q4PP1/5RK1 w - - 1 27",
+          "setupMove": "g7h8",
+          "fen": "2R4Q/4kp2/4p2p/3pn3/6rP/4P3/q4PP1/5RK1 b - - 2 27",
+          "line": [
+            "e5f3",
+            "g1h1",
+            "g4h4"
+          ],
+          "rating": 980,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn2",
+            "pin",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 411,
+          "deviation": 82,
+          "san": [
+            "Nf3+",
+            "Kh1",
+            "Rxh4#"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300091,
+              "score": 99998,
+              "gap": 100489
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-pins-check-13",
+          "theme": "board-pins-check",
+          "goal": "Use the pin"
+        },
+        {
+          "sourceId": "19kU2",
+          "setupFen": "8/kp4p1/p4q2/Q1N1p3/3p4/P6p/1P5B/5rRK w - - 1 36",
+          "setupMove": "c5e4",
+          "fen": "8/kp4p1/p4q2/Q3p3/3pN3/P6p/1P5B/5rRK b - - 2 36",
+          "line": [
+            "f6f3"
+          ],
+          "rating": 983,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn1",
+            "oneMove",
+            "pin"
+          ],
+          "popularity": 95,
+          "plays": 489,
+          "deviation": 79,
+          "san": [
+            "Qf3#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-pins-check-14",
+          "theme": "board-pins-check",
+          "goal": "Use the pin"
+        },
+        {
+          "sourceId": "0GyKc",
+          "setupFen": "r2q4/5r1k/p2p2p1/5p2/PpBBPP2/8/5K2/7R b - - 1 28",
+          "setupMove": "h7g8",
+          "fen": "r2q2k1/5r2/p2p2p1/5p2/PpBBPP2/8/5K2/7R w - - 2 29",
+          "line": [
+            "h1h8"
+          ],
+          "rating": 989,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn1",
+            "oneMove",
+            "operaMate",
+            "pin"
+          ],
+          "popularity": 98,
+          "plays": 4348,
+          "deviation": 79,
+          "san": [
+            "Rh8#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-pins-check-15",
+          "theme": "board-pins-check",
+          "goal": "Use the pin"
+        }
+      ],
+      "examples": [
+        {
+          "sourceId": "1tGLj",
+          "setupFen": "5r2/R1p3kp/3p2p1/3qp1n1/8/3P2P1/6QP/3R1r1K w - - 5 33",
+          "setupMove": "d1f1",
+          "fen": "5r2/R1p3kp/3p2p1/3qp1n1/8/3P2P1/6QP/5R1K b - - 0 33",
+          "line": [
+            "f8f1"
+          ],
+          "rating": 996,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn1",
+            "oneMove",
+            "pin"
+          ],
+          "popularity": 94,
+          "plays": 653,
+          "deviation": 78,
+          "san": [
+            "Rxf1#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-pins-check-example-1",
+          "theme": "board-pins-check",
+          "goal": "Use the pin"
+        },
+        {
+          "sourceId": "0SI72",
+          "setupFen": "2k1r3/pp3R2/2p4p/3nP1p1/3PK3/8/1P1B2PP/8 w - - 2 29",
+          "setupMove": "f7h7",
+          "fen": "2k1r3/pp5R/2p4p/3nP1p1/3PK3/8/1P1B2PP/8 b - - 3 29",
+          "line": [
+            "d5f6",
+            "e4f5",
+            "f6h7"
+          ],
+          "rating": 996,
+          "tags": [
+            "advantage",
+            "endgame",
+            "pin",
+            "short"
+          ],
+          "popularity": 98,
+          "plays": 812,
+          "deviation": 77,
+          "san": [
+            "Nf6+",
+            "Kf5",
+            "Nxh7"
+          ],
+          "checks": [
+            {
+              "depth": 15,
+              "nodes": 300004,
+              "score": 513,
+              "gap": 756
+            },
+            {
+              "depth": 18,
+              "nodes": 300388,
+              "score": 500,
+              "gap": 784
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-pins-check-example-2",
+          "theme": "board-pins-check",
+          "goal": "Use the pin"
+        },
+        {
+          "sourceId": "1S4Ki",
+          "setupFen": "8/1pR2pkp/p4pb1/8/3P1N2/8/3r1PP1/6K1 b - - 5 30",
+          "setupMove": "d2d4",
+          "fen": "8/1pR2pkp/p4pb1/8/3r1N2/8/5PP1/6K1 w - - 0 31",
+          "line": [
+            "f4e6",
+            "g7h6",
+            "e6d4"
+          ],
+          "rating": 996,
+          "tags": [
+            "advantage",
+            "endgame",
+            "master",
+            "pin",
+            "short"
+          ],
+          "popularity": 98,
+          "plays": 466,
+          "deviation": 79,
+          "san": [
+            "Ne6+",
+            "Kh6",
+            "Nxd4"
+          ],
+          "checks": [
+            {
+              "depth": 15,
+              "nodes": 300067,
+              "score": 545,
+              "gap": 728
+            },
+            {
+              "depth": 18,
+              "nodes": 300317,
+              "score": 537,
+              "gap": 823
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-pins-check-example-3",
+          "theme": "board-pins-check",
+          "goal": "Use the pin"
+        }
+      ]
+    },
+    "board-back-rank-check": {
+      "practice": [
+        {
+          "sourceId": "0Bir2",
+          "setupFen": "2k5/pp5p/6p1/2N5/1P5q/P7/6PP/2R4K b - - 1 43",
+          "setupMove": "c8b8",
+          "fen": "1k6/pp5p/6p1/2N5/1P5q/P7/6PP/2R4K w - - 2 44",
+          "line": [
+            "c5d7",
+            "b8a8",
+            "c1c8"
+          ],
+          "rating": 803,
+          "tags": [
+            "backRankMate",
+            "endgame",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 464,
+          "deviation": 77,
+          "san": [
+            "Nd7+",
+            "Ka8",
+            "Rc8#"
+          ],
+          "checks": [
+            {
+              "depth": 20,
+              "nodes": 300010,
+              "score": 99998,
+              "gap": 100189
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-back-rank-check-1",
+          "theme": "board-back-rank-check",
+          "goal": "Find back-rank mate"
+        },
+        {
+          "sourceId": "18Jkp",
+          "setupFen": "2Rn2k1/2Rr1ppp/6b1/1p6/pP2p3/P7/5P1P/6K1 b - - 1 38",
+          "setupMove": "d7c7",
+          "fen": "2Rn2k1/2r2ppp/6b1/1p6/pP2p3/P7/5P1P/6K1 w - - 0 39",
+          "line": [
+            "c8d8"
+          ],
+          "rating": 822,
+          "tags": [
+            "backRankMate",
+            "endgame",
+            "hangingPiece",
+            "master",
+            "mate",
+            "mateIn1",
+            "oneMove"
+          ],
+          "popularity": 98,
+          "plays": 697,
+          "deviation": 79,
+          "san": [
+            "Rxd8#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-back-rank-check-2",
+          "theme": "board-back-rank-check",
+          "goal": "Find back-rank mate"
+        },
+        {
+          "sourceId": "0p6Wo",
+          "setupFen": "1rr3k1/p4ppp/8/8/8/1Q2R3/P1P2PPP/6K1 w - - 3 24",
+          "setupMove": "b3a4",
+          "fen": "1rr3k1/p4ppp/8/8/Q7/4R3/P1P2PPP/6K1 b - - 4 24",
+          "line": [
+            "b8b1",
+            "e3e1",
+            "b1e1"
+          ],
+          "rating": 829,
+          "tags": [
+            "backRankMate",
+            "endgame",
+            "mate",
+            "mateIn2",
+            "queenRookEndgame",
+            "short"
+          ],
+          "popularity": 97,
+          "plays": 2581,
+          "deviation": 83,
+          "san": [
+            "Rb1+",
+            "Re1",
+            "Rxe1#"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300267,
+              "score": 99998,
+              "gap": 100481
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-back-rank-check-3",
+          "theme": "board-back-rank-check",
+          "goal": "Find back-rank mate"
+        },
+        {
+          "sourceId": "0dePb",
+          "setupFen": "2Q5/5ppk/5q1p/8/1pN4b/1P6/2P2PPP/1R2r1K1 w - - 2 33",
+          "setupMove": "b1e1",
+          "fen": "2Q5/5ppk/5q1p/8/1pN4b/1P6/2P2PPP/4R1K1 b - - 0 33",
+          "line": [
+            "f6f2",
+            "g1h1",
+            "f2e1"
+          ],
+          "rating": 830,
+          "tags": [
+            "backRankMate",
+            "endgame",
+            "fork",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 440,
+          "deviation": 78,
+          "san": [
+            "Qxf2+",
+            "Kh1",
+            "Qxe1#"
+          ],
+          "checks": [
+            {
+              "depth": 22,
+              "nodes": 151078,
+              "score": 99998,
+              "gap": 99998
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-back-rank-check-4",
+          "theme": "board-back-rank-check",
+          "goal": "Find back-rank mate"
+        },
+        {
+          "sourceId": "1sPPs",
+          "setupFen": "4r1k1/p1P5/6pp/8/5p2/P3qP2/1Q4PP/3qR2K w - - 0 32",
+          "setupMove": "e1d1",
+          "fen": "4r1k1/p1P5/6pp/8/5p2/P3qP2/1Q4PP/3R3K b - - 0 32",
+          "line": [
+            "e3e1",
+            "d1e1",
+            "e8e1"
+          ],
+          "rating": 840,
+          "tags": [
+            "backRankMate",
+            "endgame",
+            "mate",
+            "mateIn2",
+            "sacrifice",
+            "short"
+          ],
+          "popularity": 95,
+          "plays": 521,
+          "deviation": 79,
+          "san": [
+            "Qe1+",
+            "Rxe1",
+            "Rxe1#"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300215,
+              "score": 99998,
+              "gap": 100371
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-back-rank-check-5",
+          "theme": "board-back-rank-check",
+          "goal": "Find back-rank mate"
+        },
+        {
+          "sourceId": "1Py4u",
+          "setupFen": "1r4k1/5ppp/8/2n4P/RR4P1/6K1/8/8 b - - 0 40",
+          "setupMove": "b8b4",
+          "fen": "6k1/5ppp/8/2n4P/Rr4P1/6K1/8/8 w - - 0 41",
+          "line": [
+            "a4a8",
+            "b4b8",
+            "a8b8"
+          ],
+          "rating": 841,
+          "tags": [
+            "backRankMate",
+            "endgame",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 347,
+          "deviation": 79,
+          "san": [
+            "Ra8+",
+            "Rb8",
+            "Rxb8#"
+          ],
+          "checks": [
+            {
+              "depth": 21,
+              "nodes": 300192,
+              "score": 99998,
+              "gap": 99934
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-back-rank-check-6",
+          "theme": "board-back-rank-check",
+          "goal": "Find back-rank mate"
+        },
+        {
+          "sourceId": "07Sg1",
+          "setupFen": "1R3nk1/5ppp/2N5/8/2P1P3/r1N2P1b/5r2/3B3K b - - 0 27",
+          "setupMove": "a3c3",
+          "fen": "1R3nk1/5ppp/2N5/8/2P1P3/2r2P1b/5r2/3B3K w - - 0 28",
+          "line": [
+            "c6e7",
+            "g8h8",
+            "b8f8"
+          ],
+          "rating": 843,
+          "tags": [
+            "backRankMate",
+            "deflection",
+            "mate",
+            "mateIn2",
+            "middlegame",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 634,
+          "deviation": 77,
+          "san": [
+            "Ne7+",
+            "Kh8",
+            "Rxf8#"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300143,
+              "score": 99998,
+              "gap": 100418
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-back-rank-check-7",
+          "theme": "board-back-rank-check",
+          "goal": "Find back-rank mate"
+        },
+        {
+          "sourceId": "0B5A9",
+          "setupFen": "6k1/p5pp/8/1p6/5R2/1P1p2P1/P3r1BP/3n1K2 b - - 4 33",
+          "setupMove": "e2a2",
+          "fen": "6k1/p5pp/8/1p6/5R2/1P1p2P1/r5BP/3n1K2 w - - 0 34",
+          "line": [
+            "g2d5",
+            "g8h8",
+            "f4f8"
+          ],
+          "rating": 850,
+          "tags": [
+            "backRankMate",
+            "endgame",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 568,
+          "deviation": 76,
+          "san": [
+            "Bd5+",
+            "Kh8",
+            "Rf8#"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300033,
+              "score": 99998,
+              "gap": 100353
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-back-rank-check-8",
+          "theme": "board-back-rank-check",
+          "goal": "Find back-rank mate"
+        },
+        {
+          "sourceId": "22UpY",
+          "setupFen": "6k1/pp4pp/8/3N4/3np3/4b3/4r1PP/1K3R2 b - - 3 26",
+          "setupMove": "e3d2",
+          "fen": "6k1/pp4pp/8/3N4/3np3/8/3br1PP/1K3R2 w - - 4 27",
+          "line": [
+            "d5e7",
+            "g8h8",
+            "f1f8"
+          ],
+          "rating": 851,
+          "tags": [
+            "backRankMate",
+            "endgame",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 98,
+          "plays": 3318,
+          "deviation": 78,
+          "san": [
+            "Ne7+",
+            "Kh8",
+            "Rf8#"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300001,
+              "score": 99998,
+              "gap": 100644
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-back-rank-check-9",
+          "theme": "board-back-rank-check",
+          "goal": "Find back-rank mate"
+        },
+        {
+          "sourceId": "1O2g7",
+          "setupFen": "4r1k1/pp3ppp/8/4N3/2QPRq2/P1P4P/6P1/6K1 b - - 0 31",
+          "setupMove": "f4e4",
+          "fen": "4r1k1/pp3ppp/8/4N3/2QPq3/P1P4P/6P1/6K1 w - - 0 32",
+          "line": [
+            "c4f7",
+            "g8h8",
+            "f7e8"
+          ],
+          "rating": 855,
+          "tags": [
+            "backRankMate",
+            "endgame",
+            "fork",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 97,
+          "plays": 639,
+          "deviation": 84,
+          "san": [
+            "Qxf7+",
+            "Kh8",
+            "Qxe8#"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300375,
+              "score": 99998,
+              "gap": 100289
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-back-rank-check-10",
+          "theme": "board-back-rank-check",
+          "goal": "Find back-rank mate"
+        },
+        {
+          "sourceId": "0tvCD",
+          "setupFen": "3r4/p1R5/6p1/6k1/3n4/5P2/PPP2P2/2K5 w - - 2 25",
+          "setupMove": "c7a7",
+          "fen": "3r4/R7/6p1/6k1/3n4/5P2/PPP2P2/2K5 b - - 0 25",
+          "line": [
+            "d4e2",
+            "c1b1",
+            "d8d1"
+          ],
+          "rating": 863,
+          "tags": [
+            "backRankMate",
+            "endgame",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 381,
+          "deviation": 78,
+          "san": [
+            "Ne2+",
+            "Kb1",
+            "Rd1#"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300254,
+              "score": 99998,
+              "gap": 100005
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-back-rank-check-11",
+          "theme": "board-back-rank-check",
+          "goal": "Find back-rank mate"
+        },
+        {
+          "sourceId": "0cMlC",
+          "setupFen": "3r2k1/5pp1/p6p/5B2/8/3R1Q2/5PPP/1q4K1 w - - 1 34",
+          "setupMove": "f3d1",
+          "fen": "3r2k1/5pp1/p6p/5B2/8/3R4/5PPP/1q1Q2K1 b - - 2 34",
+          "line": [
+            "b1d1",
+            "d3d1",
+            "d8d1"
+          ],
+          "rating": 865,
+          "tags": [
+            "backRankMate",
+            "endgame",
+            "mate",
+            "mateIn2",
+            "short",
+            "xRayAttack"
+          ],
+          "popularity": 97,
+          "plays": 361,
+          "deviation": 85,
+          "san": [
+            "Qxd1+",
+            "Rxd1",
+            "Rxd1#"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300355,
+              "score": 99998,
+              "gap": 100574
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-back-rank-check-12",
+          "theme": "board-back-rank-check",
+          "goal": "Find back-rank mate"
+        },
+        {
+          "sourceId": "0S5cy",
+          "setupFen": "8/pp1r1k1p/8/n4pB1/8/8/P2bRPPP/2rR2K1 w - - 8 27",
+          "setupMove": "e2d2",
+          "fen": "8/pp1r1k1p/8/n4pB1/8/8/P2R1PPP/2rR2K1 b - - 0 27",
+          "line": [
+            "c1d1",
+            "d2d1",
+            "d7d1"
+          ],
+          "rating": 866,
+          "tags": [
+            "backRankMate",
+            "endgame",
+            "mate",
+            "mateIn2",
+            "short",
+            "xRayAttack"
+          ],
+          "popularity": 97,
+          "plays": 909,
+          "deviation": 82,
+          "san": [
+            "Rxd1+",
+            "Rxd1",
+            "Rxd1#"
+          ],
+          "checks": [
+            {
+              "depth": 20,
+              "nodes": 300202,
+              "score": 99998,
+              "gap": 99983
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-back-rank-check-13",
+          "theme": "board-back-rank-check",
+          "goal": "Find back-rank mate"
+        },
+        {
+          "sourceId": "02ahl",
+          "setupFen": "2k5/ppp2Bpp/8/8/5b2/1KP5/PP3r1P/3R4 b - - 0 22",
+          "setupMove": "f2h2",
+          "fen": "2k5/ppp2Bpp/8/8/5b2/1KP5/PP5r/3R4 w - - 0 23",
+          "line": [
+            "f7e6",
+            "c8b8",
+            "d1d8"
+          ],
+          "rating": 870,
+          "tags": [
+            "backRankMate",
+            "endgame",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 99,
+          "plays": 575,
+          "deviation": 78,
+          "san": [
+            "Be6+",
+            "Kb8",
+            "Rd8#"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300212,
+              "score": 99998,
+              "gap": 100201
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-back-rank-check-14",
+          "theme": "board-back-rank-check",
+          "goal": "Find back-rank mate"
+        },
+        {
+          "sourceId": "0KKDy",
+          "setupFen": "6k1/6pp/p1N5/1p2p3/1P2r3/P2n2P1/7P/5R1K b - - 2 34",
+          "setupMove": "e4e3",
+          "fen": "6k1/6pp/p1N5/1p2p3/1P6/P2nr1P1/7P/5R1K w - - 3 35",
+          "line": [
+            "c6e7",
+            "g8h8",
+            "f1f8"
+          ],
+          "rating": 876,
+          "tags": [
+            "backRankMate",
+            "endgame",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 98,
+          "plays": 3083,
+          "deviation": 80,
+          "san": [
+            "Ne7+",
+            "Kh8",
+            "Rf8#"
+          ],
+          "checks": [
+            {
+              "depth": 20,
+              "nodes": 300075,
+              "score": 99998,
+              "gap": 100046
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-back-rank-check-15",
+          "theme": "board-back-rank-check",
+          "goal": "Find back-rank mate"
+        }
+      ],
+      "examples": [
+        {
+          "sourceId": "0P5CJ",
+          "setupFen": "5r1k/p5pp/5q2/1p6/8/1P1QN3/P3n1PP/R4r1K w - - 0 28",
+          "setupMove": "a1f1",
+          "fen": "5r1k/p5pp/5q2/1p6/8/1P1QN3/P3n1PP/5R1K b - - 0 28",
+          "line": [
+            "f6f1",
+            "e3f1",
+            "f8f1"
+          ],
+          "rating": 876,
+          "tags": [
+            "backRankMate",
+            "endgame",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 97,
+          "plays": 2780,
+          "deviation": 83,
+          "san": [
+            "Qxf1+",
+            "Nxf1",
+            "Rxf1#"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300337,
+              "score": 99998,
+              "gap": 100062
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-back-rank-check-example-1",
+          "theme": "board-back-rank-check",
+          "goal": "Find back-rank mate"
+        },
+        {
+          "sourceId": "0IoBT",
+          "setupFen": "4r3/N5kp/3R2p1/2p5/2n5/8/P4PPP/5K1R w - - 1 28",
+          "setupMove": "d6c6",
+          "fen": "4r3/N5kp/2R3p1/2p5/2n5/8/P4PPP/5K1R b - - 2 28",
+          "line": [
+            "c4d2",
+            "f1g1",
+            "e8e1"
+          ],
+          "rating": 879,
+          "tags": [
+            "backRankMate",
+            "endgame",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 98,
+          "plays": 481,
+          "deviation": 79,
+          "san": [
+            "Nd2+",
+            "Kg1",
+            "Re1#"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300268,
+              "score": 99998,
+              "gap": 100419
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-back-rank-check-example-2",
+          "theme": "board-back-rank-check",
+          "goal": "Find back-rank mate"
+        },
+        {
+          "sourceId": "0Y8xG",
+          "setupFen": "5r1k/R6p/4Q1pb/1P2P3/8/8/1P4PP/6K1 w - - 1 36",
+          "setupMove": "b5b6",
+          "fen": "5r1k/R6p/1P2Q1pb/4P3/8/8/1P4PP/6K1 b - - 0 36",
+          "line": [
+            "h6e3",
+            "g1h1",
+            "f8f1"
+          ],
+          "rating": 892,
+          "tags": [
+            "backRankMate",
+            "endgame",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 97,
+          "plays": 560,
+          "deviation": 78,
+          "san": [
+            "Be3+",
+            "Kh1",
+            "Rf1#"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300261,
+              "score": 99998,
+              "gap": 100832
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-back-rank-check-example-3",
+          "theme": "board-back-rank-check",
+          "goal": "Find back-rank mate"
+        }
+      ]
+    },
+    "board-discovery-check": {
+      "practice": [
+        {
+          "sourceId": "1RSh1",
+          "setupFen": "3r2k1/p6p/4p1p1/3n4/2B5/2P5/PP3r2/1K1RR3 w - - 0 26",
+          "setupMove": "e1e6",
+          "fen": "3r2k1/p6p/4R1p1/3n4/2B5/2P5/PP3r2/1K1R4 b - - 0 26",
+          "line": [
+            "d5c3",
+            "b2c3",
+            "d8d1"
+          ],
+          "rating": 968,
+          "tags": [
+            "discoveredAttack",
+            "endgame",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 96,
+          "plays": 533,
+          "deviation": 77,
+          "san": [
+            "Nxc3+",
+            "bxc3",
+            "Rxd1#"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300182,
+              "score": 99998,
+              "gap": 100362
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-discovery-check-1",
+          "theme": "board-discovery-check",
+          "goal": "Reveal the attack"
+        },
+        {
+          "sourceId": "21yj5",
+          "setupFen": "4k3/2R5/8/6pN/6P1/r3n2P/6K1/8 w - - 4 57",
+          "setupMove": "g2f3",
+          "fen": "4k3/2R5/8/6pN/6P1/r3nK1P/8/8 b - - 5 57",
+          "line": [
+            "e3d5",
+            "f3e4",
+            "d5c7"
+          ],
+          "rating": 968,
+          "tags": [
+            "crushing",
+            "discoveredAttack",
+            "discoveredCheck",
+            "endgame",
+            "master",
+            "masterVsMaster",
+            "short"
+          ],
+          "popularity": 95,
+          "plays": 2221,
+          "deviation": 77,
+          "san": [
+            "Nd5+",
+            "Ke4",
+            "Nxc7"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300235,
+              "score": 379,
+              "gap": 395
+            },
+            {
+              "depth": 18,
+              "nodes": 300060,
+              "score": 431,
+              "gap": 473
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-discovery-check-2",
+          "theme": "board-discovery-check",
+          "goal": "Reveal the attack"
+        },
+        {
+          "sourceId": "0PGIm",
+          "setupFen": "4r1k1/pb4p1/5p1p/8/3RN3/P3R2P/2r2PP1/6K1 b - - 6 35",
+          "setupMove": "c2a2",
+          "fen": "4r1k1/pb4p1/5p1p/8/3RN3/P3R2P/r4PP1/6K1 w - - 7 36",
+          "line": [
+            "e4f6",
+            "g7f6",
+            "e3e8"
+          ],
+          "rating": 969,
+          "tags": [
+            "crushing",
+            "discoveredAttack",
+            "endgame",
+            "master",
+            "short"
+          ],
+          "popularity": 95,
+          "plays": 1025,
+          "deviation": 81,
+          "san": [
+            "Nxf6+",
+            "gxf6",
+            "Rxe8+"
+          ],
+          "checks": [
+            {
+              "depth": 16,
+              "nodes": 300237,
+              "score": 465,
+              "gap": 467
+            },
+            {
+              "depth": 18,
+              "nodes": 300270,
+              "score": 457,
+              "gap": 576
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-discovery-check-3",
+          "theme": "board-discovery-check",
+          "goal": "Reveal the attack"
+        },
+        {
+          "sourceId": "0gY12",
+          "setupFen": "2r3k1/6pp/2N5/3n1p2/p2Pp3/4P1P1/2R2PP1/6K1 b - - 2 29",
+          "setupMove": "g8f7",
+          "fen": "2r5/5kpp/2N5/3n1p2/p2Pp3/4P1P1/2R2PP1/6K1 w - - 3 30",
+          "line": [
+            "c6e5",
+            "f7e7",
+            "c2c8"
+          ],
+          "rating": 969,
+          "tags": [
+            "crushing",
+            "discoveredAttack",
+            "endgame",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 620,
+          "deviation": 76,
+          "san": [
+            "Ne5+",
+            "Ke7",
+            "Rxc8"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300132,
+              "score": 499,
+              "gap": 590
+            },
+            {
+              "depth": 18,
+              "nodes": 300047,
+              "score": 506,
+              "gap": 631
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-discovery-check-4",
+          "theme": "board-discovery-check",
+          "goal": "Reveal the attack"
+        },
+        {
+          "sourceId": "0hmR9",
+          "setupFen": "5r1k/1p5p/8/pP6/2Pb2q1/3n2B1/3R2QP/5N1K b - - 1 34",
+          "setupMove": "d3c5",
+          "fen": "5r1k/1p5p/8/pPn5/2Pb2q1/6B1/3R2QP/5N1K w - - 2 35",
+          "line": [
+            "g3e5",
+            "d4e5",
+            "g2g4"
+          ],
+          "rating": 971,
+          "tags": [
+            "advantage",
+            "discoveredAttack",
+            "master",
+            "middlegame",
+            "short"
+          ],
+          "popularity": 97,
+          "plays": 946,
+          "deviation": 80,
+          "san": [
+            "Be5+",
+            "Bxe5",
+            "Qxg4"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300122,
+              "score": 486,
+              "gap": 445
+            },
+            {
+              "depth": 18,
+              "nodes": 300011,
+              "score": 470,
+              "gap": 975
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-discovery-check-5",
+          "theme": "board-discovery-check",
+          "goal": "Reveal the attack"
+        },
+        {
+          "sourceId": "0L1eT",
+          "setupFen": "8/3r1b2/1R5p/p4p2/P1Pk3P/1P3BP1/3KPP2/8 w - - 3 49",
+          "setupMove": "e2e3",
+          "fen": "8/3r1b2/1R5p/p4p2/P1Pk3P/1P2PBP1/3K1P2/8 b - - 0 49",
+          "line": [
+            "d4c5",
+            "d2c3",
+            "c5b6"
+          ],
+          "rating": 974,
+          "tags": [
+            "advantage",
+            "discoveredAttack",
+            "discoveredCheck",
+            "endgame",
+            "master",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 552,
+          "deviation": 77,
+          "san": [
+            "Kc5+",
+            "Kc3",
+            "Kxb6"
+          ],
+          "checks": [
+            {
+              "depth": 16,
+              "nodes": 300253,
+              "score": 346,
+              "gap": 920
+            },
+            {
+              "depth": 18,
+              "nodes": 300233,
+              "score": 342,
+              "gap": 927
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-discovery-check-6",
+          "theme": "board-discovery-check",
+          "goal": "Reveal the attack"
+        },
+        {
+          "sourceId": "12IzT",
+          "setupFen": "6k1/p2r1p1p/1p1P2p1/4p3/3q1BP1/5Q1P/P7/5R1K b - - 0 30",
+          "setupMove": "d4f4",
+          "fen": "6k1/p2r1p1p/1p1P2p1/4p3/5qP1/5Q1P/P7/5R1K w - - 0 31",
+          "line": [
+            "f3a8",
+            "g8g7",
+            "f1f4"
+          ],
+          "rating": 975,
+          "tags": [
+            "crushing",
+            "discoveredAttack",
+            "endgame",
+            "short"
+          ],
+          "popularity": 98,
+          "plays": 643,
+          "deviation": 78,
+          "san": [
+            "Qa8+",
+            "Kg7",
+            "Rxf4"
+          ],
+          "checks": [
+            {
+              "depth": 16,
+              "nodes": 300185,
+              "score": 604,
+              "gap": 905
+            },
+            {
+              "depth": 18,
+              "nodes": 300123,
+              "score": 601,
+              "gap": 1005
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-discovery-check-7",
+          "theme": "board-discovery-check",
+          "goal": "Reveal the attack"
+        },
+        {
+          "sourceId": "1Zbwa",
+          "setupFen": "8/5p2/6pp/RP1k4/1rp5/2K4P/5PP1/8 b - - 1 35",
+          "setupMove": "d5c5",
+          "fen": "8/5p2/6pp/RPk5/1rp5/2K4P/5PP1/8 w - - 2 36",
+          "line": [
+            "b5b6",
+            "c5b6",
+            "c3b4"
+          ],
+          "rating": 975,
+          "tags": [
+            "crushing",
+            "deflection",
+            "discoveredAttack",
+            "discoveredCheck",
+            "endgame",
+            "rookEndgame",
+            "short"
+          ],
+          "popularity": 97,
+          "plays": 557,
+          "deviation": 78,
+          "san": [
+            "b6+",
+            "Kxb6",
+            "Kxb4"
+          ],
+          "checks": [
+            {
+              "depth": 16,
+              "nodes": 300187,
+              "score": 663,
+              "gap": 670
+            },
+            {
+              "depth": 17,
+              "nodes": 300288,
+              "score": 657,
+              "gap": 656
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-discovery-check-8",
+          "theme": "board-discovery-check",
+          "goal": "Reveal the attack"
+        },
+        {
+          "sourceId": "0IyPu",
+          "setupFen": "1r4k1/1p4pp/5n2/5R2/8/1r6/5KPP/5B1R b - - 2 28",
+          "setupMove": "b3b1",
+          "fen": "1r4k1/1p4pp/5n2/5R2/8/8/5KPP/1r3B1R w - - 3 29",
+          "line": [
+            "f1c4",
+            "g8h8",
+            "h1b1"
+          ],
+          "rating": 979,
+          "tags": [
+            "advantage",
+            "discoveredAttack",
+            "endgame",
+            "short"
+          ],
+          "popularity": 97,
+          "plays": 311,
+          "deviation": 80,
+          "san": [
+            "Bc4+",
+            "Kh8",
+            "Rxb1"
+          ],
+          "checks": [
+            {
+              "depth": 16,
+              "nodes": 300104,
+              "score": 394,
+              "gap": 482
+            },
+            {
+              "depth": 18,
+              "nodes": 300302,
+              "score": 420,
+              "gap": 461
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-discovery-check-9",
+          "theme": "board-discovery-check",
+          "goal": "Reveal the attack"
+        },
+        {
+          "sourceId": "0hhJ6",
+          "setupFen": "R7/3r2pk/1Bn1N2p/1p6/1n3P2/p6P/6PK/8 b - - 1 39",
+          "setupMove": "a3a2",
+          "fen": "R7/3r2pk/1Bn1N2p/1p6/1n3P2/7P/p5PK/8 w - - 0 40",
+          "line": [
+            "e6f8",
+            "h7g8",
+            "f8d7"
+          ],
+          "rating": 979,
+          "tags": [
+            "advantage",
+            "discoveredAttack",
+            "discoveredCheck",
+            "endgame",
+            "fork",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 1657,
+          "deviation": 77,
+          "san": [
+            "Nf8+",
+            "Kg8",
+            "Nxd7+"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300243,
+              "score": 463,
+              "gap": 536
+            },
+            {
+              "depth": 16,
+              "nodes": 300365,
+              "score": 454,
+              "gap": 505
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-discovery-check-10",
+          "theme": "board-discovery-check",
+          "goal": "Reveal the attack"
+        },
+        {
+          "sourceId": "0FGku",
+          "setupFen": "6k1/6p1/5b1p/1pB1r3/1P6/5P1P/1P3P2/2R3K1 w - - 4 33",
+          "setupMove": "c5d4",
+          "fen": "6k1/6p1/5b1p/1p2r3/1P1B4/5P1P/1P3P2/2R3K1 b - - 5 33",
+          "line": [
+            "e5g5",
+            "g1f1",
+            "f6d4"
+          ],
+          "rating": 980,
+          "tags": [
+            "advantage",
+            "discoveredAttack",
+            "endgame",
+            "short"
+          ],
+          "popularity": 92,
+          "plays": 805,
+          "deviation": 81,
+          "san": [
+            "Rg5+",
+            "Kf1",
+            "Bxd4"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300004,
+              "score": 399,
+              "gap": 427
+            },
+            {
+              "depth": 18,
+              "nodes": 300091,
+              "score": 406,
+              "gap": 434
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-discovery-check-11",
+          "theme": "board-discovery-check",
+          "goal": "Reveal the attack"
+        },
+        {
+          "sourceId": "0Nc7R",
+          "setupFen": "6k1/pp3ppp/1q6/1PQ5/2B3P1/P3r2P/8/R5K1 w - - 0 30",
+          "setupMove": "c5c8",
+          "fen": "2Q3k1/pp3ppp/1q6/1P6/2B3P1/P3r2P/8/R5K1 b - - 1 30",
+          "line": [
+            "e3e8",
+            "g1g2",
+            "e8c8"
+          ],
+          "rating": 987,
+          "tags": [
+            "crushing",
+            "discoveredAttack",
+            "discoveredCheck",
+            "endgame",
+            "short"
+          ],
+          "popularity": 95,
+          "plays": 374,
+          "deviation": 80,
+          "san": [
+            "Re8+",
+            "Kg2",
+            "Rxc8"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300246,
+              "score": 680,
+              "gap": 100678
+            },
+            {
+              "depth": 18,
+              "nodes": 300346,
+              "score": 670,
+              "gap": 896
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-discovery-check-12",
+          "theme": "board-discovery-check",
+          "goal": "Reveal the attack"
+        },
+        {
+          "sourceId": "10vfJ",
+          "setupFen": "nRN2rk1/P4pp1/4p2p/p3b3/8/4P3/1pK4P/8 b - - 3 34",
+          "setupMove": "a8b6",
+          "fen": "1RN2rk1/P4pp1/1n2p2p/p3b3/8/4P3/1pK4P/8 w - - 4 35",
+          "line": [
+            "c8e7",
+            "g8h7",
+            "b8f8"
+          ],
+          "rating": 989,
+          "tags": [
+            "advantage",
+            "deflection",
+            "discoveredAttack",
+            "endgame",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 499,
+          "deviation": 77,
+          "san": [
+            "Ne7+",
+            "Kh7",
+            "Rxf8"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300150,
+              "score": 433,
+              "gap": 645
+            },
+            {
+              "depth": 17,
+              "nodes": 300250,
+              "score": 375,
+              "gap": 589
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-discovery-check-13",
+          "theme": "board-discovery-check",
+          "goal": "Reveal the attack"
+        },
+        {
+          "sourceId": "1IjIb",
+          "setupFen": "3R1b1r/N6p/1n2pp2/7p/4k3/8/PP4P1/2KR4 w - - 0 26",
+          "setupMove": "d8e8",
+          "fen": "4Rb1r/N6p/1n2pp2/7p/4k3/8/PP4P1/2KR4 b - - 1 26",
+          "line": [
+            "f8h6",
+            "c1c2",
+            "h8e8"
+          ],
+          "rating": 990,
+          "tags": [
+            "advantage",
+            "discoveredAttack",
+            "endgame",
+            "short"
+          ],
+          "popularity": 99,
+          "plays": 859,
+          "deviation": 77,
+          "san": [
+            "Bh6+",
+            "Kc2",
+            "Rxe8"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300213,
+              "score": 421,
+              "gap": 659
+            },
+            {
+              "depth": 18,
+              "nodes": 300205,
+              "score": 430,
+              "gap": 830
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-discovery-check-14",
+          "theme": "board-discovery-check",
+          "goal": "Reveal the attack"
+        },
+        {
+          "sourceId": "1g23t",
+          "setupFen": "8/1K6/4R3/1P6/6k1/3n2B1/2r1p2P/8 w - - 11 64",
+          "setupMove": "b5b6",
+          "fen": "8/1K6/1P2R3/8/6k1/3n2B1/2r1p2P/8 b - - 0 64",
+          "line": [
+            "d3c5",
+            "b7c6",
+            "c5e6"
+          ],
+          "rating": 992,
+          "tags": [
+            "crushing",
+            "discoveredAttack",
+            "discoveredCheck",
+            "endgame",
+            "fork",
+            "master",
+            "short"
+          ],
+          "popularity": 98,
+          "plays": 966,
+          "deviation": 84,
+          "san": [
+            "Nc5+",
+            "Kc6",
+            "Nxe6+"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300283,
+              "score": 505,
+              "gap": 503
+            },
+            {
+              "depth": 18,
+              "nodes": 300102,
+              "score": 472,
+              "gap": 472
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-discovery-check-15",
+          "theme": "board-discovery-check",
+          "goal": "Reveal the attack"
+        }
+      ],
+      "examples": [
+        {
+          "sourceId": "1RZfj",
+          "setupFen": "4r1k1/pp4p1/8/3Nb3/8/2P2R2/PP5r/2KR4 w - - 1 28",
+          "setupMove": "f3e3",
+          "fen": "4r1k1/pp4p1/8/3Nb3/8/2P1R3/PP5r/2KR4 b - - 2 28",
+          "line": [
+            "e5f4",
+            "d5f4",
+            "e8e3"
+          ],
+          "rating": 998,
+          "tags": [
+            "advantage",
+            "deflection",
+            "discoveredAttack",
+            "endgame",
+            "pin",
+            "short"
+          ],
+          "popularity": 97,
+          "plays": 359,
+          "deviation": 77,
+          "san": [
+            "Bf4",
+            "Nxf4",
+            "Rxe3"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300201,
+              "score": 428,
+              "gap": 416
+            },
+            {
+              "depth": 18,
+              "nodes": 300142,
+              "score": 418,
+              "gap": 844
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-discovery-check-example-1",
+          "theme": "board-discovery-check",
+          "goal": "Reveal the attack"
+        },
+        {
+          "sourceId": "1uKvO",
+          "setupFen": "8/p4p1p/2k1rQ2/3q4/8/P5P1/5P1P/1R4K1 w - - 2 43",
+          "setupMove": "f6f7",
+          "fen": "8/p4Q1p/2k1r3/3q4/8/P5P1/5P1P/1R4K1 b - - 0 43",
+          "line": [
+            "e6e1",
+            "b1e1",
+            "d5f7"
+          ],
+          "rating": 998,
+          "tags": [
+            "advantage",
+            "discoveredAttack",
+            "endgame",
+            "short"
+          ],
+          "popularity": 90,
+          "plays": 379,
+          "deviation": 77,
+          "san": [
+            "Re1+",
+            "Rxe1",
+            "Qxf7"
+          ],
+          "checks": [
+            {
+              "depth": 16,
+              "nodes": 300118,
+              "score": 192,
+              "gap": 716
+            },
+            {
+              "depth": 18,
+              "nodes": 300102,
+              "score": 202,
+              "gap": 978
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-discovery-check-example-2",
+          "theme": "board-discovery-check",
+          "goal": "Reveal the attack"
+        },
+        {
+          "sourceId": "0rfoh",
+          "setupFen": "2q2r1k/4b2p/6p1/4P3/3B1P2/2P3Pb/4QK1P/6R1 b - - 8 32",
+          "setupMove": "h3g4",
+          "fen": "2q2r1k/4b2p/6p1/4P3/3B1Pb1/2P3P1/4QK1P/6R1 w - - 9 33",
+          "line": [
+            "e5e6",
+            "h8g8",
+            "e2g4"
+          ],
+          "rating": 1003,
+          "tags": [
+            "advantage",
+            "discoveredAttack",
+            "interference",
+            "middlegame",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 317,
+          "deviation": 77,
+          "san": [
+            "e6+",
+            "Kg8",
+            "Qxg4"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300295,
+              "score": 264,
+              "gap": 433
+            },
+            {
+              "depth": 17,
+              "nodes": 300064,
+              "score": 373,
+              "gap": 621
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-discovery-check-example-3",
+          "theme": "board-discovery-check",
+          "goal": "Reveal the attack"
+        }
+      ]
+    },
+    "board-promotion-check": {
+      "practice": [
+        {
+          "sourceId": "1LDYI",
+          "setupFen": "8/5KPk/5P2/8/8/1p6/2p5/8 b - - 0 68",
+          "setupMove": "c2c1q",
+          "fen": "8/5KPk/5P2/8/8/1p6/8/2q5 w - - 0 69",
+          "line": [
+            "g7g8q",
+            "h7h6",
+            "g8g6"
+          ],
+          "rating": 955,
+          "tags": [
+            "advancedPawn",
+            "endgame",
+            "mate",
+            "mateIn2",
+            "promotion",
+            "queenEndgame",
+            "short"
+          ],
+          "popularity": 96,
+          "plays": 5175,
+          "deviation": 84,
+          "san": [
+            "g8=Q+",
+            "Kh6",
+            "Qg6#"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300059,
+              "score": 99998,
+              "gap": 100886
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-promotion-check-1",
+          "theme": "board-promotion-check",
+          "goal": "Find the promotion"
+        },
+        {
+          "sourceId": "1tMN7",
+          "setupFen": "7k/3Q2p1/1q5p/8/8/P7/3p2PP/R3q2K w - - 0 47",
+          "setupMove": "a1e1",
+          "fen": "7k/3Q2p1/1q5p/8/8/P7/3p2PP/4R2K b - - 0 47",
+          "line": [
+            "d2e1q"
+          ],
+          "rating": 959,
+          "tags": [
+            "advancedPawn",
+            "backRankMate",
+            "endgame",
+            "mate",
+            "mateIn1",
+            "oneMove",
+            "promotion"
+          ],
+          "popularity": 100,
+          "plays": 427,
+          "deviation": 76,
+          "san": [
+            "dxe1=Q#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-promotion-check-2",
+          "theme": "board-promotion-check",
+          "goal": "Find the promotion"
+        },
+        {
+          "sourceId": "0KmcA",
+          "setupFen": "3r4/1R6/6kp/P3b3/4p3/4P2P/2p2PP1/1R4K1 w - - 0 36",
+          "setupMove": "b1c1",
+          "fen": "3r4/1R6/6kp/P3b3/4p3/4P2P/2p2PP1/2R3K1 b - - 1 36",
+          "line": [
+            "d8d1",
+            "c1d1",
+            "c2d1q"
+          ],
+          "rating": 968,
+          "tags": [
+            "advancedPawn",
+            "endgame",
+            "mate",
+            "mateIn2",
+            "promotion",
+            "short"
+          ],
+          "popularity": 96,
+          "plays": 4178,
+          "deviation": 77,
+          "san": [
+            "Rd1+",
+            "Rxd1",
+            "cxd1=Q#"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300120,
+              "score": 99998,
+              "gap": 100005
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-promotion-check-3",
+          "theme": "board-promotion-check",
+          "goal": "Find the promotion"
+        },
+        {
+          "sourceId": "0NvhH",
+          "setupFen": "2R5/7P/8/2p5/3p4/2k5/7r/4K3 b - - 5 66",
+          "setupMove": "c5c4",
+          "fen": "2R5/7P/8/8/2pp4/2k5/7r/4K3 w - - 0 67",
+          "line": [
+            "h7h8q",
+            "h2h8",
+            "c8h8"
+          ],
+          "rating": 969,
+          "tags": [
+            "advancedPawn",
+            "crushing",
+            "endgame",
+            "promotion",
+            "short"
+          ],
+          "popularity": 97,
+          "plays": 461,
+          "deviation": 77,
+          "san": [
+            "h8=Q",
+            "Rxh8",
+            "Rxh8"
+          ],
+          "checks": [
+            {
+              "depth": 16,
+              "nodes": 300061,
+              "score": 504,
+              "gap": 431
+            },
+            {
+              "depth": 16,
+              "nodes": 300214,
+              "score": 493,
+              "gap": 1151
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-promotion-check-4",
+          "theme": "board-promotion-check",
+          "goal": "Find the promotion"
+        },
+        {
+          "sourceId": "0PWeF",
+          "setupFen": "8/1bP2kpp/8/P7/8/8/2K2pBP/8 w - - 2 38",
+          "setupMove": "c2d3",
+          "fen": "8/1bP2kpp/8/P7/8/3K4/5pBP/8 b - - 3 38",
+          "line": [
+            "b7g2",
+            "c7c8q",
+            "f2f1q"
+          ],
+          "rating": 971,
+          "tags": [
+            "advancedPawn",
+            "bishopEndgame",
+            "crushing",
+            "endgame",
+            "hangingPiece",
+            "master",
+            "promotion",
+            "short"
+          ],
+          "popularity": 96,
+          "plays": 2886,
+          "deviation": 77,
+          "san": [
+            "Bxg2",
+            "c8=Q",
+            "f1=Q+"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300023,
+              "score": 389,
+              "gap": 318
+            },
+            {
+              "depth": 19,
+              "nodes": 300346,
+              "score": 408,
+              "gap": 548
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-promotion-check-5",
+          "theme": "board-promotion-check",
+          "goal": "Find the promotion"
+        },
+        {
+          "sourceId": "1v68Z",
+          "setupFen": "8/1kp4P/1p2p3/4P1r1/8/5K2/p7/7R b - - 1 54",
+          "setupMove": "g5h5",
+          "fen": "8/1kp4P/1p2p3/4P2r/8/5K2/p7/7R w - - 2 55",
+          "line": [
+            "h1h5",
+            "a2a1q",
+            "h7h8q"
+          ],
+          "rating": 971,
+          "tags": [
+            "advancedPawn",
+            "advantage",
+            "endgame",
+            "hangingPiece",
+            "master",
+            "promotion",
+            "rookEndgame",
+            "short"
+          ],
+          "popularity": 97,
+          "plays": 4219,
+          "deviation": 76,
+          "san": [
+            "Rxh5",
+            "a1=Q",
+            "h8=Q"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300310,
+              "score": 247,
+              "gap": 704
+            },
+            {
+              "depth": 18,
+              "nodes": 300301,
+              "score": 238,
+              "gap": 238
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-promotion-check-6",
+          "theme": "board-promotion-check",
+          "goal": "Find the promotion"
+        },
+        {
+          "sourceId": "27jjB",
+          "setupFen": "1Q6/P4rk1/5p1p/3q4/8/6PK/5P1P/8 b - - 10 54",
+          "setupMove": "d5a5",
+          "fen": "1Q6/P4rk1/5p1p/q7/8/6PK/5P1P/8 w - - 11 55",
+          "line": [
+            "a7a8q",
+            "a5a8",
+            "b8a8"
+          ],
+          "rating": 971,
+          "tags": [
+            "advancedPawn",
+            "crushing",
+            "endgame",
+            "promotion",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 464,
+          "deviation": 75,
+          "san": [
+            "a8=Q",
+            "Qxa8",
+            "Qxa8"
+          ],
+          "checks": [
+            {
+              "depth": 16,
+              "nodes": 300250,
+              "score": 600,
+              "gap": 590
+            },
+            {
+              "depth": 18,
+              "nodes": 300489,
+              "score": 586,
+              "gap": 1013
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-promotion-check-7",
+          "theme": "board-promotion-check",
+          "goal": "Find the promotion"
+        },
+        {
+          "sourceId": "1fBLU",
+          "setupFen": "3Q4/4kPp1/1pK1P3/p1p5/P7/2P4p/6r1/8 b - - 0 43",
+          "setupMove": "e7d8",
+          "fen": "3k4/5Pp1/1pK1P3/p1p5/P7/2P4p/6r1/8 w - - 0 44",
+          "line": [
+            "f7f8q"
+          ],
+          "rating": 972,
+          "tags": [
+            "advancedPawn",
+            "endgame",
+            "mate",
+            "mateIn1",
+            "oneMove",
+            "promotion"
+          ],
+          "popularity": 96,
+          "plays": 648,
+          "deviation": 84,
+          "san": [
+            "f8=Q#"
+          ],
+          "checks": [
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-promotion-check-8",
+          "theme": "board-promotion-check",
+          "goal": "Find the promotion"
+        },
+        {
+          "sourceId": "0aaT6",
+          "setupFen": "8/4k3/7R/P3p3/1K2P3/P4rpp/8/8 w - - 0 50",
+          "setupMove": "h6h3",
+          "fen": "8/4k3/8/P3p3/1K2P3/P4rpR/8/8 b - - 0 50",
+          "line": [
+            "g3g2",
+            "h3f3",
+            "g2g1q"
+          ],
+          "rating": 975,
+          "tags": [
+            "advancedPawn",
+            "crushing",
+            "endgame",
+            "master",
+            "promotion",
+            "rookEndgame",
+            "short"
+          ],
+          "popularity": 96,
+          "plays": 1358,
+          "deviation": 77,
+          "san": [
+            "g2",
+            "Rxf3",
+            "g1=Q"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300125,
+              "score": 353,
+              "gap": 353
+            },
+            {
+              "depth": 18,
+              "nodes": 300432,
+              "score": 342,
+              "gap": 932
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-promotion-check-9",
+          "theme": "board-promotion-check",
+          "goal": "Find the promotion"
+        },
+        {
+          "sourceId": "1HnkE",
+          "setupFen": "3r1k2/3b1Pp1/8/4p2p/4q3/8/pP3R1P/K2R4 b - - 1 34",
+          "setupMove": "d7e6",
+          "fen": "3r1k2/5Pp1/4b3/4p2p/4q3/8/pP3R1P/K2R4 w - - 2 35",
+          "line": [
+            "d1d8",
+            "f8e7",
+            "f7f8q"
+          ],
+          "rating": 976,
+          "tags": [
+            "advancedPawn",
+            "endgame",
+            "hangingPiece",
+            "mate",
+            "mateIn2",
+            "promotion",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 517,
+          "deviation": 77,
+          "san": [
+            "Rxd8+",
+            "Ke7",
+            "f8=Q#"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300142,
+              "score": 99998,
+              "gap": 100732
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-promotion-check-10",
+          "theme": "board-promotion-check",
+          "goal": "Find the promotion"
+        },
+        {
+          "sourceId": "1vc6P",
+          "setupFen": "1r6/1P6/1R2pk2/P7/8/5P1p/8/1K6 w - - 0 37",
+          "setupMove": "a5a6",
+          "fen": "1r6/1P6/PR2pk2/8/8/5P1p/8/1K6 b - - 0 37",
+          "line": [
+            "h3h2",
+            "b1a2",
+            "h2h1q"
+          ],
+          "rating": 976,
+          "tags": [
+            "advancedPawn",
+            "crushing",
+            "endgame",
+            "master",
+            "masterVsMaster",
+            "promotion",
+            "rookEndgame",
+            "short",
+            "superGM"
+          ],
+          "popularity": 99,
+          "plays": 2057,
+          "deviation": 77,
+          "san": [
+            "h2",
+            "Ka2",
+            "h1=Q"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300056,
+              "score": 414,
+              "gap": 971
+            },
+            {
+              "depth": 18,
+              "nodes": 300117,
+              "score": 491,
+              "gap": 906
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-promotion-check-11",
+          "theme": "board-promotion-check",
+          "goal": "Find the promotion"
+        },
+        {
+          "sourceId": "0yoTp",
+          "setupFen": "4k3/4P3/8/6B1/7p/4PP1P/pr6/R4K2 w - - 0 44",
+          "setupMove": "e3e4",
+          "fen": "4k3/4P3/8/6B1/4P2p/5P1P/pr6/R4K2 b - - 0 44",
+          "line": [
+            "b2b1",
+            "a1b1",
+            "a2b1q"
+          ],
+          "rating": 979,
+          "tags": [
+            "advancedPawn",
+            "crushing",
+            "endgame",
+            "promotion",
+            "short"
+          ],
+          "popularity": 98,
+          "plays": 644,
+          "deviation": 78,
+          "san": [
+            "Rb1+",
+            "Rxb1",
+            "axb1=Q+"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300237,
+              "score": 280,
+              "gap": 700
+            },
+            {
+              "depth": 18,
+              "nodes": 300193,
+              "score": 498,
+              "gap": 562
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-promotion-check-12",
+          "theme": "board-promotion-check",
+          "goal": "Find the promotion"
+        },
+        {
+          "sourceId": "0CJBR",
+          "setupFen": "5r2/1ppk1P2/p7/3R4/4R1pr/1Pb5/P5P1/6K1 b - - 2 32",
+          "setupMove": "d7c8",
+          "fen": "2k2r2/1pp2P2/p7/3R4/4R1pr/1Pb5/P5P1/6K1 w - - 3 33",
+          "line": [
+            "e4e8",
+            "f8e8",
+            "f7e8q"
+          ],
+          "rating": 989,
+          "tags": [
+            "advancedPawn",
+            "endgame",
+            "mate",
+            "mateIn2",
+            "promotion",
+            "short"
+          ],
+          "popularity": 91,
+          "plays": 341,
+          "deviation": 82,
+          "san": [
+            "Re8+",
+            "Rxe8",
+            "fxe8=Q#"
+          ],
+          "checks": [
+            {
+              "depth": 20,
+              "nodes": 300317,
+              "score": 99998,
+              "gap": 100008
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-promotion-check-13",
+          "theme": "board-promotion-check",
+          "goal": "Find the promotion"
+        },
+        {
+          "sourceId": "1xHHK",
+          "setupFen": "8/1p6/2b2P2/6R1/2P5/8/pkPK4/8 w - - 1 55",
+          "setupMove": "f6f7",
+          "fen": "8/1p3P2/2b5/6R1/2P5/8/pkPK4/8 b - - 0 55",
+          "line": [
+            "a2a1q",
+            "f7f8q",
+            "a1c1"
+          ],
+          "rating": 992,
+          "tags": [
+            "advancedPawn",
+            "crushing",
+            "endgame",
+            "master",
+            "promotion",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 610,
+          "deviation": 77,
+          "san": [
+            "a1=Q",
+            "f8=Q",
+            "Qc1+"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300302,
+              "score": 385,
+              "gap": 1541
+            },
+            {
+              "depth": 18,
+              "nodes": 300222,
+              "score": 440,
+              "gap": 817
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-promotion-check-14",
+          "theme": "board-promotion-check",
+          "goal": "Find the promotion"
+        },
+        {
+          "sourceId": "0M6L1",
+          "setupFen": "2r3k1/2P3pp/q7/1p1Qp3/1P6/1N5P/6P1/6K1 b - - 1 28",
+          "setupMove": "g8h8",
+          "fen": "2r4k/2P3pp/q7/1p1Qp3/1P6/1N5P/6P1/6K1 w - - 2 29",
+          "line": [
+            "d5d8",
+            "c8d8",
+            "c7d8q"
+          ],
+          "rating": 993,
+          "tags": [
+            "advancedPawn",
+            "backRankMate",
+            "endgame",
+            "mate",
+            "mateIn2",
+            "promotion",
+            "short"
+          ],
+          "popularity": 93,
+          "plays": 2236,
+          "deviation": 85,
+          "san": [
+            "Qd8+",
+            "Rxd8",
+            "cxd8=Q#"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300069,
+              "score": 99998,
+              "gap": 100284
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-promotion-check-15",
+          "theme": "board-promotion-check",
+          "goal": "Find the promotion"
+        }
+      ],
+      "examples": [
+        {
+          "sourceId": "00oYS",
+          "setupFen": "4K3/4P1k1/8/8/8/8/2p1R3/2r5 w - - 10 59",
+          "setupMove": "e8d7",
+          "fen": "8/3KP1k1/8/8/8/8/2p1R3/2r5 b - - 11 59",
+          "line": [
+            "c1d1",
+            "d7e6",
+            "c2c1q"
+          ],
+          "rating": 995,
+          "tags": [
+            "advancedPawn",
+            "clearance",
+            "crushing",
+            "endgame",
+            "master",
+            "promotion",
+            "rookEndgame",
+            "short"
+          ],
+          "popularity": 95,
+          "plays": 782,
+          "deviation": 77,
+          "san": [
+            "Rd1+",
+            "Ke6",
+            "c1=Q"
+          ],
+          "checks": [
+            {
+              "depth": 15,
+              "nodes": 300258,
+              "score": 448,
+              "gap": 761
+            },
+            {
+              "depth": 17,
+              "nodes": 300078,
+              "score": 669,
+              "gap": 669
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-promotion-check-example-1",
+          "theme": "board-promotion-check",
+          "goal": "Find the promotion"
+        },
+        {
+          "sourceId": "18LXc",
+          "setupFen": "7k/4B3/r4p1P/8/3p4/3B1K2/1p6/8 w - - 2 52",
+          "setupMove": "d3a6",
+          "fen": "7k/4B3/B4p1P/8/3p4/5K2/1p6/8 b - - 0 52",
+          "line": [
+            "b2b1q",
+            "e7f6",
+            "h8h7"
+          ],
+          "rating": 997,
+          "tags": [
+            "advancedPawn",
+            "crushing",
+            "endgame",
+            "master",
+            "promotion",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 885,
+          "deviation": 76,
+          "san": [
+            "b1=Q",
+            "Bxf6+",
+            "Kh7"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300412,
+              "score": 394,
+              "gap": 683
+            },
+            {
+              "depth": 19,
+              "nodes": 300203,
+              "score": 429,
+              "gap": 295
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-promotion-check-example-2",
+          "theme": "board-promotion-check",
+          "goal": "Find the promotion"
+        },
+        {
+          "sourceId": "1Svga",
+          "setupFen": "5k2/1p3Pp1/p3P3/8/3P1N2/8/PK1n4/4r3 b - - 6 39",
+          "setupMove": "g7g5",
+          "fen": "5k2/1p3P2/p3P3/6p1/3P1N2/8/PK1n4/4r3 w - - 0 40",
+          "line": [
+            "f4g6",
+            "f8g7",
+            "f7f8q"
+          ],
+          "rating": 1001,
+          "tags": [
+            "advancedPawn",
+            "crushing",
+            "endgame",
+            "promotion",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 702,
+          "deviation": 76,
+          "san": [
+            "Ng6+",
+            "Kg7",
+            "f8=Q+"
+          ],
+          "checks": [
+            {
+              "depth": 15,
+              "nodes": 300051,
+              "score": 577,
+              "gap": 958
+            },
+            {
+              "depth": 15,
+              "nodes": 300256,
+              "score": 577,
+              "gap": 444
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-promotion-check-example-3",
+          "theme": "board-promotion-check",
+          "goal": "Find the promotion"
+        }
+      ]
+    },
+    "board-skewers-check": {
+      "practice": [
+        {
+          "sourceId": "0bz1j",
+          "setupFen": "4rk2/5pp1/5q2/3p4/1b6/4P2R/5PPP/3Q2K1 b - - 0 36",
+          "setupMove": "e8a8",
+          "fen": "r4k2/5pp1/5q2/3p4/1b6/4P2R/5PPP/3Q2K1 w - - 1 37",
+          "line": [
+            "h3h8",
+            "f8e7",
+            "h8a8"
+          ],
+          "rating": 873,
+          "tags": [
+            "advantage",
+            "endgame",
+            "master",
+            "short",
+            "skewer"
+          ],
+          "popularity": 91,
+          "plays": 410,
+          "deviation": 79,
+          "san": [
+            "Rh8+",
+            "Ke7",
+            "Rxa8"
+          ],
+          "checks": [
+            {
+              "depth": 16,
+              "nodes": 300121,
+              "score": 486,
+              "gap": 934
+            },
+            {
+              "depth": 17,
+              "nodes": 300312,
+              "score": 478,
+              "gap": 994
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-skewers-check-1",
+          "theme": "board-skewers-check",
+          "goal": "Find the skewer"
+        },
+        {
+          "sourceId": "0KcJG",
+          "setupFen": "2k3r1/2p5/pp5p/4P1b1/6K1/2N5/PPP5/5R2 w - - 4 34",
+          "setupMove": "g4f5",
+          "fen": "2k3r1/2p5/pp5p/4PKb1/8/2N5/PPP5/5R2 b - - 5 34",
+          "line": [
+            "g8f8",
+            "f5e6",
+            "f8f1"
+          ],
+          "rating": 876,
+          "tags": [
+            "crushing",
+            "endgame",
+            "short",
+            "skewer"
+          ],
+          "popularity": 98,
+          "plays": 356,
+          "deviation": 85,
+          "san": [
+            "Rf8+",
+            "Ke6",
+            "Rxf1"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300330,
+              "score": 534,
+              "gap": 314
+            },
+            {
+              "depth": 18,
+              "nodes": 300302,
+              "score": 552,
+              "gap": 572
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-skewers-check-2",
+          "theme": "board-skewers-check",
+          "goal": "Find the skewer"
+        },
+        {
+          "sourceId": "0V4IF",
+          "setupFen": "8/pp6/4nk2/7R/7P/8/r2K1P2/6R1 w - - 5 46",
+          "setupMove": "d2e1",
+          "fen": "8/pp6/4nk2/7R/7P/8/r4P2/4K1R1 b - - 6 46",
+          "line": [
+            "a2a1",
+            "e1e2",
+            "a1g1"
+          ],
+          "rating": 876,
+          "tags": [
+            "crushing",
+            "endgame",
+            "master",
+            "short",
+            "skewer"
+          ],
+          "popularity": 98,
+          "plays": 2372,
+          "deviation": 78,
+          "san": [
+            "Ra1+",
+            "Ke2",
+            "Rxg1"
+          ],
+          "checks": [
+            {
+              "depth": 16,
+              "nodes": 300357,
+              "score": 346,
+              "gap": 509
+            },
+            {
+              "depth": 18,
+              "nodes": 300020,
+              "score": 351,
+              "gap": 338
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-skewers-check-3",
+          "theme": "board-skewers-check",
+          "goal": "Find the skewer"
+        },
+        {
+          "sourceId": "0iKbo",
+          "setupFen": "2b5/6b1/p7/3k4/1P1p1B2/P2B1K2/8/8 b - - 0 41",
+          "setupMove": "c8b7",
+          "fen": "8/1b4b1/p7/3k4/1P1p1B2/P2B1K2/8/8 w - - 1 42",
+          "line": [
+            "d3e4",
+            "d5c4",
+            "e4b7"
+          ],
+          "rating": 877,
+          "tags": [
+            "bishopEndgame",
+            "crushing",
+            "endgame",
+            "short",
+            "skewer"
+          ],
+          "popularity": 90,
+          "plays": 425,
+          "deviation": 84,
+          "san": [
+            "Be4+",
+            "Kc4",
+            "Bxb7"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300174,
+              "score": 350,
+              "gap": 336
+            },
+            {
+              "depth": 18,
+              "nodes": 300325,
+              "score": 369,
+              "gap": 336
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-skewers-check-4",
+          "theme": "board-skewers-check",
+          "goal": "Find the skewer"
+        },
+        {
+          "sourceId": "0iOjx",
+          "setupFen": "4b3/2k4p/2p1p1p1/R4p2/2NP1P2/3r4/5KPP/8 b - - 22 49",
+          "setupMove": "e8d7",
+          "fen": "8/2kb3p/2p1p1p1/R4p2/2NP1P2/3r4/5KPP/8 w - - 23 50",
+          "line": [
+            "a5a7",
+            "c7b8",
+            "a7d7"
+          ],
+          "rating": 882,
+          "tags": [
+            "advantage",
+            "deflection",
+            "endgame",
+            "short",
+            "skewer"
+          ],
+          "popularity": 100,
+          "plays": 339,
+          "deviation": 77,
+          "san": [
+            "Ra7+",
+            "Kb8",
+            "Rxd7"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300342,
+              "score": 377,
+              "gap": 425
+            },
+            {
+              "depth": 19,
+              "nodes": 300270,
+              "score": 400,
+              "gap": 400
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-skewers-check-5",
+          "theme": "board-skewers-check",
+          "goal": "Find the skewer"
+        },
+        {
+          "sourceId": "0TXpF",
+          "setupFen": "8/8/5k2/pr4p1/6P1/5RK1/8/8 b - - 6 60",
+          "setupMove": "f6e5",
+          "fen": "8/8/8/pr2k1p1/6P1/5RK1/8/8 w - - 7 61",
+          "line": [
+            "f3f5",
+            "e5d4",
+            "f5b5"
+          ],
+          "rating": 883,
+          "tags": [
+            "crushing",
+            "endgame",
+            "master",
+            "rookEndgame",
+            "short",
+            "skewer"
+          ],
+          "popularity": 100,
+          "plays": 485,
+          "deviation": 80,
+          "san": [
+            "Rf5+",
+            "Kd4",
+            "Rxb5"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300186,
+              "score": 948,
+              "gap": 1225
+            },
+            {
+              "depth": 18,
+              "nodes": 300202,
+              "score": 1040,
+              "gap": 1447
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-skewers-check-6",
+          "theme": "board-skewers-check",
+          "goal": "Find the skewer"
+        },
+        {
+          "sourceId": "0LURZ",
+          "setupFen": "8/p7/8/P1P2k2/4p2R/4K3/2r2P2/8 b - - 0 47",
+          "setupMove": "c2c5",
+          "fen": "8/p7/8/P1r2k2/4p2R/4K3/5P2/8 w - - 0 48",
+          "line": [
+            "h4h5",
+            "f5e6",
+            "h5c5"
+          ],
+          "rating": 889,
+          "tags": [
+            "crushing",
+            "endgame",
+            "rookEndgame",
+            "short",
+            "skewer"
+          ],
+          "popularity": 94,
+          "plays": 400,
+          "deviation": 79,
+          "san": [
+            "Rh5+",
+            "Ke6",
+            "Rxc5"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300316,
+              "score": 764,
+              "gap": 749
+            },
+            {
+              "depth": 20,
+              "nodes": 300045,
+              "score": 755,
+              "gap": 708
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-skewers-check-7",
+          "theme": "board-skewers-check",
+          "goal": "Find the skewer"
+        },
+        {
+          "sourceId": "0IDTi",
+          "setupFen": "8/8/1R3k2/P1pP4/8/6PP/4q3/7K b - - 6 56",
+          "setupMove": "f6e5",
+          "fen": "8/8/1R6/P1pPk3/8/6PP/4q3/7K w - - 7 57",
+          "line": [
+            "b6e6",
+            "e5d5",
+            "e6e2"
+          ],
+          "rating": 899,
+          "tags": [
+            "crushing",
+            "endgame",
+            "queenRookEndgame",
+            "short",
+            "skewer"
+          ],
+          "popularity": 100,
+          "plays": 394,
+          "deviation": 79,
+          "san": [
+            "Re6+",
+            "Kxd5",
+            "Rxe2"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300263,
+              "score": 746,
+              "gap": 1045
+            },
+            {
+              "depth": 19,
+              "nodes": 300098,
+              "score": 800,
+              "gap": 1199
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-skewers-check-8",
+          "theme": "board-skewers-check",
+          "goal": "Find the skewer"
+        },
+        {
+          "sourceId": "0pXGs",
+          "setupFen": "8/8/2k1R1p1/r4p1p/5P1P/p5P1/K7/8 b - - 1 49",
+          "setupMove": "c6d5",
+          "fen": "8/8/4R1p1/r2k1p1p/5P1P/p5P1/K7/8 w - - 2 50",
+          "line": [
+            "e6e5",
+            "d5c4",
+            "e5a5"
+          ],
+          "rating": 904,
+          "tags": [
+            "crushing",
+            "endgame",
+            "master",
+            "rookEndgame",
+            "short",
+            "skewer"
+          ],
+          "popularity": 100,
+          "plays": 390,
+          "deviation": 80,
+          "san": [
+            "Re5+",
+            "Kc4",
+            "Rxa5"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300027,
+              "score": 597,
+              "gap": 448
+            },
+            {
+              "depth": 21,
+              "nodes": 300097,
+              "score": 640,
+              "gap": 640
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-skewers-check-9",
+          "theme": "board-skewers-check",
+          "goal": "Find the skewer"
+        },
+        {
+          "sourceId": "0559u",
+          "setupFen": "8/8/3k1p2/2p3b1/4p3/4P1K1/8/4R3 w - - 0 46",
+          "setupMove": "g3f2",
+          "fen": "8/8/3k1p2/2p3b1/4p3/4P3/5K2/4R3 b - - 1 46",
+          "line": [
+            "g5h4",
+            "f2f1",
+            "h4e1"
+          ],
+          "rating": 910,
+          "tags": [
+            "crushing",
+            "endgame",
+            "short",
+            "skewer"
+          ],
+          "popularity": 99,
+          "plays": 881,
+          "deviation": 79,
+          "san": [
+            "Bh4+",
+            "Kf1",
+            "Bxe1"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300092,
+              "score": 766,
+              "gap": 760
+            },
+            {
+              "depth": 18,
+              "nodes": 300160,
+              "score": 909,
+              "gap": 893
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-skewers-check-10",
+          "theme": "board-skewers-check",
+          "goal": "Find the skewer"
+        },
+        {
+          "sourceId": "0gQ15",
+          "setupFen": "8/8/k7/P4K1p/R6P/6r1/8/8 w - - 3 61",
+          "setupMove": "f5f4",
+          "fen": "8/8/k7/P6p/R4K1P/6r1/8/8 b - - 4 61",
+          "line": [
+            "g3g4",
+            "f4f5",
+            "g4a4"
+          ],
+          "rating": 912,
+          "tags": [
+            "crushing",
+            "endgame",
+            "rookEndgame",
+            "short",
+            "skewer"
+          ],
+          "popularity": 99,
+          "plays": 1162,
+          "deviation": 77,
+          "san": [
+            "Rg4+",
+            "Kf5",
+            "Rxa4"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300178,
+              "score": 712,
+              "gap": 716
+            },
+            {
+              "depth": 17,
+              "nodes": 300339,
+              "score": 705,
+              "gap": 728
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-skewers-check-11",
+          "theme": "board-skewers-check",
+          "goal": "Find the skewer"
+        },
+        {
+          "sourceId": "0hNmE",
+          "setupFen": "8/8/6Kp/5R1P/6P1/8/1k6/2q5 b - - 3 63",
+          "setupMove": "b2c3",
+          "fen": "8/8/6Kp/5R1P/6P1/2k5/8/2q5 w - - 4 64",
+          "line": [
+            "f5c5",
+            "c3b2",
+            "c5c1"
+          ],
+          "rating": 920,
+          "tags": [
+            "crushing",
+            "endgame",
+            "master",
+            "queenRookEndgame",
+            "short",
+            "skewer"
+          ],
+          "popularity": 96,
+          "plays": 918,
+          "deviation": 80,
+          "san": [
+            "Rc5+",
+            "Kb2",
+            "Rxc1"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300327,
+              "score": 899,
+              "gap": 890
+            },
+            {
+              "depth": 18,
+              "nodes": 300095,
+              "score": 1354,
+              "gap": 1441
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-skewers-check-12",
+          "theme": "board-skewers-check",
+          "goal": "Find the skewer"
+        },
+        {
+          "sourceId": "0CQ91",
+          "setupFen": "8/4Rp1p/p4p2/5P1P/2P3P1/1P2p3/P1k1K3/6r1 w - - 4 42",
+          "setupMove": "e2e3",
+          "fen": "8/4Rp1p/p4p2/5P1P/2P3P1/1P2K3/P1k5/6r1 b - - 0 42",
+          "line": [
+            "g1e1",
+            "e3d4",
+            "e1e7"
+          ],
+          "rating": 933,
+          "tags": [
+            "advantage",
+            "endgame",
+            "rookEndgame",
+            "short",
+            "skewer"
+          ],
+          "popularity": 97,
+          "plays": 507,
+          "deviation": 84,
+          "san": [
+            "Re1+",
+            "Kd4",
+            "Rxe7"
+          ],
+          "checks": [
+            {
+              "depth": 17,
+              "nodes": 300299,
+              "score": 221,
+              "gap": 489
+            },
+            {
+              "depth": 18,
+              "nodes": 300318,
+              "score": 229,
+              "gap": 725
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-skewers-check-13",
+          "theme": "board-skewers-check",
+          "goal": "Find the skewer"
+        },
+        {
+          "sourceId": "0e597",
+          "setupFen": "3r1k2/7R/p7/5p2/8/KPBb4/P4PPP/1r6 b - - 2 36",
+          "setupMove": "d8c8",
+          "fen": "2r2k2/7R/p7/5p2/8/KPBb4/P4PPP/1r6 w - - 3 37",
+          "line": [
+            "h7h8",
+            "f8f7",
+            "h8c8"
+          ],
+          "rating": 934,
+          "tags": [
+            "advantage",
+            "endgame",
+            "short",
+            "skewer"
+          ],
+          "popularity": 96,
+          "plays": 13196,
+          "deviation": 77,
+          "san": [
+            "Rh8+",
+            "Kf7",
+            "Rxc8"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300130,
+              "score": 348,
+              "gap": 655
+            },
+            {
+              "depth": 17,
+              "nodes": 300050,
+              "score": 354,
+              "gap": 652
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-skewers-check-14",
+          "theme": "board-skewers-check",
+          "goal": "Find the skewer"
+        },
+        {
+          "sourceId": "0kwXr",
+          "setupFen": "7k/2R5/5K2/5P2/6rp/8/8/8 w - - 4 57",
+          "setupMove": "f6f7",
+          "fen": "7k/2R2K2/8/5P2/6rp/8/8/8 b - - 5 57",
+          "line": [
+            "g4g7",
+            "f7f6",
+            "g7c7"
+          ],
+          "rating": 941,
+          "tags": [
+            "crushing",
+            "endgame",
+            "master",
+            "rookEndgame",
+            "short",
+            "skewer"
+          ],
+          "popularity": 92,
+          "plays": 398,
+          "deviation": 84,
+          "san": [
+            "Rg7+",
+            "Kf6",
+            "Rxc7"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300126,
+              "score": 846,
+              "gap": 843
+            },
+            {
+              "depth": 18,
+              "nodes": 300091,
+              "score": 796,
+              "gap": 796
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-skewers-check-15",
+          "theme": "board-skewers-check",
+          "goal": "Find the skewer"
+        }
+      ],
+      "examples": [
+        {
+          "sourceId": "0NFe5",
+          "setupFen": "6k1/2R2p1p/4b1p1/P5r1/R3rK2/8/7P/8 w - - 0 33",
+          "setupMove": "f4e4",
+          "fen": "6k1/2R2p1p/4b1p1/P5r1/R3K3/8/7P/8 b - - 0 33",
+          "line": [
+            "g5g4",
+            "e4e5",
+            "g4a4"
+          ],
+          "rating": 945,
+          "tags": [
+            "crushing",
+            "endgame",
+            "short",
+            "skewer"
+          ],
+          "popularity": 100,
+          "plays": 369,
+          "deviation": 77,
+          "san": [
+            "Rg4+",
+            "Ke5",
+            "Rxa4"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300226,
+              "score": 545,
+              "gap": 751
+            },
+            {
+              "depth": 17,
+              "nodes": 300259,
+              "score": 523,
+              "gap": 556
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-skewers-check-example-1",
+          "theme": "board-skewers-check",
+          "goal": "Find the skewer"
+        },
+        {
+          "sourceId": "0dhDL",
+          "setupFen": "8/7R/2k1p3/1p6/5B2/KP6/n3r2P/8 b - - 0 37",
+          "setupMove": "a2c3",
+          "fen": "8/7R/2k1p3/1p6/5B2/KPn5/4r2P/8 w - - 1 38",
+          "line": [
+            "h7c7",
+            "c6d5",
+            "c7c3"
+          ],
+          "rating": 945,
+          "tags": [
+            "advantage",
+            "endgame",
+            "short",
+            "skewer"
+          ],
+          "popularity": 97,
+          "plays": 332,
+          "deviation": 77,
+          "san": [
+            "Rc7+",
+            "Kd5",
+            "Rxc3"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300383,
+              "score": 444,
+              "gap": 488
+            },
+            {
+              "depth": 19,
+              "nodes": 300304,
+              "score": 434,
+              "gap": 434
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-skewers-check-example-2",
+          "theme": "board-skewers-check",
+          "goal": "Find the skewer"
+        },
+        {
+          "sourceId": "0cJah",
+          "setupFen": "3k1r2/p7/8/8/6B1/2R1P3/r7/4K3 b - - 2 39",
+          "setupMove": "f8g8",
+          "fen": "3k2r1/p7/8/8/6B1/2R1P3/r7/4K3 w - - 3 40",
+          "line": [
+            "c3c8",
+            "d8e7",
+            "c8g8"
+          ],
+          "rating": 947,
+          "tags": [
+            "advantage",
+            "endgame",
+            "master",
+            "short",
+            "skewer"
+          ],
+          "popularity": 97,
+          "plays": 428,
+          "deviation": 80,
+          "san": [
+            "Rc8+",
+            "Ke7",
+            "Rxg8"
+          ],
+          "checks": [
+            {
+              "depth": 16,
+              "nodes": 300344,
+              "score": 337,
+              "gap": 644
+            },
+            {
+              "depth": 17,
+              "nodes": 300031,
+              "score": 330,
+              "gap": 596
+            }
+          ],
+          "terminal": false,
+          "original": false,
+          "id": "practice-steps-board-skewers-check-example-3",
+          "theme": "board-skewers-check",
+          "goal": "Find the skewer"
+        }
+      ]
+    },
+    "board-two-mate-check": {
+      "practice": [
+        {
+          "sourceId": "07cYB",
+          "setupFen": "1r6/8/3R4/pp3k2/2pP1p2/P1P2b1r/1P3P1K/6R1 w - - 0 37",
+          "setupMove": "h2h3",
+          "fen": "1r6/8/3R4/pp3k2/2pP1p2/P1P2b1K/1P3P2/6R1 b - - 0 37",
+          "line": [
+            "b8h8",
+            "d6h6",
+            "h8h6"
+          ],
+          "rating": 925,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn2",
+            "pillsburysMate",
+            "short"
+          ],
+          "popularity": 90,
+          "plays": 974,
+          "deviation": 85,
+          "san": [
+            "Rh8+",
+            "Rh6",
+            "Rxh6#"
+          ],
+          "checks": [
+            {
+              "depth": 20,
+              "nodes": 300137,
+              "score": 99998,
+              "gap": 100090
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-two-mate-check-1",
+          "theme": "board-two-mate-check",
+          "goal": "Mate in two"
+        },
+        {
+          "sourceId": "0AJgL",
+          "setupFen": "8/8/5R1p/6pk/8/7P/6PK/B2q4 b - - 0 52",
+          "setupMove": "d1a1",
+          "fen": "8/8/5R1p/6pk/8/7P/6PK/q7 w - - 0 53",
+          "line": [
+            "g2g4",
+            "h5h4",
+            "f6h6"
+          ],
+          "rating": 928,
+          "tags": [
+            "deflection",
+            "endgame",
+            "mate",
+            "mateIn2",
+            "queenRookEndgame",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 429,
+          "deviation": 77,
+          "san": [
+            "g4+",
+            "Kh4",
+            "Rxh6#"
+          ],
+          "checks": [
+            {
+              "depth": 21,
+              "nodes": 300289,
+              "score": 99998,
+              "gap": 100245
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-two-mate-check-2",
+          "theme": "board-two-mate-check",
+          "goal": "Mate in two"
+        },
+        {
+          "sourceId": "0Fp8Y",
+          "setupFen": "5r2/p3R2p/3p2pk/3b4/6K1/6P1/P5r1/R7 b - - 6 31",
+          "setupMove": "a7a5",
+          "fen": "5r2/4R2p/3p2pk/p2b4/6K1/6P1/P5r1/R7 w - - 0 32",
+          "line": [
+            "a1h1",
+            "g2h2",
+            "h1h2"
+          ],
+          "rating": 930,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 97,
+          "plays": 1142,
+          "deviation": 83,
+          "san": [
+            "Rh1+",
+            "Rh2",
+            "Rxh2#"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300185,
+              "score": 99998,
+              "gap": 100575
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-two-mate-check-3",
+          "theme": "board-two-mate-check",
+          "goal": "Mate in two"
+        },
+        {
+          "sourceId": "0B5xq",
+          "setupFen": "5k2/R7/5Kp1/5b1p/p4P1P/8/8/r7 b - - 11 50",
+          "setupMove": "a4a3",
+          "fen": "5k2/R7/5Kp1/5b1p/5P1P/p7/8/r7 w - - 0 51",
+          "line": [
+            "a7a8",
+            "f5c8",
+            "a8c8"
+          ],
+          "rating": 931,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 90,
+          "plays": 948,
+          "deviation": 79,
+          "san": [
+            "Ra8+",
+            "Bc8",
+            "Rxc8#"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300301,
+              "score": 99998,
+              "gap": 100407
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-two-mate-check-4",
+          "theme": "board-two-mate-check",
+          "goal": "Mate in two"
+        },
+        {
+          "sourceId": "0GSko",
+          "setupFen": "3r2k1/1p2Rp1p/3P2p1/2q5/8/5Q1P/6P1/7K b - - 1 39",
+          "setupMove": "c5d6",
+          "fen": "3r2k1/1p2Rp1p/3q2p1/8/8/5Q1P/6P1/7K w - - 0 40",
+          "line": [
+            "f3f7",
+            "g8h8",
+            "f7h7"
+          ],
+          "rating": 931,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 97,
+          "plays": 517,
+          "deviation": 83,
+          "san": [
+            "Qxf7+",
+            "Kh8",
+            "Qxh7#"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300053,
+              "score": 99998,
+              "gap": 99998
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-two-mate-check-5",
+          "theme": "board-two-mate-check",
+          "goal": "Mate in two"
+        },
+        {
+          "sourceId": "08zS8",
+          "setupFen": "6k1/5ppp/3N3n/2r5/p2K1PP1/P1r4P/2P5/4R3 b - - 5 35",
+          "setupMove": "g8h8",
+          "fen": "7k/5ppp/3N3n/2r5/p2K1PP1/P1r4P/2P5/4R3 w - - 6 36",
+          "line": [
+            "e1e8",
+            "h6g8",
+            "d6f7"
+          ],
+          "rating": 937,
+          "tags": [
+            "deflection",
+            "endgame",
+            "mate",
+            "mateIn2",
+            "short",
+            "smotheredMate"
+          ],
+          "popularity": 92,
+          "plays": 450,
+          "deviation": 83,
+          "san": [
+            "Re8+",
+            "Ng8",
+            "Nxf7#"
+          ],
+          "checks": [
+            {
+              "depth": 21,
+              "nodes": 300122,
+              "score": 99998,
+              "gap": 100178
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-two-mate-check-6",
+          "theme": "board-two-mate-check",
+          "goal": "Mate in two"
+        },
+        {
+          "sourceId": "0B7DX",
+          "setupFen": "6k1/6p1/1P6/8/3PQBPK/5P2/8/7q w - - 1 53",
+          "setupMove": "h4g5",
+          "fen": "6k1/6p1/1P6/6K1/3PQBP1/5P2/8/7q b - - 2 53",
+          "line": [
+            "h1h6",
+            "g5f5",
+            "h6f6"
+          ],
+          "rating": 938,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 389,
+          "deviation": 78,
+          "san": [
+            "Qh6+",
+            "Kf5",
+            "Qf6#"
+          ],
+          "checks": [
+            {
+              "depth": 22,
+              "nodes": 115741,
+              "score": 99998,
+              "gap": 199988
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-two-mate-check-7",
+          "theme": "board-two-mate-check",
+          "goal": "Mate in two"
+        },
+        {
+          "sourceId": "01nHS",
+          "setupFen": "8/p4p1k/4p1bp/5p2/5Q1R/4P1KP/1r3PP1/6q1 b - - 9 43",
+          "setupMove": "b2e2",
+          "fen": "8/p4p1k/4p1bp/5p2/5Q1R/4P1KP/4rPP1/6q1 w - - 10 44",
+          "line": [
+            "f4h6",
+            "h7g8",
+            "h6h8"
+          ],
+          "rating": 941,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 477,
+          "deviation": 76,
+          "san": [
+            "Qxh6+",
+            "Kg8",
+            "Qh8#"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300251,
+              "score": 99998,
+              "gap": 100188
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-two-mate-check-8",
+          "theme": "board-two-mate-check",
+          "goal": "Mate in two"
+        },
+        {
+          "sourceId": "0Gld8",
+          "setupFen": "r6k/1pp4p/1p1p3Q/8/3q4/8/PP4PP/5R1K b - - 2 23",
+          "setupMove": "d4b2",
+          "fen": "r6k/1pp4p/1p1p3Q/8/8/8/Pq4PP/5R1K w - - 0 24",
+          "line": [
+            "f1f8",
+            "a8f8",
+            "h6f8"
+          ],
+          "rating": 946,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 381,
+          "deviation": 78,
+          "san": [
+            "Rf8+",
+            "Rxf8",
+            "Qxf8#"
+          ],
+          "checks": [
+            {
+              "depth": 20,
+              "nodes": 300222,
+              "score": 99998,
+              "gap": 100097
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-two-mate-check-9",
+          "theme": "board-two-mate-check",
+          "goal": "Mate in two"
+        },
+        {
+          "sourceId": "00Rk3",
+          "setupFen": "8/1p2rppk/5q1p/Q4R2/2P5/PP5P/5PP1/5rK1 w - - 0 32",
+          "setupMove": "g1f1",
+          "fen": "8/1p2rppk/5q1p/Q4R2/2P5/PP5P/5PP1/5K2 b - - 0 32",
+          "line": [
+            "f6a1",
+            "a5e1",
+            "e7e1"
+          ],
+          "rating": 950,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 417,
+          "deviation": 76,
+          "san": [
+            "Qa1+",
+            "Qe1",
+            "Rxe1#"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300239,
+              "score": 99998,
+              "gap": 100037
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-two-mate-check-10",
+          "theme": "board-two-mate-check",
+          "goal": "Mate in two"
+        },
+        {
+          "sourceId": "04PCA",
+          "setupFen": "8/2R4p/6pk/5p2/1rBP1KPP/4PP2/8/2r5 b - - 0 41",
+          "setupMove": "b4c4",
+          "fen": "8/2R4p/6pk/5p2/2rP1KPP/4PP2/8/2r5 w - - 0 42",
+          "line": [
+            "g4g5",
+            "h6h5",
+            "c7h7"
+          ],
+          "rating": 951,
+          "tags": [
+            "deflection",
+            "endgame",
+            "mate",
+            "mateIn2",
+            "rookEndgame",
+            "short"
+          ],
+          "popularity": 96,
+          "plays": 3059,
+          "deviation": 80,
+          "san": [
+            "g5+",
+            "Kh5",
+            "Rxh7#"
+          ],
+          "checks": [
+            {
+              "depth": 20,
+              "nodes": 300245,
+              "score": 99998,
+              "gap": 100307
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-two-mate-check-11",
+          "theme": "board-two-mate-check",
+          "goal": "Mate in two"
+        },
+        {
+          "sourceId": "0DFR1",
+          "setupFen": "4r1k1/ppR4p/6p1/4Bp2/4p3/2P3K1/1q4PP/3R4 b - - 0 33",
+          "setupMove": "e8e5",
+          "fen": "6k1/ppR4p/6p1/4rp2/4p3/2P3K1/1q4PP/3R4 w - - 0 34",
+          "line": [
+            "d1d8",
+            "e5e8",
+            "d8e8"
+          ],
+          "rating": 955,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn2",
+            "queenRookEndgame",
+            "short"
+          ],
+          "popularity": 100,
+          "plays": 422,
+          "deviation": 78,
+          "san": [
+            "Rd8+",
+            "Re8",
+            "Rxe8#"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300040,
+              "score": 99998,
+              "gap": 100469
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-two-mate-check-12",
+          "theme": "board-two-mate-check",
+          "goal": "Mate in two"
+        },
+        {
+          "sourceId": "0FMT8",
+          "setupFen": "5r2/6k1/R2pB1p1/1p1P4/PPn5/6P1/6KP/8 w - - 1 38",
+          "setupMove": "a4b5",
+          "fen": "5r2/6k1/R2pB1p1/1P1P4/1Pn5/6P1/6KP/8 b - - 0 38",
+          "line": [
+            "c4e3",
+            "g2h3",
+            "f8h8"
+          ],
+          "rating": 955,
+          "tags": [
+            "anastasiaMate",
+            "endgame",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 91,
+          "plays": 845,
+          "deviation": 81,
+          "san": [
+            "Ne3+",
+            "Kh3",
+            "Rh8#"
+          ],
+          "checks": [
+            {
+              "depth": 20,
+              "nodes": 300217,
+              "score": 99998,
+              "gap": 100265
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-two-mate-check-13",
+          "theme": "board-two-mate-check",
+          "goal": "Mate in two"
+        },
+        {
+          "sourceId": "05bZx",
+          "setupFen": "5r1k/pp5p/2P4r/8/P2Pp3/8/1P2RP2/4QKq1 w - - 0 36",
+          "setupMove": "f1g1",
+          "fen": "5r1k/pp5p/2P4r/8/P2Pp3/8/1P2RP2/4Q1K1 b - - 0 36",
+          "line": [
+            "f8g8",
+            "g1f1",
+            "h6h1"
+          ],
+          "rating": 959,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn2",
+            "queenRookEndgame",
+            "short"
+          ],
+          "popularity": 93,
+          "plays": 461,
+          "deviation": 78,
+          "san": [
+            "Rg8+",
+            "Kf1",
+            "Rh1#"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300104,
+              "score": 99998,
+              "gap": 100114
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-two-mate-check-14",
+          "theme": "board-two-mate-check",
+          "goal": "Mate in two"
+        },
+        {
+          "sourceId": "0Gek3",
+          "setupFen": "r6k/p1p4p/1p5Q/8/8/P1P5/2P3PP/4qRK1 b - - 2 23",
+          "setupMove": "e1c3",
+          "fen": "r6k/p1p4p/1p5Q/8/8/P1q5/2P3PP/5RK1 w - - 0 24",
+          "line": [
+            "f1f8",
+            "a8f8",
+            "h6f8"
+          ],
+          "rating": 961,
+          "tags": [
+            "endgame",
+            "master",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 92,
+          "plays": 510,
+          "deviation": 78,
+          "san": [
+            "Rf8+",
+            "Rxf8",
+            "Qxf8#"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300125,
+              "score": 99998,
+              "gap": 99979
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-two-mate-check-15",
+          "theme": "board-two-mate-check",
+          "goal": "Mate in two"
+        }
+      ],
+      "examples": [
+        {
+          "sourceId": "0CmJ3",
+          "setupFen": "8/p6R/6p1/7k/5KnP/4P1P1/r7/8 b - - 3 39",
+          "setupMove": "g4h6",
+          "fen": "8/p6R/6pn/7k/5K1P/4P1P1/r7/8 w - - 4 40",
+          "line": [
+            "g3g4",
+            "h5h4",
+            "h7h6"
+          ],
+          "rating": 962,
+          "tags": [
+            "deflection",
+            "endgame",
+            "master",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 90,
+          "plays": 334,
+          "deviation": 81,
+          "san": [
+            "g4+",
+            "Kxh4",
+            "Rxh6#"
+          ],
+          "checks": [
+            {
+              "depth": 21,
+              "nodes": 300392,
+              "score": 99998,
+              "gap": 99999
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-two-mate-check-example-1",
+          "theme": "board-two-mate-check",
+          "goal": "Mate in two"
+        },
+        {
+          "sourceId": "029mV",
+          "setupFen": "8/8/5k2/1p4p1/1R1P2K1/6R1/3r2b1/8 w - - 0 37",
+          "setupMove": "b4b5",
+          "fen": "8/8/5k2/1R4p1/3P2K1/6R1/3r2b1/8 b - - 0 37",
+          "line": [
+            "d2d4",
+            "g4h5",
+            "d4h4"
+          ],
+          "rating": 965,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn2",
+            "short"
+          ],
+          "popularity": 97,
+          "plays": 4146,
+          "deviation": 78,
+          "san": [
+            "Rxd4+",
+            "Kh5",
+            "Rh4#"
+          ],
+          "checks": [
+            {
+              "depth": 19,
+              "nodes": 300154,
+              "score": 99998,
+              "gap": 100061
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-two-mate-check-example-2",
+          "theme": "board-two-mate-check",
+          "goal": "Mate in two"
+        },
+        {
+          "sourceId": "00CtS",
+          "setupFen": "Q5k1/5q2/p2p4/b1p1pr2/P7/6P1/4KP1R/8 b - - 3 38",
+          "setupMove": "g8g7",
+          "fen": "Q7/5qk1/p2p4/b1p1pr2/P7/6P1/4KP1R/8 w - - 4 39",
+          "line": [
+            "a8h8",
+            "g7g6",
+            "h8h6"
+          ],
+          "rating": 967,
+          "tags": [
+            "endgame",
+            "mate",
+            "mateIn2",
+            "short",
+            "swallowstailMate"
+          ],
+          "popularity": 96,
+          "plays": 3149,
+          "deviation": 78,
+          "san": [
+            "Qh8+",
+            "Kg6",
+            "Qh6#"
+          ],
+          "checks": [
+            {
+              "depth": 18,
+              "nodes": 300285,
+              "score": 99998,
+              "gap": 100254
+            },
+            {
+              "immediateMate": true
+            }
+          ],
+          "terminal": true,
+          "original": false,
+          "id": "practice-steps-board-two-mate-check-example-3",
+          "theme": "board-two-mate-check",
+          "goal": "Mate in two"
+        }
+      ]
     }
   }
 }

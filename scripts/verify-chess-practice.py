@@ -18,10 +18,10 @@ root = Path(__file__).resolve().parents[1]
 data = json.loads((root / 'hub/chess-practice.json').read_text())
 groups = list(data['units'].items())
 all_positions = [p for _, group in groups for kind in ('practice', 'examples') for p in group[kind]]
-assert len(groups) == 18 and len(all_positions) == 324
-assert len({p['id'] for p in all_positions}) == 324
-assert len({p['sourceId'] for p in all_positions}) == 324
-assert len({p['fen'].split()[0] for p in all_positions}) == 324
+assert len(groups) == 27 and len(all_positions) == 486
+assert len({p['id'] for p in all_positions}) == 486
+assert len({p['sourceId'] for p in all_positions}) == 486
+assert len({p['fen'].split()[0] for p in all_positions}) == 486
 
 def verify(item):
     name, group = item
@@ -59,4 +59,4 @@ def verify(item):
 
 with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
     list(pool.map(verify, groups))
-print('Verified 270 practice positions and 54 distinct examples' + (' with Stockfish.' if args.engine else '.'))
+print('Verified 405 practice positions and 81 distinct examples' + (' with Stockfish.' if args.engine else '.'))

@@ -12,8 +12,8 @@ const move=(p,u)=>act(p,'move',{from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]
 
 test('The longer bridge retains its 54 full-board lessons and separate examples',()=>{
  assert.equal(BRIDGE_UNITS.length,18);
- assert.equal(STEP_UNITS.length,54);
- assert.equal(STEP_LESSONS.length,162);
+ assert.equal(STEP_UNITS.length,63);
+ assert.equal(STEP_LESSONS.length,189);
  const practice=BRIDGE_UNITS.flatMap(u=>STEPS[u.theme]);
  const bridgeLessons=STEP_LESSONS.filter(l=>BRIDGE_UNITS.includes(STEP_UNITS[l.unit]));
  const examples=bridgeLessons.map(l=>STEP_EXAMPLES[l.id]);

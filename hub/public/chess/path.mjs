@@ -1,5 +1,14 @@
 import { lessonsForBand } from './curriculum.mjs';
 
+// Newly inserted short lessons can precede an older completed bridge lesson.
+// Offer them explicitly at a stopping point without moving the learner's place.
+export function shortPracticeLesson(profile) {
+  if(profile.settings?.band!=='steps'||profile.session&&profile.session.phase!=='summary')return null;
+  const path=pathProgress(profile);
+  const reached=Math.max(-1,...path.map((l,i)=>l.complete?i:-1));
+  return path.find((l,i)=>i<reached&&l.id.startsWith('steps-board-')&&!l.complete&&!l.locked)||null;
+}
+
 export function pathProgress(profile) {
   // Older versions allowed out-of-order play: keep every reached lesson available.
   const LESSONS=lessonsForBand(profile.settings?.band);
