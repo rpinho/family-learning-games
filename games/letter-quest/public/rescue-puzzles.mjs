@@ -143,7 +143,7 @@ export function puzzleAction(p,input){
     if(!wasReady&&puzzleReady(s,b)){kind='opened';line=PUZZLE_LINES.ready;}
     if(puzzleLever(draft))line=PUZZLE_LINES.lever;
     if(puzzleReady(s,b)&&b.friends.includes(s.position)&&!s.rescued.includes(s.position)){s.rescued.push(s.position);line=PUZZLE_LINES.saved;}
-    if(s.rescued.length===b.friends.length&&puzzleReady(s,b)){s.phase='exit';if(s.position!==b.exit)line=PUZZLE_LINES.exit;}
+    if(s.phase!=='exit'&&s.rescued.length===b.friends.length&&puzzleReady(s,b)){s.phase='exit';if(s.position!==b.exit)line=PUZZLE_LINES.exit;}
     if(s.phase==='exit'&&s.position===b.exit){
      s.phase='done';s.badges++;s.undo=[];s.history.push({engine:2,type:s.type,tier:s.tier,mission:s.mission,moves:s.moves,helpCount:s.helpCount,pauses:s.pauses,undos:s.undos,blocked:s.blocked,completedAt:new Date().toISOString()});s.history=s.history.slice(-100);kind='complete';line=PUZZLE_LINES.done;
     }

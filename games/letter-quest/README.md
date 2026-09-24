@@ -1,5 +1,9 @@
 # Letter Quest
 
+## September 23: quiet return to the rescue exit
+
+After the last friend is rescued, Rook announces the exit objective once instead of restarting it on every forward move. The objective remains visible and available through replay; Help, resume and completion still speak. Existing saves and movement rules are unchanged.
+
 ## September 16: reliable reading saves and accessible help
 
 Reading actions lock before pending ink saves finish, so repeated taps cannot submit competing answers. Revision conflicts refresh the same activity without automatically replaying an answer; pending handwriting stays available for a deliberate retry. Other-screen activity changes leave unsaved writing on its current page.

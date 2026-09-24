@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {freshProfile} from '../public/engine.mjs';
+import {mazeOpen} from '../public/maze.mjs';
 import {newPuzzle,puzzleBase,puzzleBoard,puzzleReady,puzzleLever,puzzleClue,puzzleAction,solveBlocks,puzzleTier,puzzleLine,PUZZLE_LINES} from '../public/rescue-puzzles.mjs';
 import {rescueMovementView,rescueFinishView,rescueShouldSpeak} from '../public/rescue-view.mjs';
 test('Repeated rescue Undo stays silent without muting help or mission instructions',()=>{
@@ -33,6 +34,31 @@ test('Completion has one primary next-rescue action; stopping is not adjacent to
  }
 });
 function step(p,d){while(p.rescue.direction!==d)act(p,'turn',{turn:1});return act(p,'forward');}
+test('The exit objective speaks on transition, not on every walk; replay and saved routes retain it',()=>{
+ for(const serial of [0,1,2]){
+  let p=freshProfile('admin');p.rescue=newPuzzle(p,serial+1,{puzzleSerial:serial});
+  const results=[];let exitMoves=0,reloaded=false;
+  if(p.rescue.phase==='plan')act(p,'plan',{card:puzzleBase(p.rescue).friends.at(-1)});
+  if(p.rescue.type==='blocks')for(const d of solveBlocks(p.rescue,50000))results.push(step(p,d));
+  for(let i=0;i<500&&p.rescue.phase!=='done';i++){
+   if(puzzleLever(p)){results.push(act(p,'rook'));continue;}
+   if(p.rescue.phase==='exit'){
+    exitMoves++;
+    assert.equal(puzzleLine(p),PUZZLE_LINES.exit,'manual replay keeps the current objective');
+    if(!reloaded){
+     const board=puzzleBoard(p),detour=mazeOpen(board,p.rescue.position).find(v=>v.position!==board.exit);
+     assert.ok(detour);results.push(step(p,detour.direction));
+     p=JSON.parse(JSON.stringify(p));reloaded=true;assert.ok(act(p,'help').line,'requested help remains available');
+    }
+   }
+   results.push(step(p,puzzleClue(p).absolute));
+  }
+  assert.equal(p.rescue.phase,'done');assert.ok(exitMoves>1,'exercise a multi-step return to the exit');
+  assert.equal(results.filter(r=>r.line===PUZZLE_LINES.exit).length,1,'announce the new objective once');
+  assert.equal(results.filter(r=>r.kind==='complete').length,1);
+  assert.equal(p.rescue.badges,1);assert.equal(p.rescue.history.length,1);
+ }
+});
 function solve(p){
  const s=p.rescue;
  if(s.phase==='plan')act(p,'plan',{card:puzzleBase(s).friends.at(-1)});
