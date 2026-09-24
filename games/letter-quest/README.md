@@ -1,5 +1,9 @@
 # Letter Quest
 
+## September 24: answer timing survives clock corrections
+
+Answer durations use the browser’s monotonic clock, so a device clock adjustment cannot produce negative timing and reject a valid tap. The same bounded timer covers lessons, the labyrinth, reading and word penalties. Server validation, saved progress, assistance and difficulty rules remain unchanged. Refresh an existing tab to load the fix.
+
 ## September 23: quiet return to the rescue exit
 
 After the last friend is rescued, Rook announces the exit objective once instead of restarting it on every forward move. The objective remains visible and available through replay; Help, resume and completion still speak. Existing saves and movement rules are unchanged.

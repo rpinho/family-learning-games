@@ -1,3 +1,4 @@
+import {elapsedMs} from './timing.mjs';
 import {exclusiveReadingAction} from './reading-client.mjs';
 import {readingHintState} from './reading.mjs';
 import {hintLabel,useHint,wasHinted} from './hints.mjs';
@@ -32,7 +33,7 @@ let profile,challenge,view='map',tab=routeTab(location.hash),id=demo?'demo':['ex
 let selectedDifficulty,reviewId,lessonOrigin='practice',storyMessage='';
 if(!demo)try{localStorage.setItem('letter-quest-player',id);}catch{}
 let busy=false,feedback=null,strokes=[],current=[],drawing=false,pointer=null,started=0,helped=false,showModel=false,nameAnswer='',nameUsed=[],resizeObserver;
-let mute=false,mazeClient=null,mazeMessage='',mazeStarted=Date.now(),mazeTaskId='',mazeEntryId='',leagueSelection;
+let mute=false,mazeClient=null,mazeMessage='',mazeStarted=performance.now(),mazeTaskId='',mazeEntryId='',leagueSelection;
 let resetConfirmation=false;
 let saveError='';
 let soccerMessage='',soccerAnimating=false,soccerStarted=0,soccerQuestionId='';
@@ -52,7 +53,7 @@ const soccerEffect=kind=>{if(!mute&&profile?.settings.sound)void soccerAudio.pla
 coachVoice.player.addEventListener('playing',()=>document.body.classList.add('rook-speaking'));
 for(const event of ['pause','ended','emptied','error','waiting'])coachVoice.player.addEventListener(event,()=>document.body.classList.remove('rook-speaking'));
 telemetry.record('session_start',{address:location.origin,agent:navigator.userAgent,platform:navigator.platform,width:innerWidth,height:innerHeight,dpr:devicePixelRatio,touchPoints:navigator.maxTouchPoints,online:navigator.onLine});
-setInterval(()=>{if(document.visibilityState==='visible')telemetry.record('heartbeat',{elapsedMs:started?Date.now()-started:0,pending:telemetry.status().pending});},30000);
+setInterval(()=>{if(document.visibilityState==='visible')telemetry.record('heartbeat',{elapsedMs:started?elapsedMs(started):0,pending:telemetry.status().pending});},30000);
 const kingdom=()=>KINGDOMS[Math.min(6,Math.floor(profile.completed/20))];
 const league=()=>KINGDOMS[profile.league%7];
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -101,7 +102,7 @@ function render(){
  if(tab==='reading'&&view==='map'){
   if(mazeClient){mazeClient.dispose();mazeClient=null;}resizeObserver?.disconnect();document.body.classList.remove('maze-open','lesson-open');
   document.title='Letter Quest — '+profile.name+'’s Reading Missions';
-  const s=readingState(profile);if(s.question&&readingId!==profile.id+s.question.id){readingId=profile.id+s.question.id;readingStarted=Date.now();readingInkDraft=s.ink;readingInkError='';}
+  const s=readingState(profile);if(s.question&&readingId!==profile.id+s.question.id){readingId=profile.id+s.question.id;readingStarted=performance.now();readingInkDraft=s.ink;readingInkError='';}
   const visibleProfile=readingInkError&&s.question?.type==='write'?{...profile,reading:{...s,ink:readingInkDraft}}:profile;
   app.innerHTML=readingView(visibleProfile,{busy,message:readingMessage,now:Date.now()+readingServerOffset});bind();
   const canvas=app.querySelector('#reading-ink');if(canvas){disposeReadingInk=mountReadingInk(canvas,readingInkError?readingInkDraft:s.ink,ink=>{
@@ -113,13 +114,13 @@ function render(){
  if(tab==='soccer'&&view==='map'){
   if(mazeClient){mazeClient.dispose();mazeClient=null;}resizeObserver?.disconnect();document.body.classList.remove('maze-open','lesson-open');
   document.title='Letter Quest — '+profile.name+' FC';
-  const q=soccerState(profile).question;if(q&&soccerQuestionId!==profile.id+q.id){soccerQuestionId=profile.id+q.id;soccerStarted=Date.now();}
+  const q=soccerState(profile).question;if(q&&soccerQuestionId!==profile.id+q.id){soccerQuestionId=profile.id+q.id;soccerStarted=performance.now();}
   app.innerHTML=soccerView(profile,{busy,animate:soccerAnimating,message:soccerMessage});bind();return;
  }
  if(tab==='maze'&&view==='map'){
   document.body.classList.add('maze-open');document.title='Letter Quest — '+profile.name+'’s labyrinth';
   if(!mazeClient)mazeClient=createMazeView(app,mazeAct,message=>telemetry.record('runtime_error',{source:'maze-renderer',message}));
-  if(mazeGate(profile)){const q=mazeQuestion(profile);if(profile.id+q.id!==mazeTaskId){mazeTaskId=profile.id+q.id;mazeStarted=Date.now();}}
+  if(mazeGate(profile)){const q=mazeQuestion(profile);if(profile.id+q.id!==mazeTaskId){mazeTaskId=profile.id+q.id;mazeStarted=performance.now();}}
   mazeClient.update(profile,mazeMessage,busy);
   mountRefresh();
   if(!profile.maze&&!busy&&mazeEntryId!==profile.id){mazeEntryId=profile.id;void mazeAct({kind:'enter'});}
@@ -145,14 +146,14 @@ function parentView(){const skills=Object.entries(profile.skills).sort(([a],[b])
 function prompt(){return taskPrompt(challenge,showModel);}
 function start(){if(feedback?.next)challenge=feedback.next;view='lesson';feedback=null;newExercise();}
 let rail;
-function newExercise(){rail=challenge.guided?new GuidedTrace(challenge.paths):null;strokes=[];current=[];drawing=false;pointer=null;helped=!!challenge.guided||wasHinted(profile,`lesson:${challenge.id}`)||!!challenge.retry||!!challenge.duel&&profile.duel?.hintedRound===profile.duel?.round;showModel=helped;nameAnswer='';nameUsed=[];saveError='';started=Date.now();render();window.scrollTo(0,0);telemetry.record('challenge_shown',{retry:!!challenge.retry,guided:!!challenge.guided});speak(prompt());}
+function newExercise(){rail=challenge.guided?new GuidedTrace(challenge.paths):null;strokes=[];current=[];drawing=false;pointer=null;helped=!!challenge.guided||wasHinted(profile,`lesson:${challenge.id}`)||!!challenge.retry||!!challenge.duel&&profile.duel?.hintedRound===profile.duel?.round;showModel=helped;nameAnswer='';nameUsed=[];saveError='';started=performance.now();render();window.scrollTo(0,0);telemetry.record('challenge_shown',{retry:!!challenge.retry,guided:!!challenge.guided});speak(prompt());}
 function resetTrace(withHint=false){
  if(feedback?.ok)return;
  telemetry.record('trace_reset',{reason:withHint?'hint':'try_again'});
  const retry=!!feedback;
  if(retry){challenge=feedback.next;feedback=null;}
  rail=challenge.guided?new GuidedTrace(challenge.paths):null;
- strokes=[];current=[];drawing=false;pointer=null;started=Date.now();
+ strokes=[];current=[];drawing=false;pointer=null;started=performance.now();
  helped=helped||withHint||!!challenge.retry;
  showModel=showModel||withHint||!!challenge.retry;
  coachVoice.stop();render();if(retry)telemetry.record('challenge_shown',{retry:true});if(retry||withHint)speak(prompt());
@@ -205,7 +206,7 @@ function paint(canvas,ctx){const w=canvas.clientWidth,h=canvas.clientHeight,{siz
 async function submit(answer){
  if(challenge.guided&&!rail?.done)return;
  if(busy||feedback)return;busy=true;saveError='';
- const payload={challengeId:challenge.id,answer,strokes,helped,durationMs:Math.min(86400000,Date.now()-started)};
+ const payload={challengeId:challenge.id,answer,strokes,helped,durationMs:elapsedMs(started)};
  telemetry.record('attempt_submit',{answer,durationMs:payload.durationMs});render();
  try{const data=await request('attempt',payload);profile=data.profile;feedback=data.result;feedback.submittedAnswer=answer;feedback.next=data.challenge;feedback.line=pickDialogue(feedbackCategory(challenge,feedback,helped));telemetry.record('feedback',{ok:feedback.ok,reason:feedback.reason||'',message:feedback.line});if(feedback.ok)chime();if(coachVoice.mode!=='letter')coachVoice.stop();praise(feedback.ok);}
  catch(e){saveError=e.message;}
@@ -267,7 +268,7 @@ async function readingAct(kind,value){
  else if(['tile','actor','undo','clear'].includes(kind)){
   const draft=[...s.draft];if(kind==='undo'&&q.type==='change'){draft.splice(0,draft.length,...[...q.from].map(c=>q.tiles.indexOf(c)));}else if(kind==='undo')draft.pop();else if(kind==='clear')draft.length=0;else if(q.type==='change')draft[s.cursor||0]=Number(value);else if(draft.length<(q.type==='act'?q.count:q.type==='sentence'?q.tiles.length:q.word.length))draft.push(Number(value));
   input={kind:'draft',draft};
- }else if(kind==='answer'||kind==='check')input={kind:'answer',answer:value,durationMs:Math.min(86400000,Math.max(0,Date.now()-readingStarted))};
+ }else if(kind==='answer'||kind==='check')input={kind:'answer',answer:value,durationMs:elapsedMs(readingStarted)};
  else {busy=false;return;}
  readingMessage='';render();
  try{
@@ -287,7 +288,7 @@ async function soccerAct(kind,value){
  if(kind==='repeat'){coachVoice.speak(soccerState(profile).question?.prompt||SOCCER_LINES.intro);return;}
  if(kind==='sound'){soccerAudio.stop();await settings({sound:!profile.settings.sound});return;}
  busy=true;coachVoice.stop();soccerMessage='';render();
- const payload={kind,revision:profile.revision,...(kind==='start'?{level:Number(value)}:{}),...(kind==='aim'?{aim:value}:{}),...(['hint','answer'].includes(kind)?{questionId:soccerState(profile).question?.id}:{}),...(kind==='answer'?{answer:value,durationMs:Math.min(86400000,Math.max(0,Date.now()-soccerStarted))}:{})};
+ const payload={kind,revision:profile.revision,...(kind==='start'?{level:Number(value)}:{}),...(kind==='aim'?{aim:value}:{}),...(['hint','answer'].includes(kind)?{questionId:soccerState(profile).question?.id}:{}),...(kind==='answer'?{answer:value,durationMs:elapsedMs(soccerStarted)}:{})};
  try{
   const data=demo?{profile,result:soccerAction(profile,payload),challenge:nextChallenge(profile)}:await request('soccer',payload);
   accept(data);soccerMessage=data.result.line||'';
@@ -314,7 +315,7 @@ async function mazeAct(input){
  const manualSound=input.kind==='sound'||input.kind==='answer'&&mazeQuestion(profile).type==='blend';
  if(tapLine&&(manualSound||audible))void (input.kind==='sound'?coachVoice.phoneme(tapLine):coachVoice.letter(tapLine));
  else if(['forward','next','retry'].includes(input.kind))coachVoice.stop();
- const payload={...input,revision:profile.revision,...(['answer','hint','retry','sound'].includes(input.kind)?{questionId:mazeQuestion(profile).id}:{}),...(input.kind==='answer'?{durationMs:Math.min(86400000,Date.now()-mazeStarted)}:{})};
+ const payload={...input,revision:profile.revision,...(['answer','hint','retry','sound'].includes(input.kind)?{questionId:mazeQuestion(profile).id}:{}),...(input.kind==='answer'?{durationMs:elapsedMs(mazeStarted)}:{})};
  telemetry.record('action',{action:'maze:'+input.kind,...(input.answer?{answer:input.answer}:{})});
  try{
   const data=demo?{profile,result:mazeAction(profile,payload),challenge:nextChallenge(profile)}:await request('maze',payload);

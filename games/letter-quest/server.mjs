@@ -25,7 +25,7 @@ const allowedHosts=new Set(['localhost','127.0.0.1',os.hostname().toLowerCase(),
 let queue=Promise.resolve();
 async function load(id){try{return JSON.parse(await readFile(path.join(data,id+'.json'),'utf8'));}catch(e){if(e.code==='ENOENT')return freshProfile(id);throw e;}}
 async function save(p){const file=path.join(data,p.id+'.json');await writeFile(file+'.tmp',JSON.stringify(p,null,2),{mode:0o600});await rename(file+'.tmp',file);}
-const files={'/hints.mjs':'hints.mjs','/':'index.html','/app.mjs':'app.mjs','/engine.mjs':'engine.mjs','/dialogue.mjs':'dialogue.mjs','/voice.mjs':'voice.mjs','/telemetry.mjs':'telemetry.mjs','/version.mjs':'version.mjs','/style.css':'style.css','/rook.svg':'rook.svg','/favicon.ico':'rook.svg'};
+const files={'/timing.mjs':'timing.mjs','/hints.mjs':'hints.mjs','/':'index.html','/app.mjs':'app.mjs','/engine.mjs':'engine.mjs','/dialogue.mjs':'dialogue.mjs','/voice.mjs':'voice.mjs','/telemetry.mjs':'telemetry.mjs','/version.mjs':'version.mjs','/style.css':'style.css','/rook.svg':'rook.svg','/favicon.ico':'rook.svg'};
 Object.assign(files,{'/hub.mjs':'hub.mjs','/hub.css':'hub.css'});
 for(const file of ['rescue.mjs','rescue-puzzles.mjs','rescue-view.mjs','rescue.css','player-banner.css'])files['/'+file]=file;
 for(const file of ['story.mjs','story-ui.mjs','rook.mjs','story.css'])files['/'+file]=file;
