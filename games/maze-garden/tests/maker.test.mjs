@@ -65,8 +65,38 @@ test('New maker size follows normal level, with choices and a blank-space limit'
  assert.ok(makerPathLimit(13)<13*13/2);
 });
 
+test('Biggest board grows an existing drawing, keeps the choice, and accepts more than 115 squares',()=>{
+ const p=newProfile('explorer');p.level=25;action(p,{type:'maker-new'});
+ const old=makerEndpoints(19),straight=Array.from({length:19},(_,i)=>old.start+i);
+ action(p,{type:'maker-draft',path:straight});
+ action(p,{type:'maker-size',size:25});
+ assert.equal(p.maker.size,25);
+ assert.deepEqual(p.maker.draft,Array.from({length:19},(_,i)=>makerEndpoints(25).start+i));
+ assert.equal(makerPathLimit(25),200);
+ const extended=extendMakerPath(p.maker.draft,makerEndpoints(25).goal,25);
+ assert.equal(validMakerPath(extended,true,25),true);
+ action(p,{type:'maker-draft',path:extended});
+ action(p,{type:'maker-build',seed:42});
+ assert.equal(p.maker.challenge.n,25);
+ action(p,{type:'maker-new'});
+ assert.equal(p.maker.size,25);
+ assert.equal(p.maker.challenge.n,25);
+
+ const at=(row,col)=>row*25+col,path=[at(12,0)];
+ for(let row=13;row<=24;row++)path.push(at(row,0));
+ for(let col=1;col<=24;col++)path.push(at(24,col));
+ for(let row=23;row>=20;row--){const left=row%2===1;path.push(at(row,left?24:1));for(let col=left?23:2;left?col>=1:col<=24;col+=left?-1:1)path.push(at(row,col));}
+ for(let row=19;row>=12;row--)path.push(at(row,24));
+ assert.ok(path.length>115&&path.length<=makerPathLimit(25));
+ assert.equal(validMakerPath(path,true,25),true);
+ action(p,{type:'maker-draft',path});
+ action(p,{type:'maker-build',seed:43});
+ assert.equal(p.maker.challenge.sourcePath.length,path.length);
+ assert.equal(p.maker.challenge.cells.length,25*25);
+});
+
 test('Unused space becomes a full walled maze with a longer route than the sketch',()=>{
- for(const n of [9,13,19])for(const seed of [1,99,12345]){
+ for(const n of [9,13,19,25])for(const seed of [1,99,12345]){
   const {start,goal}=makerEndpoints(n),drawn=Array.from({length:n},(_,i)=>start+i),m=makeChildMaze(drawn,seed,'explorer',n);
   assert.equal(m.cells.length,n*n);assert.equal(m.cells.filter(Array.isArray).length,n*n);
   assert.equal(m.cells.reduce((sum,c)=>sum+c.length,0)/2,n*n-1);

@@ -1,4 +1,4 @@
-export const VERSION = 'maze-garden-2026-09-25-maker-fourth-choice';
+export const VERSION = 'maze-garden-2026-09-25-maker-biggest-board';
 export const MAX_LEVEL = 27;
 export const baseline = player => player==='explorer'?12:player==='beginner'?6:6;
 export const gridSize = level => 9+2*(Math.max(1,Math.min(MAX_LEVEL,level))-1);
@@ -46,7 +46,7 @@ function candidate(level,seed,shape){const r=random(seed),n=gridSize(level),mid=
 export function makeMaze(level,seed,shapeOverride){const shape=shapeOverride??(seed>>>0)%4;const quality=m=>m.metrics.steps+4*m.metrics.decisions;let m=candidate(level,seed,shape);for(let k=1;k<6;k++){let alt=candidate(level,seed+k*991,shape);if(quality(alt)>quality(m))m=alt;}return m;}
 export function newProfile(player){return {player,calibration:2,level:baseline(player),completed:0,stars:0,streak:0,struggles:0,revision:0,mode:'pure',history:[],active:null};}
 export const MAKER_SIZE=7, MAKER_START=21, MAKER_GOAL=27;
-export const MAKER_SIZES=[9,13,19];
+export const MAKER_SIZES=[9,13,19,25];
 export const makerSizeForLevel=level=>level>=17?19:level>=9?13:9;
 export const makerEndpoints=n=>({start:Math.floor(n/2)*n,goal:Math.floor(n/2)*n+n-1});
 export const makerPathLimit=n=>n===7?n*n:Math.floor(n*n*.32);
@@ -116,8 +116,8 @@ export function complete(p,now=Date.now()){const a=p.active;if(!a||a.finished||a
  let change='same';if(clean&&p.level<MAX_LEVEL){p.level=Math.min(MAX_LEVEL,p.level+(ratio<=1.15?2:1));p.streak=0;p.struggles=0;change='up';}else if(p.struggles>=2&&p.level>1){p.level--;p.struggles=0;change='down';}
  p.history.push({id:a.id,level:a.level,theme:a.theme,mode:a.mode,moves:a.moves,optimal:a.solution.length-1,hints:a.hints,stars:3,independent:a.hints===0,wrong:a.wrong,seconds:Math.round((now-a.startedAt)/1000),change,at:new Date(now).toISOString()});p.history=p.history.slice(-500);return true;}
 export function action(p,input){const a=p.active;switch(input.type){case 'recalibrate':recalibrate(p,input.seed);break;case 'start':if(!a||a.finished)p.active=startMaze(p,input.seed);break;
- case 'maker-new':{const m=makerState(p),n=makerSizeForLevel(p.level);m.size=n;m.draft=[makerEndpoints(n).start];m.editing=true;break;}
- case 'maker-size':{const m=makerState(p),n=input.size;if(!MAKER_SIZES.includes(n)||m.draft.length>1)throw Error('Choose the size before drawing.');m.size=n;m.draft=[makerEndpoints(n).start];break;}
+ case 'maker-new':{const m=makerState(p),n=MAKER_SIZES.includes(m.size)?m.size:makerSizeForLevel(p.level);m.size=n;m.draft=[makerEndpoints(n).start];m.editing=true;break;}
+ case 'maker-size':{const m=makerState(p),n=input.size,old=m.size||MAKER_SIZE;if(!MAKER_SIZES.includes(n))throw Error('Choose an available maze size.');if(m.draft.length>1){if(n<=old)throw Error('You can only make this drawing bigger.');const shift=Math.floor(n/2)-Math.floor(old/2),grown=m.draft.map(id=>(Math.floor(id/old)+shift)*n+id%old);if(!validMakerPath(grown,false,n))throw Error('Could not enlarge this trail.');m.draft=grown;}else m.draft=[makerEndpoints(n).start];m.size=n;break;}
  case 'maker-draft':{const m=makerState(p);if(!validMakerPath(input.path,false,m.size||MAKER_SIZE))throw Error('Connect neighboring squares without crossing your path.');m.draft=[...input.path];break;}
  case 'maker-build':{const m=makerState(p),created=makeChildMaze(m.draft,input.seed,p.player,m.size||MAKER_SIZE);if(m.challenge)(m.archive??=[]).push(m.challenge);m.archive=m.archive?.slice(-5)||[];m.challenge=created;m.editing=false;break;}
  case 'maker-previous':{const m=makerState(p);if(!m.archive?.length)throw Error('No earlier maze.');const old=m.archive.pop();if(m.challenge)m.archive.push(m.challenge);m.challenge=old;m.editing=false;break;}
