@@ -33,7 +33,7 @@ export const CATALOG = [
   {
     id: "maze-garden",
     name: "Maze Garden",
-    description: "Tracing mazes, letter labyrinths and obstacle rescues.",
+    description: "Trace, make and explore four kinds of mazes.",
     color: "#d5eca4",
   },
   {
@@ -73,6 +73,14 @@ export const FAMILIES = {
       game: "maze-garden",
       route: "",
       preview: "maze-garden",
+    },
+    {
+      id: "maker",
+      name: "Make a Maze",
+      description: "Draw a trail, then trace the twists it creates.",
+      game: "maze-garden",
+      route: "maker",
+      preview: "maze-maker",
     },
     {
       id: "letters",
@@ -136,6 +144,7 @@ export function destination(hash) {
   return { type: "frame", item, game: item.game || family, route: "", query: item.query || "" };
 }
 export function movedRoute(game, route) {
+  if (game === "maze-garden" && route === "maze-menu") return "maze-garden";
   return game === "letter-quest"
     ? {
         "letter-home": "letter-quest",

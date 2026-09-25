@@ -10,7 +10,7 @@ After setup, open **http://localhost:4810/**. Choose a player once; their name s
 
 ## Nine games. Nine different adventures.
 
-**[Rook Academy](hub/CHESS.md)** offers 36 First moves lessons, 189 Small steps lessons that grow from sparse boards into full positions, and a 72-lesson advanced continuation in two difficulty bands, with an original speaking coach, hints, review and local practice games. **Maze Garden** now gathers all three maze variants, and **Soccer Club** gathers all three soccer variants. Choose any version; existing progress is preserved.
+**[Rook Academy](hub/CHESS.md)** offers 36 First moves lessons, 189 Small steps lessons that grow from sparse boards into full positions, and a 72-lesson advanced continuation in two difficulty bands, with an original speaking coach, hints, review and local practice games. **Maze Garden** gathers four activities: tracing mazes, Make a Maze, letter labyrinths and obstacle rescues. **Soccer Club** gathers three soccer variants. Choose any version; existing progress is preserved.
 
 Drag, trace, steer, aim, and think ahead. Pick an activity and a manageable challenge, then play together.
 
@@ -85,7 +85,7 @@ Choose live dribbling, feint puzzles, or word penalties. Existing saves stay sep
 | [Word Arcade](games/word-arcade) | Moving spaceship challenges, word building, rhymes and flashcards | http://localhost:4810/#word-arcade |
 | [Number Park](games/number-park) | Counting, patterns, manipulatives, tracing, reading and harder math | http://localhost:4810/#number-park |
 | [Guess My Drawing](games/number-park) | Wide free drawing, local picture guesses and varied drawing ideas | http://localhost:4810/#drawing-studio |
-| [Maze Garden](games/maze-garden) | Tracing mazes, 3D letter labyrinths and obstacle rescues | http://localhost:4810/#maze-garden |
+| [Maze Garden](games/maze-garden) | Tracing mazes, Make a Maze, 3D letter labyrinths and obstacle rescues | http://localhost:4810/#maze-garden |
 | [Three in a Row](games/three-in-a-row) | Tic-tac-toe against Rook and one-move practice puzzles | http://localhost:4810/#three-in-a-row |
 | [Target Trail](games/target-trail) | Moving targets, adjustable aiming difficulty and spoken letters/words | http://localhost:4810/#target-trail |
 | [Rook Academy](hub/CHESS.md) | 270 lessons across beginner and advanced paths, review and local practice games | http://localhost:4810/#chess |

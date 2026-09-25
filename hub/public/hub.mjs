@@ -123,7 +123,7 @@ async function render() {
     return;
   }
   if (dest.type === "family") {
-    main.innerHTML = `<section class="catalog family-catalog"><a class="back-link" href="#">← All games</a><h1>${esc(item.name)}</h1><p>Choose your adventure. Each one keeps your progress.</p><div class="cards">${dest.modes.map((m) => `<a class="card activity-card" style="--tint:${item.color}" href="#${game}/${m.id}"><img class="game-preview" src="/previews/${m.preview}.jpg" alt="" width="640" height="400"><h2>${m.name}</h2><p>${m.description}</p><strong>Let’s play →</strong></a>`).join("")}</div></section>`;
+    main.innerHTML = `<section class="catalog family-catalog family-${game}"><a class="back-link" href="#">← All games</a><h1>${esc(item.name)}</h1><p>Choose your adventure. Each one keeps your progress.</p><div class="cards">${dest.modes.map((m) => `<a class="card activity-card" style="--tint:${item.color}" href="#${game}/${m.id}"><img class="game-preview" src="/previews/${m.preview}.jpg" alt="" width="640" height="400"><h2>${m.name}</h2><p>${m.description}</p><strong>Let’s play →</strong></a>`).join("")}</div></section>`;
     return;
   }
   if (dest.type === "frame") {

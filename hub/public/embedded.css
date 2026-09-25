@@ -15,3 +15,13 @@ html[data-family-game="letter-quest"] body .maze-shell {
     height: 100dvh;
   }
 }
+/* Maze Garden's hub toolbar already supplies player identity and navigation. */
+html[data-family-game="maze-garden"] body > header,
+html[data-family-game="maze-garden"] body > main > footer,
+html[data-family-game="maze-garden"] #make-maze,
+html[data-family-game="maze-garden"] #maker-back {
+  display: none;
+}
+html[data-family-game="maze-garden"] body > main {
+  padding-top: 12px;
+}
