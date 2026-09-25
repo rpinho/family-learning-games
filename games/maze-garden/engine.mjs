@@ -1,4 +1,4 @@
-export const VERSION = 'maze-garden-2026-09-25-maze-maker';
+export const VERSION = 'maze-garden-2026-09-25-maze-maker-swipe';
 export const MAX_LEVEL = 27;
 export const baseline = player => player==='explorer'?12:player==='beginner'?6:6;
 export const gridSize = level => 9+2*(Math.max(1,Math.min(MAX_LEVEL,level))-1);
@@ -55,6 +55,18 @@ export function validMakerPath(path,ready=false){
   seen.add(cell);
  }
  return !ready||path.length>=7&&path.at(-1)===MAKER_GOAL;
+}
+// A quick finger sweep may skip pointer events; fill the squares between two cells.
+export function extendMakerPath(path,target){
+ if(!validMakerPath(path)||!Number.isInteger(target)||target<0||target>=MAKER_SIZE**2)return path;
+ const from=path.at(-1);if(target===from)return path;
+ if(target===path.at(-2))return path.slice(0,-1);
+ if(from===MAKER_GOAL)return path;
+ const fx=from%MAKER_SIZE,fy=Math.floor(from/MAKER_SIZE),tx=target%MAKER_SIZE,ty=Math.floor(target/MAKER_SIZE);
+ if(fx!==tx&&fy!==ty)return path;
+ const step=fx===tx?Math.sign(ty-fy)*MAKER_SIZE:Math.sign(tx-fx),out=[...path];
+ for(let cell=from+step;cell!==target+step;cell+=step){if(out.includes(cell))break;out.push(cell);if(cell===MAKER_GOAL)break;}
+ return out;
 }
 export function makerPuzzleFor(player,seed){
  const r=random(seed),pick=sets=>sets[Math.floor(r()*sets.length)];

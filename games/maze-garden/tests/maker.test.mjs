@@ -1,8 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {MAKER_START,MAKER_GOAL,validMakerPath,makeChildMaze,newProfile,action,pendingPuzzle,route} from '../engine.mjs';
+import {MAKER_START,MAKER_GOAL,validMakerPath,extendMakerPath,makeChildMaze,newProfile,action,pendingPuzzle,route} from '../engine.mjs';
 
 const path=[21,22,23,24,25,26,27];
+
+test('A fast straight finger sweep fills skipped cells without crossing a diagonal',()=>{
+ assert.deepEqual(extendMakerPath([MAKER_START],MAKER_GOAL),path);
+ assert.deepEqual(extendMakerPath([21,22,23],22),[21,22]);
+ assert.deepEqual(extendMakerPath([21,22],30),[21,22]);
+});
 
 test('Child maze is a real connected route with dead ends and an optional spoken word stop',()=>{
  assert.equal(validMakerPath(path,true),true);
