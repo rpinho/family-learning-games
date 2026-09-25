@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {MAKER_START,MAKER_GOAL,validMakerPath,extendMakerPath,makeChildMaze,newProfile,action,pendingPuzzle,route} from '../engine.mjs';
+import {MAKER_START,MAKER_GOAL,makerEndpoints,makerPathLimit,validMakerPath,extendMakerPath,makeChildMaze,newProfile,action,pendingPuzzle,route,traceSegment} from '../engine.mjs';
 
 const path=[21,22,23,24,25,26,27];
+const legacy=p=>(p.maker={size:7,draft:[21],challenge:null,completed:0,archive:[]});
 
 test('A fast straight finger sweep fills skipped cells without crossing a diagonal',()=>{
  assert.deepEqual(extendMakerPath([MAKER_START],MAKER_GOAL),path);
@@ -22,6 +23,7 @@ test('Child maze is a real connected route with dead ends and an optional spoken
 
 test('Making and replaying a maze leaves the regular adventure and difficulty untouched',()=>{
  const p=newProfile('beginner');action(p,{type:'start',seed:44});
+ legacy(p);
  const old=JSON.stringify(p.active),level=p.level,stars=p.stars;
  action(p,{type:'maker-draft',path});action(p,{type:'maker-build',seed:12345});
  const m=p.maker.challenge;assert.deepEqual(route(m,MAKER_START,MAKER_GOAL),path);
@@ -35,7 +37,7 @@ test('Making and replaying a maze leaves the regular adventure and difficulty un
 });
 
 test('A malformed maker save cannot replace the current creation',()=>{
- const p=newProfile('admin');action(p,{type:'maker-draft',path});
+ const p=newProfile('admin');legacy(p);action(p,{type:'maker-draft',path});
  assert.throws(()=>action(p,{type:'maker-draft',path:[21,22,21]}));
  assert.deepEqual(p.maker.draft,path);
  p.maker.draft=[MAKER_START];
@@ -43,7 +45,7 @@ test('A malformed maker save cannot replace the current creation',()=>{
 });
 
 test('Sound stop can be skipped without crediting a correct word choice',()=>{
- const p=newProfile('explorer');action(p,{type:'maker-draft',path});action(p,{type:'maker-build',seed:2});
+ const p=newProfile('explorer');legacy(p);action(p,{type:'maker-draft',path});action(p,{type:'maker-build',seed:2});
  for(const cell of path.slice(1))action(p,{type:'maker-move',cell});
  action(p,{type:'maker-skip'});
  assert.equal(p.maker.challenge.finished,true);
@@ -51,4 +53,39 @@ test('Sound stop can be skipped without crediting a correct word choice',()=>{
  assert.equal(p.maker.completed,1);
  action(p,{type:'maker-again'});
  assert.equal(p.maker.challenge.checkpoints[0].skipped,undefined);
+});
+
+test('New maker size follows normal level, with choices and a blank-space limit',()=>{
+ const p=newProfile('explorer');p.level=25;action(p,{type:'maker-new'});assert.equal(p.maker.size,19);
+ assert.deepEqual(p.maker.draft,[makerEndpoints(19).start]);
+ action(p,{type:'maker-size',size:13});assert.equal(p.maker.size,13);
+ const {start,goal}=makerEndpoints(13),straight=Array.from({length:13},(_,i)=>start+i);
+ assert.equal(straight.at(-1),goal);assert.equal(validMakerPath(straight,true,13),true);
+ action(p,{type:'maker-draft',path:straight});assert.throws(()=>action(p,{type:'maker-size',size:9}));
+ assert.ok(makerPathLimit(13)<13*13/2);
+});
+
+test('Unused space becomes a full walled maze with a longer route than the sketch',()=>{
+ for(const n of [9,13,19])for(const seed of [1,99,12345]){
+  const {start,goal}=makerEndpoints(n),drawn=Array.from({length:n},(_,i)=>start+i),m=makeChildMaze(drawn,seed,'explorer',n);
+  assert.equal(m.cells.length,n*n);assert.equal(m.cells.filter(Array.isArray).length,n*n);
+  assert.equal(m.cells.reduce((sum,c)=>sum+c.length,0)/2,n*n-1);
+  assert.ok(route(m,start,goal).length>drawn.length,`Expected a detour on ${n}×${n}, seed ${seed}`);
+  assert.ok(m.cells.filter(c=>c.length>=3).length>0);
+  assert.ok(m.cells.filter(c=>c.length===1).length>0);
+ }
+});
+
+test('A continuous finger trace saves multiple squares at once, and earlier creations survive',()=>{
+ const p=newProfile('explorer');p.level=25;action(p,{type:'maker-new'});
+ const {start,goal}=makerEndpoints(19),drawn=Array.from({length:19},(_,i)=>start+i);
+ action(p,{type:'maker-draft',path:drawn});action(p,{type:'maker-build',seed:21});
+ const c=p.maker.challenge,shadow=structuredClone(c),from={x:.5,y:9.5},to={x:5.5,y:9.5};
+ const batch=traceSegment(shadow,from,to);assert.equal(batch.length,5);
+ action(p,{type:'maker-moves',maze:c.id,cells:batch});assert.equal(c.trail.at(-1),start+5);
+ assert.throws(()=>action(p,{type:'maker-moves',maze:'wrong',cells:[start+10]}));
+ action(p,{type:'maker-new'});assert.equal(p.maker.challenge.id,c.id);
+ action(p,{type:'maker-draft',path:drawn});action(p,{type:'maker-build',seed:22});
+ assert.equal(p.maker.archive.length,1);action(p,{type:'maker-previous'});assert.equal(p.maker.challenge.id,c.id);
+ assert.equal(p.maker.challenge.trail.at(-1),start+5);
 });

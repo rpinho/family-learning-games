@@ -1,4 +1,4 @@
-export const VERSION = 'maze-garden-2026-09-25-maze-maker-swipe';
+export const VERSION = 'maze-garden-2026-09-25-maze-maker-trace';
 export const MAX_LEVEL = 27;
 export const baseline = player => player==='explorer'?12:player==='beginner'?6:6;
 export const gridSize = level => 9+2*(Math.max(1,Math.min(MAX_LEVEL,level))-1);
@@ -46,26 +46,30 @@ function candidate(level,seed,shape){const r=random(seed),n=gridSize(level),mid=
 export function makeMaze(level,seed,shapeOverride){const shape=shapeOverride??(seed>>>0)%4;const quality=m=>m.metrics.steps+4*m.metrics.decisions;let m=candidate(level,seed,shape);for(let k=1;k<6;k++){let alt=candidate(level,seed+k*991,shape);if(quality(alt)>quality(m))m=alt;}return m;}
 export function newProfile(player){return {player,calibration:2,level:baseline(player),completed:0,stars:0,streak:0,struggles:0,revision:0,mode:'pure',history:[],active:null};}
 export const MAKER_SIZE=7, MAKER_START=21, MAKER_GOAL=27;
-export function validMakerPath(path,ready=false){
- if(!Array.isArray(path)||path.length<1||path.length>MAKER_SIZE**2||path[0]!==MAKER_START)return false;
+export const MAKER_SIZES=[9,13,19];
+export const makerSizeForLevel=level=>level>=17?19:level>=9?13:9;
+export const makerEndpoints=n=>({start:Math.floor(n/2)*n,goal:Math.floor(n/2)*n+n-1});
+export const makerPathLimit=n=>n===7?n*n:Math.floor(n*n*.32);
+export function validMakerPath(path,ready=false,n=MAKER_SIZE){
+ if(![MAKER_SIZE,...MAKER_SIZES].includes(n)||!Array.isArray(path)||path.length<1||path.length>makerPathLimit(n)||path[0]!==makerEndpoints(n).start)return false;
  const seen=new Set();
  for(let i=0;i<path.length;i++){
-  const cell=path[i];if(!Number.isInteger(cell)||cell<0||cell>=MAKER_SIZE**2||seen.has(cell))return false;
-  if(i&&Math.abs(Math.floor(cell/MAKER_SIZE)-Math.floor(path[i-1]/MAKER_SIZE))+Math.abs(cell%MAKER_SIZE-path[i-1]%MAKER_SIZE)!==1)return false;
+  const cell=path[i];if(!Number.isInteger(cell)||cell<0||cell>=n*n||seen.has(cell))return false;
+  if(i&&Math.abs(Math.floor(cell/n)-Math.floor(path[i-1]/n))+Math.abs(cell%n-path[i-1]%n)!==1)return false;
   seen.add(cell);
  }
- return !ready||path.length>=7&&path.at(-1)===MAKER_GOAL;
+ return !ready||path.length>=n&&path.at(-1)===makerEndpoints(n).goal;
 }
 // A quick finger sweep may skip pointer events; fill the squares between two cells.
-export function extendMakerPath(path,target){
- if(!validMakerPath(path)||!Number.isInteger(target)||target<0||target>=MAKER_SIZE**2)return path;
- const from=path.at(-1);if(target===from)return path;
+export function extendMakerPath(path,target,n=MAKER_SIZE){
+ if(!validMakerPath(path,false,n)||!Number.isInteger(target)||target<0||target>=n*n)return path;
+ const from=path.at(-1),{goal}=makerEndpoints(n);if(target===from)return path;
  if(target===path.at(-2))return path.slice(0,-1);
- if(from===MAKER_GOAL)return path;
- const fx=from%MAKER_SIZE,fy=Math.floor(from/MAKER_SIZE),tx=target%MAKER_SIZE,ty=Math.floor(target/MAKER_SIZE);
+ if(from===goal)return path;
+ const fx=from%n,fy=Math.floor(from/n),tx=target%n,ty=Math.floor(target/n);
  if(fx!==tx&&fy!==ty)return path;
- const step=fx===tx?Math.sign(ty-fy)*MAKER_SIZE:Math.sign(tx-fx),out=[...path];
- for(let cell=from+step;cell!==target+step;cell+=step){if(out.includes(cell))break;out.push(cell);if(cell===MAKER_GOAL)break;}
+ const step=fx===tx?Math.sign(ty-fy)*n:Math.sign(tx-fx),out=[...path];
+ for(let cell=from+step;cell!==target+step;cell+=step){if(out.includes(cell)||out.length>=makerPathLimit(n))break;out.push(cell);if(cell===goal)break;}
  return out;
 }
 export function makerPuzzleFor(player,seed){
@@ -77,17 +81,25 @@ export function makerPuzzleFor(player,seed){
  const [word,answer,options]=pick([['sun','S',['S','M','T']],['moon','M',['M','S','T']],['top','T',['T','M','S']]]);
  return {prompt:'Hear the first sound.',spoken:`Which letter starts ${word}?`,context:'👂',options:shuffle([...options],r),answer};
 }
-export function makeChildMaze(path,seed,player){
- if(!validMakerPath(path,true))throw Error('Draw a connected path from the explorer to the goal.');
- const r=random(seed),cells=Array(MAKER_SIZE**2).fill(null),onPath=new Set(path);
- for(const id of path)cells[id]=[];
- for(let i=1;i<path.length;i++){cells[path[i-1]].push(path[i]);cells[path[i]].push(path[i-1]);}
- // Short blind alleys create choices while preserving the child's one true route.
- for(const id of path.slice(1,-1))if(r()<.8){const x=id%MAKER_SIZE,y=Math.floor(id/MAKER_SIZE);const options=[[x-1,y],[x+1,y],[x,y-1],[x,y+1]].filter(([a,b])=>a>=0&&b>=0&&a<MAKER_SIZE&&b<MAKER_SIZE).map(([a,b])=>b*MAKER_SIZE+a).filter(v=>!onPath.has(v)&&cells[v]===null);if(options.length){const v=options[Math.floor(r()*options.length)];cells[v]=[id];cells[id].push(v);}}
- return {id:`made-${seed}`,n:MAKER_SIZE,cells,start:MAKER_START,goal:MAKER_GOAL,trail:[MAKER_START],moves:0,finished:false,wrong:0,checkpoints:[{cell:MAKER_GOAL,solved:false,puzzle:makerPuzzleFor(player,seed)}]};
+export function makeChildMaze(path,seed,player,n=MAKER_SIZE){
+ if(!validMakerPath(path,true,n))throw Error('Draw a connected path from the explorer to the goal.');
+ const r=random(seed),cells=Array.from({length:n*n},()=>[]),seen=new Set(path),frontier=[...path],{start,goal}=makerEndpoints(n),split=n===MAKER_SIZE?-1:Math.floor(path.length/2),side=new Int8Array(n*n);
+ for(let i=0;i<path.length;i++)side[path[i]]=i<split?1:2;
+ for(let i=1;i<path.length;i++)if(i!==split){cells[path[i-1]].push(path[i]);cells[path[i]].push(path[i-1]);}
+ // Two halves of the child's trail grow through the blank squares as separate trees.
+ // Joining them at the farthest useful crossing forces a genuine detour, even for a straight sketch.
+ while(seen.size<n*n){const index=r()<.7?frontier.length-1:Math.floor(r()*frontier.length),from=frontier[index];
+  const options=[[0,-1],[1,0],[0,1],[-1,0]].map(([dx,dy])=>[(from%n)+dx,Math.floor(from/n)+dy]).filter(([x,y])=>x>=0&&y>=0&&x<n&&y<n).map(([x,y])=>y*n+x).filter(id=>!seen.has(id));
+  if(!options.length){frontier.splice(index,1);continue;}
+  const to=options[Math.floor(r()*options.length)];cells[from].push(to);cells[to].push(from);side[to]=side[from];seen.add(to);frontier.push(to);
+ }
+ if(split>0){const distances=origin=>{const out=new Int32Array(n*n).fill(-1),queue=[origin];out[origin]=0;for(let i=0;i<queue.length;i++)for(const to of cells[queue[i]])if(out[to]<0){out[to]=out[queue[i]]+1;queue.push(to);}return out;},fromStart=distances(start),toGoal=distances(goal);
+  let choice=null,score=-1;for(let from=0;from<n*n;from++)for(const to of [from+1,from+n])if(to<n*n&&(to===from+n||Math.floor(to/n)===Math.floor(from/n))&&side[from]!==side[to]){const a=side[from]===1?from:to,b=side[from]===2?from:to,value=fromStart[a]+toGoal[b]+1;if(value>score){score=value;choice=[from,to];}}
+  if(!choice)throw Error('Could not connect the created maze.');cells[choice[0]].push(choice[1]);cells[choice[1]].push(choice[0]);}
+ return {id:`made-${seed}`,n,cells,start,goal,sourcePath:[...path],trail:[start],moves:0,hints:0,finished:false,wrong:0,checkpoints:[{cell:goal,solved:false,puzzle:makerPuzzleFor(player,seed)}]};
 }
-function makerState(p){return p.maker??={draft:[MAKER_START],challenge:null,completed:0};}
-export function makerComplete(p){const m=makerState(p),a=m.challenge;if(!a||a.finished||a.trail.at(-1)!==MAKER_GOAL||pendingPuzzle(a))return false;a.finished=true;m.completed++;return true;}
+function makerState(p){return p.maker??={size:makerSizeForLevel(p.level),draft:[makerEndpoints(makerSizeForLevel(p.level)).start],challenge:null,completed:0,archive:[]};}
+export function makerComplete(p){const m=makerState(p),a=m.challenge;if(!a||a.finished||a.trail.at(-1)!==a.goal||pendingPuzzle(a))return false;a.finished=true;m.completed++;return true;}
 export function recalibrate(p,seed){if(p.calibration===2)return false;if(p.active)(p.archivedMazes??=[]).push(p.active);p.calibration=2;p.level=Math.max(baseline(p.player),Math.min(MAX_LEVEL,p.level||1));p.streak=0;p.struggles=0;p.active=startMaze(p,seed);return true;}
 export function puzzleFor(player,seed,index){const r=random(seed+index*101),pick=a=>a[Math.floor(r()*a.length)];if(player==='explorer'){
  const names=['ALEXANDRA','ALEXANDRA','JAMIE','CHARLIE','JESSICA'],name=pick(names),position=Math.floor(r()*name.length),answer=name[position];
@@ -104,9 +116,13 @@ export function complete(p,now=Date.now()){const a=p.active;if(!a||a.finished||a
  let change='same';if(clean&&p.level<MAX_LEVEL){p.level=Math.min(MAX_LEVEL,p.level+(ratio<=1.15?2:1));p.streak=0;p.struggles=0;change='up';}else if(p.struggles>=2&&p.level>1){p.level--;p.struggles=0;change='down';}
  p.history.push({id:a.id,level:a.level,theme:a.theme,mode:a.mode,moves:a.moves,optimal:a.solution.length-1,hints:a.hints,stars:3,independent:a.hints===0,wrong:a.wrong,seconds:Math.round((now-a.startedAt)/1000),change,at:new Date(now).toISOString()});p.history=p.history.slice(-500);return true;}
 export function action(p,input){const a=p.active;switch(input.type){case 'recalibrate':recalibrate(p,input.seed);break;case 'start':if(!a||a.finished)p.active=startMaze(p,input.seed);break;
- case 'maker-draft':{const m=makerState(p);if(!validMakerPath(input.path))throw Error('Connect neighboring squares without crossing your path.');m.draft=[...input.path];break;}
- case 'maker-build':{const m=makerState(p);m.challenge=makeChildMaze(m.draft,input.seed,p.player);break;}
+ case 'maker-new':{const m=makerState(p),n=makerSizeForLevel(p.level);m.size=n;m.draft=[makerEndpoints(n).start];m.editing=true;break;}
+ case 'maker-size':{const m=makerState(p),n=input.size;if(!MAKER_SIZES.includes(n)||m.draft.length>1)throw Error('Choose the size before drawing.');m.size=n;m.draft=[makerEndpoints(n).start];break;}
+ case 'maker-draft':{const m=makerState(p);if(!validMakerPath(input.path,false,m.size||MAKER_SIZE))throw Error('Connect neighboring squares without crossing your path.');m.draft=[...input.path];break;}
+ case 'maker-build':{const m=makerState(p),created=makeChildMaze(m.draft,input.seed,p.player,m.size||MAKER_SIZE);if(m.challenge)(m.archive??=[]).push(m.challenge);m.archive=m.archive?.slice(-5)||[];m.challenge=created;m.editing=false;break;}
+ case 'maker-previous':{const m=makerState(p);if(!m.archive?.length)throw Error('No earlier maze.');const old=m.archive.pop();if(m.challenge)m.archive.push(m.challenge);m.challenge=old;m.editing=false;break;}
  case 'maker-move':{const c=makerState(p).challenge;if(!c||!Number.isInteger(input.cell)||!move(c,input.cell))throw Error('Follow an open path from your explorer.');makerComplete(p);break;}
+ case 'maker-moves':{const c=makerState(p).challenge;if(!c||input.maze!==c.id)throw Error('This maze has changed. Refresh to continue.');if(!Array.isArray(input.cells)||input.cells.length>1000)throw Error('Invalid trail.');for(const id of input.cells){if(!Number.isInteger(id)||!move(c,id))throw Error('That trail crosses a wall or a sound stop.');}makerComplete(p);break;}
  case 'maker-answer':{const c=makerState(p).challenge,q=c&&pendingPuzzle(c);if(!q)throw Error('No sound stop here.');if(String(input.answer)===q.puzzle.answer)q.solved=true;else c.wrong++;makerComplete(p);break;}
  case 'maker-skip':{const c=makerState(p).challenge,q=c&&pendingPuzzle(c);if(!q)throw Error('No sound stop here.');q.solved=true;q.skipped=true;makerComplete(p);break;}
  case 'maker-again':{const c=makerState(p).challenge;if(!c)throw Error('Make a maze first.');c.trail=[c.start];c.moves=0;c.finished=false;c.wrong=0;c.checkpoints.forEach(q=>{q.solved=false;delete q.skipped;});break;}
