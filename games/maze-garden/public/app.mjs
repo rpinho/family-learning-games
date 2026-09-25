@@ -1,5 +1,6 @@
 import {PLAYERS,THEMES,VERSION,traceSegment,move,pendingPuzzle,decisionHint} from '/engine.mjs';
 import {hintView,drawHint} from '/hint-view.mjs';
+import {checkpointMarkers} from '/checkpoint-view.mjs';
 const $=s=>document.querySelector(s),board=$('#board'),ctx=board.getContext('2d');
 let receivedAt=Date.now(),player,profile,busy=false,dirty=[],drag=null,lastPoint=null,hintCells=[],hintTimer,puzzleShown='',muted=localStorage.getItem('maze-sound')==='off',audio=new Audio(),clips={},audioContext;
 const missionLines=['Help the rabbit find the carrot.','Help the turtle find the island.','Help the bee find the flower.','Help the rocket reach the planet.','Help the penguin find the fish.','Help the monkey find the banana.','Help the fox find its home.','Help the dragon find the gem.'];
@@ -19,7 +20,7 @@ function draw(){if(!profile?.active)return;const a=profile.active,t=THEMES[a.the
  line(a.trail,t.accent,s*.28);
  ctx.strokeStyle=t.wall;ctx.lineWidth=Math.max(1.3,s*.075);ctx.beginPath();for(let id=0;id<a.cells.length;id++){if(a.cells[id]===null)continue;const x=(id%a.n+pad)*s,y=(Math.floor(id/a.n)+pad)*s,links=a.cells[id];for(const [other,x1,y1,x2,y2] of [[id-a.n,x,y,x+s,y],[id+1,x+s,y,x+s,y+s],[id+a.n,x,y+s,x+s,y+s],[id-1,x,y,x,y+s]]){if(!links.includes(other)){ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);}}}ctx.stroke();
  const emoji=(id,text,f=.61)=>{const [x,y]=at(id);ctx.font=`${s*f}px system-ui`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,x,y+s*.035);};
- emoji(a.goal,t.goal,Math.max(.7,20/s));for(const c of a.checkpoints)emoji(c.cell,c.solved?'✅':'🔒',.43);
+ emoji(a.goal,t.goal,Math.max(.7,20/s));for(const c of checkpointMarkers(player,a))emoji(c.cell,c.solved?'✅':'🔒',.43);
  const [sx,sy]=at(a.start);ctx.fillStyle=t.accent;ctx.beginPath();ctx.arc(sx,sy,s*.12,0,Math.PI*2);ctx.fill();emoji(a.trail.at(-1),t.animal,Math.max(.68,22/s));
  drawHint(ctx,at,s,hintCells);
  board.setAttribute('aria-label',`${t.name}. ${a.n} by ${a.n} maze. Use arrow keys or drag ${t.animal} to ${t.goal}.`);

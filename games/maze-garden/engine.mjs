@@ -1,4 +1,4 @@
-export const VERSION = 'maze-garden-2026-09-22-visible-hints';
+export const VERSION = 'maze-garden-2026-09-25-hidden-checkpoints';
 export const MAX_LEVEL = 27;
 export const baseline = player => player==='explorer'?12:player==='beginner'?6:6;
 export const gridSize = level => 9+2*(Math.max(1,Math.min(MAX_LEVEL,level))-1);
