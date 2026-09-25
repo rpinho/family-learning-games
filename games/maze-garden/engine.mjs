@@ -1,4 +1,4 @@
-export const VERSION = 'maze-garden-2026-09-25-hidden-checkpoints';
+export const VERSION = 'maze-garden-2026-09-25-maze-maker';
 export const MAX_LEVEL = 27;
 export const baseline = player => player==='explorer'?12:player==='beginner'?6:6;
 export const gridSize = level => 9+2*(Math.max(1,Math.min(MAX_LEVEL,level))-1);
@@ -45,6 +45,37 @@ function candidate(level,seed,shape){const r=random(seed),n=gridSize(level),mid=
 }
 export function makeMaze(level,seed,shapeOverride){const shape=shapeOverride??(seed>>>0)%4;const quality=m=>m.metrics.steps+4*m.metrics.decisions;let m=candidate(level,seed,shape);for(let k=1;k<6;k++){let alt=candidate(level,seed+k*991,shape);if(quality(alt)>quality(m))m=alt;}return m;}
 export function newProfile(player){return {player,calibration:2,level:baseline(player),completed:0,stars:0,streak:0,struggles:0,revision:0,mode:'pure',history:[],active:null};}
+export const MAKER_SIZE=7, MAKER_START=21, MAKER_GOAL=27;
+export function validMakerPath(path,ready=false){
+ if(!Array.isArray(path)||path.length<1||path.length>MAKER_SIZE**2||path[0]!==MAKER_START)return false;
+ const seen=new Set();
+ for(let i=0;i<path.length;i++){
+  const cell=path[i];if(!Number.isInteger(cell)||cell<0||cell>=MAKER_SIZE**2||seen.has(cell))return false;
+  if(i&&Math.abs(Math.floor(cell/MAKER_SIZE)-Math.floor(path[i-1]/MAKER_SIZE))+Math.abs(cell%MAKER_SIZE-path[i-1]%MAKER_SIZE)!==1)return false;
+  seen.add(cell);
+ }
+ return !ready||path.length>=7&&path.at(-1)===MAKER_GOAL;
+}
+export function makerPuzzleFor(player,seed){
+ const r=random(seed),pick=sets=>sets[Math.floor(r()*sets.length)];
+ if(player==='explorer'){
+  const words=pick([['CAT','HAT','MAT'],['SUN','RUN','FUN'],['TOP','HOP','MOP']]),answer=pick(words);
+  return {prompt:'Hear a word. Find it.',spoken:`Listen. Find ${answer.toLowerCase()}.`,context:'🔊',options:shuffle([...words],r),answer};
+ }
+ const [word,answer,options]=pick([['sun','S',['S','M','T']],['moon','M',['M','S','T']],['top','T',['T','M','S']]]);
+ return {prompt:'Hear the first sound.',spoken:`Which letter starts ${word}?`,context:'👂',options:shuffle([...options],r),answer};
+}
+export function makeChildMaze(path,seed,player){
+ if(!validMakerPath(path,true))throw Error('Draw a connected path from the explorer to the goal.');
+ const r=random(seed),cells=Array(MAKER_SIZE**2).fill(null),onPath=new Set(path);
+ for(const id of path)cells[id]=[];
+ for(let i=1;i<path.length;i++){cells[path[i-1]].push(path[i]);cells[path[i]].push(path[i-1]);}
+ // Short blind alleys create choices while preserving the child's one true route.
+ for(const id of path.slice(1,-1))if(r()<.8){const x=id%MAKER_SIZE,y=Math.floor(id/MAKER_SIZE);const options=[[x-1,y],[x+1,y],[x,y-1],[x,y+1]].filter(([a,b])=>a>=0&&b>=0&&a<MAKER_SIZE&&b<MAKER_SIZE).map(([a,b])=>b*MAKER_SIZE+a).filter(v=>!onPath.has(v)&&cells[v]===null);if(options.length){const v=options[Math.floor(r()*options.length)];cells[v]=[id];cells[id].push(v);}}
+ return {id:`made-${seed}`,n:MAKER_SIZE,cells,start:MAKER_START,goal:MAKER_GOAL,trail:[MAKER_START],moves:0,finished:false,wrong:0,checkpoints:[{cell:MAKER_GOAL,solved:false,puzzle:makerPuzzleFor(player,seed)}]};
+}
+function makerState(p){return p.maker??={draft:[MAKER_START],challenge:null,completed:0};}
+export function makerComplete(p){const m=makerState(p),a=m.challenge;if(!a||a.finished||a.trail.at(-1)!==MAKER_GOAL||pendingPuzzle(a))return false;a.finished=true;m.completed++;return true;}
 export function recalibrate(p,seed){if(p.calibration===2)return false;if(p.active)(p.archivedMazes??=[]).push(p.active);p.calibration=2;p.level=Math.max(baseline(p.player),Math.min(MAX_LEVEL,p.level||1));p.streak=0;p.struggles=0;p.active=startMaze(p,seed);return true;}
 export function puzzleFor(player,seed,index){const r=random(seed+index*101),pick=a=>a[Math.floor(r()*a.length)];if(player==='explorer'){
  const names=['ALEXANDRA','ALEXANDRA','JAMIE','CHARLIE','JESSICA'],name=pick(names),position=Math.floor(r()*name.length),answer=name[position];
@@ -61,6 +92,12 @@ export function complete(p,now=Date.now()){const a=p.active;if(!a||a.finished||a
  let change='same';if(clean&&p.level<MAX_LEVEL){p.level=Math.min(MAX_LEVEL,p.level+(ratio<=1.15?2:1));p.streak=0;p.struggles=0;change='up';}else if(p.struggles>=2&&p.level>1){p.level--;p.struggles=0;change='down';}
  p.history.push({id:a.id,level:a.level,theme:a.theme,mode:a.mode,moves:a.moves,optimal:a.solution.length-1,hints:a.hints,stars:3,independent:a.hints===0,wrong:a.wrong,seconds:Math.round((now-a.startedAt)/1000),change,at:new Date(now).toISOString()});p.history=p.history.slice(-500);return true;}
 export function action(p,input){const a=p.active;switch(input.type){case 'recalibrate':recalibrate(p,input.seed);break;case 'start':if(!a||a.finished)p.active=startMaze(p,input.seed);break;
+ case 'maker-draft':{const m=makerState(p);if(!validMakerPath(input.path))throw Error('Connect neighboring squares without crossing your path.');m.draft=[...input.path];break;}
+ case 'maker-build':{const m=makerState(p);m.challenge=makeChildMaze(m.draft,input.seed,p.player);break;}
+ case 'maker-move':{const c=makerState(p).challenge;if(!c||!Number.isInteger(input.cell)||!move(c,input.cell))throw Error('Follow an open path from your explorer.');makerComplete(p);break;}
+ case 'maker-answer':{const c=makerState(p).challenge,q=c&&pendingPuzzle(c);if(!q)throw Error('No sound stop here.');if(String(input.answer)===q.puzzle.answer)q.solved=true;else c.wrong++;makerComplete(p);break;}
+ case 'maker-skip':{const c=makerState(p).challenge,q=c&&pendingPuzzle(c);if(!q)throw Error('No sound stop here.');q.solved=true;q.skipped=true;makerComplete(p);break;}
+ case 'maker-again':{const c=makerState(p).challenge;if(!c)throw Error('Make a maze first.');c.trail=[c.start];c.moves=0;c.finished=false;c.wrong=0;c.checkpoints.forEach(q=>{q.solved=false;delete q.skipped;});break;}
  case 'moves':if(!a||input.maze!==a.id)throw Error('This maze has changed. Refresh to continue.');if(!Array.isArray(input.cells)||input.cells.length>1000)throw Error('Invalid trail');for(const id of input.cells){if(!Number.isInteger(id)||!move(a,id))throw Error('That trail crosses a wall or a puzzle stop.');}complete(p);break;
  case 'answer':{const c=pendingPuzzle(a);if(!c)throw Error('No puzzle here');if(String(input.answer)===c.puzzle.answer)c.solved=true;else a.wrong++;complete(p);break;}
  case 'hint':if(a&&!a.finished){requestHint(a);}break;

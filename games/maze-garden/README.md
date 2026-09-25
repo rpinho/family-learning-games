@@ -20,6 +20,8 @@ Set `PORT` to change the port, `HOST` to change the listening interface, or `MAZ
 
 In puzzle mode, Explorer's checkpoint markers stay hidden so their locations do not reveal the route. The spoken puzzle still opens on arrival; Beginner retains visible markers.
 
+**Make a Maze** lets a player draw a connected 7×7 route and test it with generated blind alleys. The draft and latest playable maze are saved separately from the regular adventure. At the goal, a short letter or word choice can be heard, answered or skipped. This is one saved creation per profile, not a gallery; making another replaces it.
+
 First help circles the next junction. After five seconds, More help marks only its outgoing branch. Replaying a junction cue does not inflate assistance. The next maze starts with help off and available on request. Every completion earns three stars; hints alone do not automatically lower the chosen level. Independent completions and substantial extra exploration still inform the provisional difficulty heuristic. Existing boards, previous stars and histories are retained; assistance is recorded separately from completion.
 
 Requested hints enlarge dense boards to tracing size and center the junction. A white-edged purple arrow makes the next branch visible over the existing trail; a short spoken cue explains when the move goes back. The first hint still withholds the branch, the five-second stronger-help pause remains, and Overview/Find me stay available. Sound respects the existing mute preference.
