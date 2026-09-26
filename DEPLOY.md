@@ -17,6 +17,12 @@ under a running server freezes their game. So production never runs from a worki
 
 `<game>` is one of the ids in the private `deploy.json` (the six games plus `hub`).
 
+A top-level `env` in `deploy.json` is added to every service's environment (a game's own `env` wins). Use it for
+`FAMILY_EXTRA_HOSTS`: extra names or addresses this machine answers to (comma separated, e.g. a VPN name), which
+every game and the hub accept in their host allowlist alongside `localhost`, the hostname and the current interface
+addresses (re-read every few seconds). Promotion only restarts a service, so an env change reaches a live service
+when its launchd plist is rewritten (`prepare-cutover` with the live refs, then the cutover).
+
 ## How it works
 
 - **Releases.** `build` exports a commit with `git archive` into

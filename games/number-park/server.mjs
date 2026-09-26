@@ -21,13 +21,17 @@ let queue=Promise.resolve(),logError=null;
 const log=async row=>{try{await appendFile(join(data,'logs',new Date().toISOString().slice(0,10)+'.jsonl'),JSON.stringify({at:new Date().toISOString(),version:VERSION,...row})+'\n',{mode:0o600});logError=null;}catch(e){logError=e.code;console.error('Log failed',e.code);}};
 const load=async id=>{try{return prepareProfile(JSON.parse(await readFile(join(data,id+'.json'),'utf8')));}catch(e){if(e.code==='ENOENT')return freshProfile(id);throw e;}};
 const send=(res,status,body)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(body));};
-const hosts=new Set(['localhost','127.0.0.1','localhost',hostname().toLowerCase(),...Object.values(networkInterfaces()).flat().filter(Boolean).map(i=>i.address)]);
+// Only this machine's own names and addresses. The network interfaces are re-read every few seconds, so a new
+// address (a new router, a VPN) works without a restart. FAMILY_EXTRA_HOSTS (comma or space separated) adds
+// other names this machine answers to, such as a VPN DNS name.
+const BASE_HOSTS=['localhost','127.0.0.1'];let hostCache=null,hostCacheAt=0;
+function allowedHosts(){if(hostCache&&Date.now()-hostCacheAt<5000)return hostCache;const me=hostname().toLowerCase(),short=me.replace(/\.local$/,'');hostCacheAt=Date.now();return hostCache=new Set([...BASE_HOSTS.map(h=>String(h).toLowerCase()),me,short,short+'.local',...(process.env.FAMILY_EXTRA_HOSTS||'').split(/[\s,]+/).filter(Boolean).map(h=>h.toLowerCase()),...Object.values(networkInterfaces()).flat().filter(Boolean).map(i=>i.family==='IPv6'||i.family===6?'['+i.address.toLowerCase()+']':i.address)]);}
 const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.rsc':'text/x-component','.txt':'text/plain','.svg':'image/svg+xml','.png':'image/png','.ico':'image/x-icon','.wav':'audio/wav','.webmanifest':'application/manifest+json','.woff2':'font/woff2'};
 const server=http.createServer(async(req,res)=>{
  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','same-origin');
  const began=Date.now();let url;
  const diagnostic={clientId:String(req.headers['x-game-client']||'legacy').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,96),requestId:String(req.headers['x-game-request']||'').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,112)};
- try{url=new URL(req.url,'http://'+req.headers.host);if(!hosts.has(url.hostname.toLowerCase())||req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host||req.headers['sec-fetch-site']==='cross-site')return send(res,403,{error:'Use the home-network address.'});}catch{return send(res,400,{error:'Invalid address.'});}
+ try{url=new URL(req.url,'http://'+req.headers.host);if(!allowedHosts().has(url.hostname.toLowerCase())||req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host||req.headers['sec-fetch-site']==='cross-site')return send(res,403,{error:'Use the home-network address.'});}catch{return send(res,400,{error:'Invalid address.'});}
  res.on('finish',()=>{if(res.statusCode>=400)void log({type:'request_error',...diagnostic,path:url.pathname.slice(0,120),status:res.statusCode,ms:Date.now()-began});});
  res.on('close',()=>{if(!res.writableFinished&&url.pathname.startsWith('/api/'))void log({type:'response_interrupted',...diagnostic,path:url.pathname.slice(0,120),ms:Date.now()-began});});
  try{

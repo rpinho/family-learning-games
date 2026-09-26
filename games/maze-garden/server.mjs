@@ -2,7 +2,7 @@ import http from 'node:http';
 import {readFileSync,writeFileSync,renameSync,mkdirSync,appendFileSync,existsSync} from 'node:fs';
 import {resolve,dirname,extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {homedir,networkInterfaces} from 'node:os';
+import {homedir,hostname,networkInterfaces} from 'node:os';
 import {randomBytes} from 'node:crypto';
 import {PLAYERS,VERSION,newProfile,action} from './engine.mjs';
 import {literacyFrom,DEFAULT_TRACK} from './public/word-break.mjs';
@@ -11,7 +11,11 @@ mkdirSync(resolve(data,'logs'),{recursive:true,mode:0o700});
 const letterData=process.env.LETTER_QUEST_DATA||resolve(homedir(),'.local/share/family-learning-games/letter-quest');
 // Read-only look at Letter Quest progress so word breaks match each child.
 function literacy(id){let save=null;try{save=JSON.parse(readFileSync(resolve(letterData,id+'.json'),'utf8'));}catch{}return literacyFrom(save,DEFAULT_TRACK[id]||'mixed');}
-const hosts=new Set(['localhost','127.0.0.1','localhost',...Object.values(networkInterfaces()).flat().filter(Boolean).map(n=>n.address)]);
+// Only this machine's own names and addresses. The network interfaces are re-read every few seconds, so a new
+// address (a new router, a VPN) works without a restart. FAMILY_EXTRA_HOSTS (comma or space separated) adds
+// other names this machine answers to, such as a VPN DNS name.
+const BASE_HOSTS=['localhost','127.0.0.1'];let hostCache=null,hostCacheAt=0;
+function allowedHosts(){if(hostCache&&Date.now()-hostCacheAt<5000)return hostCache;const me=hostname().toLowerCase(),short=me.replace(/\.local$/,'');hostCacheAt=Date.now();return hostCache=new Set([...BASE_HOSTS.map(h=>String(h).toLowerCase()),me,short,short+'.local',...(process.env.FAMILY_EXTRA_HOSTS||'').split(/[\s,]+/).filter(Boolean).map(h=>h.toLowerCase()),...Object.values(networkInterfaces()).flat().filter(Boolean).map(i=>i.family==='IPv6'||i.family===6?'['+i.address.toLowerCase()+']':i.address)]);}
 const log=e=>appendFileSync(resolve(data,'logs',new Date().toISOString().slice(0,10)+'.jsonl'),JSON.stringify({at:new Date().toISOString(),version:VERSION,...e})+'\n',{mode:0o600});
 const file=p=>resolve(data,p+'.json');
 function save(p){const tmp=file(p.player)+'.tmp';writeFileSync(tmp,JSON.stringify(p),{mode:0o600});renameSync(tmp,file(p.player));}
@@ -19,7 +23,7 @@ function load(player){return existsSync(file(player))?JSON.parse(readFileSync(fi
 function send(res,status,value){res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(value));}
 const types={'.html':'text/html; charset=utf-8','.css':'text/css','.mjs':'text/javascript','.js':'text/javascript','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json'};
 const server=http.createServer(async(req,res)=>{res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self'; connect-src 'self'; frame-ancestors 'none'");
- try{const url=new URL(req.url,`http://${req.headers.host}`);if(!hosts.has(url.hostname))return send(res,403,{error:'Local access only'});
+ try{const url=new URL(req.url,`http://${req.headers.host}`);if(!allowedHosts().has(url.hostname.toLowerCase()))return send(res,403,{error:'Local access only'});
  if(req.headers.origin&&req.headers.origin!==url.origin)return send(res,403,{error:'Origin mismatch'});
  if(url.pathname==='/api/health')return send(res,200,{version:VERSION,name:'Maze Garden'});
  if(url.pathname.startsWith('/api/')){const player=url.searchParams.get('player');if(!Object.hasOwn(PLAYERS,player))return send(res,400,{error:'Choose a player'});
