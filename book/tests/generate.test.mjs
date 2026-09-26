@@ -53,3 +53,10 @@ test('Every line a chapter can speak is in its narration list',()=>{
 test('Recap lines for one child only',()=>{
  assert.deepEqual(recapLines('## Leo\n- **Time:** 5 min\n- **Worth a look:**\n\n## Ada\n- x','Leo'),['Time: 5 min']);
 });
+test('Chapters carry their cast; pages know who is on them; portraits only when the file exists',()=>{
+ const p={...plans(['2026-03-10'])[1]};p.cast=[{id:'dragon',name:'Dragon',emoji:'🐉'},{id:'cat',name:'the Twin Cats',emoji:'🐱'}];p.companion=p.cast[0];
+ const ch=assemble(templateChapter(p),p,{portraits:new Set(['dragon'])});
+ assert.deepEqual(ch.cast.map(c=>[c.id,c.portrait]),[['dragon','dragon.jpg'],['cat',null]]);
+ assert.deepEqual(ch.pages[0].cast,['dragon','cat']);
+ assert.ok(ch.pages.some(pg=>pg.cast.length===1&&pg.cast[0]==='dragon'));
+});

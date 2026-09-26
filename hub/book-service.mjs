@@ -79,6 +79,8 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
    if(u.pathname==='/api/book/bedtime'&&req.method==='GET'){const d=u.searchParams.get('date');return send(res,200,await bedtime(DATE.test(d||'')?d:today()));}
    const clip=u.pathname.match(/^\/book-voice\/([a-f0-9]{16}\.wav)$/);
    if(clip&&req.method==='GET'){try{const bytes=await readFile(join(bookDir,'voice',clip[1]));res.writeHead(200,{'Content-Type':'audio/wav','Content-Length':bytes.length,'Cache-Control':'max-age=31536000, immutable'});res.end(bytes);}catch(e){if(e.code==='ENOENT')send(res,404,{error:'Use device narration.'});else throw e;}return;}
+   const face=u.pathname.match(/^\/book-cast\/([a-z0-9-]{1,40}\.jpg)$/);
+   if(face&&req.method==='GET'){try{const bytes=await readFile(join(bookDir,'cast',face[1]));res.writeHead(200,{'Content-Type':'image/jpeg','Content-Length':bytes.length,'Cache-Control':'max-age=86400'});res.end(bytes);}catch(e){if(e.code==='ENOENT')send(res,404,{error:'No picture.'});else throw e;}return;}
    return false;
   },
   today,chapter,progress,notes

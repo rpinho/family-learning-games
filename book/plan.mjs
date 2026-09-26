@@ -63,13 +63,31 @@ function readerPlan(m,r){
    fix:{kind:'math',track:'words',spoken:`What is ${ma} times ${mb}?`,display:`${ma} × ${mb} = ?`,answer:String(right),options:shuffle([String(right),String(wrongN),String(right-ma)],r)}}
  };
 }
-export function planChapter(model,{date,profile={}}={}){
+// Who is in today's chapter: the child's fixed companions, then a rotating few from the shared cast
+// (a family's real toys, like the Primer's Dinosaur, Duck, Peter and Purple). Without a cast file,
+// the profile's companions.
+export function chooseCast(model,{date,cast,level}){
+ const fallback=(model.companions||[]).length?model.companions:[{name:'Pip',kind:'a cheerful little robot',emoji:'🤖'}];
+ if(!cast?.cast?.length)return fallback.map(c=>({id:c.id||c.name.toLowerCase().replace(/[^a-z0-9]+/g,'-'),...c}));
+ const r=rng(`cast:${model.player}:${date}`),byId=Object.fromEntries(cast.cast.map(c=>[c.id,c]));
+ const mine=cast.children?.[model.player];
+ if(mine){
+  const fixed=(mine.fixed||[]).map(id=>byId[id]).filter(Boolean),pool=(mine.rotate||[]).map(id=>byId[id]).filter(Boolean);
+  const out=[...fixed,...shuffle(pool,r).slice(0,Math.max(0,Number(mine.perChapter??2)))];
+  return out.length?out:fallback;
+ }
+ // One cast shared by every child (ownership not known yet).
+ const n=Math.max(1,Number(cast.perChapter?.[level])||2);
+ return shuffle(cast.cast,r).slice(0,n);
+}
+export function chooseProps(model,cast){return (cast?.children?.[model.player]?.props||[]).map(id=>(cast.props||[]).find(p=>p.id===id)).filter(Boolean);}
+export function planChapter(model,{date,profile={},cast=null}={}){
  const r=rng(`${model.player}:${date}`);
  const early=(model.math?.track==='early')||model.literacy?.track==='letters';
  const base=early?earlyPlan(model,r):readerPlan(model,r);
- const companion=(model.companions||[])[0]||{name:'Pip',kind:'a cheerful little robot',emoji:'🤖'};
+ const members=chooseCast(model,{date,cast,level:early?'early':'reader'}),companion=members[0];
  const interests=shuffle(model.interests||[],r).slice(0,2);
- return {player:model.player,name:model.name,date,sibling:profile.sibling||null,companion,interests,...base,
+ return {player:model.player,name:model.name,date,sibling:profile.sibling||null,companion,cast:members,props:chooseProps(model,cast),interests,...base,
   dadLines:(model.recent?.dadLines||[]).map(l=>l.text),yesterday:model.recent?.yesterday||null,play:model.recent?.play||[],
   tricks:(model.tricks||[]).map(t=>t.text),previous:model.story?.book||[],running:model.story?.running||[]};
 }

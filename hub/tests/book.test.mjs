@@ -18,6 +18,7 @@ async function hub(){
  await mkdir(join(book,'beginner'),{recursive:true});await mkdir(join(book,'voice'),{recursive:true});
  await writeFile(join(book,'beginner',today+'.json'),JSON.stringify(chapter('beginner')));
  await writeFile(join(book,'voice','0123456789abcdef.wav'),'RIFFfake');
+ await mkdir(join(book,'cast'),{recursive:true});await writeFile(join(book,'cast','owl.jpg'),'JFIFfake');
  const child=spawn(process.execPath,[new URL('../server.mjs',import.meta.url).pathname],{env:{...process.env,FAMILY_CONFIG:'',FAMILY_DATA:data,FAMILY_BOOK:book,PORT:'0',HOST:'127.0.0.1'},stdio:['ignore','pipe','pipe']});
  const out=await new Promise((resolve,reject)=>{child.stdout.once('data',x=>resolve(String(x)));child.once('exit',c=>reject(Error('exit '+c)));});
  return {data,book,child,base:'http://127.0.0.1:'+out.match(/localhost:(\d+)/)[1]};
@@ -49,6 +50,8 @@ test('Today’s chapter opens by itself until finished, and never more than a fe
   const wav=await fetch(base+'/book-voice/0123456789abcdef.wav');assert.equal(wav.status,200);assert.equal(wav.headers.get('content-type'),'audio/wav');
   assert.equal((await fetch(base+'/book-voice/..%2Fbeginner.wav')).status,404);
   assert.equal((await fetch(base+'/book-voice/ffffffffffffffff.wav')).status,404);
+  const face=await fetch(base+'/book-cast/owl.jpg');assert.equal(face.status,200);assert.equal(face.headers.get('content-type'),'image/jpeg');
+  assert.equal((await fetch(base+'/book-cast/..%2Fprofiles.json')).status,404);assert.equal((await fetch(base+'/book-cast/nobody.jpg')).status,404);
   for(const f of ['/book.mjs','/word-break.mjs','/bedtime.html','/bedtime.mjs'])assert.equal((await fetch(base+f)).status,200,f);
   const html=await(await fetch(base+'/')).text();assert.match(html,/id="book-note"/);assert.match(html,/bedtime\.html/);
  }finally{child.kill();}

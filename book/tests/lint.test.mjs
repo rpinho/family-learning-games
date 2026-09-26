@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {safetyIssues,wrongEquations,lintChapter,safeDadLine,tokens} from '../lint.mjs';
-import {planChapter} from '../plan.mjs';
+import {planChapter,chooseCast,chooseProps} from '../plan.mjs';
 import {templateChapter} from '../template.mjs';
 import {plans} from './fixtures.mjs';
 
@@ -50,4 +50,25 @@ test('Dad’s line is used only when it is safe',()=>{
  assert.equal(safeDadLine('grandma was in the hospital'),null);
  assert.equal(safeDadLine(''),null);
  assert.deepEqual(tokens('"5 × 4 = 25!"'),['5','4','25']);
+});
+test('Cast: each child’s own toys, fixed friends every chapter, a rotating few, props, and a shared fallback',()=>{
+ const cast={cast:[{id:'bear',name:'Bear'},{id:'owl',name:'Captain Owl'},{id:'fox',name:'Fox'},{id:'cat',name:'the Twin Cats'},{id:'dragon',name:'Dragon'}],props:[{id:'kite',name:'the kite',kind:'a red kite'}],
+  children:{older:{fixed:['dragon','fox'],rotate:[],perChapter:0},young:{fixed:['bear'],rotate:['owl','cat'],perChapter:1,props:['kite']}}};
+ const [y,o]=plans(['2026-03-10']);
+ assert.deepEqual(chooseCast({player:'older'},{date:'2026-03-10',cast}).map(c=>c.id),['dragon','fox']);
+ const young=chooseCast({player:'young'},{date:'2026-03-10',cast});assert.equal(young[0].id,'bear');assert.equal(young.length,2);assert.ok(['owl','cat'].includes(young[1].id));
+ assert.deepEqual(chooseCast({player:'young'},{date:'2026-03-10',cast}),young,'deterministic per date');
+ assert.deepEqual(chooseProps({player:'young'},cast).map(p=>p.id),['kite']);
+ assert.equal(chooseCast({player:'nobody'},{date:'2026-03-10',cast:{cast:cast.cast,perChapter:{early:3}},level:'early'}).length,3,'shared cast when ownership is unknown');
+ assert.equal(chooseCast({player:'x',companions:[{name:'Pip',kind:'k'}]},{date:'d',cast:null})[0].name,'Pip');
+ for(const [p,who] of [[y,'young'],[o,'older']]){const withCast={...p,cast:chooseCast({player:who},{date:p.date,cast})};withCast.companion=withCast.cast[0];
+  assert.deepEqual(lintChapter(templateChapter(withCast),withCast),[],who);
+  const t=templateChapter(withCast);const name=withCast.cast.at(-1).name.replace(/^the /,'');for(const pg of t.pages)pg.text=pg.text.split(name).join('someone');
+  assert.ok(lintChapter(t,withCast).some(i=>i.startsWith('the friend')),'every friend must appear');}
+});
+test('A family’s own toy names pass the brand rule only when allowed, and no other brand does',()=>{
+ assert.ok(safetyIssues('Little Mario naps.').some(i=>i.startsWith('brand')));
+ assert.deepEqual(safetyIssues('Little Mario naps.',{allow:['Mario']}),[]);
+ assert.ok(safetyIssues('Little Mario builds with Lego.',{allow:['Mario']}).some(i=>i==='brand: "Lego"'));
+ assert.ok(safetyIssues('Mario went to the hospital.',{allow:['Mario']}).some(i=>i.startsWith('illness')),'allowing a name never relaxes other rules');
 });

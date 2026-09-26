@@ -10,7 +10,7 @@ import {existsSync,readFileSync} from 'node:fs';
 import {join,dirname} from 'node:path';
 import {tmpdir} from 'node:os';
 import {fileURLToPath} from 'node:url';
-import {bookPaths,readProfiles,localDate,addDays} from './paths.mjs';
+import {bookPaths,readProfiles,readCast,localDate,addDays} from './paths.mjs';
 import {learnerFor,writeLearner,bookPlayers} from './build-learner.mjs';
 import {planChapter} from './plan.mjs';
 import {lintChapter,safeDadLine} from './lint.mjs';
@@ -53,14 +53,15 @@ export async function askModel(prompt,{env=process.env,log=()=>{}}={}){
  return null;
 }
 // Write, lint, repair once, else template. Returns {story, source, lint}.
-export async function writeStory(plan,{extra=[],dadLines=[],ask=askModel,log=()=>{}}={}){
+export async function writeStory(plan,{extra=[],allow=[],dadLines=[],ask=askModel,log=()=>{}}={}){
  const first=await ask(buildPrompt(plan,{dadLines}),{log});
  if(first){
-  let story=parseChapter(first.text),issues=story?lintChapter(story,plan,{extra}):['reply was not JSON'];
+  let story=parseChapter(first.text),issues=story?lintChapter(story,plan,{extra,allow}):['reply was not JSON'];
+  if(!story)log(`reply was not JSON (${plan.player}): ${String(first.text).slice(0,240).replace(/\s+/g,' ')}`);
   if(!issues.length)return {story,source:first.source,lint:[]};
   log(`lint (${plan.player}): ${issues.join(' | ')}`);
   const second=await ask(story?repairPrompt(story,issues):buildPrompt(plan,{dadLines}),{log});
-  if(second){const s2=parseChapter(second.text),i2=s2?lintChapter(s2,plan,{extra}):['reply was not JSON'];
+  if(second){const s2=parseChapter(second.text),i2=s2?lintChapter(s2,plan,{extra,allow}):['reply was not JSON'];
    if(!i2.length)return {story:s2,source:second.source+' (repaired)',lint:issues};
    log(`lint after repair (${plan.player}): ${i2.join(' | ')}`);issues=i2;}
   return {story:templateChapter(plan),source:'template (model chapter failed lint)',lint:issues};
@@ -87,11 +88,14 @@ export async function generateOne(player,{paths,profiles,date,noLLM=false,noVoic
  const profile=profiles[player]||{},extra=[...(profiles._lint?.extra||[]),...(profile.lintExtra||[])];
  const model=await learnerFor(player,{paths,profiles,now,chapterDate:date});
  await writeLearner(model,paths.learner);
- const plan=planChapter(model,{date,profile});
- const dadLines=plan.dadLines.map(t=>safeDadLine(t,{extra})).filter(Boolean);
+ const cast=readCast(paths),allow=cast?.allowNames||[];
+ const plan=planChapter(model,{date,profile,cast});
+ const dadLines=plan.dadLines.map(t=>safeDadLine(t,{extra,allow})).filter(Boolean);
  plan.dadLines=dadLines;
- const {story,source,lint}=noLLM?{story:templateChapter(plan),source:'template (--no-llm)',lint:[]}:await writeStory(plan,{extra,dadLines,ask,log:m=>log(m)});
- const ch=assemble(story,plan,{number:await chapterNumber(dir,date),source,lint,dadLines});
+ const {story,source,lint}=noLLM?{story:templateChapter(plan),source:'template (--no-llm)',lint:[]}:await writeStory(plan,{extra,allow,dadLines,ask,log:m=>log(m)});
+ const portraits=new Set(),portraitData={};
+ for(const c of plan.cast||[]){try{const b=await readFile(join(paths.portraits,`${c.id}.jpg`));portraits.add(c.id);portraitData[c.id]='data:image/jpeg;base64,'+b.toString('base64');}catch{}}
+ const ch=assemble(story,plan,{number:await chapterNumber(dir,date),source,lint,dadLines,portraits});
  if(!noVoice){try{const v=profile.voice||{};const n=await narrate(speechLines(ch),{paths,voice:v.voice,speed:v.speed});ch.voice={name:n.voice,speed:n.speed,clips:n.clips};log(`${player} ${date}: ${n.made} new clips`);}
   catch(e){log(`${player} ${date}: narration failed, device speech will be used (${String(e.message).slice(0,200)})`);}}
  let did=[];try{did=recapLines(await readFile(join(paths.recap,addDays(date,-1)+'.md'),'utf8'),model.name).filter(l=>l!=='No play.');}catch{}
@@ -99,7 +103,7 @@ export async function generateOne(player,{paths,profiles,date,noLLM=false,noVoic
  // Publish: write into a staging folder, then rename each file into place (clips already exist).
  const stage=join(paths.book,'.staging',`${player}-${date}-${process.pid}`);await mkdir(stage,{recursive:true,mode:0o700});await mkdir(dir,{recursive:true,mode:0o700});
  await writeFile(join(stage,date+'.md'),markdown(ch,{did}),{mode:0o600});
- await writeFile(join(stage,date+'.html'),bedtimeHTML(ch,{did,dadLines}),{mode:0o600});
+ await writeFile(join(stage,date+'.html'),bedtimeHTML(ch,{did,dadLines,portraitData}),{mode:0o600});
  await writeFile(join(stage,date+'.json'),JSON.stringify(ch,null,1),{mode:0o600});
  for(const ext of ['md','html','json'])await rename(join(stage,`${date}.${ext}`),join(dir,`${date}.${ext}`));
  await rm(stage,{recursive:true,force:true});

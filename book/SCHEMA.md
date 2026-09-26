@@ -10,6 +10,7 @@ Everything below lives **outside the repository** (children's data is private), 
 | Path | Written by | Read by |
 |---|---|---|
 | `book/profiles.json` | a grown-up, by hand | nightly job |
+| `book/cast.json`, `book/cast/<id>.jpg` | a grown-up; portraits by `book/portraits.py` from the family's toy photos | nightly job, hub `/book-cast/` |
 | `learner/<player>.json` | `book/build-learner.mjs` | nightly job, grown-ups |
 | `book/<player>/<date>.json` / `.md` / `.html` | `book/generate.mjs` | hub (json), grown-ups (md, printable html) |
 | `book/voice/<16 hex>.wav` | `book/narrate.py` (added only, never rewritten) | hub `/book-voice/` |
@@ -26,6 +27,19 @@ Staging reads `staging-data/book/` instead of `book/`. Game saves are only ever 
   "voice": {"voice": "af_heart", "speed": 0.9}, "lintExtra": ["…"]},
  "_lint": {"extra": ["words a chapter must never contain, e.g. a surname"]}}
 ```
+
+## cast.json (optional: the child's own toys as his companions)
+
+```json
+{"photos": "<folder of toy photos>", "allowNames": ["names of the family's toys that the brand rule would otherwise reject"],
+ "children": {"<player>": {"fixed": ["<id>"], "rotate": ["<id>"], "perChapter": 2, "props": ["<id>"]}},
+ "cast": [{"id": "owl", "name": "Captain Owl", "kind": "personality in one line", "emoji": "🦉", "photo": "<file>", "box": [x, y, size]}],
+ "props": [{"id": "kite", "name": "the kite", "kind": "a red kite"}]}
+```
+
+Fixed friends appear in every chapter; `perChapter` more are drawn from `rotate`, seeded by the date.
+Without `children`, the whole cast is shared. Without the file, the profile's `companions` are used.
+Portraits never leave the private data directory.
 
 ## Learner model (`family-book-learner-1`)
 
@@ -51,6 +65,7 @@ Staging reads `staging-data/book/` instead of `book/`. Game saves are only ever 
   {kind: "challenge", text, lines[], practises, item: <word-break item: find-letter | first-letter | read-word | sentence | math | count>},
   {kind: "mistake", text, lines[], mistake: {kind: "math"|"letter", claim, wrong, right, tokens?, hint, caught, fix: <item>}}
  ],
+ cast: [{id, name, emoji, portrait}], (each page also lists the cast ids it mentions)
  summary, hook, bedtimeQuestion, voice: {name, speed, clips: {text: file}},
  meta: {generatedAt, source, lint[], practises[], dadLines[], yesterday}}
 ```

@@ -21,9 +21,10 @@ export function howItWent(ch,progress){
 function chapterHTML(k){
  const ch=k.chapter;
  if(!ch)return `<article><div class="kicker">${esc(k.name)}</div><p class="empty">No chapter for this day.</p>${didHTML(k,[])}</article>`;
+ const faces=ids=>(ids||[]).map(id=>(ch.cast||[]).find(c=>c.id===id)).filter(c=>c?.portrait).map(c=>`<img class="face" src="/book-cast/${encodeURIComponent(c.portrait)}" alt="${esc(c.name)}">`).join('');
  const pages=ch.pages.map(p=>p.kind==='challenge'?`<aside class="ask"><b>Ask ${esc(ch.name)}</b><p>${esc(p.text)}</p><p class="q">${esc(itemLine(p.item))}</p></aside>`
   :p.kind==='mistake'?`<aside class="slip"><b>Catch the mistake</b><p>${esc(p.text)}</p><p class="q">Read it as if it’s true and let him catch it. The right answer: ${esc(p.mistake.right)}.</p></aside>`
-  :`<p>${p.scene?`<span class="scene" aria-hidden="true">${esc(p.scene)}</span> `:''}${esc(p.text)}</p>`).join('');
+  :`${faces(p.cast)?`<div class="faces">${faces(p.cast)}</div>`:''}<p>${p.scene?`<span class="scene" aria-hidden="true">${esc(p.scene)}</span> `:''}${esc(p.text)}</p>`).join('');
  return `<article><div class="kicker">${esc(ch.name)}’s Book · Chapter ${esc(ch.number)}</div><h1>${esc(ch.title)}</h1>${pages}<p class="bedtime">Bedtime question: ${esc(ch.bedtimeQuestion)}</p>${didHTML(k,howItWent(ch,k.progress))}</article>`;
 }
 function didHTML(k,went){

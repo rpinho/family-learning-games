@@ -35,6 +35,10 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{}}){
   main.innerHTML=`<section class="book book-${ch.level}" aria-label="${esc(ch.name)}'s book">${inner}${nav?`<div class="book-nav"><button class="book-hear" type="button" aria-label="Hear it again">🔊</button><div class="book-dots" aria-hidden="true">${ch.pages.map((_,i)=>`<i class="${i<page?'done':i===page?'now':''}"></i>`).join('')}</div><button class="book-next" type="button" aria-label="Next page" disabled>→</button></div>`:''}</section>`;
   return main.querySelector('.book');
  }
+ // The chapter's friends: a family's own toy portraits when there are any, otherwise their emoji.
+ const face=(c,cls='book-face')=>c.portrait?`<img class="${cls}" src="/book-cast/${encodeURIComponent(c.portrait)}" alt="${esc(c.name)}">`:`<span class="${cls} book-face-emoji" role="img" aria-label="${esc(c.name)}">${esc(c.emoji)}</span>`;
+ const cast=ch.cast||[{name:ch.companion.name,emoji:ch.companion.emoji}];
+ const faces=ids=>(ids||[]).map(id=>cast.find(c=>c.id===id)).filter(Boolean).map(c=>face(c)).join('');
  const lineHTML=p=>p.lines.map((l,i)=>`<span class="book-line" data-i="${i}">${esc(l)}</span>`).join(' ');
  async function narrate(root,p){
   for(let i=0;i<p.lines.length&&alive;i++){const el=root.querySelector(`.book-line[data-i="${i}"]`);el?.classList.add('reading');await speak(p.lines[i]);el?.classList.remove('reading');}
@@ -50,11 +54,12 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{}}){
  }
  function showStory(p){
   const teach=p.teach?`<div class="book-teach" aria-label="${esc(p.teach.word)} starts with ${esc(p.teach.letter)}"><span class="book-teach-pic">${esc(p.teach.picture)}</span><span class="book-teach-letter">${esc(p.teach.letter)}</span></div>`:'';
-  const root=shell(`<div class="book-scene" aria-hidden="true">${esc(p.scene||ch.companion.emoji)}</div>${teach}<p class="book-text">${lineHTML(p)}</p>`);
+  const who=faces(p.cast);
+  const root=shell(`<div class="book-scene" aria-hidden="true">${who?`<span class="book-faces">${who}</span>`:''}${esc(p.scene||(who?'':ch.companion.emoji))}</div>${teach}<p class="book-text">${lineHTML(p)}</p>`);
   wireStory(root,p);
  }
  async function showChallenge(p){
-  const root=shell(`<div class="book-scene" aria-hidden="true">${esc(ch.companion.emoji)}</div><p class="book-text">${lineHTML(p)}</p>`);
+  const root=shell(`<div class="book-scene" aria-hidden="true">${faces(p.cast)?`<span class="book-faces">${faces(p.cast)}</span>`:esc(ch.companion.emoji)}</div><p class="book-text">${lineHTML(p)}</p>`);
   root.querySelector('.book-hear').onclick=()=>void narrate(root,p);
   await narrate(root,p);if(!alive)return;
   const item={...p.item};if(item.kind==='math'&&item.display)item.picture=item.display;
@@ -69,7 +74,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{}}){
   const m=p.mistake,early=ch.level==='early'&&Array.isArray(m.tokens);
   const text=early?`<p class="book-text">${lineHTML(p)}</p><div class="book-claim">${m.tokens.map(t=>`<button type="button" class="book-token big" data-t="${esc(t)}">${esc(t)}</button>`).join('')}</div>`
    :`<p class="book-text tappable">${p.text.split(/\s+/).map(t=>`<button type="button" class="book-token" data-t="${esc(t)}">${esc(t)}</button>`).join(' ')}</p>`;
-  const root=shell(`<div class="book-scene" aria-hidden="true">🔎${esc(ch.companion.emoji)}</div>${text}`);
+  const root=shell(`<div class="book-scene" aria-hidden="true">🔎${faces(p.cast)?`<span class="book-faces">${faces(p.cast)}</span>`:esc(ch.companion.emoji)}</div>${text}`);
   const next=root.querySelector('.book-next');next.hidden=true;
   let misses=0,hints=0,caught=false,repeats=0,idle=null;const started=Date.now();
   const prompt=()=>speak(UI.mistakePrompt);
@@ -97,7 +102,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{}}){
   });
  }
  function cover(){
-  const root=shell(`<div class="book-cover"><div class="book-companion" aria-hidden="true">${esc(ch.companion.emoji)}</div><p class="book-kicker">${esc(ch.name)}'s Book · Chapter ${ch.number}</p><h1>${esc(ch.title)}</h1><button class="book-open" type="button" aria-label="Open the book">📖</button></div>`,{nav:false});
+  const root=shell(`<div class="book-cover"><div class="book-companion">${cast.map(c=>face(c,'book-cover-face')).join('')}</div><p class="book-kicker">${esc(ch.name)}'s Book · Chapter ${ch.number}</p><h1>${esc(ch.title)}</h1><button class="book-open" type="button" aria-label="Open the book">📖</button></div>`,{nav:false});
   root.querySelector('.book-open').onclick=async()=>{
    // The tap also unlocks audio on tablets.
    root.querySelector('.book-open').disabled=true;event('book_open',`${date}:${page}`);

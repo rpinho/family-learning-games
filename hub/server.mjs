@@ -60,7 +60,7 @@ const server=http.createServer(async(req,res)=>{
   if(u.pathname==='/__deploy/version'&&req.method==='GET'){const g=u.searchParams.get('game'),idle=Number(u.searchParams.get('idle'));if(Number.isFinite(idle)&&idle>=0&&idle<120)touch(g,Date.now()-idle*1000);const games=Object.fromEntries(ids.map(id=>[id,releaseOf(id)]));return send(res,200,{hub:HUB_RELEASE,games,channel});}
   if(u.pathname.startsWith('/api/')&&!['GET','HEAD'].includes(req.method))touch('hub');
   if(u.pathname==='/api/chess')return await chess.handle(req,res,u);
-  if(u.pathname.startsWith('/api/book')||u.pathname.startsWith('/book-voice/')){const handled=await book.handle(req,res,u);if(handled!==false)return;}
+  if(u.pathname.startsWith('/api/book')||u.pathname.startsWith('/book-voice/')||u.pathname.startsWith('/book-cast/')){const handled=await book.handle(req,res,u);if(handled!==false)return;}
   if(u.pathname==='/health')return send(res,200,{ok:true,version:HUB_VERSION,release:HUB_RELEASE||null,channel:channel||null,physicsVersion:VERSION,diagnostics:{ok:!logError,error:logError}});
   if(/^\/(?:voice|chess-voice)\/(manifest\.json|[a-f0-9]{16}\.wav)$/.test(u.pathname)&&req.method==='GET'){try{const bytes=await readFile(join(data,u.pathname.slice(1)));res.writeHead(200,{'Content-Type':u.pathname.endsWith('.wav')?'audio/wav':'application/json'});res.end(bytes);}catch(e){if(e.code==='ENOENT')send(res,404,{error:'Use device narration.'});else throw e;}return;}
   if(u.pathname==='/api/config'&&req.method==='GET')return send(res,200,{players:config.players,version:HUB_VERSION,release:HUB_RELEASE});

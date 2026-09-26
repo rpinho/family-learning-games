@@ -22,9 +22,15 @@ const SENTENCES=s=>String(s).split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(Bool
 export const splitLines=SENTENCES;
 const norm=s=>String(s).toLowerCase().replace(/[^a-z0-9×÷+=\- ]+/g,' ').replace(/\s+/g,' ').trim();
 export const tokens=s=>String(s).split(/\s+/).map(t=>t.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu,'')).filter(Boolean);
-export function safetyIssues(text,{extra=[]}={}){
- const out=[];
- for(const [label,re] of SAFETY){const m=String(text).match(re);if(m)out.push(`${label}: "${m[0]}"`);}
+// allow: names a family has chosen for its own toys (e.g. a plush named after a character). They pass
+// the brand rule only; every other rule still applies.
+export function safetyIssues(text,{extra=[],allow=[]}={}){
+ const out=[],ok=new Set(allow.map(a=>a.toLowerCase()));
+ for(const [label,re] of SAFETY){
+  const all=[...String(text).matchAll(new RegExp(re.source,re.flags.includes('g')?re.flags:re.flags+'g'))].map(m=>m[0]);
+  const hit=label==='brand'?all.find(m=>!ok.has(m.toLowerCase())):all[0];
+  if(hit)out.push(`${label}: "${hit}"`);
+ }
  for(const w of extra){if(!w)continue;const re=new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\\b`,'i');if(re.test(text))out.push(`private word: "${w}"`);}
  return out;
 }
@@ -41,7 +47,7 @@ export const LEVELS={
 };
 export const SCENE_EMOJI=new Set([...'🐻🤖⚽🥅🏆🦖🦕🌳🌲🌸🌻🌈☀️🌙⭐🌟✨☁️🍪🍯🍎🍌🥕🧁🎂🍕🏠🏡🏰⛺🚀🛸🚂🚌🚲🛝🪁🎈🎁📚📖✏️🎨🧩♟️🎯🏹🪀🦊🐶🐱🐰🐸🐢🦉🐝🦋🐞🐟🐙🦆🐔🐷🐮🐑🦁🐯🐘🦒🐒🐧🐳🌊⛵🏖️⛰️🌋🗺️🔦🔑🧸🎵🥁🎺🎸🍂❄️⛄🌧️💡🔧🔩⚙️🛠️📦🧺🪺🥚🌽🍓🫐🍉🧃🥛🧀🍞🥄🍽️🪴🌵🍄🐿️🦔🦜🦩🐌🧦🧤🧣🎩👑🛶🚁✈️🚜🚒🏗️🧱🪨🌰🌉🧭🎡🪜🛷🏀🎾🏐🥇🎉🎊🌞🌝🔭🧲🪐🌠']);
 const graphemes=s=>[...new Intl.Segmenter('en',{granularity:'grapheme'}).segment(String(s))].map(x=>x.segment).filter(x=>x.trim());
-export function lintChapter(ch,plan,{extra=[]}={}){
+export function lintChapter(ch,plan,{extra=[],allow=[]}={}){
  const issues=[];const L=LEVELS[plan.level]||LEVELS.reader;
  if(!ch||typeof ch!=='object'||!Array.isArray(ch.pages))return ['not a chapter object with pages'];
  if(typeof ch.title!=='string'||!ch.title.trim()||ch.title.length>70)issues.push('title missing or longer than 70 characters');
@@ -49,7 +55,7 @@ export function lintChapter(ch,plan,{extra=[]}={}){
  if(pages.length<5||pages.length>16)issues.push(`needs 5-16 pages, has ${pages.length}`);
  const texts=pages.map(p=>String(p?.text||''));
  const all=[ch.title,...texts,ch.summary||'',ch.hook||'',ch.bedtimeQuestion||''].join('\n');
- issues.push(...safetyIssues(all,{extra}));
+ issues.push(...safetyIssues(all,{extra,allow}));
  // structure
  for(const c of plan.challenges){const n=pages.filter(p=>p?.challenge===c.id).length;if(n!==1)issues.push(`challenge ${c.id} must appear exactly once (found ${n})`);}
  const mi=pages.findIndex(p=>p?.mistake===plan.mistake.id);
@@ -88,17 +94,19 @@ export function lintChapter(ch,plan,{extra=[]}={}){
  if(count<L.words[0]||count>L.words[1])issues.push(`story has ${count} words, needs ${L.words[0]}-${L.words[1]}`);
  const sentences=SENTENCES(story);const avg=sentences.length?count/sentences.length:0;
  if(avg>L.avgSentence)issues.push(`sentences average ${avg.toFixed(1)} words (max ${L.avgSentence}); use shorter sentences`);
- const names=new Set([plan.name,plan.companion?.name,plan.sibling,'Mom','Dad'].filter(Boolean).map(s=>s.toLowerCase()));
+ const castNames=(plan.cast||[plan.companion]).filter(Boolean).map(c=>c.name);
+ const names=new Set([plan.name,plan.sibling,'Mom','Dad',...castNames.flatMap(n=>n.split(/\s+/))].filter(Boolean).map(s=>s.toLowerCase()));
  const long=[...new Set(words.filter(w=>w.length>L.maxWordLength&&!names.has(w.toLowerCase())))];
  if(long.length)issues.push(`words too long for this reader: ${long.slice(0,6).join(', ')}`);
  if(!new RegExp(`\\b${plan.name}\\b`).test(story))issues.push(`the hero ${plan.name} must be in the story`);
- if(plan.companion?.name&&!new RegExp(`\\b${plan.companion.name}\\b`).test(story))issues.push(`the companion ${plan.companion.name} must be in the story`);
+ for(const n of castNames){const core=n.replace(/^the\s+/i,'');if(!new RegExp(`\\b${core.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\\b`,'i').test(story))issues.push(`the friend ${n} must be in the story`);}
  // a first name followed by another capitalised word mid-sentence looks like a full name
  const full=story.match(new RegExp(`\\b(${[plan.name,plan.sibling].filter(Boolean).join('|')})\\s+([A-Z][a-z]+)`,'g'))||[];
- const allowedNext=new Set(['and','Mom','Dad',plan.companion?.name,plan.name,plan.sibling].filter(Boolean));
+ const allowedNext=new Set(['and','Mom','Dad',plan.name,plan.sibling,...castNames.flatMap(n=>n.split(/\s+/))].filter(Boolean));
  for(const f of full){const next=f.split(/\s+/)[1];if(!allowedNext.has(next))issues.push(`looks like a full name: "${f}"`);}
  for(const k of ['summary','hook','bedtimeQuestion'])if(typeof ch[k]!=='string'||!ch[k].trim())issues.push(`${k} missing`);
  return [...new Set(issues)];
 }
 // Dad's free-text line is only used when it passes the same safety rules.
+// opts: {extra, allow}
 export function safeDadLine(text,opts){const t=String(text||'').trim().slice(0,160);return t&&!safetyIssues(t,opts).length?t:null;}
