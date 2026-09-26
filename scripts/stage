@@ -1,0 +1,3 @@
+#!/bin/sh
+# Build a release and deploy it to the STAGING site only (safe while the children play).
+exec nice -n 19 taskpolicy -b node "$(dirname "$0")/deploy/cli.mjs" stage "$@"
