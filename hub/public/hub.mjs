@@ -208,6 +208,32 @@ $("#refresh").onclick = async () => {
   location.replace(u);
 };
 window.addEventListener("hashchange", render);
+// Updates: when the hub's release changes, reload this page at a natural boundary
+// (home/catalog screens, or when an embedded game reports it reached one).
+let hubDue = false,
+  lastInput = Date.now(),
+  quietSince = 0;
+for (const t of ["pointerdown", "keydown", "touchstart", "wheel"])
+  addEventListener(t, () => (lastInput = Date.now()), { capture: true, passive: true });
+async function pollRelease() {
+  try {
+    const idle = Math.round((Date.now() - lastInput) / 1000);
+    const r = await fetch(`/__deploy/version?game=hub&idle=${idle}`, { cache: "no-store" });
+    if (!r.ok) return;
+    const v = await r.json();
+    if (v.hub && config && v.hub !== (config.release || "")) hubDue = true;
+  } catch {}
+}
+setTimeout(pollRelease, 4000 + Math.random() * 4000);
+setInterval(pollRelease, 60000 + Math.random() * 5000);
+setInterval(() => {
+  if (!hubDue) return;
+  const quiet = Date.now() - lastInput;
+  const home = !frame && !dispose && !document.querySelector("dialog[open]");
+  if (!((home && quiet > 5000) || (dispose && !frame && quiet > 10 * 60000))) return void (quietSince = 0);
+  quietSince ||= Date.now();
+  if (Date.now() - quietSince > 3000) location.reload();
+}, 1000);
 window.addEventListener("message", (e) => {
   if (e.origin !== location.origin || e.source !== frame?.contentWindow) return;
   if (e.data?.type === "family-open") {
@@ -222,6 +248,7 @@ window.addEventListener("message", (e) => {
     return;
   }
   if (e.data?.type === "family-ready") $(".loading-note")?.remove();
+  if (e.data?.type === "family-update-reload" && (hubDue || e.data.hub)) location.reload();
   if (e.data?.type === "family-status") {
     statusResolver?.(e.data);
     statusResolver = null;

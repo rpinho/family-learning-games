@@ -1,5 +1,6 @@
 import http from 'node:http';
 import {readFile,writeFile,rename,appendFile,mkdir} from 'node:fs/promises';
+import {readFileSync,writeFileSync,renameSync} from 'node:fs';
 import {join,resolve,extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {hostname,networkInterfaces} from 'node:os';
@@ -23,6 +24,17 @@ const icons={'letter-quest':'games/letter-quest/public/icons/app-192-v2.png','wo
 const types={'.html':'text/html','.mjs':'text/javascript','.css':'text/css','.jpg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml','.webmanifest':'application/manifest+json','.woff2':'font/woff2'};
 const files=['chess/request.mjs','menu-cache.mjs','chess/tokens.mjs','chess/steps-curriculum.mjs','chess/foundations-curriculum.mjs','chess/sequel-curriculum.mjs','chess/bridge-curriculum.mjs','chess/practice-curriculum.mjs','chess/teaching.mjs','chess/audio.mjs','menu-options.mjs','soccer-logo.svg','drawing-studio.svg','sling.svg','chess/path.mjs','chess/narration.mjs','chess/pieces.mjs','chess/academy-world.png','catalog.mjs','letter-book.svg','chess/rook.mjs','chess/app.mjs','chess/style.css','chess/art.mjs','chess/board.mjs','chess/rules.mjs','chess/curriculum.mjs','chess/icon.svg','chess/CHESS-JS-LICENSE.txt','index.html','hub.mjs','style.css','embedded.css','bridge.mjs','dribble-ui.mjs','dribble-classic.mjs','soccer-mode.mjs','dribble-live.mjs','dribble-live-v1.mjs','dribble-live-v2.mjs','reading-reward.mjs','live-pitch.mjs','pitch.mjs','save-request.mjs','icon.svg','icon-192.png','icon-512.png','manifest.webmanifest'];
 const HUB_VERSION='family-games-2026-09-26-sling-shot';
+// Optional managed deployment (see DEPLOY.md). A release directory carries .release.json;
+// FAMILY_DEPLOY_DIR holds current.json (running game releases) and activity.json (last real play).
+const deployDir=process.env.FAMILY_DEPLOY_DIR||null,channel=process.env.FAMILY_CHANNEL||'';
+let HUB_RELEASE='';try{HUB_RELEASE=JSON.parse(readFileSync(join(root,'.release.json'),'utf8')).version||'';}catch{}
+let currentCache={at:0,value:{}};
+function currentReleases(){if(!deployDir)return {};if(Date.now()-currentCache.at<3000)return currentCache.value;let value={};try{value=JSON.parse(readFileSync(join(deployDir,'current.json'),'utf8'));}catch{}currentCache={at:Date.now(),value};return value;}
+const activity={};let activityDirty=false;
+function touch(key,at=Date.now()){if(!deployDir||!(ids.includes(key)||key==='hub'))return;if(!activity[key]||at>activity[key]){activity[key]=at;activityDirty=true;}}
+function flushActivity(){if(!activityDirty)return;activityDirty=false;try{const file=join(deployDir,'activity.json');let old={};try{old=JSON.parse(readFileSync(file,'utf8'));}catch{}for(const [k,v] of Object.entries(activity))if(!old[k]||Date.parse(old[k])<v)old[k]=new Date(v).toISOString();writeFileSync(file+'.tmp',JSON.stringify(old));renameSync(file+'.tmp',file);}catch(e){console.error('activity file',e.code||e.message);}}
+if(deployDir)setInterval(flushActivity,5000).unref();
+const releaseOf=game=>game==='hub'?HUB_RELEASE:String(currentReleases()[game]||'');
 const menu=cachedMenuOrderService({players,onError:detail=>void log({type:'menu_refresh_error',detail}),sources:{...Object.fromEntries(ids.map(id=>[id,join(config.gameData?.[id]||join(data,'..',id),'logs')])),hub:join(data,'logs')}});
 const chess=chessService({data,players,log,settingsFor:Object.fromEntries(config.players.map(p=>[p.id,p.chess||{}]))});
 const server=http.createServer(async(req,res)=>{
@@ -31,7 +43,7 @@ const server=http.createServer(async(req,res)=>{
   const u=new URL(req.url,'http://'+req.headers.host);
   if(!hosts.has(u.hostname.toLowerCase())||req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host||req.headers['sec-fetch-site']==='cross-site')return send(res,403,{error:'Use the local games address.'});
   const match=u.pathname.match(/^\/g\/([a-z-]+)\/(\w+)\/(.*)$/);
-  if(match){const [,game,player,path]=match;if(!ids.includes(game)||!players.includes(player))return send(res,404,{error:'Unknown game or player.'});return proxy(req,res,{game,player,players,port:config.games[game],prefix:`/g/${game}/${player}/`,path:'/'+path+u.search},log);}
+  if(match){const [,game,player,path]=match;if(!ids.includes(game)||!players.includes(player))return send(res,404,{error:'Unknown game or player.'});if(!['GET','HEAD','OPTIONS'].includes(req.method))touch(game);return proxy(req,res,{game,player,players,port:config.games[game],prefix:`/g/${game}/${player}/`,path:'/'+path+u.search,releases:{hub:HUB_RELEASE,game:releaseOf(game)}},log);}
   // Some SSR runtimes construct import paths at runtime from "/" + asset name.
   // Keep their router separators intact and scope those requests using the
   // same-origin embedding document/module, never a caller-selected upstream.
@@ -39,10 +51,12 @@ const server=http.createServer(async(req,res)=>{
    const ref=new URL(req.headers.referer),from=ref.pathname.match(/^\/g\/([a-z-]+)\/(\w+)\//);
    if(ref.origin===u.origin&&from&&ids.includes(from[1])&&players.includes(from[2])){res.writeHead(307,{Location:`/g/${from[1]}/${from[2]}${u.pathname}${u.search}`});res.end();return;}
   }
+  if(u.pathname==='/__deploy/version'&&req.method==='GET'){const g=u.searchParams.get('game'),idle=Number(u.searchParams.get('idle'));if(Number.isFinite(idle)&&idle>=0&&idle<120)touch(g,Date.now()-idle*1000);const games=Object.fromEntries(ids.map(id=>[id,releaseOf(id)]));return send(res,200,{hub:HUB_RELEASE,games,channel});}
+  if(u.pathname.startsWith('/api/')&&!['GET','HEAD'].includes(req.method))touch('hub');
   if(u.pathname==='/api/chess')return await chess.handle(req,res,u);
-  if(u.pathname==='/health')return send(res,200,{ok:true,version:HUB_VERSION,physicsVersion:VERSION,diagnostics:{ok:!logError,error:logError}});
+  if(u.pathname==='/health')return send(res,200,{ok:true,version:HUB_VERSION,release:HUB_RELEASE||null,channel:channel||null,physicsVersion:VERSION,diagnostics:{ok:!logError,error:logError}});
   if(/^\/(?:voice|chess-voice)\/(manifest\.json|[a-f0-9]{16}\.wav)$/.test(u.pathname)&&req.method==='GET'){try{const bytes=await readFile(join(data,u.pathname.slice(1)));res.writeHead(200,{'Content-Type':u.pathname.endsWith('.wav')?'audio/wav':'application/json'});res.end(bytes);}catch(e){if(e.code==='ENOENT')send(res,404,{error:'Use device narration.'});else throw e;}return;}
-  if(u.pathname==='/api/config'&&req.method==='GET')return send(res,200,{players:config.players,version:HUB_VERSION});
+  if(u.pathname==='/api/config'&&req.method==='GET')return send(res,200,{players:config.players,version:HUB_VERSION,release:HUB_RELEASE});
   if(u.pathname.startsWith('/api/')){
    const player=u.searchParams.get('player');if(!players.includes(player))return send(res,400,{error:'Choose a player.'});
    if(u.pathname==='/api/menu'&&req.method==='GET'){const {order,ready}=menu.ranking(player);return send(res,200,{order,ready});}
@@ -56,12 +70,14 @@ const server=http.createServer(async(req,res)=>{
   if(!['GET','HEAD'].includes(req.method))return send(res,405,{error:'Read only.'});
   let file;const preview=u.pathname.match(/^\/previews\/([a-z-]+)\.jpg$/);const icon=u.pathname.match(/^\/game-icons\/([a-z-]+)\.png$/);
   if(preview&&['letter-quest','word-arcade','number-park','maze-garden','maze-maker','chess','three-in-a-row','target-trail','dribble-duel','maze-letters','maze-rescue','soccer-classic','soccer-penalties','sling'].includes(preview[1]))file=join(here,'public','previews',preview[1]+'.jpg');else if(icon&&icons[icon[1]])file=join(root,icons[icon[1]]);else if(u.pathname==='/dribble.mjs')file=join(here,'dribble.mjs');else{const name=u.pathname==='/'?'index.html':u.pathname.slice(1);if(!files.includes(name))return send(res,404,{error:'Not found.'});file=join(here,'public',name);}
-  const bytes=await readFile(file);res.writeHead(200,{'Content-Type':types[extname(file)]||'application/octet-stream','Content-Length':bytes.length});res.end(req.method==='HEAD'?undefined:bytes);
+  let bytes=await readFile(file);
+  if(channel==='staging'&&file.endsWith('index.html'))bytes=Buffer.from(bytes.toString().replace(/<body([^>]*)>/i,'<body$1><div role="note" style="position:fixed;z-index:99999;top:0;left:50%;transform:translateX(-50%);background:#c62828;color:#fff;font:700 14px/1.2 system-ui,sans-serif;padding:4px 14px;border-radius:0 0 10px 10px;letter-spacing:.08em;pointer-events:none">STAGING · test copy, not the kids\' games</div>'));
+  res.writeHead(200,{'Content-Type':types[extname(file)]||'application/octet-stream','Content-Length':bytes.length});res.end(req.method==='HEAD'?undefined:bytes);
  }catch(e){await log({type:'error',detail:e.message});send(res,e.code==='ENOENT'?404:500,{error:'Could not load. Try Refresh.'});}
 });
 let stopping=false;
 for(const signal of ['SIGTERM','SIGINT'])process.on(signal,()=>{
- if(stopping)return;stopping=true;menu.close();
+ if(stopping)return;stopping=true;menu.close();if(deployDir)flushActivity();
  // A tablet can retain a connection after the listener closes. Drain saved actions
  // before exiting, and bound idle/streaming socket shutdown during local updates.
  const timer=setTimeout(()=>server.closeAllConnections(),2000);timer.unref();
