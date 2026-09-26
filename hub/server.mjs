@@ -10,10 +10,11 @@ import {proxy} from './proxy.mjs';
 import {chessService} from './chess-service.mjs';
 import {cachedMenuOrderService} from './menu-cache.mjs';
 import {bookService} from './book-service.mjs';
+import {literacyFrom,DEFAULT_TRACK} from './public/word-break.mjs';
 const here=fileURLToPath(new URL('.',import.meta.url)),root=resolve(here,'..'),data=process.env.FAMILY_DATA||join(root,'.data','hub');
 const ids=['letter-quest','word-arcade','number-park','maze-garden','three-in-a-row','target-trail'];
 const base=Number(process.env.BASE_PORT||4811);
-const defaults={players:[{id:'beginner',name:'Beginner',level:1,chess:{band:'steps',strength:'friendly'}},{id:'explorer',name:'Explorer',level:3,chess:{band:'stretch',strength:'club'}},{id:'admin',name:'Admin',level:1}],games:Object.fromEntries(ids.map((id,i)=>[id,base+i])),hosts:[]};
+const defaults={players:[{id:'beginner',name:'Beginner',level:1,chess:{band:'steps',strength:'friendly',matchRating:250,bigHints:true}},{id:'explorer',name:'Explorer',level:3,chess:{band:'stretch',strength:'club',matchRating:600}},{id:'admin',name:'Admin',level:1}],games:Object.fromEntries(ids.map((id,i)=>[id,base+i])),hosts:[]};
 const config=process.env.FAMILY_CONFIG?JSON.parse(await readFile(process.env.FAMILY_CONFIG,'utf8')):defaults;
 if(!config.players?.length||config.players.some(p=>!/^\w{1,24}$/.test(p.id)||typeof p.name!=='string')||ids.some(id=>!Number.isInteger(config.games[id])||config.games[id]<1024||config.games[id]>65535))throw Error('Invalid local hub configuration');
 const players=config.players.map(p=>p.id);
@@ -28,9 +29,9 @@ const send=(res,status,obj)=>{res.writeHead(status,{'Content-Type':'application/
 async function load(player){try{return JSON.parse(await readFile(join(data,player+'.json'),'utf8'));}catch(e){if(e.code==='ENOENT')return fresh(player,config.players.find(x=>x.id===player).level||1);throw e;}}
 const icons={'letter-quest':'games/letter-quest/public/icons/app-192-v2.png','word-arcade':'games/word-arcade/public/icons/app-192-v1.png','number-park':'games/number-park/public/icons/number-park-192.png','maze-garden':'games/maze-garden/public/icon-192.png','three-in-a-row':'games/three-in-a-row/dist/icon-192.png','target-trail':'games/target-trail/dist/icon-192.png'};
 const types={'.html':'text/html','.mjs':'text/javascript','.css':'text/css','.jpg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml','.webmanifest':'application/manifest+json','.woff2':'font/woff2'};
-const files=['chess/request.mjs','menu-cache.mjs','chess/tokens.mjs','chess/steps-curriculum.mjs','chess/foundations-curriculum.mjs','chess/sequel-curriculum.mjs','chess/bridge-curriculum.mjs','chess/practice-curriculum.mjs','chess/teaching.mjs','chess/audio.mjs','menu-options.mjs','soccer-logo.svg','drawing-studio.svg','sling.svg','chess/path.mjs','chess/narration.mjs','chess/pieces.mjs','chess/academy-world.png','catalog.mjs','letter-book.svg','chess/rook.mjs','chess/app.mjs','chess/style.css','chess/art.mjs','chess/board.mjs','chess/rules.mjs','chess/curriculum.mjs','chess/icon.svg','chess/CHESS-JS-LICENSE.txt','index.html','hub.mjs','style.css','embedded.css','bridge.mjs','dribble-ui.mjs','dribble-classic.mjs','soccer-mode.mjs','dribble-live.mjs','dribble-live-v1.mjs','dribble-live-v2.mjs','reading-reward.mjs','live-pitch.mjs','pitch.mjs','save-request.mjs','book.mjs','book.css','book-scene.mjs','word-break.mjs','icon.svg','icon-192.png','icon-512.png','icon-maskable-192.png','icon-maskable-512.png','manifest.webmanifest'];
+const files=['chess/request.mjs','chess/match-voice.mjs','menu-cache.mjs','chess/tokens.mjs','chess/steps-curriculum.mjs','chess/foundations-curriculum.mjs','chess/sequel-curriculum.mjs','chess/bridge-curriculum.mjs','chess/practice-curriculum.mjs','chess/teaching.mjs','chess/audio.mjs','menu-options.mjs','soccer-logo.svg','drawing-studio.svg','sling.svg','chess/path.mjs','chess/narration.mjs','chess/pieces.mjs','chess/academy-world.png','catalog.mjs','letter-book.svg','chess/rook.mjs','chess/app.mjs','chess/style.css','chess/art.mjs','chess/board.mjs','chess/rules.mjs','chess/curriculum.mjs','chess/icon.svg','chess/CHESS-JS-LICENSE.txt','index.html','hub.mjs','style.css','embedded.css','bridge.mjs','dribble-ui.mjs','dribble-classic.mjs','soccer-mode.mjs','dribble-live.mjs','dribble-live-v1.mjs','dribble-live-v2.mjs','reading-reward.mjs','live-pitch.mjs','pitch.mjs','save-request.mjs','book.mjs','book.css','book-scene.mjs','word-break.mjs','icon.svg','icon-192.png','icon-512.png','icon-maskable-192.png','icon-maskable-512.png','manifest.webmanifest'];
 function playerManifest(base,p){const first=p.name.split(/\s/)[0],start='/?player='+encodeURIComponent(p.id);return {...base,id:start,start_url:start,name:`${base.name} · ${p.name}`,short_name:`${first}'s Games`};}
-const HUB_VERSION='family-games-2026-09-27-picture-book';
+const HUB_VERSION='family-games-2026-09-27-play-rook';
 // Optional managed deployment (see DEPLOY.md). A release directory carries .release.json;
 // FAMILY_DEPLOY_DIR holds current.json (running game releases) and activity.json (last real play).
 const deployDir=process.env.FAMILY_DEPLOY_DIR||null,channel=process.env.FAMILY_CHANNEL||'';
@@ -75,6 +76,8 @@ const server=http.createServer(async(req,res)=>{
   if(u.pathname==='/api/config'&&req.method==='GET')return send(res,200,{players:config.players,version:HUB_VERSION,release:HUB_RELEASE});
   if(u.pathname.startsWith('/api/')){
    const player=u.searchParams.get('player');if(!players.includes(player))return send(res,400,{error:'Choose a player.'});
+   // The shared end-of-game word break follows each child's Letter Quest progress (read only).
+   if(u.pathname==='/api/word-break'&&req.method==='GET'){let save=null;try{save=JSON.parse(await readFile(join(process.env.LETTER_QUEST_DATA||config.gameData?.['letter-quest']||join(data,'..','letter-quest'),player+'.json'),'utf8'));}catch{}return send(res,200,literacyFrom(save,DEFAULT_TRACK[player]||'mixed'));}
    if(u.pathname==='/api/menu'&&req.method==='GET'){const {order,ready}=menu.ranking(player);return send(res,200,{order,ready});}
    if(u.pathname==='/api/dribble'&&req.method==='GET'){await queue.catch(()=>{});return send(res,200,{profile:await load(player),version:VERSION});}
    if(req.method!=='POST'||!['/api/dribble','/api/events'].includes(u.pathname))return send(res,405,{error:'Unsupported action.'});

@@ -1620,3 +1620,96 @@ body:has(.chess-lesson) > .top .home {
 .fork-title-icon{display:inline-block;vertical-align:middle;width:25px;height:31px;margin-right:9px;fill:none;stroke:#a16b13;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
 @keyframes teach-line{to{stroke-dashoffset:0}}
 @media(prefers-reduced-motion:reduce){.teaching-route{animation:none;stroke-dashoffset:0}}
+
+/* Full games against the coach: one clear entry, a small lobby, the shared board. */
+.academy .ac-button.tab.match-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+  background: var(--green);
+  border-color: var(--green);
+  box-shadow: 0 3px 0 var(--shadow);
+  font-weight: 800;
+}
+.academy .ac-button.tab.match-tab.active {
+  color: #fff;
+  background: #3fa233;
+  border-color: #3fa233;
+}
+.match-tab-face svg {
+  width: 26px;
+  height: 26px;
+  display: block;
+  margin: -4px 0;
+}
+.match-lobby {
+  max-width: 720px;
+  margin: auto;
+  text-align: center;
+}
+.match-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  text-align: left;
+}
+.match-hero > .academy-coach {
+  width: 150px;
+  flex-shrink: 0;
+}
+.match-hero h1 {
+  font-size: clamp(30px, 6vw, 44px);
+  margin: 4px 0;
+}
+.match-hero p {
+  color: var(--muted);
+  margin: 0;
+}
+.match-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 22px 0;
+}
+.match-stats > div {
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  padding: 10px 6px;
+}
+.match-stats small {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+}
+.match-stats strong {
+  font-size: 26px;
+}
+.match-stats > div:first-child strong {
+  color: #2386b2;
+}
+.match-play p {
+  color: var(--muted);
+  margin: 12px 0 0;
+}
+.match-result {
+  font-size: 16px;
+}
+.match-result .up {
+  color: #2f9b44;
+}
+.match-result .down {
+  color: #c0521f;
+}
+.academy .ac-button.undo-button span {
+  margin-left: 4px;
+}
+@media (max-width: 700px) {
+  .match-hero > .academy-coach {
+    width: 104px;
+  }
+  .match-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

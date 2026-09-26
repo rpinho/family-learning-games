@@ -3,6 +3,7 @@ import {FOUNDATION_UNITS,FOUNDATION_LESSONS} from './public/chess/foundations-cu
 import {STEPS,STEP_EXAMPLES,meetsStepGoal,checkingPieceCapture} from './chess-steps.mjs';
 import {STEP_UNITS,STEP_LESSONS,STEP_VOICE} from './public/chess/steps-curriculum.mjs';
 import { randomUUID } from "node:crypto";
+import { actMatch, publicMatch } from "./chess-match.mjs";
 import { readFile } from "node:fs/promises";
 import { Chess } from "./public/chess/rules.mjs";
 import {
@@ -245,7 +246,7 @@ function finishLesson(p, now) {
   // Retain at least one result for every lesson in the expanded 108-step path.
   p.history = p.history.slice(-240);
 }
-export function publicChess(p, now = Date.now()) {
+export function publicChess(p, now = Date.now(), settings = {}) {
   const s = p.session, reviewIds = bandPuzzleIds(p.settings.band);
   let session = null;
   if (s) {
@@ -327,9 +328,10 @@ export function publicChess(p, now = Date.now()) {
       ...p.game.hint, ...hintPublic(p.game.hint, now),
     } : null } : null,
     settings: p.settings,
+    match: publicMatch(p, settings),
   };
 }
-export async function actChess(p, input, { engine, now = Date.now() } = {}) {
+export async function actChess(p, input, { engine, now = Date.now(), settings = {}, rng } = {}) {
   if (!input || typeof input !== "object") fail("Choose a chess action.");
   if (
     typeof input.requestId !== "string" ||
@@ -656,8 +658,11 @@ export async function actChess(p, input, { engine, now = Date.now() } = {}) {
         ...(stage >= 3 ? { to: g.coaching.to, promotion: g.coaching.promotion } : {}) };
       result = { hint: stage, advanced: true, waiting: false };
     }
+  } else if (typeof input.type === "string" && input.type.startsWith("match-")) {
+    result = await actMatch(p, input, { engine, now, settings, rng });
   } else fail("Unknown chess action.");
-  if (input.type.startsWith("game-")) p.current = "game";
+  if (input.type.startsWith("match-")) p.current = "match";
+  else if (input.type.startsWith("game-")) p.current = "game";
   else if (
     ["start", "begin", "move", "hint", "next", "retry-puzzle"].includes(
       input.type,

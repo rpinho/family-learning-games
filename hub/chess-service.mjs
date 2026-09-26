@@ -26,7 +26,7 @@ export function chessService({ data, players, log, settingsFor = {} }) {
         return send(res, 400, { error: "Choose a player." });
       if (req.method === "GET") {
         await queues.get(player)?.catch(() => {});
-        return send(res, 200, { profile: publicChess(await load(player)) });
+        return send(res, 200, { profile: publicChess(await load(player), Date.now(), settingsFor[player]) });
       }
       if (req.method !== "POST")
         return send(res, 405, { error: "Unsupported chess action." });
@@ -49,7 +49,7 @@ export function chessService({ data, players, log, settingsFor = {} }) {
         .then(async () => {
           try {
             const profile = await load(player);
-            const result = await actChess(profile, input, { engine });
+            const result = await actChess(profile, input, { engine, settings: settingsFor[player] });
             if (!result.duplicate) {
               await mkdir(dir, { recursive: true, mode: 0o700 });
               const file = join(dir, player + ".json");
@@ -65,9 +65,10 @@ export function chessService({ data, players, log, settingsFor = {} }) {
                 position: profile.session?.ids[profile.session.index],
                 result,
                 revision: profile.revision,
+                ...(input.type.startsWith("match-") ? { match: { game: profile.match?.game?.id, rating: profile.match?.rating, plies: profile.match?.game?.moves.length } } : {}),
               });
             }
-            send(res, 200, { profile: publicChess(profile), result });
+            send(res, 200, { profile: publicChess(profile, Date.now(), settingsFor[player]), result });
           } catch (e) {
             await log({
               type: "chess-rejected",
