@@ -48,7 +48,7 @@ CATCH THE MISTAKE (the child wins by spotting the narrator's error)
 SHAPE
 - ${early?'6-9':'7-11'} pages in total, including the challenge and mistake pages. Page 1 is a story page; the last page is a story page with a warm ending and a small hint of tomorrow.
 - ${L.words[0]+20}-${L.words[1]-20} words in total across all pages; at most ${L.pageWords-5} words on any page.
-- Do not use em dashes. Plain punctuation only.
+- Do not use em dashes. Put spoken words in double quotes ("like this").
 - ${plan.name} is the hero: he solves things, his friends help.
 - Each story page may have "scene": 1-4 emoji from this set only: ${[...SCENE_EMOJI].slice(0,90).join('')}
 
