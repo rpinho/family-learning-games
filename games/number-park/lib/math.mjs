@@ -9,7 +9,7 @@ import {validCookieDraft,cookieCounts} from './cookie-division.mjs';
 import {readingAction} from './reading.mjs';
 import {artAction} from './art.mjs';
 import {planningAction} from './planning.mjs';
-export const VERSION='number-park-2026-09-26-cookie-remainders-public';
+export const VERSION='number-park-2026-09-26-cookie-drag-adaptive-public';
 export const GAMES=[
  {id:'mix',icon:'🎲',title:'Little sums',description:'A mix just like the first unit.'},
  {id:'line',icon:'📏',title:'Number hop',description:'Slide to the missing number.'},
@@ -28,6 +28,15 @@ export function prepareProfile(p){
  // inventing a completion or changing any guided/copy counts.
  if(p.traceNext==='100'&&((p.guided?.['100']||0)>0||(p.copiedNumbers?.['100']||0)>0))p.traceNext='101';
  p.ceiling=advanced(p)?200:13;
+ const cookie=p.session;
+ if(cookie?.game==='cookies'&&!cookie.finished&&!cookie.result&&['remainder','snack'].includes(cookie.question?.mode)){
+  // The button-only round has no placed cookies. Keep earned progress and the
+  // round number, but offer the requested drag interaction on next refresh.
+  cookie.question=makeQuestion(p,'cookies',cookie.round);
+  cookie.question.id+=':drag3';
+  cookie.cookieDraft=Array(cookie.question.total).fill(null);
+  cookie.started=Date.now();cookie.helped=false;delete cookie.cookieChecks;delete cookie.cookieMessage;
+ }
  const s=p.session;if(!additionOnly(p)||!s||s.finished)return p;
  if(!s.result&&s.game!=='subtract'&&s.question.operator==='−'){
   s.question=makeQuestion(p,s.game,s.round);s.question.id+=':addition2';s.helped=false;
@@ -37,9 +46,9 @@ export function prepareProfile(p){
 export const freshProfile=id=>({id,name:id==='admin'?'Admin':id==='beginner'?'Beginner':'Explorer',revision:0,xp:0,lessons:0,completed:{},recent:[],history:[],session:null,drawing:[],guided:{},ceiling:id==='explorer'?200:13});
 export const random=seed=>()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
 const shuffle=(a,r)=>a.map(v=>[r(),v]).sort((a,b)=>a[0]-b[0]).map(v=>v[1]);
-export function makeQuestion(p,game,round=0,legacyCookies=false){
+export function makeQuestion(p,game,round=0){
  const r=random((p.revision+1)*7919+(p.history.length+1)*101+round*37),max=13;
- if(advanced(p))return challengeQuestion(p,game,round,r,legacyCookies);
+ if(advanced(p))return challengeQuestion(p,game,round,r);
  const roll=n=>Math.floor(r()*n);let q;
  for(let trial=0;trial<120;trial++){
   let kind=game==='mix'?['choice','line','missing','choice','line','missing'][round%6]:game;
@@ -69,8 +78,7 @@ export function action(p,input,now=Date.now(),services={}){
   readingAction(p,input,now);
  }else if(input.kind==='start'){
   if(!gamesFor(p).some(g=>g.id===input.game))fail('Choose a listed game.');
-  const modernCookie=input.game==='cookies'&&input.cookiePlanV2===true;
-  p.session={game:input.game,round:0,correct:0,independent:0,helped:false,result:null,finished:false,started:now,question:makeQuestion(p,input.game,0,input.game==='cookies'&&!modernCookie),...(input.game==='cookies'?{cookiePlanV2:modernCookie}:{})};
+  p.session={game:input.game,round:0,correct:0,independent:0,helped:false,result:null,finished:false,started:now,question:makeQuestion(p,input.game)};
   if(p.session.question.kind==='cookies'&&p.session.question.mode==='share')p.session.cookieDraft=Array(p.session.question.total).fill(null);
  }else if(input.kind==='hint'){
   const s=p.session;if(!s||s.finished||s.result)fail('No question to help with.');s.helped=true;
@@ -111,7 +119,7 @@ export function action(p,input,now=Date.now(),services={}){
  }else if(input.kind==='next'){
   const s=p.session;if(!s||s.finished||!s.result)fail('Finish this question first.');
   if(s.round===5){s.finished=true;p.lessons++;p.completed[s.game]=(p.completed[s.game]||0)+1;}
-  else{s.round++;s.question=makeQuestion(p,s.game,s.round,s.game==='cookies'&&!s.cookiePlanV2);s.helped=false;s.result=null;s.started=now;delete s.cookieChecks;delete s.cookieMessage;if(s.question.kind==='cookies'&&s.question.mode==='share')s.cookieDraft=Array(s.question.total).fill(null);else delete s.cookieDraft;}
+  else{s.round++;s.question=makeQuestion(p,s.game,s.round);s.helped=false;s.result=null;s.started=now;delete s.cookieChecks;delete s.cookieMessage;if(s.question.kind==='cookies'&&s.question.mode==='share')s.cookieDraft=Array(s.question.total).fill(null);else delete s.cookieDraft;}
  }else if(input.kind==='drawing'){
   if(!validFreeInk(input.strokes))fail('Drawing is too large or invalid.');
   if(input.space!==undefined&&input.space!==FREE_DRAWING_SPACE)fail('Drawing space is invalid.');

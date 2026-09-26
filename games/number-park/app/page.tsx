@@ -40,7 +40,7 @@ export default function Home(){
  useEffect(()=>{const report=(e:ErrorEvent)=>event('error','runtime',e.message);window.addEventListener('error',report);return()=>window.removeEventListener('error',report);},[]);
  const act=(input:any)=>appRefresh.current.busy?Promise.resolve(null):client.current.action(input);
  const run=(input:any)=>void act(input).catch(()=>{});
- const start=async(game:string)=>{stopVoice();const data=await act({kind:'start',game,...(game==='cookies'?{cookiePlanV2:true}:{})});if(data)setOpen(true);return data;};
+ const start=async(game:string)=>{stopVoice();const data=await act({kind:'start',game});if(data)setOpen(true);return data;};
  const s=p?.session,q=s?.question,older=player==='explorer';
  useEffect(()=>{if(!open||tab!=='play')return;const frame=requestAnimationFrame(()=>document.querySelector('.playboard')?.scrollIntoView({block:'start'}));return()=>cancelAnimationFrame(frame);},[open,tab]);
  const [visible,setVisible]=useState(true);

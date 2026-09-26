@@ -14,14 +14,14 @@ export const advanced=p=>p.id==='explorer';
 // Neither old preschool play nor guided tracing can establish mastery here.
 export function challengeLevel(p,skill){
  if(skill==='cookies'){
-  // Sharing-only history is a warm-up, not evidence that more dragging is hard.
-  // Explorer starts with remainders; four independent remainder answers open
-  // the two-step snack problems. Two assisted/missed snack answers ease back.
-  let level=2,streak=0,struggles=0;
+  // Credit old sharing success once, without promoting twice from the same
+  // short lesson. New drag rounds then drive this skill in either direction.
+  const oldWins=(p.history||[]).filter(h=>h.question?.track===EXPLORER_TRACK&&h.question.skill==='cookies'&&h.question.plan!=='drag3'&&(!h.question.mode||h.question.mode==='share')&&h.ok&&!h.helped).length;
+  let level=oldWins>=4?2:1,streak=0,struggles=0;
   for(const h of p.history||[]){
-   if(h.question?.track!==EXPLORER_TRACK||h.question.skill!=='cookies'||!['remainder','snack'].includes(h.question.mode))continue;
-   if(h.ok&&!h.helped){streak++;struggles=0;if(level===2&&streak>=4){level=3;streak=0;}}
-   else{streak=0;struggles++;if(struggles>=2){level=2;struggles=0;}}
+   if(h.question?.track!==EXPLORER_TRACK||h.question.skill!=='cookies'||h.question.plan!=='drag3')continue;
+   if(h.ok&&!h.helped){streak++;struggles=0;if(streak>=4){level=Math.min(3,level+1);streak=0;}}
+   else{streak=0;struggles++;if(struggles>=2){level=Math.max(1,level-1);struggles=0;}}
   }
   return level;
  }
@@ -40,10 +40,10 @@ function options(answer,max,r,near=[]){
  for(let n=0;valid.length<3;n++)if(n!==answer&&!valid.includes(n))valid.push(n);
  return shuffle([answer,...valid.slice(0,3)],r);
 }
-export function challengeQuestion(p,game,round,r,legacyCookies=false){
+export function challengeQuestion(p,game,round,r){
  const skills=['multiply','sums','factor','skip','place','multiply'];
  const skill=game==='mix'?skills[round%6]:({line:'sums',missing:'factor',count:'skip',addobjects:'multiply',subtract:'sums',pattern:'skip'}[game]||game);
- const level=legacyCookies&&skill==='cookies'?1:challengeLevel(p,skill),roll=n=>Math.floor(r()*n);let q;
+ const level=challengeLevel(p,skill),roll=n=>Math.floor(r()*n);let q;
  if(skill==='cookies'){
   for(let trial=0;trial<40;trial++){
    q={track:EXPLORER_TRACK,...cookieQuestion(level,r)};

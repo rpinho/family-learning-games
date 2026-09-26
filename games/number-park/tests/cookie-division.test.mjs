@@ -1,21 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {freshProfile,action,publicState,gamesFor,makeQuestion} from '../lib/math.mjs';
-import {challengeLevel} from '../lib/explorer.mjs';
+import {freshProfile,action,publicState,gamesFor,prepareProfile} from '../lib/math.mjs';
+import {challengeLevel,EXPLORER_TRACK} from '../lib/explorer.mjs';
 import {cookiePrompt,cookieVoiceLines,cookieQuestion} from '../lib/cookie-division.mjs';
 const act=(p,input)=>action(p,{...input,revision:p.revision});
 
-test('Explorer starts with remainders, then snack problems; every prompt is spoken',()=>{
+test('all levels keep drag sharing and every prompt is spoken',()=>{
  const p=freshProfile('explorer'),lines=new Set(cookieVoiceLines());
- assert.equal(challengeLevel(p,'cookies'),2);
+ assert.equal(challengeLevel(p,'cookies'),1);
  for(let level=1;level<=3;level++)for(let i=0;i<100;i++){
   const q=cookieQuestion(level,()=>((i*37)%97)/97);
-  assert.equal(q.level,level);assert.equal(q.total,q.plates*q.answer+q.leftover);
+  assert.equal(q.level,level);assert.equal(q.mode,'share');assert.equal(q.plan,'drag3');
+  assert.equal(q.total,q.plates*q.answer);assert.ok(q.total<=24);
   assert.equal(q.baked,q.total+q.eaten);assert.ok(lines.has(q.prompt));
   assert.equal(q.prompt,cookiePrompt(q.total,q.plates,q.mode,q.baked,q.eaten));
-  if(level===1)assert.equal(q.mode,'share');
-  if(level===2){assert.equal(q.mode,'remainder');assert.ok(q.leftover>0);}
-  if(level===3){assert.equal(q.mode,'snack');assert.ok(q.eaten>=2);}
+  assert.equal(q.leftover,0);assert.equal(q.eaten,0);
  }
  assert.equal(gamesFor(freshProfile('beginner')).some(g=>g.id==='cookies'),false);
  assert.throws(()=>act(freshProfile('beginner'),{kind:'start',game:'cookies'}));
@@ -23,7 +22,7 @@ test('Explorer starts with remainders, then snack problems; every prompt is spok
 
 test('cookie sharing saves each move, rejects shortcuts and gives a non-revealing hint',()=>{
  const p=freshProfile('explorer'),q={...cookieQuestion(1,()=>0),id:'legacy',track:'explorer-math-1'};
- delete q.mode; // Existing saves may contain a partially placed old round.
+ delete q.mode;delete q.plan; // A partially placed old round survives the upgrade.
  p.session={game:'cookies',round:0,correct:0,independent:0,helped:false,result:null,finished:false,started:0,question:q,cookieDraft:Array(q.total).fill(null)};
  assert.equal(publicState(p).session.question.answer,undefined);
  assert.throws(()=>act(p,{kind:'answer',questionId:q.id,answer:q.answer}));
@@ -41,35 +40,40 @@ test('cookie sharing saves each move, rejects shortcuts and gives a non-revealin
  act(p,{kind:'next'});assert.equal(p.session.question.mode,'share');assert.equal(p.session.cookieDraft.length,p.session.question.total);
 });
 
-test('old clients keep sharing while the new client opts into the harder plan',()=>{
+test('old and newer clients both start with draggable cookies',()=>{
  const old=freshProfile('explorer');act(old,{kind:'start',game:'cookies'});
- assert.equal(old.session.question.mode,'share');assert.equal(old.session.cookiePlanV2,false);
+ assert.equal(old.session.question.mode,'share');assert.equal(old.session.cookieDraft.length,old.session.question.total);
  const modern=freshProfile('explorer');act(modern,{kind:'start',game:'cookies',cookiePlanV2:true});
- assert.equal(modern.session.question.mode,'remainder');assert.equal(modern.session.cookiePlanV2,true);
+ assert.equal(modern.session.question.mode,'share');assert.equal(modern.session.cookieDraft.length,modern.session.question.total);
 });
 
-test('mental cookie answers require quotient and leftovers, with corrections but no reveal',()=>{
- const p=freshProfile('explorer');act(p,{kind:'start',game:'cookies',cookiePlanV2:true});const q=p.session.question;
- assert.equal(q.mode,'remainder');assert.equal(publicState(p).session.question.answer,undefined);assert.equal(publicState(p).session.question.leftover,undefined);
- assert.throws(()=>act(p,{kind:'cookie-place',questionId:q.id,draft:[]}));
- assert.throws(()=>act(p,{kind:'cookie-check',questionId:q.id,perPlate:99,leftover:0}));
- act(p,{kind:'cookie-check',questionId:q.id,perPlate:q.answer-1,leftover:q.leftover});assert.equal(p.session.result,null);assert.equal(p.session.cookieChecks,1);assert.equal(publicState(p).session.question.answer,undefined);
- act(p,{kind:'cookie-check',questionId:q.id,perPlate:q.answer,leftover:q.leftover});assert.equal(p.session.result.ok,true);assert.equal(p.session.result.xp,4);
- assert.equal(p.history.at(-1).leftover,q.leftover);
+test('unfinished button-only problem becomes draggable without losing progress',()=>{
+ const p=freshProfile('explorer');p.revision=44;p.xp=70;p.history=[{at:'earlier',game:'cookies'}];
+ p.session={game:'cookies',round:2,correct:2,independent:2,helped:false,result:null,finished:false,started:100,question:{...cookieQuestion(2,()=>0),mode:'remainder',id:'button-only'},cookiePlanV2:true};
+ prepareProfile(p);const q=p.session.question;
+ assert.equal(q.mode,'share');assert.equal(q.plan,'drag3');assert.equal(q.level,1);
+ assert.equal(p.session.round,2);assert.equal(p.session.correct,2);assert.equal(p.xp,70);assert.equal(p.revision,44);assert.equal(p.history.length,1);
+ assert.ok(p.session.started>100);
+ assert.equal(p.session.cookieDraft.length,q.total);assert.equal(publicState(p).session.question.answer,undefined);
+ prepareProfile(p);assert.equal(p.session.question.id,q.id);
 });
 
-test('four independent remainder rounds open two-step snack problems without changing other skills',()=>{
- const p=freshProfile('explorer');p.xp=25;p.completed={multiply:3};act(p,{kind:'start',game:'cookies',cookiePlanV2:true});
+test('old easy wins seed moderate sharing; new independent rounds advance and hints ease it',()=>{
+ const p=freshProfile('explorer');p.xp=25;p.completed={multiply:3};
+ p.history=Array.from({length:8},()=>({game:'cookies',question:{track:EXPLORER_TRACK,skill:'cookies'},ok:true,helped:false}));
+ assert.equal(challengeLevel(p,'cookies'),2);act(p,{kind:'start',game:'cookies'});
  for(let round=0;round<6;round++){
   const q=p.session.question;
-  assert.equal(q.mode,round<4?'remainder':'snack');
-  assert.equal(publicState(p).session.question.leftover,undefined);
-  if(q.mode==='snack')assert.ok(q.baked>q.total);
-  assert.equal(p.session.cookieDraft,undefined);
-  act(p,{kind:'cookie-check',questionId:q.id,perPlate:q.answer,leftover:q.leftover});
+  assert.equal(q.mode,'share');assert.equal(q.level,round<4?2:3);
+  assert.equal(publicState(p).session.question.answer,undefined);
+  for(let id=0;id<q.total;id++){
+   const draft=[...p.session.cookieDraft];draft[id]=Math.floor(id/q.answer);act(p,{kind:'cookie-place',questionId:q.id,draft});
+  }
+  if(round>=4)act(p,{kind:'hint'});
+  act(p,{kind:'cookie-check',questionId:q.id});
   assert.equal(p.session.result.ok,true);act(p,{kind:'next'});
  }
  assert.equal(p.completed.cookies,1);assert.equal(p.completed.multiply,3);
- assert.equal(p.xp,85);assert.equal(challengeLevel(p,'cookies'),3);assert.equal(challengeLevel(p,'multiply'),2);
+ assert.equal(p.xp,73);assert.equal(challengeLevel(p,'cookies'),2);assert.equal(challengeLevel(p,'multiply'),2);
  assert.equal(p.session.finished,true);
 });
