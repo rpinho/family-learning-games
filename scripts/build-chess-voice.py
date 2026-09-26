@@ -1,18 +1,24 @@
 """Optional original coach narration using a local stock Kokoro voice.
 Usage: python scripts/build-chess-voice.py --models /path/to/models --data /path/to/hub-data
+Without arguments (the release pipeline): --data defaults to $FAMILY_DATA and --models to
+$FAMILY_VOICE_MODELS, else <data>/voice-models. Only missing clips are synthesized.
 Requires kokoro-onnx==0.4.9, onnxruntime, numpy, soundfile. No network calls.
 Without these clips the game stays text-only; it never substitutes robotic device speech.
 """
-import argparse, hashlib, json, subprocess, time
+import argparse, hashlib, json, os, subprocess, time
 from pathlib import Path
 import numpy as np
 import onnxruntime as ort
 import soundfile as sf
 from kokoro_onnx import Kokoro
 parser=argparse.ArgumentParser()
-parser.add_argument('--models',type=Path,required=True)
-parser.add_argument('--data',type=Path,required=True)
+parser.add_argument('--models',type=Path)
+parser.add_argument('--data',type=Path)
 args=parser.parse_args()
+if args.data is None:
+ if not os.environ.get('FAMILY_DATA'):parser.error('--data or FAMILY_DATA is required')
+ args.data=Path(os.environ['FAMILY_DATA'])
+if args.models is None:args.models=Path(os.environ.get('FAMILY_VOICE_MODELS') or args.data/'voice-models')
 root=Path(__file__).resolve().parents[1]
 lines=json.loads(subprocess.check_output(['node',str(root/'scripts/chess-voice-lines.mjs')]))
 options=ort.SessionOptions();options.intra_op_num_threads=4;options.inter_op_num_threads=1
