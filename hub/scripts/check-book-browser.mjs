@@ -23,9 +23,10 @@ const target=(await(await fetch(`http://127.0.0.1:${port}/json/list`)).json()).f
 const ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((ok,no)=>{ws.onopen=ok;ws.onerror=no;});
 let seq=0;const waiting=new Map();
 ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id&&waiting.has(m.id)){const {ok,no}=waiting.get(m.id);waiting.delete(m.id);m.error?no(Error(m.error.message)):ok(m.result);}};
-const send=(method,params={})=>new Promise((ok,no)=>{const id=++seq;waiting.set(id,{ok,no});ws.send(JSON.stringify({id,method,params}));});
+const send=(method,params={})=>new Promise((ok,no)=>{const id=++seq;waiting.set(id,{ok,no});ws.send(JSON.stringify({id,method,params}));setTimeout(()=>{if(waiting.delete(id))no(Error(`${method} timed out`));},20000);});
 const js=async expr=>{const r=await send('Runtime.evaluate',{expression:expr,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.exception?.description||'eval failed');return r.result.value;};
 const until=async(expr,ms=15000)=>{const t=Date.now();while(Date.now()-t<ms){if(await js(expr))return true;await sleep(150);}return false;};
+setTimeout(()=>{console.log(JSON.stringify({player,label,ok:false,errors:['overall timeout']}));proc.kill();process.exit(1);},8*60000).unref();
 const result={player,label,size:`${W}x${H}`,pages:[],refused:0,beforeTap:null,errors:[]};
 try{
  await send('Page.enable');await send('Runtime.enable');
