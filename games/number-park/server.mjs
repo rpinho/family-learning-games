@@ -6,11 +6,15 @@ import {homedir,hostname,networkInterfaces} from 'node:os';
 import {freshProfile,action,publicState,prepareProfile,VERSION} from './lib/math.mjs';
 import {recognizeArt} from './lib/symbol-recognition.mjs';
 import {daySummary,localDate} from './lib/day-summary.mjs';
+import {literacyFrom,DEFAULT_TRACK} from './lib/word-break.mjs';
 const timeZone=process.env.FAMILY_TZ||Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 const doodleModel=JSON.parse(await readFile(new URL('./data/doodle-model.json',import.meta.url),'utf8'));
 const symbolModel=JSON.parse(await readFile(new URL('./data/symbol-model.json',import.meta.url),'utf8'));
 const data=process.env.NUMBER_PARK_DATA||join(homedir(),'.local/share/family-learning-games/number-park');
+// Read-only look at Letter Quest progress so word breaks match each child. Never written.
+const letterData=process.env.LETTER_QUEST_DATA||join(homedir(),'.local/share/family-learning-games/letter-quest');
+async function literacy(id){let save=null;try{save=JSON.parse(await readFile(join(letterData,id+'.json'),'utf8'));}catch{}return literacyFrom(save,DEFAULT_TRACK[id]||'mixed');}
 const root=resolve(process.env.NUMBER_PARK_STATIC||'dist/client'),port=Number(process.env.PORT||4321);
 await mkdir(join(data,'logs'),{recursive:true,mode:0o700});
 let queue=Promise.resolve(),logError=null;
@@ -28,6 +32,8 @@ const server=http.createServer(async(req,res)=>{
  res.on('close',()=>{if(!res.writableFinished&&url.pathname.startsWith('/api/'))void log({type:'response_interrupted',...diagnostic,path:url.pathname.slice(0,120),ms:Date.now()-began});});
  try{
   if(url.pathname==='/health')return send(res,200,{ok:true,version:VERSION,diagnostics:{ok:!logError,error:logError}});
+  const breakRoute=url.pathname.match(/^\/api\/(beginner|explorer|admin)\/word-break$/);
+  if(breakRoute){if(req.method!=='GET')return send(res,405,{error:'Read only.'});return send(res,200,await literacy(breakRoute[1]));}
   const route=url.pathname.match(/^\/api\/(beginner|explorer|admin)(?:\/(action|events|summary))?$/);
   if(route){
    const [,id,op]=route;
@@ -47,7 +53,7 @@ const server=http.createServer(async(req,res)=>{
    let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>150000)return send(res,413,{error:'Too much data.'});}
    let input;try{input=JSON.parse(raw);}catch{return send(res,400,{error:'Invalid JSON.'});}
    if(!input||typeof input!=='object'||Array.isArray(input))return send(res,400,{error:'Invalid action.'});
-   if(op==='events'){if(!['open','voice','error','trace_pause','trace_done','group','pattern','cookie','place','sync','drawing','reading','planning'].includes(input.kind))return send(res,400,{error:'Invalid event.'});await log({type:'client',...diagnostic,player:id,kind:input.kind,name:String(input.name||'').slice(0,160),detail:String(input.detail||'').slice(0,500)});return send(res,200,{ok:true});}
+   if(op==='events'){if(!['open','voice','error','trace_pause','trace_done','group','pattern','cookie','place','sync','drawing','reading','planning','word-break'].includes(input.kind))return send(res,400,{error:'Invalid event.'});await log({type:'client',...diagnostic,player:id,kind:input.kind,name:String(input.name||'').slice(0,160),detail:String(input.detail||'').slice(0,500)});return send(res,200,{ok:true});}
    queue=queue.catch(()=>{}).then(async()=>{
     let currentRevision;
     try{const p=await load(id),before=structuredClone(p.session),planningBefore=input.kind?.startsWith('plan_')?structuredClone(p.planning||null):undefined;currentRevision=p.revision;action(p,input,Date.now(),{recognize:(ink,mode)=>recognizeArt(ink,doodleModel,symbolModel,mode)});const file=join(data,id+'.json');await writeFile(file+'.tmp',JSON.stringify(p),{mode:0o600});await rename(file+'.tmp',file);await log({type:'action',...diagnostic,player:id,input,before,after:p.session,...(input.kind?.startsWith('plan_')?{planningBefore,planning:p.planning}:{}),...(input.kind?.startsWith('art_')?{art:p.art.history.at(-1)}:{}),...(input.kind?.startsWith('reading_')?{reading:{level:p.reading.level,round:p.reading.session.round,finished:p.reading.session.finished,stars:p.reading.stars,question:p.reading.session.questions[p.reading.session.round]}}:{}),revision:p.revision});send(res,200,publicState(p));}

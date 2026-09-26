@@ -1,4 +1,5 @@
 import {useHint} from './hints.mjs';
+import {SENTENCES,scramble,tilesOf,endMark} from './word-break.mjs';
 // Reading practice is separate from letter mastery and from game XP.
 export const READING_TYPES=[
  ['decode','🔎','Word detective','Read a word. Find what it means.'],
@@ -19,11 +20,10 @@ export const WORD_CHANGES=[
  [['ship','shop'],['fish','dish'],['sock','rock'],['ring','wing'],['king','sing'],['back','pack'],['duck','luck'],['thin','chin'],['chop','chip'],['wish','wash'],['rush','rash'],['rich','rice']],
  [['train','brain'],['snail','snarl'],['green','greet'],['sheep','sheet'],['beach','bench'],['brush','crush'],['snack','stack'],['stamp','stomp'],['shark','share'],['whale','while'],['black','block'],['track','trick']]
 ];
-export const READING_SENTENCES=[
- ['The cat can nap.','The pig can dig.','The dog can run.','The hen is red.','The sun is hot.','The hat is in the bag.','The fox can hop.','The bug is on the bed.'],
- ['The fish is in the pond.','The frog can jump.','The duck has a snack.','The red flag is on the ship.','The crab is on the rock.','The king has a gold ring.','The drum is in the shop.','The sock is under the bed.'],
- ['The green frog jumps into the pond.','The small snail rests on a leaf.','The shark swims past the ship.','The sheep stands beside the fence.','The train stops at the next town.','The child puts a snack in the bag.','The brush is beside the green cup.','The whale swims under the blue waves.']
-];
+// Sentence studio uses the shared varied bank (names first/middle/last, said/asked early, several capitals).
+export const READING_SENTENCES=SENTENCES;
+// One look-alike extra tile from level 2, so the last tiles cannot be guessed by position.
+const SENTENCE_DISTRACT={cat:'cot',big:'bag',hen:'pen',pig:'peg',hop:'hip',run:'ran',ran:'run',sat:'sit',got:'get',get:'got',red:'rod',ship:'shop',frog:'from',duck:'dock',rock:'rack',fish:'dish',log:'leg',pond:'pod',flag:'flat',drum:'drop',hill:'hall',fox:'fix',fix:'fox',wet:'wit',cup:'cap',hat:'hot',sun:'son',bus:'bun',jump:'dump',swim:'swam',shop:'chop',stop:'step',step:'stop',snack:'snake',black:'block',whale:'while',sheep:'sheet',brush:'crush',shell:'shelf',train:'trail',fast:'last',spot:'spit',smile:'mile',beach:'bench',found:'round'};
 export const READING_STORIES=[
  [
   ['Sam has a red cap. The cap is in a bag.','Where is the cap?','bag',['bed','box']],
@@ -87,7 +87,11 @@ export function readingQuestion(p){
   return {...base,command,answer:targets.map(t=>t.id).join('|'),count:targets.length,options:shuffle(objects,r),prompt:prompts.act,helpLine:command};
  }
  if(type==='sentence'){
-  const sentence=READING_SENTENCES[level-1][index%8],tokens=sentence.split(' ');return {...base,sentence,answer:sentence,tiles:shuffle(tokens,r),prompt:prompts.sentence,listenLine:sentence,helpLine:sentence};
+  // Tiles carry no punctuation and are never in sentence order or a rotation of it.
+  // Questions saved before this change keep their original tiles (they live in the save).
+  const bank=READING_SENTENCES[level-1],sentence=bank[index%bank.length],words=tilesOf(sentence);
+  const extra=level>=2?words.map(w=>SENTENCE_DISTRACT[w.toLowerCase()]).find(w=>w&&!words.some(x=>x.toLowerCase()===w)):null;
+  return {...base,sentence,answer:words.join(' '),tiles:scramble(extra?[...words,extra]:words,r),slots:words.length,mark:endMark(sentence),prompt:prompts.sentence,listenLine:sentence,helpLine:sentence};
  }
  const [passage,question,answer,wrong]=READING_STORIES[level-1][index%8];return {...base,passage,question,answer,options:shuffle([answer,...wrong],r),prompt:prompts.story,helpLine:passage+' '+question};
 }
@@ -131,6 +135,7 @@ export function readingAction(p,input){
  if(input.kind==='draft'){
   if(!Array.isArray(input.draft)||input.draft.length>20||!input.draft.every(n=>Number.isInteger(n)&&n>=0&&n<(q.tiles?.length||q.options?.length||0)))throw Error('Invalid reading tiles');
   if(q.type==='sentence'&&new Set(input.draft).size!==input.draft.length)throw Error('A word tile can only be used once');
+  if(q.type==='sentence'&&input.draft.length>(q.slots||q.tiles.length))throw Error('The sentence is already full');
   if(!['dictation','change','sentence','act'].includes(q.type))throw Error('No tiles in this activity');
   s.draft=input.draft;p.revision++;return {kind:'draft'};
  }

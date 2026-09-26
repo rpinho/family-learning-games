@@ -29,11 +29,11 @@ export function createDiagnostics(data){
 }
 
 const EVENTS=new Set(['session_start','challenge_shown','action','trace_start','trace_blocked','trace_stroke','trace_cancel','trace_reset','attempt_submit','feedback','api_error','runtime_error','resource_error','voice_error','voice_play','voice_skip','visibility','connection','heartbeat','logging_gap']);
-for(const event of ['guided_trace_start','guided_trace_progress','guided_trace_pause'])EVENTS.add(event);
+for(const event of ['guided_trace_start','guided_trace_progress','guided_trace_pause','word_break'])EVENTS.add(event);
 const STRINGS=new Set(['eventId','session','player','build','kind','challengeId','task','char','action','reason','pointerType','message','stack','source','voice','clip','address','visibility','platform','agent','requestId','answer']);
 const NUMBERS=new Set(['clientTime','elapsedMs','durationMs','level','width','height','dpr','touchPoints','strokeCount','points','status','line','column','dropped','pending','code']);
 const BOOLEANS=new Set(['demo','busy','feedback','drawing','helped','showModel','ok','online','retry']);
-for(const field of ['completed','cursor'])NUMBERS.add(field);
+for(const field of ['completed','cursor','misses'])NUMBERS.add(field);
 for(const field of ['guided','done'])BOOLEANS.add(field);
 function text(value,max=300){return String(value).replace(/https?:\/\/[^\s)]+/g,url=>url.split(/[?#]/)[0]).replace(/[\u0000-\u001f]/g,' ').slice(0,max);}
 export const identifier=value=>typeof value==='string'&&/^[a-zA-Z0-9:_-]{1,100}$/.test(value)?value:undefined;

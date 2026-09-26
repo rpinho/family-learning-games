@@ -11,7 +11,7 @@ import {storyView} from './story-ui.mjs';
 import {storyAction,storyState,storyBoard,STORY_LINES} from './story.mjs';
 import {createMazeView} from './maze-view.mjs';
 import {createRescueView,rescueShouldSpeak} from './rescue-view.mjs';
-import {rescueAction,rescueState,rescueLine} from './rescue.mjs';
+import {rescueAction,rescueState,rescueLine,rescueInfo} from './rescue.mjs';
 import {mazeTapLine} from './maze-learning.mjs';
 import {soundLine} from './phonics.mjs';
 import {mazeAction,mazeState,mazeGate,mazeQuestion,mazeClue,MAZE_LINES} from './maze.mjs';
@@ -27,6 +27,7 @@ import {soccerView} from './soccer-view.mjs';
 import {createSoccerAudio} from './soccer-audio.mjs';
 import {readingState,readingAction,READING_LINES} from './reading.mjs';
 import {readingHome,readingView,mountReadingInk} from './reading-view.mjs';
+import {wordBreak,literacyFrom,DEFAULT_TRACK,WORD_BREAK_FEEDBACK} from './word-break.mjs';
 const app=document.querySelector('#app');
 const demo=new URLSearchParams(location.search).has('demo');
 const params=new URLSearchParams(location.search);
@@ -66,9 +67,23 @@ const league=()=>KINGDOMS[profile.league%7];
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const btn=(label,action,cls='button',extra='')=>`<button class="${cls}" data-action="${action}" ${extra}>${action==='hint'?hintLabel(profile):label}</button>`;
 const coach=(text,large=false)=>`<div class="coach ${large?'large':''} ${feedback?.duel&&!feedback.duel.rookOk?'rook-goof':feedback?.ok?'rook-proud':''}">${rookAvatar(feedback?.ok?'happy':'idle')}<div class="bubble"><span class="eyebrow">COACH ROOK</span><p>${text}</p>${view==='lesson'?btn('<span aria-hidden="true">🔊</span>','repeat','repeat-instruction','aria-label="Hear instruction again" title="Hear instruction again"'):''}</div></div>`;
-function speak(text,queued=false){if(mute||!profile?.settings.sound)return;return queued?coachVoice.enqueue(briefLine(text)):coachVoice.instruction(briefLine(text));}
+// Sound rule. CONTENT (the question itself, the letter/word to find, letter names on
+// taps) always plays, even with sound off, and repeats once if the child is idle. INSTRUCTIONS (how to play)
+// play once per session and obey the sound setting. Narration and praise obey the sound setting.
+let lastContent=null,lastTouch=Date.now();const heardInstructions=new Set();
+for(const type of ['pointerdown','keydown'])document.addEventListener(type,()=>{lastTouch=Date.now();},true);
+function contentKey(){if(!profile)return '';if(view==='lesson')return feedback?'':'lesson:'+challenge?.id;if(tab==='maze'&&view==='map')return mazeGate(profile)?'maze:'+mazeQuestion(profile)?.id:'';if(tab==='soccer'){const q=soccerState(profile);return q.phase==='question'?'soccer:'+q.question?.id:'';}if(tab==='reading'){const r=readingState(profile);return r.phase==='question'?'reading:'+r.question?.id:'';}return '';}
+function speak(text,queued=false){if(mute||!profile||!text)return;lastContent={text:briefLine(text),key:contentKey(),at:Date.now(),repeated:false};return queued?coachVoice.enqueue(briefLine(text)):coachVoice.instruction(briefLine(text));}
+// Once per browser session (survives a Refresh), per line.
+function firstTime(key){try{const k='lq-said-once:'+key;if(sessionStorage.getItem(k))return false;sessionStorage.setItem(k,'1');return true;}catch{if(heardInstructions.has(key))return false;heardInstructions.add(key);return true;}}
+function instruct(text,queued=false){if(mute||!profile?.settings.sound||!text||!firstTime(text))return;return queued?coachVoice.enqueue(text):coachVoice.instruction(text);}
+function narrate(text,queued=false){if(mute||!profile?.settings.sound||!text)return;return queued?coachVoice.enqueue(briefLine(text)):coachVoice.instruction(briefLine(text));}
+// One gentle repeat of the content prompt after ~9 s with no taps, while the same question is still open.
+setInterval(()=>{const c=lastContent,now=Date.now();if(!c||c.repeated||!c.key||busy||document.hidden||document.querySelector('dialog[open]'))return;if(c.key!==contentKey()){lastContent=null;return;}if(now-c.at<9000||now-lastTouch<9000||coachVoice.mode||coachVoice.promptTimer)return;c.repeated=true;coachVoice.instruction(c.text);},1000);
 function praise(ok=true){if(!mute&&profile?.settings.sound)void coachVoice.feedback(ok);}
-function readingPrompt(q,manual=false){if(!q)return;if(manual){coachVoice.stop();void coachVoice.enqueue(q.prompt);if(q.listenLine)void coachVoice.enqueue(q.listenLine);return;}if(mute||!profile?.settings.sound)return;coachVoice.instruction(q.listenLine||briefLine(q.prompt),{key:'reading:'+q.type,essential:!['decode','act','story'].includes(q.type)});}
+function readingPrompt(q,manual=false){if(!q)return;if(manual){coachVoice.stop();void coachVoice.enqueue(q.prompt);if(q.listenLine)void coachVoice.enqueue(q.listenLine);return;}if(mute)return;
+ // Decode/act/story never speak the printed answer; their prompt is a how-to instruction.
+ if(['decode','act','story'].includes(q.type))instruct(q.prompt);else speak(q.listenLine||q.prompt);}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)coachVoice.stop();});
 let audio;
 function chime(){if(mute||!profile.settings.sound)return;try{audio??=new AudioContext();audio.resume();[523,659,784].forEach((f,i)=>{const o=audio.createOscillator(),g=audio.createGain();o.connect(g);g.connect(audio.destination);o.frequency.value=f;g.gain.setValueAtTime(.055,audio.currentTime+i*.09);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+i*.09+.3);o.start(audio.currentTime+i*.09);o.stop(audio.currentTime+i*.09+.3);});}catch{}}
@@ -163,7 +178,7 @@ function todayPanel(){
  const parts=[l.attempts&&`Lessons: ${l.finished} finished, ${l.correct}/${l.attempts} answers right, ${l.independent} on their own`,m.gatesAnswered&&`Labyrinth: ${m.levelsFinished} levels, ${m.gatesCorrect} of ${m.gatesAnswered} gate answers right (now level ${m.level})`,o.rescueMissions&&`${o.rescueMissions} rescue missions`,o.storyChapters&&`${o.storyChapters} story chapters`,o.readingActions&&'Reading Missions',o.soccerActions&&'Word soccer'].filter(Boolean);
  return `<section class="panel today"><h2>Today</h2><p><strong>About ${s.minutes} min</strong> (${s.stretches.map(x=>`${x.start}–${x.end}`).join(', ')})</p><ul>${parts.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>${s.stuck.length?`<p><strong>Worth a look</strong></p><ul>${s.stuck.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`:''}${s.story.length?`<p><strong>Story so far today</strong></p><ul>${s.story.map(x=>`<li>${escape(x)}</li>`).join('')}</ul>`:''}${rest}</section>`;
 }
-function parentView(){const skills=Object.entries(profile.skills).sort(([a],[b])=>a.localeCompare(b));const recent=profile.history.slice(-20),accuracy=recent.length?Math.round(recent.filter(h=>h.ok).length/recent.length*100):null;return `<div class="page-heading"><div><div class="eyebrow">A WINDOW INTO THE LITTLE WINS</div><h1>Grown-ups’ corner.</h1><p>Celebrate progress. Notice what needs another gentle go.</p></div></div><div class="parent-metrics"><div><b>${profile.completed}</b><span>Finished lessons</span></div><div><b>${accuracy===null?'—':accuracy+'%'}</b><span>Last 20 attempts · includes help</span></div><div><b>${skills.filter(([,s])=>s.level>=3).length}</b><span>Skills practicing from memory</span></div></div>${todayPanel()}${demo?'':adminControls()}<section class="panel"><h2>Practice settings</h2>${btn("Hear Rook’s new voice ♪","preview-voice","button secondary")}<label class="setting"><span><strong>Left-handed layout</strong><small>Places controls on the right. Writing direction stays left to right.</small></span><input id="left-handed" type="checkbox" ${profile.settings.leftHanded?'checked':''}></label><label class="setting"><span><strong>Spoken instructions and celebration sounds</strong><small>Browser narration. Tap the speaker to repeat a prompt.</small></span><input id="sound-setting" type="checkbox" ${profile.settings.sound?'checked':''}></label><p>Five correct answers finish a lesson. Guidance fades after independent successes and returns after difficulty. Quick, accurate recognition can advance immediately; handwriting has no speed target. Recognition and tracing adapt separately for each character.</p><p>Start with matching and letter names, then trace, copy, and recall. This version does not yet teach a full phonics/reading curriculum or evaluate free-form handwriting. A tracing score measures similarity to the displayed path.</p><p>Try 5–10 minutes together, then one letter on paper. Ask a teacher to review stroke models and pencil practice. There are no lost hearts or streak penalties.</p>${btn('Download practice record ↓','export','button secondary')}</section><section class="panel"><h2>Skill notebook</h2><div class="table-wrap"><table><thead><tr><th>Skill</th><th>Guidance</th><th>Successful / tried</th></tr></thead><tbody>${skills.map(([key,s])=>`<tr><td>${escape(key.replace('find:','Recognize ').replace('trace:','Write '))}</td><td>${['Full model','Guided practice','Copy the model','Memory practice'][s.level]}</td><td>${s.hits} / ${s.seen}</td></tr>`).join('')||'<tr><td colspan="3">The notebook starts with the first quest.</td></tr>'}</tbody></table></div><p class="quiet">This is a practice record, not a school grade or diagnostic assessment. Assisted successes count here; the downloaded record identifies help separately.</p></section><section class="panel"><h2>At home, together</h2><p><strong>Local practice diagnostics are on.</strong> Attempts, drawing paths, hints, retries, difficulty changes and technical errors are saved on the server so we can review problems. No microphone, camera, passwords or activity outside this game is recorded. Logs are not available through this website.</p><p>Each preset has its own start link: <a href="/?player=explorer">Explorer’s game</a> · <a href="/?player=beginner">Beginner’s game</a>. Progress and difficulty are independent.</p><p>Progress is stored on your server and shared by the selected player across devices. Everyone on your home network who can open this address can select a player and see this notebook. This page is not password protected. No accounts, ads, chat, or public leaderboard.</p><p>Coach Rook is an original character. Narration uses your browser’s speech service. Availability, accent and offline support depend on the device. No third-party character recordings are included.</p></section>`;}
+function parentView(){const skills=Object.entries(profile.skills).sort(([a],[b])=>a.localeCompare(b));const recent=profile.history.slice(-20),accuracy=recent.length?Math.round(recent.filter(h=>h.ok).length/recent.length*100):null;return `<div class="page-heading"><div><div class="eyebrow">A WINDOW INTO THE LITTLE WINS</div><h1>Grown-ups’ corner.</h1><p>Celebrate progress. Notice what needs another gentle go.</p></div></div><div class="parent-metrics"><div><b>${profile.completed}</b><span>Finished lessons</span></div><div><b>${accuracy===null?'—':accuracy+'%'}</b><span>Last 20 attempts · includes help</span></div><div><b>${skills.filter(([,s])=>s.level>=3).length}</b><span>Skills practicing from memory</span></div></div>${todayPanel()}${demo?'':adminControls()}<section class="panel"><h2>Practice settings</h2>${btn("Hear Rook’s new voice ♪","preview-voice","button secondary")}<label class="setting"><span><strong>Left-handed layout</strong><small>Places controls on the right. Writing direction stays left to right.</small></span><input id="left-handed" type="checkbox" ${profile.settings.leftHanded?'checked':''}></label><label class="setting"><span><strong>Music, sound effects and celebration lines</strong><small>Browser narration. Spoken instructions for each exercise always play. Tap the speaker to repeat a prompt.</small></span><input id="sound-setting" type="checkbox" ${profile.settings.sound?'checked':''}></label><p>Five correct answers finish a lesson. Guidance fades after independent successes and returns after difficulty. Quick, accurate recognition can advance immediately; handwriting has no speed target. Recognition and tracing adapt separately for each character.</p><p>Start with matching and letter names, then trace, copy, and recall. This version does not yet teach a full phonics/reading curriculum or evaluate free-form handwriting. A tracing score measures similarity to the displayed path.</p><p>Try 5–10 minutes together, then one letter on paper. Ask a teacher to review stroke models and pencil practice. There are no lost hearts or streak penalties.</p>${btn('Download practice record ↓','export','button secondary')}</section><section class="panel"><h2>Skill notebook</h2><div class="table-wrap"><table><thead><tr><th>Skill</th><th>Guidance</th><th>Successful / tried</th></tr></thead><tbody>${skills.map(([key,s])=>`<tr><td>${escape(key.replace('find:','Recognize ').replace('trace:','Write '))}</td><td>${['Full model','Guided practice','Copy the model','Memory practice'][s.level]}</td><td>${s.hits} / ${s.seen}</td></tr>`).join('')||'<tr><td colspan="3">The notebook starts with the first quest.</td></tr>'}</tbody></table></div><p class="quiet">This is a practice record, not a school grade or diagnostic assessment. Assisted successes count here; the downloaded record identifies help separately.</p></section><section class="panel"><h2>At home, together</h2><p><strong>Local practice diagnostics are on.</strong> Attempts, drawing paths, hints, retries, difficulty changes and technical errors are saved on the server so we can review problems. No microphone, camera, passwords or activity outside this game is recorded. Logs are not available through this website.</p><p>Each preset has its own start link: <a href="/?player=explorer">Explorer’s game</a> · <a href="/?player=beginner">Beginner’s game</a>. Progress and difficulty are independent.</p><p>Progress is stored on your server and shared by the selected player across devices. Everyone on your home network who can open this address can select a player and see this notebook. This page is not password protected. No accounts, ads, chat, or public leaderboard.</p><p>Coach Rook is an original character. Narration uses your browser’s speech service. Availability, accent and offline support depend on the device. No third-party character recordings are included.</p></section>`;}
 function prompt(){return taskPrompt(challenge,showModel);}
 function start(){if(feedback?.next)challenge=feedback.next;view='lesson';feedback=null;newExercise();}
 let rail;
@@ -251,9 +266,9 @@ function storyCard(){
  const recent=beats.slice(-3);
  return `<div class="story-card"><span class="eyebrow">📖 BO’S STORY</span>${recent.map((b,i)=>`<p class="${i===recent.length-1?'story-new':'story-old'}"><span aria-hidden="true">${beatIcon(b)}</span> ${escape(b.lines.join(' '))}</p>`).join('')}</div>`;
 }
-function celebrate(){view='celebrate';shownBerries=-1;const recap=lessonRecap(profile),rest=isResting(),beat=profile.boStory?.beats?.at(-1);coachVoice.stop();for(const line of recap.lines)speak(line,true);if(tellsBoStory(profile.id)&&beat?.lesson===profile.completed)for(const line of beat.lines)speak(line,true);if(rest)speak(REST_LINE,true);app.innerHTML=`<div class="celebration ${rest?'rest-view':''}">${modeBanner()}<div class="confetti">✦　✧　✦　✧</div><div class="medal">${rest?'🌙':'★'}</div><span class="eyebrow">LOOK WHAT YOU DID</span><h1>${rest?'All done for today!':'Lesson complete!'}</h1>${recapView(recap)}${storyCard()}<div class="win-badges"><span>⚡ ${profile.xp} total XP</span><span>★ ${profile.completed} lessons</span></div>${coach(rest?REST_COACH:profile.chests?'And there’s treasure waiting for you.':'That’s a good place to pause. Or make one more move.',true)}${profile.chests?btn('Open my treasure ✧','treasure-next','button primary'):btn('Back to Learn →','exit','button primary')}${rest?'':btn('Another little quest','start','text-button')}<p class="paper-prompt">✎ Bonus adventure: write one letter on paper with Mom or Dad.</p></div>`;bind();}
+function celebrate(){view='celebrate';shownBerries=-1;const recap=lessonRecap(profile),rest=isResting(),beat=profile.boStory?.beats?.at(-1);coachVoice.stop();for(const line of recap.lines)narrate(line,true);if(tellsBoStory(profile.id)&&beat?.lesson===profile.completed)for(const line of beat.lines)narrate(line,true);if(rest)instruct(REST_LINE,true);app.innerHTML=`<div class="celebration ${rest?'rest-view':''}">${modeBanner()}<div class="confetti">✦　✧　✦　✧</div><div class="medal">${rest?'🌙':'★'}</div><span class="eyebrow">LOOK WHAT YOU DID</span><h1>${rest?'All done for today!':'Lesson complete!'}</h1>${recapView(recap)}${storyCard()}<div class="win-badges"><span>⚡ ${profile.xp} total XP</span><span>★ ${profile.completed} lessons</span></div>${coach(rest?REST_COACH:profile.chests?'And there’s treasure waiting for you.':'That’s a good place to pause. Or make one more move.',true)}${profile.chests?btn('Open my treasure ✧','treasure-next','button primary'):btn('Back to Learn →','exit','button primary')}${rest?'':btn('Another little quest','start','text-button')}<p class="paper-prompt">✎ Bonus adventure: write one letter on paper with Mom or Dad.</p></div>`;bind();}
 // Starting a lesson during the wind-down shows the calm screen instead (no choice to make).
-function restView(){view='celebrate';coachVoice.stop();speak(REST_LINE);app.innerHTML=`<div class="celebration rest-view">${modeBanner()}<div class="medal">🌙</div><h1>All done for today!</h1>${storyCard()}${coach(REST_COACH,true)}${btn('Back to Learn →','exit','button primary')}</div>`;bind();}
+function restView(){view='celebrate';coachVoice.stop();instruct(REST_LINE);app.innerHTML=`<div class="celebration rest-view">${modeBanner()}<div class="medal">🌙</div><h1>All done for today!</h1>${storyCard()}${coach(REST_COACH,true)}${btn('Back to Learn →','exit','button primary')}</div>`;bind();}
 function bind(){mountRefresh();app.querySelectorAll('[data-action]').forEach(el=>el.addEventListener('click',()=>act(el.dataset.action)));const player=app.querySelector('#player');if(player)player.onchange=async()=>{id=player.value;resetConfirmation=false;selectedDifficulty=undefined;leagueSelection=undefined;letterPractice=false;feedback=null;coachVoice.stop();try{localStorage.setItem('letter-quest-player',id);}catch{}const url=new URL(location.href);url.searchParams.set('player',id);history.replaceState(null,'',url);telemetry.record('action',{action:'switch_player'});await load();};const left=app.querySelector('#left-handed');if(left)left.onchange=()=>settings({leftHanded:left.checked});const sound=app.querySelector('#sound-setting');if(sound)sound.onchange=()=>settings({sound:sound.checked});}
 function mountRefresh(){
  let identity=document.querySelector('.active-player-banner');
@@ -307,7 +322,7 @@ async function readingAct(kind,value){
  else if(kind==='position')input={kind:'position',position:Number(value)};
  else if(kind==='ink-undo'){readingInkDraft=s.ink.slice(0,-1);input={kind:'ink',ink:readingInkDraft};}
  else if(['tile','actor','undo','clear'].includes(kind)){
-  const draft=[...s.draft];if(kind==='undo'&&q.type==='change'){draft.splice(0,draft.length,...[...q.from].map(c=>q.tiles.indexOf(c)));}else if(kind==='undo')draft.pop();else if(kind==='clear')draft.length=0;else if(q.type==='change')draft[s.cursor||0]=Number(value);else if(draft.length<(q.type==='act'?q.count:q.type==='sentence'?q.tiles.length:q.word.length))draft.push(Number(value));
+  const draft=[...s.draft];if(kind==='undo'&&q.type==='change'){draft.splice(0,draft.length,...[...q.from].map(c=>q.tiles.indexOf(c)));}else if(kind==='undo')draft.pop();else if(kind==='clear')draft.length=0;else if(q.type==='change')draft[s.cursor||0]=Number(value);else if(draft.length<(q.type==='act'?q.count:q.type==='sentence'?(q.slots||q.tiles.length):q.word.length))draft.push(Number(value));
   input={kind:'draft',draft};
  }else if(kind==='answer'||kind==='check')input={kind:'answer',answer:value,durationMs:elapsedMs(readingStarted)};
  else {busy=false;return;}
@@ -319,7 +334,7 @@ async function readingAct(kind,value){
   if(kind==='start'||kind==='choose')goTab('reading');
   if(['start','choose','next'].includes(kind)&&readingState(profile).phase==='question')readingPrompt(readingState(profile).question);
   else if(['read','show'].includes(kind)&&data.result.line)void coachVoice.speak(data.result.line);
-  else if(kind==='tile'&&q?.tiles?.[Number(value)]&&['dictation','change'].includes(q.type)&&!mute&&profile.settings.sound)void coachVoice.letter(`Letter ${q.tiles[Number(value)].toUpperCase()}.`);
+  else if(kind==='tile'&&q?.tiles?.[Number(value)]&&['dictation','change'].includes(q.type)&&!mute)void coachVoice.letter(`Letter ${q.tiles[Number(value)].toUpperCase()}.`);
   else if(data.result.line)praise(data.result.kind!=='wrong');
   if(data.result.kind==='correct')chime();
  }catch(e){readingMessage=e.message;notice(e.message);}finally{busy=false;render();}
@@ -342,17 +357,21 @@ async function soccerAct(kind,value){
    await new Promise(resolve=>setTimeout(resolve,matchMedia('(prefers-reduced-motion: reduce)').matches?150:1150));
    soccerAnimating=false;
    if(tab==='soccer'){soccerEffect(data.result.kind);if(!data.result.goal){const a=data.result.shot.question.answer;speak(a.length===1?`Letter ${a.toUpperCase()}.`:`Choose the word ${a}.`);}else praise();}
-  }else if(soccerMessage)speak(soccerMessage);
+  }else if(kind==='hint')speak(soccerMessage);else if(soccerState(profile).phase==='complete')narrate(soccerMessage);else instruct(soccerMessage);
  }catch(e){soccerMessage=e.message;notice(e.message);}finally{busy=false;soccerAnimating=false;render();}
+ // Half time (after the third shot) and full time.
+ const ss=soccerState(profile);
+ if(kind==='next'&&tab==='soccer'&&ss.shots?.length===3&&ss.phase==='ready')void wordBreakNow('soccer-half-time','soccer-half:'+ss.number);
+ if(kind==='next'&&tab==='soccer'&&ss.phase==='complete')void wordBreakNow('soccer-full-time','soccer-full:'+ss.number);
 }
 async function mazeAct(input){
- if(input.kind==='next'&&isResting()){mazeMessage=REST_LINE;speak(REST_LINE);notice(REST_LINE);mazeClient?.update(profile,mazeMessage,false);return;}
+ if(input.kind==='next'&&isResting()){mazeMessage=REST_LINE;instruct(REST_LINE);notice(REST_LINE);mazeClient?.update(profile,mazeMessage,false);return;}
  if(input.kind==='rescue'){goTab('rescue');return;}
  if(input.kind==='exit'){goTab('practice');return;}
  if(input.kind==='repeat'){coachVoice.speak(mazeState(profile).review?.learning.line||(mazeGate(profile)?mazeQuestion(profile).prompt:mazeClue(profile)?.line||MAZE_LINES.won));return;}
- if(input.kind==='listen'){if(!mute&&profile.settings.sound)void coachVoice.speak(mazeTapLine(input.answer));telemetry.record('action',{action:'maze:listen',answer:input.answer});return;}
+ if(input.kind==='listen'){if(!mute)void coachVoice.speak(mazeTapLine(input.answer));telemetry.record('action',{action:'maze:listen',answer:input.answer});return;}
  if(busy)return;busy=true;mazeClient?.update(profile,mazeMessage,true);
- const audible=!mute&&profile.settings.sound;
+ const audible=!mute;
  const tapLine=input.kind==='answer'?mazeTapLine(input.answer,mazeQuestion(profile)):input.kind==='sound'?soundLine(mazeQuestion(profile).word[input.index]):'';
  const manualSound=input.kind==='sound'||input.kind==='answer'&&mazeQuestion(profile).type==='blend';
  if(tapLine&&(manualSound||audible))void (input.kind==='sound'?coachVoice.phoneme(tapLine):coachVoice.letter(tapLine));
@@ -364,18 +383,38 @@ async function mazeAct(input){
   accept(data);mazeMessage=data.result.line||'';
   if(['correct','won'].includes(data.result.kind))chime();
   if(data.result.kind==='enter'&&!navigator.userActivation?.hasBeenActive){/* A direct link needs a first tap before speech. */}
-  else if(['enter','next','gate','retry'].includes(data.result.kind)){if(mazeGate(profile))speak(mazeQuestion(profile).prompt);else if(data.result.line)speak(data.result.line);}
+  else if(['enter','next','gate','retry'].includes(data.result.kind)){if(mazeGate(profile))speak(mazeQuestion(profile).prompt);else if(data.result.line)instruct(data.result.line);}
   else if(['correct','incorrect'].includes(data.result.kind)){if(audible&&data.result.learning?.line&&data.result.learning.line!==tapLine)void coachVoice.enqueue(data.result.learning.line);}
   else if(input.kind==='hint')speak(data.result.line);
   else if(data.result.line)praise(data.result.kind!=='incorrect');
-  if(data.result.windDown){mazeMessage=REST_LINE;speak(REST_LINE,true);}
+  if(data.result.windDown){mazeMessage=REST_LINE;instruct(REST_LINE,true);}
 
  }catch(e){mazeMessage=e.message;notice(e.message);}finally{busy=false;if(tab==='maze')render();}
+}
+// Word breaks: one short letter/word checkpoint at natural pauses (rescue, story, shootout).
+// Level comes from this save (read only). Always passable; no menu. Never during the wind-down.
+const brokeAt=new Set();
+const voiceIdle=(max=6000)=>new Promise(resolve=>{const t0=Date.now(),check=()=>{if(!coachVoice.mode&&!coachVoice.promptTimer||Date.now()-t0>max)resolve();else setTimeout(check,150);};setTimeout(check,300);});
+async function wordBreakNow(reason,key){
+ if(busy||!profile||isResting()||key&&brokeAt.has(key))return false;
+ if(key)brokeAt.add(key);
+ busy=true;
+ try{
+  await voiceIdle();
+  const who=demo?'admin':id,level=literacyFrom(profile,DEFAULT_TRACK[who]||'mixed');
+  await wordBreak({player:who,level,reason,speak:(line,manual)=>{if(manual||!WORD_BREAK_FEEDBACK.includes(line)||!mute&&profile.settings.sound)void coachVoice.speak(line);},log:r=>telemetry.record('word_break',{reason,source:r.kind,action:'word-break:'+r.track,answer:Array.isArray(r.answer)?r.answer.join(' '):String(r.answer),durationMs:r.ms,misses:r.misses})});
+ }catch(e){telemetry.record('runtime_error',{source:'word-break',message:e.message});}
+ finally{busy=false;render();}
+ return true;
 }
 let rescueClient=null,rescueMessage='';
 async function rescueAct(input){
  if(busy)return;
- if(input.kind==='repeat'){if(profile.settings.sound&&!mute)void coachVoice.speak(rescueLine(profile));return;}
+ // Between puzzles: if the finish break was missed (for example after a reload), take it before the next rescue.
+ if(input.kind==='next'&&rescueState(profile).phase==='done')await wordBreakNow('rescue-between','rescue-done:'+rescueState(profile).mission);
+ if(busy)return;
+ const rescuedBefore=rescueState(profile).rescued?.length||0;let breakAfter=null;
+ if(input.kind==='repeat'){if(!mute)void coachVoice.speak(rescueLine(profile));return;}
  if(input.kind==='leave'){rescueMessage='';goTab('maze');return;}
  busy=true;rescueClient?.update(profile,rescueMessage,true);
  try{
@@ -383,13 +422,19 @@ async function rescueAct(input){
   const data=demo?{profile,result:rescueAction(profile,payload),challenge:nextChallenge(profile)}:await request('rescue',payload);
   accept(data);rescueMessage=data.result.line||'';
   if(data.result.kind==='complete')chime();
+  const after=rescueState(profile);
+  if(data.result.kind==='complete')breakAfter=['rescue-finish','rescue-done:'+after.mission];
+  else if(after.engine===2&&rescuedBefore===0&&after.rescued?.length===1&&after.phase!=='done'&&(rescueInfo(profile).animals?.length||0)>1)breakAfter=['rescue-mid','rescue-mid:'+after.mission];
   if(input.kind==='pause')coachVoice.stop();
-  if(rescueShouldSpeak(input)&&rescueMessage&&profile.settings.sound&&!mute){
-   if(['push','wall'].includes(data.result.kind))coachVoice.instruction(rescueMessage,{key:`rescue:${rescueState(profile).mission}:${data.result.kind}`,essential:false});
-   else void coachVoice.speak(rescueMessage);
+  // Rescue has no letter content: its lines are how-to instructions (once per session) or narration.
+  if(rescueShouldSpeak(input)&&rescueMessage&&!mute){
+   if(input.kind==='help')void coachVoice.speak(rescueMessage);
+   else if(data.result.kind==='complete')narrate(rescueMessage);
+   else instruct(rescueMessage);
   }
  }catch(e){rescueMessage=e.message;notice(e.message);}
  finally{busy=false;if(tab==='rescue')render();}
+ if(breakAfter&&tab==='rescue')void wordBreakNow(...breakAfter);
 }
 async function act(action){telemetry.record('action',{action});if(busy)return;const [kind,value]=action.split(':');
  if(kind==='rest-clear'){busy=true;try{accept(await request('rest',{}));today=null;notice('New lessons are open again.');}catch(e){notice(e.message);}finally{busy=false;render();}return;}
@@ -422,8 +467,9 @@ async function act(action){telemetry.record('action',{action});if(busy)return;co
    const data=demo?{profile,result:storyAction(profile,input),challenge:nextChallenge(profile)}:await request('story',{...input,revision:profile.revision});
    accept(data);storyMessage=data.result.line||'';
    if(input.kind==='next')storyMessage=storyBoard(profile).finished?STORY_LINES.finished:storyBoard(profile).episode.intro;
-   if(input.kind==='next'||input.kind==='hint'){if(storyMessage)speak(storyMessage);}else if(data.result.line)praise(!['wrong','wall','locked'].includes(data.result.kind));
+   if(input.kind==='hint'){if(storyMessage)speak(storyMessage);}else if(input.kind==='next'){if(storyMessage)narrate(storyMessage);}else if(data.result.line)praise(!['wrong','wall','locked'].includes(data.result.kind));
    if(data.result.kind==='won'||data.result.kind==='collected')chime();
+   if(data.result.kind==='won')setTimeout(()=>void wordBreakNow('story-finish','story:'+storyState(profile).chapter),0);
   }catch(e){notice(e.message);}finally{busy=false;render();const to=storyState(profile).position,hero=app.querySelector('.story-hero');if(hero&&from!==to&&!matchMedia('(prefers-reduced-motion: reduce)').matches)hero.animate([{left:`${from%5*20+10}%`,top:`${Math.floor(from/5)*25+7}%`},{left:`${to%5*20+10}%`,top:`${Math.floor(to/5)*25+7}%`}],{duration:230,easing:'ease-out'});}return;
  }
  if(kind==='duel-start'){
@@ -439,7 +485,7 @@ async function act(action){telemetry.record('action',{action});if(busy)return;co
   if(kind==='admin-reset-request'||kind==='admin-reset-cancel'){resetConfirmation=kind==='admin-reset-request';render();return;}
   if(kind==='admin-reset-confirm'&&resetConfirmation){busy=true;render();try{accept(await request('reset',{confirmation:'RESET ADMIN',revision:profile.revision}));resetConfirmation=false;feedback=null;strokes=[];current=[];drawing=false;pointer=null;coachVoice.stop();notice('Admin practice reset. The boys’ progress is unchanged.');}catch(e){notice(e.message);}finally{busy=false;render();}return;}
  }
- if(kind==='tab'){storyMessage='';goTab(value);if(value==='adventure'){speak(STORY_LINES.move);}return;}
+ if(kind==='tab'){storyMessage='';goTab(value);if(value==='adventure'){instruct(STORY_LINES.move);}return;}
  if(kind==='start'){busy=true;try{if(demo){startAdventure(profile);challenge=nextChallenge(profile);}else accept(await request('adventure',{revision:profile.revision}));lessonOrigin='practice';feedback=null;busy=false;start();}catch(e){notice(e.message);}finally{busy=false;}return;}
  if(kind==='exit'){goTab(lessonOrigin);return;}
  if(kind==='sound'){await settings({sound:!profile.settings.sound});return;}if(kind==='repeat'){coachVoice.speak(prompt());return;}
@@ -454,7 +500,7 @@ async function act(action){telemetry.record('action',{action});if(busy)return;co
   // but it is recorded as supported rather than independent.
   helped=true;spotMissed=[...spotMissed.filter(j=>j!==i),i];telemetry.record('action',{action:'spot:miss',tile:i,letter:challenge.grid[i]});render();speak(prompt());return;
  }
- if(kind==='recap-letter'){if(/^[A-Za-z]$/.test(value)&&!mute&&profile.settings.sound)void coachVoice.letter(`Letter ${value.toUpperCase()}.`);return;}
+ if(kind==='recap-letter'){if(/^[A-Za-z]$/.test(value)&&!mute)void coachVoice.letter(`Letter ${value.toUpperCase()}.`);return;}
  if(kind==='answer'){await submit(value);return;}
  if(kind==='skip'){
   if(feedback?.ok)return;busy=true;coachVoice.stop();
@@ -464,7 +510,7 @@ async function act(action){telemetry.record('action',{action});if(busy)return;co
    feedback=null;busy=false;newExercise();
   }catch(e){notice(e.message);}finally{busy=false;}return;
  }
- if(kind==='name'){const i=Number(value);if(!challenge.reusable&&nameUsed.includes(i)||feedback||nameAnswer.length>=challenge.word.length)return;const letter=challenge.options[i];if(!letter)return;nameUsed.push(i);nameAnswer+=letter;if(!mute&&profile.settings.sound)void coachVoice.letter(`Letter ${letter.toUpperCase()}.`);render();return;}
+ if(kind==='name'){const i=Number(value);if(!challenge.reusable&&nameUsed.includes(i)||feedback||nameAnswer.length>=challenge.word.length)return;const letter=challenge.options[i];if(!letter)return;nameUsed.push(i);nameAnswer+=letter;if(!mute)void coachVoice.letter(`Letter ${letter.toUpperCase()}.`);render();return;}
  if(kind==='name-undo'){if(feedback)return;coachVoice.stop();nameAnswer=nameAnswer.slice(0,-1);nameUsed.pop();render();return;}
  if(kind==='name-check'){if(nameAnswer.length===challenge.word.length)await submit(nameAnswer);return;}
  if(kind==='name-clear'){if(feedback)return;coachVoice.stop();nameAnswer='';nameUsed=[];render();return;}
@@ -473,10 +519,10 @@ async function act(action){telemetry.record('action',{action});if(busy)return;co
   busy=true;try{if(demo){if(challenge.duel)useMatchHint(profile);else useHint(profile,`lesson:${challenge.id}`);}else accept(await request('hint',{challengeId:challenge.id}));helped=true;showModel=true;if(challenge.type==='trace')resetTrace(true);else speak(prompt());}catch(e){notice(e.message);}finally{busy=false;render();}return;
  }
  if(kind==='clear'){resetTrace();return;}
- if(kind==='check'){if(strokes.length===0){speak('Try drawing a line first.');notice('Start at the gold dot and draw a line.');return;}await submit();return;}
+ if(kind==='check'){if(strokes.length===0){instruct('Try drawing a line first.');notice('Start at the gold dot and draw a line.');return;}await submit();return;}
  if(kind==='next'){const wasLesson=feedback.lesson,duel=feedback.duel;challenge=feedback.next;if(duel?.finished){duelResult();return;}feedback=null;if(duel){newExercise();return;}if(wasLesson){celebrate();return;}newExercise();return;}
  if(kind==='treasure-next'){view='map';tab='treasure';render();return;}
- if(kind==='chest'||kind==='promote'){busy=true;let earned=false;try{accept(await request(kind,kind==='promote'?{revision:profile.revision}:{}));chime();earned=true;speak(kind==='chest'?pickDialogue('chest'):'First place! Your crown is yours. Stay and enjoy your victory.');}catch(e){notice(e.message);}finally{busy=false;render();if(earned)rewardModal(kind==='chest'?'Treasure unlocked!':'Number one! Enjoy your crown.',kind==='chest'?25:40,kind==='promote');}return;}
+ if(kind==='chest'||kind==='promote'){busy=true;let earned=false;try{accept(await request(kind,kind==='promote'?{revision:profile.revision}:{}));chime();earned=true;narrate(kind==='chest'?pickDialogue('chest'):'First place! Your crown is yours. Stay and enjoy your victory.');}catch(e){notice(e.message);}finally{busy=false;render();if(earned)rewardModal(kind==='chest'?'Treasure unlocked!':'Number one! Enjoy your crown.',kind==='chest'?25:40,kind==='promote');}return;}
  if(kind==='export'){const blob=new Blob([JSON.stringify({exportedAt:new Date().toISOString(),profile},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`letter-quest-${profile.id}-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
 }
 async function load(){try{accept(await request());view='map';render();}catch(e){app.innerHTML=`<div class="connection-error"><span>🔤</span><h1>Rook is waiting at home.</h1><p>${escape(e.message)}</p><p>Check that the server is on and you’re connected to home Wi-Fi.</p><button id="retry-load" class="button primary">Try again</button></div>`;document.querySelector('#retry-load').onclick=load;mountRefresh();}}

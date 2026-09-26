@@ -5,11 +5,13 @@ import {Button} from '@/components/ui/button';
 import {Dialog,DialogContent,DialogTitle,DialogTrigger,DialogClose} from '@/components/ui/dialog';
 import {PLAN_GOALS,PLAN_CARDS,PLAN_LINES,planSteps,planChoices} from '@/lib/planning.mjs';
 import {say,stopVoice,chime} from '@/lib/audio';
+import {requestWordBreak} from '@/lib/word-breaks.mjs';
+import {sessionOnce} from '@/lib/speech-rule.mjs';
 
 export function Planning({planning:a,player,act,busy,sound,active,error,report}:{planning:any,player:string,act:(v:any)=>Promise<any>,busy:boolean,sound:boolean,active:boolean,error:string,report:(n:string,d:string)=>void}){
  const s=a?.session,g=PLAN_GOALS.find(g=>g.id===s?.goal),[visible,setVisible]=useState(true),[menu,setMenu]=useState(false),[speaking,setSpeaking]=useState(false);
  const latest=useRef<any>(null),lastVoice=useRef(''),sent=useRef('');latest.current={s,busy,active,error,visible,menu};
- const voiceToken=useRef(0);
+ const voiceToken=useRef(0),firstTime=useRef(sessionOnce());
  const speak=(text:string)=>{const token=++voiceToken.current;setSpeaking(true);void say(text,e=>{report('voice',JSON.stringify({text,event:e}));if(voiceToken.current===token)setSpeaking(e==='play_started');});};
  const send=(kind:string,extra:any={})=>act({kind,planId:s?.id,...extra});
  useEffect(()=>{const update=()=>{setVisible(document.visibilityState==='visible');if(document.visibilityState!=='visible')stopVoice();};document.addEventListener('visibilitychange',update);return()=>{document.removeEventListener('visibilitychange',update);stopVoice();};},[]);
@@ -20,9 +22,14 @@ export function Planning({planning:a,player,act,busy,sound,active,error,report}:
   if(!active||!visible||!sound||menu||s?.paused)return;
   const key=[s?.id,s?.phase,s?.cursor,s?.line].join(':');if(key===lastVoice.current)return;lastVoice.current=key;
   if(s?.phase==='plan'&&s.plan.length>0&&s.line===PLAN_LINES.plan)return;
-  speak(s?.line||PLAN_LINES.choose);
-  if(s?.phase==='success')chime();
+  // How-to lines (choose/plan/edit) once per session; Rook's step-by-step narration every time. All obey sound.
+  const line=s?.line||PLAN_LINES.choose;if([PLAN_LINES.choose,PLAN_LINES.plan,PLAN_LINES.edit].includes(line)&&!firstTime.current(line))return;
+  speak(line);
+  if(s?.phase==='success'&&sound)chime();
  },[s?.id,s?.phase,s?.cursor,s?.line,active,visible,sound,menu,s?.paused]);
+ // A word break after a plan works (only when Rook just finished running it, not on reopening).
+ const lastPhase=useRef<string|undefined>(undefined);
+ useEffect(()=>{const before=lastPhase.current;lastPhase.current=s?.id+':'+s?.phase;if(s?.phase==='success'&&before===s.id+':running'&&active)requestWordBreak('plan');},[s?.id,s?.phase,active]);
  useEffect(()=>{
   if(!s||s.phase!=='running'||s.paused||!active||!visible||busy||error||menu||speaking)return;
   const token=s.id+':'+s.tries+':'+s.cursor;

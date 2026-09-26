@@ -1,7 +1,15 @@
 // Word break: a short, always-passable letter/word checkpoint shared by the family games.
 // Identical copy in every game repo (tests compare siblings). No dependencies; browser + Node.
 // Content follows each child's Letter Quest progress (read on the server, never written).
-export const WORD_BREAK_VERSION='word-break-2026-09-26-1';
+export const WORD_BREAK_VERSION='word-break-2026-09-26-2';
+// Speech contract for every game: speak(line, essential).
+// essential=true -> CONTENT the child needs to answer (the letter/word/sentence to find). Games play it even when
+// their sound toggle is off. essential=false -> praise/feedback, which obeys the toggle.
+// INSTRUCTIONS (how to play) are said once per session: gate them with onceThisSession(key).
+export const IDLE_REPEAT_MS=6500,IDLE_REPEATS=2;
+export function onceThisSession(key,store=globalThis.sessionStorage){
+ try{const k='said-once:'+key;if(store.getItem(k))return false;store.setItem(k,'1');return true;}catch{return true;}
+}
 export const DEFAULT_TRACK={beginner:'letters',explorer:'words',admin:'mixed'};
 const LQ_ORDER='FRANCISOETLHDMBPUKGWYVZXJQ';
 const LOOKALIKE={b:'dpq',d:'bpq',p:'qbd',q:'pgd',m:'nw',n:'mhu',u:'nv',w:'mv',v:'wy',i:'lj',l:'it',t:'lf',e:'ca',c:'eo',a:'od',o:'ac',g:'qj',h:'nb',j:'ig',k:'hx',f:'tl',r:'nv',s:'zc',x:'kz',y:'vg',z:'sx',
@@ -135,28 +143,31 @@ export function wordBreak({player='admin',level,speak=()=>{},log=()=>{},reason='
  const d=doc.createElement('dialog');d.className='wb';d.dataset.kind=q.kind;d.setAttribute('aria-label',q.track==='letters'?'Letter break':'Word break');
  const card=doc.createElement('div');card.className='wb-card';d.append(card);
  const top=doc.createElement('div');top.className='wb-top';const eyebrow=doc.createElement('p');eyebrow.className='wb-eyebrow';eyebrow.textContent=q.track==='letters'?'LETTER BREAK':'WORD BREAK';
- const hear=doc.createElement('button');hear.type='button';hear.className='wb-hear';hear.textContent='🔊';hear.setAttribute('aria-label','Hear it again');hear.onclick=()=>speak(q.spoken,true);top.append(eyebrow,hear);card.append(top);
+ const hear=doc.createElement('button');hear.type='button';hear.className='wb-hear';hear.textContent='🔊';hear.setAttribute('aria-label','Hear it again');hear.onclick=()=>{speak(q.spoken,true);nudge();};top.append(eyebrow,hear);card.append(top);
  if(q.picture){const p=doc.createElement('div');p.className='wb-picture';p.textContent=q.picture;p.setAttribute('aria-hidden','true');card.append(p);}
  let built,slots=[];
  if(q.kind==='sentence'){built=doc.createElement('div');built.className='wb-built';slots=q.answer.map(()=>{const s=doc.createElement('span');s.className='wb-slot';built.append(s);return s;});const m=doc.createElement('span');m.className='wb-mark';m.textContent=q.mark;built.append(m);card.append(built);}
  const choices=doc.createElement('div');choices.className='wb-choices'+(q.kind==='sentence'||q.kind==='read-word'?' wb-words':'');card.append(choices);
- let misses=0,missesHere=0,step=0,finished=false;
+ let misses=0,missesHere=0,step=0,finished=false,idle=null,repeats=0;
+ // Gentle idle repeat: say the question again after ~6 s without a tap, at most twice.
+ const nudge=()=>{clearTimeout(idle);if(finished||repeats>=IDLE_REPEATS)return;idle=setTimeout(()=>{if(finished||!d.isConnected)return;repeats++;speak(q.spoken,true);nudge();},IDLE_REPEAT_MS);};
  return new Promise(resolve=>{
-  const finish=()=>{finished=true;chime(true);remember(player,q);
+  const finish=()=>{finished=true;clearTimeout(idle);chime(true);remember(player,q);
    const done=doc.createElement('p');done.className='wb-done';done.textContent=q.kind==='sentence'?'Great reading!':'Yes!';card.append(done);speak(q.kind==='sentence'?'Great reading!':'Yes!',false);
    const result={kind:q.kind,track:q.track,answer:q.sentence||q.answer,misses,ms:Date.now()-started,reason};log(result);
    setTimeout(()=>{try{d.close();}catch{}d.remove();resolve(result);},q.kind==='sentence'?1500:1000);};
   const wrong=b=>{misses++;missesHere++;chime(false);b.classList.remove('wiggle');void b.offsetWidth;b.classList.add('wiggle');
-   if(missesHere>=2){const want=q.kind==='sentence'?q.answer[step]:q.answer;const right=[...choices.children].find(x=>x.dataset.value===want&&!x.classList.contains('used'));right?.classList.add('glow');speak(q.spoken,false);}
+   if(missesHere>=2){const want=q.kind==='sentence'?q.answer[step]:q.answer;const right=[...choices.children].find(x=>x.dataset.value===want&&!x.classList.contains('used'));right?.classList.add('glow');speak(q.spoken,true);}
    else speak('Try again.',false);};
   const list=q.kind==='sentence'?q.tiles:q.options;
   for(const value of list){const b=doc.createElement('button');b.type='button';b.className='wb-choice';b.textContent=value;b.dataset.value=value;b.setAttribute('aria-label',value);
    b.onclick=()=>{if(finished||b.classList.contains('used'))return;
+    nudge();
     if(q.kind==='sentence'){if(value!==q.answer[step])return wrong(b);b.classList.remove('glow');b.classList.add('used');slots[step].textContent=value;slots[step].classList.add('filled');step++;missesHere=0;[...choices.children].forEach(x=>x.classList.remove('glow'));if(step===q.answer.length)finish();return;}
     if(value!==q.answer)return wrong(b);b.classList.remove('glow');b.classList.add('right');finish();};
    choices.append(b);}
   d.addEventListener('cancel',e=>e.preventDefault());
   doc.body.append(d);try{d.showModal();}catch{d.setAttribute('open','');}
-  chime(true);setTimeout(()=>speak(q.spoken,false),350);
+  chime(true);setTimeout(()=>{if(!finished)speak(q.spoken,true);nudge();},350);
  });
 }

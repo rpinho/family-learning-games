@@ -1,5 +1,6 @@
 // Original coach dialogue for the shared edition.
 import {FAMILY_NAMES,WORDS,taskPrompt} from './engine.mjs';
+import {wordBreakLines} from './word-break.mjs';
 import {storyVoiceLines} from './story.mjs';
 import {mazeVoiceLines} from './maze.mjs';
 import {soccerVoiceLines} from './soccer.mjs';
@@ -166,6 +167,8 @@ export function allVoiceLines(){
   lines.push(...SHORT_FEEDBACK,...[...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'].map(c=>`Letter ${c}.`));
   for(const word of FOUNDATION_WORDS)lines.push(`Complete the word ${word}. Choose the missing letter.`);
   lines.push(...recapVoiceLines(),...boStoryVoiceLines(),REST_LINE,REST_COACH);
+  lines.push(...wordBreakLines());
+  lines.push(...wordBreakLines());
 
   return [...new Set([...lines,...lines.map(briefLine)])];
 }

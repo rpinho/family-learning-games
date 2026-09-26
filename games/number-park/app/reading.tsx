@@ -6,12 +6,14 @@ import {Progress} from '@/components/ui/progress';
 import {PACKS,soundKey,wordKey} from '@/lib/reading.mjs';
 import {readingAudio} from '@/lib/reading-audio';
 import {chime,stopVoice} from '@/lib/audio';
+import {planSpeech,sessionOnce} from '@/lib/speech-rule.mjs';
 
 export function Reading({reading:r,player,act,busy,sound,active,error,report}:{reading:any,player:string,act:(input:any)=>Promise<any>,busy:boolean,sound:boolean,active:boolean,error:string,report:(name:string,detail:string)=>void}){
  const s=r?.session,q=s?.questions[s.round],done=!!q?.result?.ok;
  const [slots,setSlots]=useState<string[]>([]),[selected,setSelected]=useState(0),[progress,setProgress]=useState(0),[playing,setPlaying]=useState(false),[highlight,setHighlight]=useState(-1),[message,setMessage]=useState(''),[adult,setAdult]=useState(false),[visible,setVisible]=useState(true);
  const [ghost,setGhost]=useState<{letter:string,x:number,y:number}|null>(null);
  const audio=useRef<AbortController|null>(null),joining=useRef(false),drag=useRef<any>(null),suppress=useRef(false),gaps=useRef<(HTMLButtonElement|null)[]>([]),latest=useRef({busy,active,error,q});latest.current={busy,active,error,q};
+ const firstTime=useRef(sessionOnce());
  const stop=()=>{audio.current?.abort();audio.current=null;setPlaying(false);setHighlight(-1);};
  const play=async(keys:string[])=>{
   stopVoice();audio.current?.abort();const c=new AbortController();audio.current=c;setPlaying(true);setMessage('');
@@ -22,8 +24,7 @@ export function Reading({reading:r,player,act,busy,sound,active,error,report}:{r
  const prompt=()=>!q?[]:q.kind==='listen'?[q.prompt,soundKey(q.target)]:['build','change'].includes(q.kind)?[q.prompt,wordKey(q.word)]:[q.prompt];
  const send=(kind:string,extra:any={})=>act({kind,questionId:q.id,...extra});
  useEffect(()=>{const update=()=>{const v=document.visibilityState==='visible';setVisible(v);if(!v)stop();};document.addEventListener('visibilitychange',update);return()=>{audio.current?.abort();document.removeEventListener('visibilitychange',update);};},[]);
- useEffect(()=>{setSlots(q?.kind==='change'?[...q.from]:Array(q?.word?.length||0).fill(''));setSelected(0);setProgress(0);setAdult(false);setMessage('');joining.current=false;setGhost(null);drag.current=null;if(active&&q&&!q.result?.ok&&!s.finished&&sound&&document.visibilityState==='visible')void play(prompt());return()=>audio.current?.abort();},[q?.id,active,player]);
- useEffect(()=>{if(!sound)stop();},[sound]);
+ useEffect(()=>{setSlots(q?.kind==='change'?[...q.from]:Array(q?.word?.length||0).fill(''));setSelected(0);setProgress(0);setAdult(false);setMessage('');joining.current=false;setGhost(null);drag.current=null;if(active&&q&&!q.result?.ok&&!s.finished&&document.visibilityState==='visible'){const said=planSpeech(prompt(),{sound,firstTime:firstTime.current});if(said.say.length)void play(said.say);}return()=>audio.current?.abort();},[q?.id,active,player]);
  useEffect(()=>{
   if(!active||!visible||busy||error||playing||!done||s?.finished)return;
   const id=q.id,timer=setTimeout(()=>{const v=latest.current;if(!v.busy&&!v.error&&v.active&&v.q?.id===id&&v.q.result?.ok&&document.visibilityState==='visible')void send('reading_next');},1100);

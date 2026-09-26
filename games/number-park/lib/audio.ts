@@ -2,7 +2,11 @@ import {takeAwayPrompt} from './play-practice.mjs';
 let manifest:Promise<{clips:Record<string,string>}>|undefined;
 let playing:HTMLAudioElement|undefined,cancelWait:(()=>void)|undefined,epoch=0,context:AudioContext|undefined;
 export function stopVoice(){epoch++;playing?.pause();cancelWait?.();cancelWait=undefined;playing=undefined;}
-export async function say(text:string|string[],report:(s:string)=>void=()=>{}){
+let current:Promise<void>=Promise.resolve();
+// Resolves when the line playing now has finished (or after max ms), so a word break never cuts off praise.
+export function voiceSettled(max=6000){return Promise.race([current,new Promise<void>(r=>setTimeout(r,max))]);}
+export function say(text:string|string[],report:(s:string)=>void=()=>{}){const task=speakLines(text,report);current=task;return task;}
+async function speakLines(text:string|string[],report:(s:string)=>void){
  const token=++epoch;playing?.pause();cancelWait?.();cancelWait=undefined;
  try{
   manifest??=fetch('/voice/manifest.json').then(r=>{if(!r.ok)throw Error('Voice not ready');return r.json()});const m=await manifest;if(token!==epoch)return;
