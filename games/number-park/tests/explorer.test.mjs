@@ -5,8 +5,8 @@ import {EXPLORER_TRACK,challengeLevel} from '../lib/explorer.mjs';
 const act=(p,input)=>action(p,{...input,revision:p.revision});
 test('Explorer has a separate menu and varied mathematically valid grade-2 challenge questions',()=>{
  const p=freshProfile('explorer');
- assert.deepEqual(gamesFor(p).map(g=>g.id),['mix','multiply','factor','sums','skip','place']);
- for(const game of gamesFor(p)){
+ assert.deepEqual(gamesFor(p).map(g=>g.id),['mix','multiply','factor','sums','skip','place','cookies']);
+ for(const game of gamesFor(p).filter(g=>g.id!=='cookies')){
   const unique=new Set();
   for(let i=0;i<400;i++){
    p.revision=i;const q=makeQuestion(p,game.id,i%6);unique.add(q.fingerprint);

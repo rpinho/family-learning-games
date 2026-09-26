@@ -5,10 +5,11 @@ import {FREE_DRAWING_SPACE,validFreeInk} from './drawing-space.mjs';
 import {countingQuestion,countingOptions} from './counting.mjs';
 import {patternQuestion} from './play-practice.mjs';
 import {advanced,EXPLORER_GAMES,challengeQuestion} from './explorer.mjs';
+import {validCookieDraft,cookieCounts} from './cookie-division.mjs';
 import {readingAction} from './reading.mjs';
 import {artAction} from './art.mjs';
 import {planningAction} from './planning.mjs';
-export const VERSION='number-park-2026-09-21-picture-narration';
+export const VERSION='number-park-2026-09-26-cookie-division';
 export const GAMES=[
  {id:'mix',icon:'🎲',title:'Little sums',description:'A mix just like the first unit.'},
  {id:'line',icon:'📏',title:'Number hop',description:'Slide to the missing number.'},
@@ -56,7 +57,7 @@ export function makeQuestion(p,game,round=0){
  if(['count','addobjects'].includes(q.kind))q.options=countingOptions(q.answer,r);
  q.id=`${p.revision}:${p.history.length}:${round}`;return q;
 }
-export function publicState(p){const state=structuredClone(p);if(state.session?.question&&!state.session.helped&&!state.session.result)delete state.session.question.answer;return state;}
+export function publicState(p){const state=structuredClone(p);if(state.session?.question&&(!state.session.helped||state.session.question.kind==='cookies')&&!state.session.result)delete state.session.question.answer;return state;}
 export function action(p,input,now=Date.now(),services={}){
  if(!input||input.revision!==p.revision)throw Object.assign(Error('Another screen changed this game. Reload and try again.'),{status:409});
  const fail=message=>{throw Object.assign(Error(message),{status:400});};
@@ -69,11 +70,28 @@ export function action(p,input,now=Date.now(),services={}){
  }else if(input.kind==='start'){
   if(!gamesFor(p).some(g=>g.id===input.game))fail('Choose a listed game.');
   p.session={game:input.game,round:0,correct:0,independent:0,helped:false,result:null,finished:false,started:now,question:makeQuestion(p,input.game)};
+  if(p.session.question.kind==='cookies')p.session.cookieDraft=Array(p.session.question.total).fill(null);
  }else if(input.kind==='hint'){
   const s=p.session;if(!s||s.finished||s.result)fail('No question to help with.');s.helped=true;
+ }else if(input.kind==='cookie-place'){
+  const s=p.session,q=s?.question;if(!s||s.finished||s.result||q.kind!=='cookies'||input.questionId!==q.id||!validCookieDraft(input.draft,q.total,q.plates))fail('Choose a cookie and a plate.');
+  const changed=input.draft.reduce((n,v,i)=>n+Number(v!==s.cookieDraft[i]),0);
+  if(changed!==1)fail('Move one cookie at a time.');
+  s.cookieDraft=[...input.draft];s.cookieMessage='';
+ }else if(input.kind==='cookie-check'){
+  const s=p.session,q=s?.question;if(!s||s.finished||s.result||q.kind!=='cookies'||input.questionId!==q.id)fail('Open a cookie round first.');
+  const counts=cookieCounts(s.cookieDraft,q.plates),remaining=s.cookieDraft.filter(v=>v===null).length;
+  if(remaining){s.cookieMessage=`${remaining} cookies are still in the tray.`;}
+  else if(!counts.every(n=>n===counts[0])){s.cookieChecks=(s.cookieChecks||0)+1;s.cookieMessage='Not equal yet. Move one from a fuller plate to a smaller plate.';}
+  else{
+   const helped=s.helped||!!s.cookieChecks,xp=helped?4:10;
+   s.result={ok:true,answer:q.answer,xp,helped};s.correct++;s.independent+=Number(!helped);p.xp+=xp;
+   p.history.push({at:new Date(now).toISOString(),game:s.game,question:q,answer:counts[0],ok:true,helped,cookieChecks:s.cookieChecks||0,distribution:[...counts],durationMs:Math.max(0,Math.min(86400000,now-s.started))});p.history=p.history.slice(-2000);
+   p.recent=[...p.recent,q.fingerprint].slice(-12);s.cookieMessage='';
+  }
  }else if(input.kind==='answer'){
   const s=p.session;if(!s||s.finished||s.result||input.questionId!==s.question.id)fail('This question is already finished.');
-  const q=s.question;if(q.kind==='pattern'?!q.options.includes(input.answer):!Number.isInteger(input.answer)||input.answer<0||input.answer>q.max)fail('Choose a valid answer.');
+  const q=s.question;if(q.kind==='cookies')fail('Share the cookies on the plates first.');if(q.kind==='pattern'?!q.options.includes(input.answer):!Number.isInteger(input.answer)||input.answer<0||input.answer>q.max)fail('Choose a valid answer.');
   if(q.kind==='subtract'&&input.removedIndices!==undefined&&(!Array.isArray(input.removedIndices)||input.removedIndices.length>q.total||new Set(input.removedIndices).size!==input.removedIndices.length||!input.removedIndices.every(i=>Number.isInteger(i)&&i>=0&&i<q.total)))fail('Invalid removed objects.');
   const ok=input.answer===q.answer,independent=ok&&!s.helped,xp=ok?(independent?10:4):0;
   s.result={ok,answer:q.answer,xp,helped:s.helped};p.xp+=xp;s.correct+=Number(ok);s.independent+=Number(independent);
@@ -83,7 +101,7 @@ export function action(p,input,now=Date.now(),services={}){
  }else if(input.kind==='next'){
   const s=p.session;if(!s||s.finished||!s.result)fail('Finish this question first.');
   if(s.round===5){s.finished=true;p.lessons++;p.completed[s.game]=(p.completed[s.game]||0)+1;}
-  else{s.round++;s.question=makeQuestion(p,s.game,s.round);s.helped=false;s.result=null;s.started=now;}
+  else{s.round++;s.question=makeQuestion(p,s.game,s.round);s.helped=false;s.result=null;s.started=now;delete s.cookieChecks;delete s.cookieMessage;if(s.question.kind==='cookies')s.cookieDraft=Array(s.question.total).fill(null);else delete s.cookieDraft;}
  }else if(input.kind==='drawing'){
   if(!validFreeInk(input.strokes))fail('Drawing is too large or invalid.');
   if(input.space!==undefined&&input.space!==FREE_DRAWING_SPACE)fail('Drawing space is invalid.');
