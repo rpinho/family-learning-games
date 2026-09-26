@@ -23,6 +23,16 @@ every game and the hub accept in their host allowlist alongside `localhost`, the
 addresses (re-read every few seconds). Promotion only restarts a service, so an env change reaches a live service
 when its launchd plist is rewritten (`prepare-cutover` with the live refs, then the cutover).
 
+## HTTPS (installable app, microphone)
+
+Browsers only install a proper app and only allow the microphone on a secure origin. Put a TLS reverse proxy on
+this machine in front of the **hub port only** (for example a VPN's built-in HTTPS serve feature), proxying to
+`http://127.0.0.1:<hub port>` and sending `X-Forwarded-Proto: https`. The hub trusts that header only from a loopback
+peer. The games need no HTTPS origin of their own: the hub reaches them through its same-origin
+`/g/<game>/<player>/` proxy. Add the proxy's host name to `FAMILY_EXTRA_HOSTS`. Plain http keeps working in parallel.
+Open `https://<name>/?player=<id>` and install from there: each player's link has its own manifest, so each child's
+installed app opens that child's profile.
+
 ## How it works
 
 - **Releases.** `build` exports a commit with `git archive` into
