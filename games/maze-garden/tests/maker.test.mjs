@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {MAKER_START,MAKER_GOAL,makerEndpoints,makerPathLimit,validMakerPath,extendMakerPath,makeChildMaze,newProfile,action,pendingPuzzle,route,traceSegment} from '../engine.mjs';
+import {MAKER_START,MAKER_GOAL,makerEndpoints,makerPathLimit,validMakerPath,extendMakerPath,makerPuzzleFor,makeChildMaze,newProfile,action,pendingPuzzle,route,traceSegment} from '../engine.mjs';
 
 const path=[21,22,23,24,25,26,27];
 const legacy=p=>(p.maker={size:7,draft:[21],challenge:null,completed:0,archive:[]});
@@ -19,6 +19,27 @@ test('Child maze is a real connected route with dead ends and an optional spoken
  assert.equal(m.checkpoints[0].puzzle.options.length,3);
  assert.match(m.checkpoints[0].puzzle.spoken,/Listen/);
  for(const bad of [[MAKER_START,MAKER_GOAL],[21,22,23,22,27],[21,22,23,24,25,26,28]])assert.equal(validMakerPath(bad,true),false);
+});
+
+test('Maker word choices stay short, varied and avoid recent saved answers',()=>{
+ const vocabulary=new Set();
+ for(let seed=0;seed<2000;seed++){
+  const q=makerPuzzleFor('explorer',seed);
+  assert.equal(q.options.length,3);
+  assert.equal(new Set(q.options).size,3);
+  assert.ok(q.options.includes(q.answer));
+  assert.match(q.answer,/^[A-Z]{3}$/);
+  vocabulary.add(q.answer);
+ }
+ assert.equal(vocabulary.size,33);
+ const p=newProfile('explorer');p.maker={size:7,draft:path,challenge:null,completed:0,archive:[]};
+ const recent=[];
+ for(let seed=1;seed<=12;seed++){
+  action(p,{type:'maker-build',seed});
+  const answer=p.maker.challenge.checkpoints[0].puzzle.answer;
+  assert.ok(!recent.includes(answer),`Repeated ${answer} within five creations`);
+  recent.unshift(answer);recent.length=Math.min(recent.length,5);
+ }
 });
 
 test('Making and replaying a maze leaves the regular adventure and difficulty untouched',()=>{

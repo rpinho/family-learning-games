@@ -1,4 +1,4 @@
-export const VERSION = 'maze-garden-2026-09-25-maker-biggest-board';
+export const VERSION = 'maze-garden-2026-09-25-maker-word-variety';
 export const MAX_LEVEL = 27;
 export const baseline = player => player==='explorer'?12:player==='beginner'?6:6;
 export const gridSize = level => 9+2*(Math.max(1,Math.min(MAX_LEVEL,level))-1);
@@ -72,16 +72,21 @@ export function extendMakerPath(path,target,n=MAKER_SIZE){
  for(let cell=from+step;cell!==target+step;cell+=step){if(out.includes(cell)||out.length>=makerPathLimit(n))break;out.push(cell);if(cell===goal)break;}
  return out;
 }
-export function makerPuzzleFor(player,seed){
+export function makerPuzzleFor(player,seed,recent=[]){
  const r=random(seed),pick=sets=>sets[Math.floor(r()*sets.length)];
  if(player==='explorer'){
-  const words=pick([['CAT','HAT','MAT'],['SUN','RUN','FUN'],['TOP','HOP','MOP']]),answer=pick(words);
+  const groups=[['CAT','HAT','MAT'],['SUN','RUN','FUN'],['TOP','HOP','MOP'],
+   ['PEN','HEN','TEN'],['MAP','CAP','TAP'],['PIG','BIG','WIG'],
+   ['DOG','LOG','FOG'],['BUG','HUG','MUG'],['FIN','PIN','TIN'],
+   ['JET','NET','PET'],['CUT','NUT','HUT']];
+  const available=groups.filter(words=>words.some(word=>!recent.includes(word)));
+  const words=pick(available),answer=pick(words.filter(word=>!recent.includes(word)));
   return {prompt:'Hear a word. Find it.',spoken:`Listen. Find ${answer.toLowerCase()}.`,context:'🔊',options:shuffle([...words],r),answer};
  }
  const [word,answer,options]=pick([['sun','S',['S','M','T']],['moon','M',['M','S','T']],['top','T',['T','M','S']]]);
  return {prompt:'Hear the first sound.',spoken:`Which letter starts ${word}?`,context:'👂',options:shuffle([...options],r),answer};
 }
-export function makeChildMaze(path,seed,player,n=MAKER_SIZE){
+export function makeChildMaze(path,seed,player,n=MAKER_SIZE,recent=[]){
  if(!validMakerPath(path,true,n))throw Error('Draw a connected path from the explorer to the goal.');
  const r=random(seed),cells=Array.from({length:n*n},()=>[]),seen=new Set(path),frontier=[...path],{start,goal}=makerEndpoints(n),split=n===MAKER_SIZE?-1:Math.floor(path.length/2),side=new Int8Array(n*n);
  for(let i=0;i<path.length;i++)side[path[i]]=i<split?1:2;
@@ -96,7 +101,7 @@ export function makeChildMaze(path,seed,player,n=MAKER_SIZE){
  if(split>0){const distances=origin=>{const out=new Int32Array(n*n).fill(-1),queue=[origin];out[origin]=0;for(let i=0;i<queue.length;i++)for(const to of cells[queue[i]])if(out[to]<0){out[to]=out[queue[i]]+1;queue.push(to);}return out;},fromStart=distances(start),toGoal=distances(goal);
   let choice=null,score=-1;for(let from=0;from<n*n;from++)for(const to of [from+1,from+n])if(to<n*n&&(to===from+n||Math.floor(to/n)===Math.floor(from/n))&&side[from]!==side[to]){const a=side[from]===1?from:to,b=side[from]===2?from:to,value=fromStart[a]+toGoal[b]+1;if(value>score){score=value;choice=[from,to];}}
   if(!choice)throw Error('Could not connect the created maze.');cells[choice[0]].push(choice[1]);cells[choice[1]].push(choice[0]);}
- return {id:`made-${seed}`,n,cells,start,goal,sourcePath:[...path],trail:[start],moves:0,hints:0,finished:false,wrong:0,checkpoints:[{cell:goal,solved:false,puzzle:makerPuzzleFor(player,seed)}]};
+ return {id:`made-${seed}`,n,cells,start,goal,sourcePath:[...path],trail:[start],moves:0,hints:0,finished:false,wrong:0,checkpoints:[{cell:goal,solved:false,puzzle:makerPuzzleFor(player,seed,recent)}]};
 }
 function makerState(p){return p.maker??={size:makerSizeForLevel(p.level),draft:[makerEndpoints(makerSizeForLevel(p.level)).start],challenge:null,completed:0,archive:[]};}
 export function makerComplete(p){const m=makerState(p),a=m.challenge;if(!a||a.finished||a.trail.at(-1)!==a.goal||pendingPuzzle(a))return false;a.finished=true;m.completed++;return true;}
@@ -119,7 +124,7 @@ export function action(p,input){const a=p.active;switch(input.type){case 'recali
  case 'maker-new':{const m=makerState(p),n=MAKER_SIZES.includes(m.size)?m.size:makerSizeForLevel(p.level);m.size=n;m.draft=[makerEndpoints(n).start];m.editing=true;break;}
  case 'maker-size':{const m=makerState(p),n=input.size,old=m.size||MAKER_SIZE;if(!MAKER_SIZES.includes(n))throw Error('Choose an available maze size.');if(m.draft.length>1){if(n<=old)throw Error('You can only make this drawing bigger.');const shift=Math.floor(n/2)-Math.floor(old/2),grown=m.draft.map(id=>(Math.floor(id/old)+shift)*n+id%old);if(!validMakerPath(grown,false,n))throw Error('Could not enlarge this trail.');m.draft=grown;}else m.draft=[makerEndpoints(n).start];m.size=n;break;}
  case 'maker-draft':{const m=makerState(p);if(!validMakerPath(input.path,false,m.size||MAKER_SIZE))throw Error('Connect neighboring squares without crossing your path.');m.draft=[...input.path];break;}
- case 'maker-build':{const m=makerState(p),created=makeChildMaze(m.draft,input.seed,p.player,m.size||MAKER_SIZE);if(m.challenge)(m.archive??=[]).push(m.challenge);m.archive=m.archive?.slice(-5)||[];m.challenge=created;m.editing=false;break;}
+ case 'maker-build':{const m=makerState(p),recent=[m.challenge,...(m.archive||[]).slice(-4)].filter(Boolean).map(maze=>maze.checkpoints?.[0]?.puzzle?.answer).filter(Boolean),created=makeChildMaze(m.draft,input.seed,p.player,m.size||MAKER_SIZE,recent);if(m.challenge)(m.archive??=[]).push(m.challenge);m.archive=m.archive?.slice(-5)||[];m.challenge=created;m.editing=false;break;}
  case 'maker-previous':{const m=makerState(p);if(!m.archive?.length)throw Error('No earlier maze.');const old=m.archive.pop();if(m.challenge)m.archive.push(m.challenge);m.challenge=old;m.editing=false;break;}
  case 'maker-move':{const c=makerState(p).challenge;if(!c||!Number.isInteger(input.cell)||!move(c,input.cell))throw Error('Follow an open path from your explorer.');makerComplete(p);break;}
  case 'maker-moves':{const c=makerState(p).challenge;if(!c||input.maze!==c.id)throw Error('This maze has changed. Refresh to continue.');if(!Array.isArray(input.cells)||input.cells.length>1000)throw Error('Invalid trail.');for(const id of input.cells){if(!Number.isInteger(id)||!move(c,id))throw Error('That trail crosses a wall or a sound stop.');}makerComplete(p);break;}
