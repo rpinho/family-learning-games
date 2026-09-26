@@ -1,4 +1,4 @@
-import {COOKIE_GAME,cookieQuestion} from './cookie-division.mjs';
+import {COOKIE_GAME,cookieQuestion,COOKIE_MAX_LEVEL} from './cookie-division.mjs';
 export const EXPLORER_TRACK='explorer-math-1';
 export const EXPLORER_GAMES=[
  {id:'mix',icon:'🚀',title:'Math mission',description:'Multiplication, sums and number puzzles.'},
@@ -20,7 +20,7 @@ export function challengeLevel(p,skill){
   let level=oldWins>=4?2:1,streak=0,struggles=0;
   for(const h of p.history||[]){
    if(h.question?.track!==EXPLORER_TRACK||h.question.skill!=='cookies'||h.question.plan!=='drag3')continue;
-   if(h.ok&&!h.helped){streak++;struggles=0;if(streak>=4){level=Math.min(3,level+1);streak=0;}}
+   if(h.ok&&!h.helped){streak++;struggles=0;if(streak>=4){level=Math.min(COOKIE_MAX_LEVEL,level+1);streak=0;}}
    else{streak=0;struggles++;if(struggles>=2){level=Math.max(1,level-1);struggles=0;}}
   }
   return level;

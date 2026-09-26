@@ -43,3 +43,11 @@
 .cookie-story-stage{display:flex;align-items:center;justify-content:center;gap:5px;width:100%;white-space:nowrap}
 .playboard{scroll-margin-top:72px}
 @media(max-width:600px){.cookie-scene-snack{gap:2px}.cookie-scene-snack .cookie-story{max-width:100%}.cookie-scene-snack .cookie-story-stage{gap:4px}}
+
+.cookie-on-plate{display:grid;place-items:center;border-radius:50%;touch-action:none;user-select:none;cursor:grab;transition:transform .12s}.cookie-on-plate:active{transform:scale(1.15)}.cookie-on-plate.cookie-selected{outline:3px solid #168f94;background:#fff}.cookie-on-plate.cookie-lifted{opacity:.25}.cookie-plate-target{border-color:#5fc2c7;box-shadow:0 0 0 3px #bdecee}.cookie-plate-count-hidden{background:#ffe9b8;color:#8a5a17}
+.cookie-plate-bowl .cookie-shape{animation:cookie-land .22s cubic-bezier(.2,1.6,.5,1)}@keyframes cookie-land{from{transform:scale(.4) translateY(-10px)}}
+.cookie-bubble{position:relative;max-width:230px;margin:0;padding:8px 12px;border-radius:16px;background:#fff;border:2px solid #9fd4ea;color:#1f5877;font-size:15px;font-weight:800;line-height:1.25;box-shadow:0 3px 0 #9fd4ea}.cookie-bubble:before{content:'';position:absolute;left:-9px;top:18px;border:8px solid transparent;border-right-color:#9fd4ea;border-left:0}.cookie-scene-fix{max-width:760px;flex-wrap:wrap}
+.cookie-game{position:relative}.cookie-crumbs{position:absolute;inset:0;pointer-events:none;overflow:hidden}.cookie-crumbs i{position:absolute;top:-12px;width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#6a3827 0 18%,transparent 22%),#e6a95f;animation:cookie-rain 1.4s ease-in forwards}@keyframes cookie-rain{to{transform:translateY(520px) rotate(300deg);opacity:0}}
+@media(max-width:600px){.cookie-bubble{font-size:12px;max-width:150px;padding:6px 8px}}
+@media(prefers-reduced-motion:reduce){.cookie-plate-bowl .cookie-shape,.cookie-crumbs i{animation:none}.cookie-crumbs{display:none}}
+.cookie-game{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}

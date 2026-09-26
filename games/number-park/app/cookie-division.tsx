@@ -34,14 +34,24 @@ export function CookieDivision({q,draft,disabled,result,message,helped,place,che
  const full=remaining===0,equal=full&&counts.every(n=>n===counts[0]);
  const put=(id:number,plate:number|null)=>{if(disabled||result)return;const next=[...spots];next[id]=plate;setSelected(null);place(next);report('place',`${plate===null?'back':plate}: ${next.filter(v=>v!==null).length}/${q.total}`);};
  const targetPlate=(x:number,y:number)=>{const hit=document.elementFromPoint(x,y)?.closest('[data-cookie-plate]');return hit?Number(hit.getAttribute('data-cookie-plate')):null;};
- const finishDrag=(e:React.PointerEvent<HTMLButtonElement>,id:number)=>{
+ const finishDrag=(e:React.PointerEvent<HTMLElement>,id:number)=>{
   if(!drag||drag.id!==id)return;
   const destination=targetPlate(e.clientX,e.clientY);
-  if(destination!==null)put(id,destination);
-  else if(!moved.current)setSelected(id);
+  if(destination!==null&&destination!==spots[id])put(id,destination);
+  else if(!moved.current)setSelected(selected===id?null:id);
   setDrag(null);moved.current=false;
  };
- if(q.mode&&q.mode!=='share')return <section className="cookie-game cookie-plan" aria-label="Solve the cookie sharing challenge">
+ const grab=(id:number)=>({
+  onPointerDown:(e:React.PointerEvent<HTMLElement>)=>{if(disabled||result)return;e.stopPropagation();moved.current=false;setDrag({id,x:e.clientX,y:e.clientY});e.currentTarget.setPointerCapture(e.pointerId)},
+  onPointerMove:(e:React.PointerEvent<HTMLElement>)=>{if(drag?.id!==id)return;if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>8)moved.current=true;setDrag({id,x:e.clientX,y:e.clientY})},
+  onPointerUp:(e:React.PointerEvent<HTMLElement>)=>finishDrag(e,id),
+  onPointerCancel:()=>{setDrag(null);moved.current=false},
+  onClick:(e:React.MouseEvent)=>e.stopPropagation()
+ });
+ const fixing=q.mode==='fix'||q.mode==='mixed',hide=!!q.hideCounts&&!result;
+ const tilt=(id:number)=>({transform:`rotate(${(id*47)%31-15}deg) translate(${(id*13)%5-2}px,${(id*7)%5-2}px)`});
+ const tip=selected!==null?'Now tap the plate it should go to.':helped?(q.mode==='fix'?'Find the fullest plate. Move one cookie to the plate with the fewest.':q.mode==='mixed'?'Tray cookies go to the smallest plates first.':'One on each plate. Go around again.'):fixing?(q.mode==='fix'?'Drag a cookie from one plate to another, or tap a cookie then a plate.':'Drag cookies from the tray or between plates. The plates hide their numbers.'):'Tap a plate to deal the next cookie, or drag one from the tray.';
+ if(q.mode&&!['share','fix','mixed'].includes(q.mode))return <section className="cookie-game cookie-plan" aria-label="Solve the cookie sharing challenge">
   <div className={'cookie-scene '+(q.mode==='snack'?'cookie-scene-snack':'')}><CookieBuddy shared={result?1:0} happy={!!result}/><div className="cookie-story">
    {q.mode==='snack'?<><div className="cookie-story-stage"><span className="cookie-story-chip">🍪 <strong>{q.baked}</strong> baked</span><span className="cookie-story-op">−</span><span className="cookie-story-chip cookie-story-snack">🍪 <strong>{q.eaten}</strong> eaten</span><span className="cookie-story-op">= ?</span></div><div className="cookie-story-stage"><span className="cookie-story-op">? ÷</span><span className="cookie-story-chip">{q.plates} friends</span></div></>:<><span className="cookie-story-chip">🍪 <strong>{q.total}</strong> cookies</span><span className="cookie-story-op">÷</span><span className="cookie-story-chip">{q.plates} friends</span></>}
   </div></div>
@@ -51,18 +61,19 @@ export function CookieDivision({q,draft,disabled,result,message,helped,place,che
   <div className="cookie-check"><Button className="big-play" disabled={disabled||!!result||guessEach===null||guessLeft===null} onClick={()=>{report('check',`plan ${guessEach} each, ${guessLeft} left`);check({perPlate:guessEach!,leftover:guessLeft!})}}>Check my plan →</Button><span role="status" aria-live="polite">{message||'How many for each friend? How many extra?'}</span></div>
   {result&&<div className="cookie-equation" aria-label={`${q.total} divided by ${q.plates} equals ${q.answer} with ${q.leftover} left over`}>{q.mode==='snack'&&<span>{q.baked} − {q.eaten} = {q.total} · </span>}{q.total} ÷ {q.plates} = {q.answer} <small>left over {q.leftover}</small></div>}
  </section>;
- return <section className="cookie-game" aria-label="Share the cookies equally">
-  <div className="cookie-scene"><CookieBuddy shared={q.total-remaining} happy={!!result}/><div className="cookie-count"><span className="cookie-mark" aria-hidden="true">🍪</span><strong>{q.total}</strong><span>cookies</span><span className="cookie-divider">÷</span><strong>{q.plates}</strong><span>plates</span></div></div>
+ return <section className={"cookie-game"+(fixing?" cookie-game-fix":"")} aria-label="Share the cookies equally">
+  <div className={'cookie-scene'+(fixing?' cookie-scene-fix':'')}><CookieBuddy shared={q.total-remaining} happy={!!result}/>{fixing&&!result&&<p className="cookie-bubble">{q.mode==='fix'?'Oops! I piled them up wrong. Can you make it fair?':'I dropped some! Count carefully and make it fair.'}</p>}<div className="cookie-count"><span className="cookie-mark" aria-hidden="true">🍪</span><strong>{q.total}</strong><span>cookies</span><span className="cookie-divider">÷</span><strong>{q.plates}</strong><span>plates</span></div></div>
   <div className="cookie-plates" aria-label="Plates">
-   {counts.map((count,plate)=><button type="button" key={plate} data-cookie-plate={plate} className={'cookie-plate '+(full&&!equal&&count!==Math.min(...counts)?'cookie-plate-more ':'')+(result?'cookie-plate-done':'')} disabled={disabled||!!result} aria-label={`Friend ${plate+1}'s plate, ${count} ${count===1?'cookie':'cookies'}. Tap to place a cookie.`} onClick={()=>{const id=selected!==null&&spots[selected]===null?selected:spots.indexOf(null);if(id>=0)put(id,plate)}}>
-    <span className="cookie-plate-label"><span className={'cookie-friend cookie-friend-'+plate%5} aria-hidden="true"><i/><i/><b/></span>FRIEND {plate+1}</span><span className="cookie-plate-bowl">{spots.map((at,id)=>at===plate?<span className="cookie-shape" aria-hidden="true" key={id}/>:null)}</span><span className="cookie-plate-count">{count}</span>
+   {counts.map((count,plate)=><button type="button" key={plate} data-cookie-plate={plate} className={'cookie-plate '+(full&&!equal&&(!fixing||helped)&&count!==Math.min(...counts)?'cookie-plate-more ':'')+(result?'cookie-plate-done':'')+(selected!==null&&spots[selected]!==plate?' cookie-plate-target':'')} disabled={disabled||!!result} aria-label={hide?`Friend ${plate+1}'s plate. Count the cookies.`:`Friend ${plate+1}'s plate, ${count} ${count===1?'cookie':'cookies'}. Tap to place a cookie.`} onClick={()=>{const id=selected!==null&&spots[selected]!==plate?selected:spots.indexOf(null);if(id>=0)put(id,plate)}}>
+    <span className="cookie-plate-label"><span className={'cookie-friend cookie-friend-'+plate%5} aria-hidden="true"><i/><i/><b/></span>FRIEND {plate+1}</span><span className="cookie-plate-bowl">{spots.map((at,id)=>at===plate?<span key={id} role="button" aria-label={`Move a cookie from friend ${plate+1}`} className={'cookie-on-plate'+(selected===id?' cookie-selected':'')+(drag?.id===id&&moved.current?' cookie-lifted':'')} {...grab(id)}><span className="cookie-shape" style={fixing?tilt(id):undefined}/></span>:null)}</span><span className={'cookie-plate-count'+(hide?' cookie-plate-count-hidden':'')}>{hide?'?':count}</span>
    </button>)}
   </div>
-  <div className="cookie-tray"><div className="cookie-tray-top"><strong>Cookie tray</strong><span>{remaining} left · tap or drag to a plate</span></div><div className="cookie-tray-pieces">{spots.map((at,id)=>at===null?<button type="button" key={id} className={'cookie-piece '+(selected===id?'cookie-selected':'')} disabled={disabled||!!result} aria-label={`Cookie ${id+1}, tap then choose a plate or drag it`} onClick={()=>{if(!moved.current)setSelected(id)}} onPointerDown={e=>{if(disabled||result)return;moved.current=false;setDrag({id,x:e.clientX,y:e.clientY});e.currentTarget.setPointerCapture(e.pointerId)}} onPointerMove={e=>{if(drag?.id!==id)return;if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>8)moved.current=true;setDrag({id,x:e.clientX,y:e.clientY})}} onPointerUp={e=>finishDrag(e,id)} onPointerCancel={()=>{setDrag(null);moved.current=false}}><span className="cookie-shape" aria-hidden="true"/></button>:null)}</div></div>
-  <p className="cookie-tip">{selected!==null?'Now tap a plate.':helped?'One on each plate. Go around again.':'Tap a plate to deal the next cookie, or drag one from the tray.'}</p>
-  {spots.some(v=>v!==null)&&!result&&<div className="cookie-return">{counts.map((count,plate)=>count?<button type="button" key={plate} disabled={disabled} onClick={()=>put(spots.lastIndexOf(plate),null)}>↶ Take one back from plate {plate+1}</button>:null)}</div>}
+  {(q.mode!=='fix'||remaining>0)&&<div className="cookie-tray"><div className="cookie-tray-top"><strong>Cookie tray</strong><span>{remaining} left · tap or drag to a plate</span></div><div className="cookie-tray-pieces">{spots.map((at,id)=>at===null?<button type="button" key={id} className={'cookie-piece '+(selected===id?'cookie-selected':'')} disabled={disabled||!!result} aria-label={`Cookie ${id+1}, tap then choose a plate or drag it`} {...grab(id)}><span className="cookie-shape" aria-hidden="true"/></button>:null)}</div></div>}
+  <p className="cookie-tip">{tip}</p>
+  {!fixing&&spots.some(v=>v!==null)&&!result&&<div className="cookie-return">{counts.map((count,plate)=>count?<button type="button" key={plate} disabled={disabled} onClick={()=>put(spots.lastIndexOf(plate),null)}>↶ Take one back from plate {plate+1}</button>:null)}</div>}
   <div className="cookie-check"><Button className="big-play" disabled={disabled||!!result||!full} onClick={()=>{report('check',equal?'equal':'uneven');check()}}>Check my sharing →</Button><span role="status" aria-live="polite">{message||(remaining?`${remaining} cookies still in the tray.`:'Look at every plate. Are they equal?')}</span></div>
   {result&&<div className="cookie-equation" aria-label={`${q.total} divided by ${q.plates} equals ${counts[0]}`}>{q.total} ÷ {q.plates} = {counts[0]}</div>}
+  {result&&<div className="cookie-crumbs" aria-hidden="true">{Array.from({length:14},(_,i)=><i key={i} style={{left:`${(i*37)%100}%`,animationDelay:`${(i%7)*60}ms`}}/>)}</div>}
   {drag&&moved.current&&<span className="cookie-drag-ghost" style={{left:drag.x,top:drag.y}} aria-hidden="true"><span className="cookie-shape"/></span>}
  </section>;
 }

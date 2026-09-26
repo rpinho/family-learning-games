@@ -77,3 +77,44 @@ test('old easy wins seed moderate sharing; new independent rounds advance and hi
  assert.equal(p.xp,73);assert.equal(challengeLevel(p,'cookies'),2);assert.equal(challengeLevel(p,'multiply'),2);
  assert.equal(p.session.finished,true);
 });
+
+test('levels 4-5 start from a lopsided layout that needs reasoning, not just dealing',()=>{
+ const lines=new Set(cookieVoiceLines());
+ for(const level of [4,5])for(let i=0;i<300;i++){
+  const q=cookieQuestion(level,Math.random);
+  assert.equal(q.mode,level===4?'fix':'mixed');assert.equal(q.total,q.plates*q.answer);assert.ok(lines.has(q.prompt));
+  assert.equal(q.start.length,q.total);
+  const counts=Array.from({length:q.plates},(_,p)=>q.start.filter(v=>v===p).length),tray=q.start.filter(v=>v===null).length;
+  assert.ok(Math.max(...counts.map(n=>Math.abs(n-q.answer)))>=1);
+  if(level===4){assert.equal(tray,0);assert.ok(!counts.every(n=>n===counts[0]));assert.equal(!!q.hideCounts,false);}
+  else{assert.ok(tray>=q.plates);assert.equal(q.hideCounts,true);}
+ }
+});
+
+test('a fix round saves plate-to-plate moves, hides the answer, and only fair plates win',()=>{
+ const p=freshProfile('explorer');
+ p.history=Array.from({length:12},()=>({game:'cookies',question:{track:EXPLORER_TRACK,skill:'cookies',plan:'drag3',mode:'share'},ok:true,helped:false}));
+ assert.equal(challengeLevel(p,'cookies'),4);
+ act(p,{kind:'start',game:'cookies'});const q=p.session.question;
+ assert.equal(q.mode,'fix');assert.deepEqual(p.session.cookieDraft,q.start);
+ assert.equal(publicState(p).session.question.answer,undefined);
+ act(p,{kind:'cookie-check',questionId:q.id});assert.match(p.session.cookieMessage,/Not equal/);assert.equal(p.session.result,null);
+ // move plate-to-plate, one cookie at a time, until fair
+ for(let guard=0;guard<60;guard++){
+  const d=p.session.cookieDraft,counts=Array.from({length:q.plates},(_,i)=>d.filter(v=>v===i).length);
+  if(counts.every(n=>n===q.answer))break;
+  const from=counts.findIndex(n=>n>q.answer),to=counts.findIndex(n=>n<q.answer),id=d.indexOf(from);
+  const next=[...d];next[id]=to;act(p,{kind:'cookie-place',questionId:q.id,draft:next});
+ }
+ act(p,{kind:'cookie-check',questionId:q.id});
+ assert.equal(p.session.result.ok,true);assert.equal(p.session.result.helped,true); // one uneven check counts as corrected
+ assert.equal(p.history.at(-1).question.mode,'fix');
+});
+
+test('the adaptive ladder now reaches level 5 and still eases on struggle',()=>{
+ const p=freshProfile('explorer');
+ p.history=Array.from({length:16},()=>({game:'cookies',question:{track:EXPLORER_TRACK,skill:'cookies',plan:'drag3'},ok:true,helped:false}));
+ assert.equal(challengeLevel(p,'cookies'),5);
+ p.history.push(...Array.from({length:2},()=>({game:'cookies',question:{track:EXPLORER_TRACK,skill:'cookies',plan:'drag3'},ok:true,helped:true})));
+ assert.equal(challengeLevel(p,'cookies'),4);
+});

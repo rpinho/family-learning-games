@@ -5,11 +5,11 @@ import {FREE_DRAWING_SPACE,validFreeInk} from './drawing-space.mjs';
 import {countingQuestion,countingOptions} from './counting.mjs';
 import {patternQuestion} from './play-practice.mjs';
 import {advanced,EXPLORER_GAMES,challengeQuestion} from './explorer.mjs';
-import {validCookieDraft,cookieCounts} from './cookie-division.mjs';
+import {validCookieDraft,cookieCounts,isDragCookie,initialCookieDraft} from './cookie-division.mjs';
 import {readingAction} from './reading.mjs';
 import {artAction} from './art.mjs';
 import {planningAction} from './planning.mjs';
-export const VERSION='number-park-2026-09-26-cookie-drag-adaptive-public';
+export const VERSION='number-park-2026-09-26-cookie-fair-fix-public';
 export const GAMES=[
  {id:'mix',icon:'🎲',title:'Little sums',description:'A mix just like the first unit.'},
  {id:'line',icon:'📏',title:'Number hop',description:'Slide to the missing number.'},
@@ -34,7 +34,7 @@ export function prepareProfile(p){
   // round number, but offer the requested drag interaction on next refresh.
   cookie.question=makeQuestion(p,'cookies',cookie.round);
   cookie.question.id+=':drag3';
-  cookie.cookieDraft=Array(cookie.question.total).fill(null);
+  cookie.cookieDraft=initialCookieDraft(cookie.question);
   cookie.started=Date.now();cookie.helped=false;delete cookie.cookieChecks;delete cookie.cookieMessage;
  }
  const s=p.session;if(!additionOnly(p)||!s||s.finished)return p;
@@ -79,18 +79,18 @@ export function action(p,input,now=Date.now(),services={}){
  }else if(input.kind==='start'){
   if(!gamesFor(p).some(g=>g.id===input.game))fail('Choose a listed game.');
   p.session={game:input.game,round:0,correct:0,independent:0,helped:false,result:null,finished:false,started:now,question:makeQuestion(p,input.game)};
-  if(p.session.question.kind==='cookies'&&p.session.question.mode==='share')p.session.cookieDraft=Array(p.session.question.total).fill(null);
+  if(p.session.question.kind==='cookies'&&isDragCookie(p.session.question))p.session.cookieDraft=initialCookieDraft(p.session.question);
  }else if(input.kind==='hint'){
   const s=p.session;if(!s||s.finished||s.result)fail('No question to help with.');s.helped=true;
  }else if(input.kind==='cookie-place'){
-  const s=p.session,q=s?.question;if(!s||s.finished||s.result||q.kind!=='cookies'||(q.mode&&q.mode!=='share')||input.questionId!==q.id||!validCookieDraft(input.draft,q.total,q.plates))fail('Choose a cookie and a plate.');
+  const s=p.session,q=s?.question;if(!s||s.finished||s.result||q.kind!=='cookies'||!isDragCookie(q)||input.questionId!==q.id||!validCookieDraft(input.draft,q.total,q.plates))fail('Choose a cookie and a plate.');
   const changed=input.draft.reduce((n,v,i)=>n+Number(v!==s.cookieDraft[i]),0);
   if(changed!==1)fail('Move one cookie at a time.');
   s.cookieDraft=[...input.draft];s.cookieMessage='';
  }else if(input.kind==='cookie-check'){
   const s=p.session,q=s?.question;if(!s||s.finished||s.result||q.kind!=='cookies'||input.questionId!==q.id)fail('Open a cookie round first.');
   let counts,remaining=0,correct=false;
-  if(!q.mode||q.mode==='share'){
+  if(isDragCookie(q)){
    counts=cookieCounts(s.cookieDraft,q.plates);remaining=s.cookieDraft.filter(v=>v===null).length;
    if(remaining)s.cookieMessage=`${remaining} cookies are still in the tray.`;
    else if(!counts.every(n=>n===counts[0])){s.cookieChecks=(s.cookieChecks||0)+1;s.cookieMessage='Not equal yet. Move one from a fuller plate to a smaller plate.';}
@@ -119,7 +119,7 @@ export function action(p,input,now=Date.now(),services={}){
  }else if(input.kind==='next'){
   const s=p.session;if(!s||s.finished||!s.result)fail('Finish this question first.');
   if(s.round===5){s.finished=true;p.lessons++;p.completed[s.game]=(p.completed[s.game]||0)+1;}
-  else{s.round++;s.question=makeQuestion(p,s.game,s.round);s.helped=false;s.result=null;s.started=now;delete s.cookieChecks;delete s.cookieMessage;if(s.question.kind==='cookies'&&s.question.mode==='share')s.cookieDraft=Array(s.question.total).fill(null);else delete s.cookieDraft;}
+  else{s.round++;s.question=makeQuestion(p,s.game,s.round);s.helped=false;s.result=null;s.started=now;delete s.cookieChecks;delete s.cookieMessage;if(s.question.kind==='cookies'&&isDragCookie(s.question))s.cookieDraft=initialCookieDraft(s.question);else delete s.cookieDraft;}
  }else if(input.kind==='drawing'){
   if(!validFreeInk(input.strokes))fail('Drawing is too large or invalid.');
   if(input.space!==undefined&&input.space!==FREE_DRAWING_SPACE)fail('Drawing space is invalid.');
