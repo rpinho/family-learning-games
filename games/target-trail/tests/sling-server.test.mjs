@@ -8,7 +8,7 @@ test('Word-break levels come from Letter Quest read-only; sling page and rounds 
  assert.equal((await(await fetch(url+'/api/word-break?player=explorer')).json()).source,'default');
  assert.equal((await fetch(url+'/api/word-break?player=beginner',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).status,405);
  assert.match(await(await fetch(url+'/?mode=sling&player=beginner')).text(),/sling-app\.mjs/);
- for(const path of ['/sling-app.mjs','/sling.mjs','/word-break.mjs','/sling.svg'])assert.equal((await fetch(url+path)).status,200,path);
+ for(const path of ['/sling-app.mjs','/sling.mjs','/sling-legacy.mjs','/word-break.mjs','/sling.svg'])assert.equal((await fetch(url+path)).status,200,path);
  const post=body=>fetch(url+'/api/action?player=beginner',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
  const p=await(await post({type:'sling-start',revision:0,literacy:{letters:['Z']}})).json();assert.deepEqual(p.sling.round.letters,[...'FRANCISOETL']);
  assert.equal(JSON.parse(await readFile(join(letters,'beginner.json'),'utf8')).secret,'not served');assert.equal(await readFile(join(letters,'beginner.json'),'utf8'),lq);

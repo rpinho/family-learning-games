@@ -1,7 +1,8 @@
 import {FLIGHT_MS,challengeFor,movingTargets,aimAt,learningDefaults} from './challenges.mjs';
 import {SLING_TRACK,MODES,STONES,scoreStone,spellingWords,SLING_VERSION} from './sling.mjs';
+import {scoreStone as legacyScoreStone} from './sling-legacy.mjs';
 export {FLIGHT_MS,challengeFor,movingTargets,aimAt,learningDefaults,READING_NAMES,voiceLines,cueLine,nameLine} from './challenges.mjs';
-export const VERSION='target-trail-2026-09-26-sling-word-breaks';
+export const VERSION='target-trail-2026-09-26-sling-aim-voice';
 export {SLING_VERSION};
 export const PLAYERS={beginner:'Beginner',explorer:'Explorer',admin:'Admin · Admin'};
 export const WORDS={start:'Drag to aim. Lift your finger to shoot.',ready:'Ready for five arrows?',bull:'Bullseye!',done:'Five arrows! Ready for another round?',higher:'Try a little higher.',lower:'Try a little lower.',left:'Try a little left.',right:'Try a little right.',hit:'Nice shot!',move:'This target moves. Take your time.'};
@@ -46,8 +47,10 @@ export function action(p,input){
   const s=slingState(p),r=s.round;if(!r||r.done||input.shot!==r.shots.length)fail('That stone has already been used.',409);
   if(input.roundId!==r.id)fail('The round changed. Aim at the new targets.',409);
   if(!Number.isFinite(input.dx)||!Number.isFinite(input.dy)||Math.abs(input.dx)>400||Math.abs(input.dy)>400)fail('Invalid pull. Try again.');
-  const score=scoreStone(r,r.shots.length,input.dx,input.dy);
-  r.shots.push({...score,dx:input.dx,dy:input.dy,input:['touch','mouse','pen','keyboard'].includes(input.pointer)?input.pointer:'unknown',at:new Date().toISOString()});
+  // Pages opened before the one-column sling still send free 2D pulls; score them with the physics they drew.
+  const legacy=input.v!==SLING_VERSION,score=(legacy?legacyScoreStone:scoreStone)(r,r.shots.length,input.dx,input.dy);
+  if(score.outcome==='no-pull')fail('Pull back, away from the balloons.');
+  r.shots.push({...score,dx:input.dx,dy:input.dy,input:['touch','mouse','pen','keyboard'].includes(input.pointer)?input.pointer:'unknown',physics:legacy?'sling-2026-09-26-1':SLING_VERSION,at:new Date().toISOString()});
   r.score+=score.points;s.stones++;if(score.outcome==='correct'){r.correct++;s.correct++;}
   if(r.shots.length===STONES){
    r.done=true;s.rounds++;s.best=Math.max(s.best,r.score);s.stars+=r.correct>=4?3:r.correct>=2?2:1;
@@ -87,4 +90,4 @@ export function action(p,input){
  }else fail('Unknown action.');
  p.revision++;return p;
 }
-export const publicState=p=>({...p,history:p.history.slice(-10),...(p.sling?{sling:{...p.sling,history:p.sling.history.slice(-10)}}:{})});
+export const publicState=p=>({...p,app:VERSION,slingVersion:SLING_VERSION,history:p.history.slice(-10),...(p.sling?{sling:{...p.sling,history:p.sling.history.slice(-10)}}:{})});
