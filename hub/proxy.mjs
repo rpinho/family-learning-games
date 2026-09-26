@@ -14,7 +14,7 @@ export function proxy(req,res,{port,prefix,path,player,players,game,releases={}}
  const who=target.pathname.match(/^\/api\/([^/]+)/)?.[1];
  if(players.includes(who)&&who!==player){if(/\/events$/.test(target.pathname)){void log({type:'discarded_initial_event',game,player});res.writeHead(200,{'Content-Type':'application/json'});res.end('{"ok":true,"discarded":true}');return;}res.writeHead(409,{'Content-Type':'application/json'});res.end(JSON.stringify({error:'Use Grown-ups on the Games home screen to change player.'}));return;}
  const headers={...req.headers,host:`localhost:${port}`,'accept-encoding':'identity','sec-fetch-site':'same-origin'};
- delete headers.cookie;delete headers.authorization;delete headers['if-none-match'];delete headers['if-modified-since'];delete headers['x-forwarded-host'];
+ delete headers.cookie;delete headers.authorization;delete headers['if-none-match'];delete headers['if-modified-since'];for(const k of Object.keys(headers))if(k.startsWith('x-forwarded-')||k.startsWith('tailscale-'))delete headers[k];
  if(headers.origin)headers.origin=`http://localhost:${port}`;
  if(headers.referer)headers.referer=`http://localhost:${port}/?player=${player}`;
  const upstream=http.request({host:'127.0.0.1',port,path:target.pathname+target.search,method:req.method,headers,timeout:15000},r=>{
