@@ -11,14 +11,18 @@ const letterData=process.env.LETTER_QUEST_DATA||join(homedir(),'.local/share/fam
 const literacy=async id=>{let save=null;try{save=JSON.parse(await readFile(join(letterData,id+'.json'),'utf8'));}catch{}return literacyFrom(save,DEFAULT_TRACK[id]||'mixed');};
 await mkdir(join(data,'logs'),{recursive:true,mode:0o700});let queue=Promise.resolve(),logError=null;
 const log=async row=>{try{await appendFile(join(data,'logs',new Date().toISOString().slice(0,10)+'.jsonl'),JSON.stringify({at:new Date().toISOString(),version:VERSION,...row})+'\n',{mode:0o600});logError=null;}catch(e){logError=e.code;console.error('Log failed',e.code);}};
-const hosts=new Set(['localhost','127.0.0.1','localhost','localhost',hostname().toLowerCase(),...Object.values(networkInterfaces()).flat().filter(Boolean).map(v=>v.address)]);
+// Only this machine's own names and addresses. The network interfaces are re-read every few seconds, so a new
+// address (a new router, a VPN) works without a restart. FAMILY_EXTRA_HOSTS (comma or space separated) adds
+// other names this machine answers to, such as a VPN DNS name.
+const BASE_HOSTS=['localhost','127.0.0.1'];let hostCache=null,hostCacheAt=0;
+function allowedHosts(){if(hostCache&&Date.now()-hostCacheAt<5000)return hostCache;const me=hostname().toLowerCase(),short=me.replace(/\.local$/,'');hostCacheAt=Date.now();return hostCache=new Set([...BASE_HOSTS.map(h=>String(h).toLowerCase()),me,short,short+'.local',...(process.env.FAMILY_EXTRA_HOSTS||'').split(/[\s,]+/).filter(Boolean).map(h=>h.toLowerCase()),...Object.values(networkInterfaces()).flat().filter(Boolean).map(i=>i.family==='IPv6'||i.family===6?'['+i.address.toLowerCase()+']':i.address)]);}
 const load=async id=>{try{return JSON.parse(await readFile(join(data,id+'.json'),'utf8'));}catch(e){if(e.code==='ENOENT')return freshProfile(id);throw e;}};
 const reply=(res,code,body)=>{res.writeHead(code,{'Content-Type':'application/json'});res.end(JSON.stringify(body));};
 const files={'/':'index.html','/sling':'sling.html','/sling-app.mjs':'sling-app.mjs','/word-break.mjs':'word-break.mjs','/sling.svg':'sling.svg','/app.mjs':'app.mjs','/style.css':'style.css','/icon.svg':'icon.svg','/manifest.webmanifest':'manifest.webmanifest','/icon-192.png':'icon-192.png','/icon-512.png':'icon-512.png'};
 const types={'.html':'text/html','.mjs':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json','.json':'application/json','.wav':'audio/wav'};
 const server=http.createServer(async(req,res)=>{
  res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','same-origin');
- let u;try{u=new URL(req.url,'http://'+req.headers.host);if(!hosts.has(u.hostname.toLowerCase())||req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host||req.headers['sec-fetch-site']==='cross-site')return reply(res,403,{error:'Use the home-network address.'});}catch{return reply(res,400,{error:'Invalid address.'});}
+ let u;try{u=new URL(req.url,'http://'+req.headers.host);if(!allowedHosts().has(u.hostname.toLowerCase())||req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host||req.headers['sec-fetch-site']==='cross-site')return reply(res,403,{error:'Use the home-network address.'});}catch{return reply(res,400,{error:'Invalid address.'});}
  try{
   if(u.pathname==='/health')return reply(res,200,{ok:true,version:VERSION,diagnostics:{ok:!logError,error:logError}});
   if(['/api/state','/api/action','/api/events','/api/word-break'].includes(u.pathname)){

@@ -17,10 +17,14 @@ let queue=Promise.resolve(),logError=null;
 async function log(row){try{await appendFile(join(data,'logs',new Date().toISOString().slice(0,10)+'.jsonl'),JSON.stringify({at:new Date().toISOString(),version:VERSION,...row})+'\n',{mode:0o600});logError=null;}catch(e){logError=e.code;console.error('Log write failed',e.code);}}
 async function profile(id){try{return JSON.parse(await readFile(join(data,id+'.json'),'utf8'));}catch(e){if(e.code==='ENOENT')return fresh(id);throw e;}}
 const send=(res,status,body)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(body));};
-const hosts=new Set(['localhost','127.0.0.1',hostname().toLowerCase(),...Object.values(networkInterfaces()).flat().filter(Boolean).map(v=>v.address)]);
+// Only this machine's own names and addresses. The network interfaces are re-read every few seconds, so a new
+// address (a new router, a VPN) works without a restart. FAMILY_EXTRA_HOSTS (comma or space separated) adds
+// other names this machine answers to, such as a VPN DNS name.
+const BASE_HOSTS=['localhost','127.0.0.1'];let hostCache=null,hostCacheAt=0;
+function allowedHosts(){if(hostCache&&Date.now()-hostCacheAt<5000)return hostCache;const me=hostname().toLowerCase(),short=me.replace(/\.local$/,'');hostCacheAt=Date.now();return hostCache=new Set([...BASE_HOSTS.map(h=>String(h).toLowerCase()),me,short,short+'.local',...(process.env.FAMILY_EXTRA_HOSTS||'').split(/[\s,]+/).filter(Boolean).map(h=>h.toLowerCase()),...Object.values(networkInterfaces()).flat().filter(Boolean).map(i=>i.family==='IPv6'||i.family===6?'['+i.address.toLowerCase()+']':i.address)]);}
 const server=http.createServer(async(req,res)=>{
  const started=Date.now();res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','DENY');
- let url;try{url=new URL(req.url,'http://'+req.headers.host);if(!hosts.has(url.hostname.toLowerCase()))return send(res,403,{error:'Home network address required'});if(req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host)return send(res,403,{error:'Foreign origin rejected'});}catch{return send(res,400,{error:'Invalid address'});}
+ let url;try{url=new URL(req.url,'http://'+req.headers.host);if(!allowedHosts().has(url.hostname.toLowerCase()))return send(res,403,{error:'Home network address required'});if(req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host)return send(res,403,{error:'Foreign origin rejected'});}catch{return send(res,400,{error:'Invalid address'});}
  res.on('finish',()=>{if(url.pathname.startsWith('/api'))void log({type:'request',path:url.pathname,status:res.statusCode,ms:Date.now()-started});});
  try{
   if(process.env.WORD_ARCADE_QA==='1'&&url.pathname==='/__qa'){const w=Math.max(320,Math.min(1500,Number(url.searchParams.get('w'))||1024)),h=Math.max(320,Math.min(1000,Number(url.searchParams.get('h'))||600));res.writeHead(200,{'Content-Type':'text/html'});res.end(`<!doctype html><title>Isolated arcade viewport</title><body style="margin:0;background:#ddd"><iframe title="Arcade ${w} by ${h}" src="/?player=admin" style="border:0;width:${w}px;height:${h}px"></iframe></body>`);return;}

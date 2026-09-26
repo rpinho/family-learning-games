@@ -25,7 +25,11 @@ await mkdir(data,{recursive:true,mode:0o700});
 const diagnostics=createDiagnostics(data);
 await diagnostics.record('server_start');
 const port=Number(process.env.PORT||4318),host=process.env.HOST||'127.0.0.1';
-const allowedHosts=new Set(['localhost','127.0.0.1',os.hostname().toLowerCase(),'localhost',...Object.values(os.networkInterfaces()).flat().filter(Boolean).map(i=>i.address)]);
+// Only this machine's own names and addresses. The network interfaces are re-read every few seconds, so a new
+// address (a new router, a VPN) works without a restart. FAMILY_EXTRA_HOSTS (comma or space separated) adds
+// other names this machine answers to, such as a VPN DNS name.
+const BASE_HOSTS=['localhost','127.0.0.1'];let hostCache=null,hostCacheAt=0;
+function allowedHosts(){if(hostCache&&Date.now()-hostCacheAt<5000)return hostCache;const me=os.hostname().toLowerCase(),short=me.replace(/\.local$/,'');hostCacheAt=Date.now();return hostCache=new Set([...BASE_HOSTS.map(h=>String(h).toLowerCase()),me,short,short+'.local',...(process.env.FAMILY_EXTRA_HOSTS||'').split(/[\s,]+/).filter(Boolean).map(h=>h.toLowerCase()),...Object.values(os.networkInterfaces()).flat().filter(Boolean).map(i=>i.family==='IPv6'||i.family===6?'['+i.address.toLowerCase()+']':i.address)]);}
 let queue=Promise.resolve();
 async function load(id){try{return JSON.parse(await readFile(path.join(data,id+'.json'),'utf8'));}catch(e){if(e.code==='ENOENT')return freshProfile(id);throw e;}}
 async function save(p){const file=path.join(data,p.id+'.json');await writeFile(file+'.tmp',JSON.stringify(p,null,2),{mode:0o600});await rename(file+'.tmp',file);}
@@ -53,7 +57,7 @@ const server=http.createServer(async(req,res)=>{
  res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
  try{
   const requestHost=(req.headers.host||'').split(':')[0].toLowerCase();
-  if(!allowedHosts.has(requestHost))return reply(res,403,{error:'Unrecognized host'});
+  if(!allowedHosts().has(requestHost))return reply(res,403,{error:'Unrecognized host'});
   if(req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host)return reply(res,403,{error:'Use the game from its own address'});
   const url=new URL(req.url,'http://localhost');
   if(url.pathname==='/health')return reply(res,200,{ok:true,version:BUILD,diagnostics:diagnostics.status()});
