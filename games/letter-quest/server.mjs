@@ -15,6 +15,10 @@ import {soccerAction,soccerState} from './public/soccer.mjs';
 import {readingAction,readingState} from './public/reading.mjs';
 import {claimLeague,advanceLeague} from './public/league.mjs';
 import {backupProfile} from './profile-backup.mjs';
+import {trackPlay,windDownDue,startRest,clearRest} from './public/rest.mjs';
+import {daySummary,localDate} from './day-summary.mjs';
+const timeZone=process.env.FAMILY_TZ||Intl.DateTimeFormat().resolvedOptions().timeZone;
+
 const root=path.dirname(fileURLToPath(import.meta.url));
 const data=process.env.LETTER_QUEST_DATA||path.join(os.homedir(),'.local/share/family-learning-games/letter-quest');
 await mkdir(data,{recursive:true,mode:0o700});
@@ -31,7 +35,7 @@ for(const file of ['rescue.mjs','rescue-puzzles.mjs','rescue-view.mjs','rescue.c
 for(const file of ['story.mjs','story-ui.mjs','rook.mjs','story.css'])files['/'+file]=file;
 for(const file of ['maze.mjs','maze-view.mjs','maze-renderer.mjs','maze-themes.mjs','maze-learning.mjs','maze-curriculum.mjs','maze-skills.mjs','phonics.mjs','maze.css','league.mjs','league.css'])files['/'+file]=file;
 for(const file of ['soccer.mjs','soccer-view.mjs','soccer-audio.mjs','soccer.css'])files['/'+file]=file;
-for(const file of ['reading-client.mjs','reading.mjs','reading-view.mjs','reading.css','foundation.mjs','guided-trace.mjs','recap.mjs'])files['/'+file]=file;
+for(const file of ['reading-client.mjs','reading.mjs','reading-view.mjs','reading.css','foundation.mjs','guided-trace.mjs','recap.mjs','bo-story.mjs','rest.mjs'])files['/'+file]=file;
 for(const version of [1,2])for(const size of [16,32,48,180,192,512])files[`/icons/app-${size}-v${version}.png`]=`icons/app-${size}-v${version}.png`;
 files['/icons/favicon-v1.ico']='icons/favicon-v1.ico';files['/icons/favicon-v2.ico']='icons/favicon-v2.ico';files['/favicon.ico']='icons/favicon-v2.ico';files['/manifest.webmanifest']='manifest.webmanifest';
 const mime={html:'text/html; charset=utf-8',mjs:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',svg:'image/svg+xml',png:'image/png',ico:'image/x-icon',webmanifest:'application/manifest+json'};
@@ -73,9 +77,16 @@ const server=http.createServer(async(req,res)=>{
    if(url.pathname.endsWith('.wav'))res.setHeader('Cache-Control','public, max-age=31536000, immutable');
    res.setHeader('Content-Length',bytes.length);res.end(req.method==='HEAD'?undefined:bytes);return;
   }
-  const match=url.pathname.match(/^\/api\/(explorer|beginner|admin)\/(state|attempt|settings|chest|promote|advance|reset|skip|duel|adventure|quest|hint|story|maze|soccer|reading|rescue)$/);
+  const match=url.pathname.match(/^\/api\/(explorer|beginner|admin)\/(state|attempt|settings|chest|promote|advance|reset|skip|duel|adventure|quest|hint|story|maze|soccer|reading|rescue|rest|summary)$/);
   if(match){
    const [,id,action]=match;
+   if(action==='summary'){
+    // Grown-ups' daily summary (read-only). ?date=YYYY-MM-DD, default today.
+    if(req.method!=='GET')return reply(res,405,{error:'Method not allowed'});
+    const date=url.searchParams.get('date')||localDate(Date.now(),timeZone);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return reply(res,400,{error:'Use a YYYY-MM-DD date'});
+    await queue;return reply(res,200,await daySummary(await load(id),date,timeZone,path.join(data,'logs')));
+   }
    if(action==='reset'&&id!=='admin')return reply(res,403,{error:'Child progress cannot be reset from the website'});
    if(req.method==='GET'&&action==='state'){await queue;const p=await load(id);return reply(res,200,{profile:p,challenge:nextChallenge(p)});}
    if(req.method!=='POST'||action==='state')return reply(res,405,{error:'Method not allowed'});
@@ -84,6 +95,7 @@ const server=http.createServer(async(req,res)=>{
    if(!input||typeof input!=='object'||Array.isArray(input))return reply(res,400,{error:'JSON object required'});
    const work=queue.then(async()=>{
     let p=await load(id),result={},attempt,storyEvent,mazeEvent,soccerEvent,readingEvent,rescueEvent;
+    const revisionBefore=p.revision;
     if(action==='attempt'){
      const challenge=nextChallenge(p);
      if(input.challengeId!==challenge.id)return reply(res,409,{error:'Progress changed on another device. Reload to continue.'});
@@ -146,6 +158,9 @@ const server=http.createServer(async(req,res)=>{
      if(input.confirmation!=='RESET ADMIN')return reply(res,400,{error:'Confirm resetting Admin practice'});
      if(input.revision!==p.revision)return reply(res,409,{error:'Admin practice changed. Reload before resetting.'});
      const backup=await backupProfile(data,p);p=resetProgress(p);result={reset:true,backup};
+    }else if(action==='rest'){
+     // Grown-ups only: end today's wind-down early.
+     clearRest(p,Date.now());p.revision++;result={resting:false};
     }else if(action==='settings'){
      for(const k of ['leftHanded','sound'])if(typeof input[k]==='boolean')p.settings[k]=input[k];
     }else if(action==='chest'){
@@ -158,8 +173,16 @@ const server=http.createServer(async(req,res)=>{
      if(input.revision!==p.revision)return reply(res,409,{error:'Progress changed. Reload before advancing.'});
      result=advanceLeague(p);if(!result)return reply(res,400,{error:'Claim this gem’s crown first'});
     }
+    // Only real moves count as play (a repeated no-op request leaves the save untouched).
+    if(!['settings','reset','rest'].includes(action)&&(p.revision!==revisionBefore||action==='attempt')){
+
+     // Calm wind-down: only when a lesson or a labyrinth has just finished.
+     const now=Date.now();trackPlay(p,now);
+     if(((action==='attempt'&&result.lesson)||(action==='maze'&&result.kind==='won'))&&windDownDue(p,now)){startRest(p,now);result={...result,windDown:true};}
+    }
     await save(p);
-    if(storyEvent)await diagnostics.record('story_action',storyEvent);
+    if(storyEvent)
+await diagnostics.record('story_action',storyEvent);
     if(mazeEvent)await diagnostics.record('maze_action',mazeEvent);
     if(rescueEvent)await diagnostics.record('rescue_action',rescueEvent);
     if(soccerEvent)await diagnostics.record('soccer_action',soccerEvent);

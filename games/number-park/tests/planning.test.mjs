@@ -12,7 +12,7 @@ test('Three goals execute actual dependencies, award once, and leave math/drawin
   assert.equal(planSteps(s).length,level+1);assert.equal(new Set(planChoices(s)).size,level+2);
   run(p,planSteps(s));assert.equal(p.planning.session.phase,'success');assert.equal(p.planning.badges,before.planning.badges+1);
   assert.throws(()=>send(p,'plan_step',{step:0}));assert.throws(()=>send(p,'plan_run'));
-  for(const k of Object.keys(before))if(!['revision','planning'].includes(k))assert.deepEqual(p[k],before[k]);
+  for(const k of Object.keys(before))if(!['revision','planning','play'].includes(k))assert.deepEqual(p[k],before[k]);
  }
 });
 test('Wrong order produces visible consequences, can be revised, and loses no badge',()=>{

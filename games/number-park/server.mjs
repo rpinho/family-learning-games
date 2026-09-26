@@ -5,6 +5,9 @@ import {join,resolve,extname} from 'node:path';
 import {homedir,hostname,networkInterfaces} from 'node:os';
 import {freshProfile,action,publicState,prepareProfile,VERSION} from './lib/math.mjs';
 import {recognizeArt} from './lib/symbol-recognition.mjs';
+import {daySummary,localDate} from './lib/day-summary.mjs';
+const timeZone=process.env.FAMILY_TZ||Intl.DateTimeFormat().resolvedOptions().timeZone;
+
 const doodleModel=JSON.parse(await readFile(new URL('./data/doodle-model.json',import.meta.url),'utf8'));
 const symbolModel=JSON.parse(await readFile(new URL('./data/symbol-model.json',import.meta.url),'utf8'));
 const data=process.env.NUMBER_PARK_DATA||join(homedir(),'.local/share/family-learning-games/number-park');
@@ -25,9 +28,17 @@ const server=http.createServer(async(req,res)=>{
  res.on('close',()=>{if(!res.writableFinished&&url.pathname.startsWith('/api/'))void log({type:'response_interrupted',...diagnostic,path:url.pathname.slice(0,120),ms:Date.now()-began});});
  try{
   if(url.pathname==='/health')return send(res,200,{ok:true,version:VERSION,diagnostics:{ok:!logError,error:logError}});
-  const route=url.pathname.match(/^\/api\/(beginner|explorer|admin)(?:\/(action|events))?$/);
+  const route=url.pathname.match(/^\/api\/(beginner|explorer|admin)(?:\/(action|events|summary))?$/);
   if(route){
    const [,id,op]=route;
+   if(op==='summary'){
+    // Parent-facing daily summary (read-only). ?date=YYYY-MM-DD, default today.
+    if(req.method!=='GET')return send(res,405,{error:'Read only.'});
+    const date=url.searchParams.get('date')||localDate(Date.now(),timeZone);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return send(res,400,{error:'Use a YYYY-MM-DD date.'});
+    queue=queue.catch(()=>{}).then(async()=>{try{send(res,200,daySummary(await load(id),date,timeZone));}catch(e){send(res,500,{error:'Could not read the summary.'});}});return;
+   }
+
    if(req.method==='GET'&&!op){
     queue=queue.catch(()=>{}).then(async()=>{try{const p=await load(id);await log({type:'sync_read',...diagnostic,player:id,revision:p.revision});send(res,200,publicState(p));}catch(e){send(res,500,{error:'Could not load your game.'});}});return;
    }

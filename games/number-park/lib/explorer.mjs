@@ -1,4 +1,4 @@
-import {COOKIE_GAME,cookieQuestion,COOKIE_MAX_LEVEL} from './cookie-division.mjs';
+import {COOKIE_GAME,cookieQuestion,COOKIE_MAX_LEVEL,FADE,STAGE_WINS,MASTERY_RUN} from './cookie-division.mjs';
 import {buildQuestion} from './place-build.mjs';
 export const EXPLORER_TRACK='explorer-math-1';
 export const EXPLORER_GAMES=[
@@ -13,19 +13,37 @@ export const EXPLORER_GAMES=[
 export const advanced=p=>p.id==='explorer';
 // Only this track's attempts inform its difficulty, independently per skill.
 // Neither old preschool play nor guided tracing can establish mastery here.
-export function challengeLevel(p,skill){
- if(skill==='cookies'){
-  // Credit old sharing success once, without promoting twice from the same
-  // short lesson. New drag rounds then drive this skill in either direction.
-  const oldWins=(p.history||[]).filter(h=>h.question?.track===EXPLORER_TRACK&&h.question.skill==='cookies'&&h.question.plan!=='drag3'&&(!h.question.mode||h.question.mode==='share')&&h.ok&&!h.helped).length;
-  let level=oldWins>=4?2:1,streak=0,struggles=0;
-  for(const h of p.history||[]){
-   if(h.question?.track!==EXPLORER_TRACK||h.question.skill!=='cookies'||h.question.plan!=='drag3')continue;
-   if(h.ok&&!h.helped){streak++;struggles=0;if(streak>=4){level=Math.min(COOKIE_MAX_LEVEL,level+1);streak=0;}}
-   else{streak=0;struggles++;if(struggles>=2){level=Math.max(1,level-1);struggles=0;}}
-  }
-  return level;
+const cookieRow=h=>h.question?.track===EXPLORER_TRACK&&h.question.skill==='cookies';
+// Cookie division progress: a level (1-6) and a help stage inside it.
+// Rounds saved before fading help existed (no question.fade) keep the old
+// ladder, so the level he had reached is never taken away; faded rounds then
+// move him through show -> hide -> own, and the quiet mastery check (five
+// clean rounds in a row on his own) moves him up a level.
+export function cookieProgress(p){
+ const history=p.history||[];
+ const oldWins=history.filter(h=>cookieRow(h)&&h.question.plan!=='drag3'&&(!h.question.mode||h.question.mode==='share')&&h.ok&&!h.helped).length;
+ let level=oldWins>=4?2:1,streak=0,struggles=0;
+ for(const h of history){
+  if(!cookieRow(h)||h.question.plan!=='drag3'||h.question.fade)continue;
+  if(h.ok&&!h.helped){streak++;struggles=0;if(streak>=4){level=Math.min(5,level+1);streak=0;}}
+  else{streak=0;struggles++;if(struggles>=2){level=Math.max(1,level-1);struggles=0;}}
  }
+ let stage=0,clean=0,rough=0,mastered=0;
+ for(const h of history){
+  if(!cookieRow(h)||!h.question.fade)continue;
+  if(h.ok&&!h.helped){
+   clean++;rough=0;
+   if(stage<2&&clean>=STAGE_WINS){stage++;clean=0;}
+   else if(stage===2&&clean>=MASTERY_RUN){mastered++;clean=0;if(level<COOKIE_MAX_LEVEL){level++;stage=0;}}
+  }else{
+   clean=0;rough++;
+   if(rough>=2){rough=0;if(stage>0)stage--;else if(level>1){level--;stage=1;}}
+  }
+ }
+ return {level,stage,fade:FADE[stage],clean,mastered,toMastery:stage===2?MASTERY_RUN-clean:null};
+}
+export function challengeLevel(p,skill){
+ if(skill==='cookies')return cookieProgress(p).level;
  let level=2,streak=0,struggles=0;
  for(const h of p.history||[]){
   if(h.question?.track!==EXPLORER_TRACK||h.question.skill!==skill)continue;
@@ -46,8 +64,10 @@ export function challengeQuestion(p,game,round,r){
  const skill=game==='mix'?skills[round%6]:({line:'sums',missing:'factor',count:'skip',addobjects:'multiply',subtract:'sums',pattern:'skip'}[game]||game);
  const level=challengeLevel(p,skill),roll=n=>Math.floor(r()*n);let q;
  if(skill==='cookies'){
+  const {fade}=cookieProgress(p);
   for(let trial=0;trial<40;trial++){
-   q={track:EXPLORER_TRACK,...cookieQuestion(level,r)};
+   q={track:EXPLORER_TRACK,...cookieQuestion(level,r,fade)};
+
    if(!(p.recent||[]).includes(q.fingerprint))break;
   }
   q.id=`${p.revision}:${p.history.length}:${round}:f1`;return q;

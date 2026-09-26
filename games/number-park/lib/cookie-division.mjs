@@ -8,11 +8,27 @@ const RANGES={
   2:{plates:[3,4],each:[3,5]},
   3:{plates:[3,4],each:[4,6]},
   4:{plates:[3,4],each:[4,6],mode:'fix'},
-  5:{plates:[4,5],each:[4,6],mode:'mixed'}
+  5:{plates:[4,5],each:[4,6],mode:'mixed'},
+  // Level 6, the top of the ladder: remainders. Cookies that can't be shared
+  // go to Cookie Buddy ("13 ÷ 4 = 3 r 1"). Never below level 6.
+  6:{plates:[3,5],each:[3,6],mode:'leftover'}
 };
-export const COOKIE_MAX_LEVEL=5;
+export const COOKIE_MAX_LEVEL=6;
 export const BAG_SLOTS=8; // bags on screen never reveal the answer: filled ones + one empty
-export const DRAG_MODES=['share','fix','mixed','bags','rows'];
+// 'leftover' is the drag remainder round. The old button-only 'remainder' and
+// 'snack' modes are not drag modes; saved ones are converted in prepareProfile.
+export const DRAG_MODES=['share','fix','mixed','bags','rows','leftover'];
+// Help fades inside every level, with no new screen or choice:
+//  show - plate counts visible, tips on (the original round)
+//  hide - counts hidden; the existing Help button brings them back
+//  own  - he says how many each BEFORE sharing; the cookies are the check
+// Two clean rounds move show -> hide -> own; five clean rounds in a row at
+// 'own' (the quiet mastery check) move up a level.
+export const FADE=['show','hide','own'];
+export const STAGE_WINS=2,MASTERY_RUN=5;
+// Cookie Buddy's spot counts as one more plate in a leftover round.
+export const slotsFor=q=>q.mode==='leftover'?q.plates+1:q.plates;
+
 export const isDragCookie=q=>!q.mode||DRAG_MODES.includes(q.mode);
 // Spoken prompts are kept to one or two short sentences (a parent turned a
 // tutor's verbosity down in a recording). The picture and the question step
@@ -27,6 +43,7 @@ export const COOKIE_HINTS={
  mixed:'Put the tray cookies on the smallest plates first. Then move one from a full plate to a small plate.',
  bags:'Fill one bag until it is full. Then start the next bag.',
  rows:'Put one cookie in each row. Then go around again.',
+ leftover:'Give every friend the same. Cookies you cannot share go to Cookie Buddy.',
  remainder:'Make full, equal plates. Count the cookies left over.',
  snack:'First take away the cookies Buddy ate. Then share the rest.'
 };
@@ -40,6 +57,15 @@ export const ASK_EACH='How many cookies does each friend get?';
 export const ASK_BAGS='How many bags did you fill?';
 export const ASK_ROWS='How many cookies are in each row?';
 export const askLine=q=>q.mode==='bags'?ASK_BAGS:q.mode==='rows'?ASK_ROWS:ASK_EACH;
+// 'own' stage: the same question, asked before any cookie moves.
+export const PREDICT_EACH='How many cookies will each friend get?';
+export const PREDICT_BAGS='How many bags will you fill?';
+export const PREDICT_ROWS='How many cookies will go in each row?';
+export const predictLine=q=>q.mode==='bags'?PREDICT_BAGS:q.mode==='rows'?PREDICT_ROWS:PREDICT_EACH;
+export const PREDICT_RIGHT='You knew it!';
+export const leftoverPrompt=(total,plates)=>`Share ${total} cookies with ${plates} friends. Extras go to Cookie Buddy.`;
+export const MONSTER_TOO_MANY='Cookie Buddy has enough for one more each. Share them!';
+export const MONSTER_SHORT='Make every plate the same first.';
 export const unevenMessage=q=>q.mode==='rows'?'Not equal yet. Move one from a long row to a short row.':'Not equal yet. Move one from a fuller plate to a smaller plate.';
 export const askRetryMessage=q=>q.mode==='bags'?'Count the full bags.':q.mode==='rows'?'Count the cookies in one row.':'Count the cookies on one plate.';
 // Rows start at 3 rows: 2 x 2 and 2 x 3 arrays were too easy in a recording.
@@ -48,6 +74,7 @@ export const ROWS_MAX_TOTAL=24;
 export function cookiePrompt(total,plates,mode='share',baked=total,eaten=0,bagSize=0){
  if(mode==='bags')return bagsPrompt(bagSize);
  if(mode==='rows')return rowsPrompt(total,plates);
+ if(mode==='leftover')return leftoverPrompt(total,plates);
  if(mode==='fix')return FIX_PROMPT;
  if(mode==='mixed')return MIXED_PROMPT;
  if(mode==='snack')return `Cookie Buddy baked ${baked} cookies and ate ${eaten}. Share the rest with ${plates} friends. How many does each friend get, and how many are left over?`;
@@ -56,7 +83,8 @@ export function cookiePrompt(total,plates,mode='share',baked=total,eaten=0,bagSi
 }
 const legacySharePrompt=(total,plates)=>`Share ${total} cookies equally onto ${plates} plates. How many cookies go on each plate?`;
 export function cookieVoiceLines(){
- const lines=new Set([...Object.values(COOKIE_HINTS),FIX_PROMPT,MIXED_PROMPT,...LEGACY_PROMPTS,'Every friend has the same. Fair sharing!',ASK_EACH,ASK_BAGS,ASK_ROWS,'Count the cookies on one plate.','Count the full bags.','Count the cookies in one row.','A bag is not full yet. Fill it before you start a new one.']);
+ const lines=new Set([...Object.values(COOKIE_HINTS),FIX_PROMPT,MIXED_PROMPT,...LEGACY_PROMPTS,'Every friend has the same. Fair sharing!',ASK_EACH,ASK_BAGS,ASK_ROWS,PREDICT_EACH,PREDICT_BAGS,PREDICT_ROWS,PREDICT_RIGHT,'Count the cookies on one plate.','Count the full bags.','Count the cookies in one row.','A bag is not full yet. Fill it before you start a new one.']);
+ for(const [plates,each,leftover] of leftoverShapes())lines.add(leftoverPrompt(plates*each+leftover,plates));
  for(let size=2;size<=6;size++){lines.add(bagsPrompt(size));lines.add(legacyBagsPrompt(size));}
  for(const {plates:[minPlates,maxPlates],each:[minEach,maxEach],mode} of Object.values(RANGES))if(!mode)for(let plates=minPlates;plates<=maxPlates;plates++)for(let each=minEach;each<=maxEach;each++){lines.add(cookiePrompt(plates*each,plates));lines.add(legacySharePrompt(plates*each,plates));}
  for(const {rows:[minRows,maxRows],each:[minEach,maxEach]} of Object.values(ROWS))for(let rows=minRows;rows<=maxRows;rows++)for(let each=minEach;each<=maxEach;each++)if(rows*each<=ROWS_MAX_TOTAL)lines.add(rowsPrompt(rows*each,rows));
@@ -87,7 +115,26 @@ export function messyStart(plates,each,random,moves,tray=0){
  for(let k=0;k<tray;k++)c[(k+1)%plates]--;
  const draft=[];c.forEach((n,i)=>{for(let k=0;k<n;k++)draft.push(i);});for(let k=0;k<tray;k++)draft.push(null);return draft;
 }
-export function cookieQuestion(level,random){
+// Every (plates, each, leftover) a level-6 round can use; at most 26 cookies to drag.
+export const LEFTOVER_MAX_TOTAL=26;
+export function leftoverShapes(){
+ const out=[];const {plates:[a,b],each:[c,d]}=RANGES[6];
+ for(let plates=a;plates<=b;plates++)for(let each=c;each<=d;each++)for(let leftover=1;leftover<plates;leftover++)if(plates*each+leftover<=LEFTOVER_MAX_TOTAL)out.push([plates,each,leftover]);
+ return out;
+}
+export function cookieQuestion(level,random,stage='show'){
+ const q=baseCookieQuestion(level,random);
+ q.level=level; // level-6 reasoning rounds are built like level 5 but belong to 6
+ q.fade=FADE.includes(stage)?stage:'show';
+
+ return q;
+}
+function baseCookieQuestion(level,random){
+ if(level>=6&&random()<0.67){
+  const shapes=leftoverShapes(),[plates,each,leftover]=shapes[Math.floor(random()*shapes.length)],total=plates*each+leftover;
+  return {kind:'cookies',skill:'cookies',level,mode:'leftover',plan:'drag3',plates,total,baked:total,eaten:0,leftover,answer:each,max:total,prompt:leftoverPrompt(total,plates),fingerprint:JSON.stringify(['cookies','leftover',plates,total])};
+ }
+ if(level>=6)level=5; // the rest of level 6 is level-5 reasoning rounds
  const range=RANGES[level]||RANGES[1];
  const plates=range.plates[0]+Math.floor(random()*(range.plates[1]-range.plates[0]+1));
  const each=range.each[0]+Math.floor(random()*(range.each[1]-range.each[0]+1));
@@ -118,9 +165,10 @@ export function cookieQuestion(level,random){
 export function initialCookieDraft(q){
  return Array.isArray(q.start)&&q.start.length===q.total?[...q.start]:Array(q.total).fill(null);
 }
-export function validCookieDraft(draft,total,plates){
- return Array.isArray(draft)&&draft.length===total&&draft.every(n=>n===null||Number.isInteger(n)&&n>=0&&n<plates);
+export function validCookieDraft(draft,total,slots){
+ return Array.isArray(draft)&&draft.length===total&&draft.every(n=>n===null||Number.isInteger(n)&&n>=0&&n<slots);
 }
+
 export function cookieCounts(draft,plates){
  return Array.from({length:plates},(_,i)=>draft.filter(n=>n===i).length);
 }

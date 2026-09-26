@@ -68,19 +68,29 @@ test('old easy wins seed moderate sharing; new independent rounds advance and hi
  const p=freshProfile('explorer');p.xp=25;p.completed={multiply:3};
  p.history=Array.from({length:8},()=>({game:'cookies',question:{track:EXPLORER_TRACK,skill:'cookies'},ok:true,helped:false}));
  assert.equal(challengeLevel(p,'cookies'),2);act(p,{kind:'start',game:'cookies'});
+ // Help fades inside the level: two clean rounds each at show, hide, then own.
+ const stages=['show','show','hide','hide','own','own'];
  for(let round=0;round<6;round++){
   const q=p.session.question;
-  assert.ok(['share','bags','rows'].includes(q.mode));assert.equal(q.level,round<4?2:3);
+  assert.ok(['share','bags','rows'].includes(q.mode));assert.equal(q.level,2);assert.equal(q.fade,stages[round]);
   assert.equal(publicState(p).session.question.answer,undefined);
+  assert.equal(!!p.session.cookieAsk?.predict,q.fade==='own');
+  if(round===5)act(p,{kind:'hint'}); // help during a prediction skips it
+  if(p.session.cookieAsk?.predict){
+   assert.throws(()=>{const d=[...p.session.cookieDraft];d[0]=0;act(p,{kind:'cookie-place',questionId:q.id,draft:d});},/question/);
+   act(p,{kind:'cookie-answer',questionId:q.id,value:q.answer});assert.equal(p.session.cookiePredict,q.answer);
+  }
   for(let id=0;id<q.total;id++){
    const draft=[...p.session.cookieDraft];draft[id]=target(q,id);act(p,{kind:'cookie-place',questionId:q.id,draft});
   }
-  if(round>=4)act(p,{kind:'hint'});
   finish(p,q);
-  assert.equal(p.session.result.ok,true);act(p,{kind:'next'});
+  assert.equal(p.session.result.ok,true);assert.equal(p.session.result.helped,round===5);
+  if(round===4)assert.equal(p.session.cookieMessage,'You knew it!');
+  act(p,{kind:'next'});
  }
  assert.equal(p.completed.cookies,1);assert.equal(p.completed.multiply,3);
- assert.equal(p.xp,73);assert.equal(challengeLevel(p,'cookies'),2);assert.equal(challengeLevel(p,'multiply'),2);
+ assert.equal(p.xp,79);assert.equal(challengeLevel(p,'cookies'),2);assert.equal(challengeLevel(p,'multiply'),2);
+
  assert.equal(p.session.finished,true);
 });
 

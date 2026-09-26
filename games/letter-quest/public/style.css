@@ -11,3 +11,15 @@
 .feeder-done{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 12px;margin:0 auto 14px}.feeder-done .feeder-bear{font-size:52px;line-height:1}.feeder-berries{display:flex;flex-wrap:wrap;gap:2px;max-width:280px;font-size:26px}.feeder-berries i{font-style:normal;animation:feeder-drop .45s ease-out both}.feeder-done strong{width:100%;font-size:18px;color:#b3363f}
 @keyframes feeder-drop{0%{opacity:0;transform:translateY(-14px)}100%{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.feeder-munch b,.feeder-berries i{animation:none}}
+/* Bo's running story + calm wind-down + Grown-ups' Today */
+.story-card{max-width:500px;margin:12px auto;padding:12px 16px;border-radius:18px;background:linear-gradient(#fffaf0,#fff1d6);border:2px solid #efd3a0;text-align:left;box-shadow:0 3px 0 #e8c98f}
+.story-card .eyebrow{display:block;margin-bottom:4px}
+.celebration .story-card p{margin:4px 0;line-height:1.35}
+.celebration .story-card .story-old{color:#8a7a66;font-size:15px}
+.celebration .story-card .story-new{color:#4b3217;font-size:18px;font-weight:800;animation:story-in .6s ease-out both}
+@keyframes story-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.rest-view .medal{background:#e7ebff;color:#3a4580}
+.panel.today ul{margin:4px 0 10px 20px;padding:0}
+.panel.today li{margin:2px 0}
+.today-rest{margin-top:10px;padding:10px 12px;border-radius:12px;background:#eef2ff}
+@media(prefers-reduced-motion:reduce){.celebration .story-card .story-new{animation:none}}

@@ -1,5 +1,6 @@
 import {useHint,wasHinted} from './hints.mjs';
 import {foundationQuestion,foundationAttempt} from './foundation.mjs';
+import {addBoBeat,tellsBoStory} from './bo-story.mjs';
 // Coordinates are explicit handwriting centerlines in a 100 x 100 writing box.
 // Lowercase uses manuscript forms. These are practice models, not a clinical rubric.
 const parse = s => s.split('|').map(stroke => stroke.trim().split(' ').map(p => p.split(',').map(Number)));
@@ -282,6 +283,8 @@ export function applyAttempt(p,challenge,payload){
  if(result.ok){p.inLesson++;if(p.inLesson>=5){p.inLesson=0;p.completed++;p.xp+=20;lesson=true;if(p.completed%3===0){p.chests++;chest=true;}}}
  p.history.push({at:new Date().toISOString(),key,...(challenge.word?{word:challenge.word}:{}),...(challenge.spot?{spot:true}:{}),...(guided?{practice:'guided-tracing'}:{}),ok:result.ok,helped:!!payload.helped,score:Math.round(result.score*100),durationMs:Math.round(payload.durationMs),level:s.level});
  p.history=p.history.slice(-2000);
+ // A finished lesson adds the next beat of Bo's story.
+ const storyBeat=lesson&&tellsBoStory(p.id)?addBoBeat(p):null;
  p.questBook??={moves:0,words:0,matches:0,claimed:[]};
  if(result.ok){p.questBook.moves++;if(['spell','gap'].includes(challenge.type))p.questBook.words++;}
  let duel,bonus=0;
@@ -300,7 +303,8 @@ export function applyAttempt(p,challenge,payload){
   }
   duel={...d,rookOk,rookAnswer,pointReason,alreadyAwarded,bonus};
  }
- return {...result,xp:xp+(lesson?20:0)+bonus,lesson,chest,level:s.level,...(duel?{duel}:{})};
+ return {...result,xp:xp+(lesson?20:0)+bonus,lesson,chest,level:s.level,...(duel?{duel}:{}),...(storyBeat?{story:storyBeat}:{})};
+
 }
 export function leagueRows(p){return [{name:p.name,xp:p.xp-p.leagueBase,you:true,icon:'📖'},...['Fern the fox','Pip the penguin','Luna the owl','Bram the bear'].map((name,i)=>({name,xp:[250,170,95,35][i]+p.league*35,icon:['🦊','🐧','🦉','🐻'][i]}))].sort((a,b)=>b.xp-a.xp);}
 export function questRating(p){
