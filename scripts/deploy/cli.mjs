@@ -306,10 +306,17 @@ function plistFor(name, channel) {
 function writePlist(file, obj) {const t = `${file}.json-${process.pid}`; writeFileSync(t, JSON.stringify(obj)); run('plutil', ['-convert', 'xml1', '-o', file, t]); rmSync(t);}
 const loaded = label => run('launchctl', ['print', `gui/${UID}/${label}`], {allowFail: true}).status === 0;
 async function bootstrap(file, label) {
-  for (let i = 0; i < 20; i++) {const r = run('launchctl', ['bootstrap', `gui/${UID}`, file], {allowFail: true}); if (r.status === 0 || loaded(label)) return; await sleep(500);}
+  for (let i = 0; i < 20; i++) {const r = run('launchctl', ['bootstrap', `gui/${UID}`, file], {allowFail: true}); if (r.status === 0) return; await sleep(500);}
   throw new Error(`launchctl bootstrap ${label} failed`);
 }
-function bootout(label) {if (loaded(label)) run('launchctl', ['bootout', `gui/${UID}/${label}`], {allowFail: true});}
+// bootout returns before a slow-stopping job (e.g. a supervisor draining children) is gone;
+// wait until launchd has really unloaded it, or a following bootstrap is a silent no-op.
+async function bootout(label) {
+  if (!loaded(label)) return;
+  run('launchctl', ['bootout', `gui/${UID}/${label}`], {allowFail: true});
+  for (let i = 0; i < 60 && loaded(label); i++) await sleep(500);
+  if (loaded(label)) throw new Error(`launchctl bootout ${label} did not finish`);
+}
 const kickstart = label => run('launchctl', ['kickstart', '-k', `gui/${UID}/${label}`]);
 async function verifyServing(name, channel, version) {
   const port = portFor(name, channel), h = await health(name, port, game(name).startTimeout || 40);
@@ -457,13 +464,13 @@ async function cutover(cut, minIdle = null) {
       const voice = applyVoice(name, version, g.data);
       atomicSymlink(releaseDir(name, version), channelLink('live', name));
       const {obj} = plistFor(name, 'live');
-      bootout(label); await waitPortFree(g.port, 25); if (g.uiPort) await waitPortFree(g.uiPort, 25);
+      await bootout(label); await waitPortFree(g.port, 25); if (g.uiPort) await waitPortFree(g.uiPort, 25);
       writePlist(file, obj); await bootstrap(file, label);
       const v = await verifyServing(name, 'live', version);
       if (!v.ok) {
         log(`CUTOVER-FAILED ${name}: ${v.why}; restoring the old plist`);
         restoreVoiceManifests(name, g.data, voice);
-        bootout(label); await waitPortFree(g.port, 25);
+        await bootout(label); await waitPortFree(g.port, 25);
         copyFileSync(join(backupDir, 'plists', label + '.plist'), file); await bootstrap(file, label);
         const back = await health(name, g.port, 60);
         log(`CUTOVER-REVERTED ${name}: old service ${back.ok ? 'healthy' : 'UNHEALTHY'}`);
@@ -487,7 +494,7 @@ async function uncutover(backupDir) {
   try {
     for (const f of safeList(join(backupDir, 'plists'))) {
       const label = f.replace(/\.plist$/, ''), name = Object.keys(cfg.games).find(n => labelFor(n, 'live') === label);
-      bootout(label); if (name) await waitPortFree(game(name).port, 25);
+      await bootout(label); if (name) await waitPortFree(game(name).port, 25);
       copyFileSync(join(backupDir, 'plists', f), plistPath(label)); await bootstrap(plistPath(label), label);
       log(`UNCUTOVER ${label} restored from ${backupDir}`);
     }
