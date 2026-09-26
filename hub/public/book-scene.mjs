@@ -34,8 +34,9 @@ export function artFor(pages,lib,base='/book-art/'){
  const out={backgrounds:{},actors:{},props:{}};
  const url=f=>base+f;
  for(const p of pages){const s=p.scene;if(!s)continue;
-  const b=lib.backgrounds[s.bg];if(b)out.backgrounds[s.bg]={url:url(b.file)};
-  for(const a of s.actors){const A=lib.actors[a.id],P=A?.poses[a.pose];if(!P)continue;(out.actors[a.id]??={name:A.name||a.id,h:A.h||0.4,poses:{}}).poses[a.pose]={url:url(P.file),ar:P.ar||0.6,...(P.fly?{fly:true}:{})};}
+  const b=lib.backgrounds[s.bg];if(b)out.backgrounds[s.bg]={url:url(b.file),...(b.goal?{goal:b.goal}:{})};
+  // Every pose of an actor in the picture (the player switches poses as he plays: kick, cheer, dive, run).
+  for(const a of s.actors){const A=lib.actors[a.id];if(!A||out.actors[a.id])continue;out.actors[a.id]={name:A.name||a.id,h:A.h||0.4,poses:Object.fromEntries(Object.entries(A.poses).map(([k,P])=>[k,{url:url(P.file),ar:P.ar||0.6,...(P.fly?{fly:true}:{})}]))};}
   for(const pr of [...s.props,...(p.carrierProp?[{id:p.carrierProp}]:[])]){const P=lib.props[pr.id];if(P)out.props[pr.id]={url:url(P.file),h:P.h||0.12,ar:P.ar||1,...(P.seats?{seats:P.seats}:{})};}
  }
  return out;

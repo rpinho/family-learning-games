@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {safetyIssues,wrongEquations,lintChapter,safeDadLine,tokens} from '../lint.mjs';
+import {safetyIssues,wrongEquations,lintChapter,safeDadLine,tokens,spelledSound} from '../lint.mjs';
+import {SOUNDS} from '../plan.mjs';
 import {planChapter,chooseCast,chooseProps} from '../plan.mjs';
 import {templateChapter} from '../template.mjs';
 import {plans,saves,NOW} from './fixtures.mjs';
@@ -108,4 +109,24 @@ test('A family’s own toy names pass the brand rule only when allowed, and no o
  assert.deepEqual(safetyIssues('Little Mario naps.',{allow:['Mario']}),[]);
  assert.ok(safetyIssues('Little Mario builds with Lego.',{allow:['Mario']}).some(i=>i==='brand: "Lego"'));
  assert.ok(safetyIssues('Mario went to the hospital.',{allow:['Mario']}).some(i=>i.startsWith('illness')),'allowing a name never relaxes other rules');
+});
+
+test('Letter sounds are phonemes, never text the voice would spell out ("L L L")',()=>{
+ for(const [l,snd] of Object.entries(SOUNDS)){assert.match(snd,/^\[\[[^\]]+\]\]$/,l);assert.equal(spelledSound(snd),null,l);}
+ for(const p of plans())for(const b of p.beats)for(const t of [b.spoken,b.notIt,b.tap,b.hint,...(b.lines||[]).map(x=>x[1])].filter(Boolean))assert.equal(spelledSound(t),null,`${p.player} ${b.kind}: ${t}`);
+ for(const t of ['Sss! said the snake.','Lll!','Grrr, went the bear.','Zzzz.','Mmm, pizza!'])assert.ok(spelledSound(t),t);
+ for(const t of ['Hello, balloon! Coffee and a hiss.','[[sss]] and a hum'])assert.equal(spelledSound(t),null,t);
+ const p=plans(['2026-03-10'])[1],o=opts(p),c=templateChapter(p,library);c.pages[0].say.push(['narrator','Sss, went the snake.']);
+ assert.ok(lintChapter(c,p,o).some(i=>i.includes('read aloud as letter names')));
+});
+test('He plays: action pages are required, need a reaction after he acts, and a young soccer fan kicks the letter ball',()=>{
+ const p=plans(['2026-03-10'])[0],o=opts(p),good=templateChapter(p,library);
+ assert.ok(good.pages.filter(x=>x.action).length>=p.minActions);
+ let c=JSON.parse(JSON.stringify(good));c.pages.forEach(x=>{delete x.action;delete x.after;});assert.ok(lintChapter(c,p,o).some(i=>i.startsWith('needs at least')));
+ c=JSON.parse(JSON.stringify(good));c.pages.find(x=>x.action).after=[];assert.ok(lintChapter(c,p,o).some(i=>i.includes('needs "after" lines')));
+ c=JSON.parse(JSON.stringify(good));c.pages.find(x=>x.action==='drive').props=[];assert.ok(lintChapter(c,p,o).some(i=>i.includes('drive action needs "train"')));
+ const young=buildLearner({player:'young',name:'Ada',profile:{age:5,mathTrack:'early',interests:['soccer']},now:NOW,saves:saves('young')});
+ const k=planChapter(young,{date:'2026-03-10',profile:{interests:['soccer']}});const b2=k.beats[1];
+ assert.equal(b2.kind,'kick-letter');assert.equal(b2.balls.filter(x=>x===b2.letter).length,1);assert.equal(b2.balls.length,3);
+ assert.deepEqual(lintChapter(templateChapter(k,library),k,opts(k)),[],'the template handles the kick-letter beat');
 });

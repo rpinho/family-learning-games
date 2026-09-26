@@ -90,7 +90,7 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
    if(clip&&req.method==='GET'){try{const bytes=await readFile(join(bookDir,'voice',clip[1]));res.writeHead(200,{'Content-Type':'audio/wav','Content-Length':bytes.length,'Cache-Control':'max-age=31536000, immutable'});res.end(bytes);}catch(e){if(e.code==='ENOENT')send(res,404,{error:'Use device narration.'});else throw e;}return;}
    // Pictures: the household's own library (private, next to the chapters), else the generic one.
    const pic=u.pathname.match(/^\/book-art\/((?:bg|actors|props)\/[a-z0-9-]{1,60}\.(webp|png|svg|jpg))$/);
-   if(pic&&req.method==='GET'){for(const dir of [join(bookDir,'art','lib'),publicArt]){try{const bytes=await readFile(join(dir,pic[1]));res.writeHead(200,{'Content-Type':ART_TYPES[pic[2]],'Content-Length':bytes.length,'Cache-Control':'max-age=86400'});res.end(bytes);return;}catch(e){if(e.code!=='ENOENT')throw e;}}
+   if(pic&&req.method==='GET'){for(const dir of [join(bookDir,'art','lib'),publicArt]){try{const bytes=await readFile(join(dir,pic[1]));res.writeHead(200,{'Content-Type':ART_TYPES[pic[2]],'Content-Length':bytes.length,'Cache-Control':'max-age=300'});res.end(bytes);return;}catch(e){if(e.code!=='ENOENT')throw e;}}
     send(res,404,{error:'No picture.'});return;}
    return false;
   },

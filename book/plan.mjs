@@ -10,12 +10,18 @@ import {FIRST_WORDS,WORD_GROUPS,SENTENCES,SENTENCE_DISTRACT,scramble,tilesOf,end
 export function rng(seedText){let h=2166136261;for(const c of String(seedText)){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return()=>{h+=0x6D2B79F5;let t=h;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
 const pick=(a,r)=>a[Math.floor(r()*a.length)];
 export const LOOK={B:'PDR',D:'BOP',P:'BRF',R:'PBK',F:'EPT',E:'FLB',T:'ILF',L:'ITE',I:'LTJ',M:'NWH',N:'MHZ',W:'MVN',V:'WYU',O:'QCD',C:'OGQ',G:'COQ',S:'ZGC',A:'HVR',H:'NAK',K:'XRH',U:'VJO',Y:'VXT',Z:'NSX',X:'KYZ',J:'LUI',Q:'OGC'};
-export const SOUNDS={A:'a',B:'buh',C:'kuh',D:'duh',E:'eh',F:'fff',G:'guh',H:'hhh',I:'ih',J:'juh',K:'kuh',L:'lll',M:'mmm',N:'nnn',O:'o',P:'puh',Q:'kwuh',R:'rrr',S:'sss',T:'tuh',U:'uh',V:'vvv',W:'wuh',X:'ks',Y:'yuh',Z:'zzz'};
+// Letter sounds as phonemes in [[...]] (narrate.py speaks them as sounds). Written as text ("Lll", "Sss") the
+// voice spells them out as letter names ("L L L"), so a sound is never plain text.
+export const SOUNDS={A:'[[æ]]',B:'[[bə]]',C:'[[kə]]',D:'[[də]]',E:'[[ɛ]]',F:'[[fff]]',G:'[[ɡə]]',H:'[[hə]]',I:'[[ɪ]]',J:'[[dʒə]]',K:'[[kə]]',L:'[[lll]]',M:'[[mmm]]',N:'[[nnn]]',O:'[[ɑ]]',P:'[[pə]]',Q:'[[kwə]]',R:'[[ɹɹɹ]]',S:'[[sss]]',T:'[[tə]]',U:'[[ʌ]]',V:'[[vvv]]',W:'[[wə]]',X:'[[ks]]',Y:'[[jə]]',Z:'[[zzz]]'};
+// A sound for text shown to grown-ups (e.g. the quest card): /s/.
+export const soundText=s=>'/'+String(s).replace(/^\[\[|\]\]$/g,'')+'/';
 const WORD_NUM=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'];
 function numberOptions(answer,r,near=[]){const c=[...near,answer+1,answer-1,answer+2,answer-2].filter(n=>Number.isInteger(n)&&n>=0&&n!==answer);return shuffle([answer,...[...new Set(c)].slice(0,2)],r).map(String);}
 // Things to count: [library prop id, spoken plural, emoji fallback]
+// Things the child DOES with his finger to move the story (no learning attached; he plays).
+export const ACTIONS={kick:'he flicks the ball into the goal past a diving keeper (a soccer pitch or the garden; a friend or Dad is the keeper)',throw:'he throws a ball and a friend runs to fetch it',drive:'he pulls the lever and drives the train to the next place (the train carries everyone)'};
 export const COUNT_THINGS=[['baby-dino','baby dinosaurs','🦕'],['ball','soccer balls','⚽'],['egg','dinosaur eggs','🥚'],['pizza','pizzas','🍕'],['star','stars','⭐']];
-const cap=w=>w[0].toUpperCase()+w.slice(1);
+const cap=w=>w.startsWith('[[')?w:w[0].toUpperCase()+w.slice(1);
 const near=l=>[...(LOOK[l]||'')].filter(c=>c!==l);
 const pictureFor=l=>FIRST_WORDS.filter(([w])=>w[0].toUpperCase()===l&&!w.includes('-'));
 
@@ -25,7 +31,7 @@ export function letterOwners(cast){
  return (cast||[]).map(c=>{const name=c.name.replace(/^the\s+/i,'');const letter=(c.letter||name[0]).toUpperCase();
   return {id:c.id,name:c.name,letter,sound:SOUNDS[letter]||letter,word:(c.word||name.split(/\s+/)[0]).toLowerCase(),shape:c.shape||`make the shape of the letter ${letter}`};}).filter(o=>/^[A-Z]$/.test(o.letter));
 }
-function earlyBeats(m,r,{cast,collection,things}){
+function earlyBeats(m,r,{cast,collection,things,soccer=false}){
  const keys=new Set((collection?.keys)||[]),known=new Set(m.literacy.letters),learning=m.literacy.learning.filter(c=>/^[A-Z]$/.test(c));
  const owners=letterOwners(cast);
  // Today's letter: a friend's letter he is still learning, else a friend's letter not yet collected, else any.
@@ -41,17 +47,19 @@ function earlyBeats(m,r,{cast,collection,things}){
  return {
   letter:L,
   beats:[
-   {id:'b1',kind:'teach-letter',what:`${owner.name} shows its letter ${L} (${L} says "${sound}") and gives ${m.name} the ${L} key`,letter:L,sound,owner:owner.id,ownerName:owner.name,word:owner.word,shape:owner.shape,
+   {id:'b1',kind:'teach-letter',what:`${owner.name} shows its letter ${L} (the sound ${soundText(sound)}) and gives ${m.name} the ${L} key`,letter:L,sound,owner:owner.id,ownerName:owner.name,word:owner.word,shape:owner.shape,
     lines:[[owner.id||'narrator',`${cap(sound)}! ${cap(sound)}! Look, I ${owner.shape}.`],['narrator',`${L}. ${L} says ${sound}. ${cap(owner.word)} starts with ${L}.`]],tap:`${L}! ${cap(sound)}!`},
-   {id:'b2',kind:'stones',what:`letter stepping-stones: the friends can only cross on the ${L} stones, so ${m.name} taps the three ${L} stones`,letter:L,sound,stones,need:3,
+   soccer?{id:'b2',kind:'kick-letter',what:`on the soccer pitch three balls have letters on them; only the ${L} ball can score, so ${m.name} kicks the ${L} ball past the keeper into the goal (he flicks it himself)`,letter:L,sound,balls:shuffle([L,...others],r),
+     spoken:`Kick the ${L} ball! ${L} says ${sound}.`,notIt:`That ball is not ${L}. Find ${sound}.`,done:`Goal! You kicked the ${L} ball in!`}
+   :{id:'b2',kind:'stones',what:`letter stepping-stones: the friends can only cross on the ${L} stones, so ${m.name} taps the three ${L} stones`,letter:L,sound,stones,need:3,
     spoken:`Tap the stones with ${L}. ${L} says ${sound}.`,notIt:`That one is not ${L}. Find ${sound}.`,done:`Hop, hop, hop! You found all the ${L} stones!`},
    {id:'b3',kind:'count',what:`count the ${things_} because the story needs that many (seats on the train, slices, eggs to carry)`,thing,things:things_,emoji,n:count,
     spoken:`Tap each one to count the ${things_}.`,ask:`How many ${things_}?`,answer:String(count),options:numberOptions(count,r)},
    {id:'b4',kind:'no',what:`${who.name} insists "${cap(review.word)} starts with ${wrong}" and wants to do something silly with it; ${m.name} says NO! and fixes it`,who:who.id,whoName:who.name,
     claim:`${cap(review.word)} starts with ${wrong}!`,ask:`Can I put the ${wrong} key in the ${review.word} lock? Can I? Please?`,wrong,right:review.letter,options:shuffle([review.letter,wrong,near(review.letter).find(c=>c!==wrong)||'O'],r),
-    ifYes:`Oops! The ${wrong} key does not fit. Hmm.`,caught:`You said NO! ${cap(review.word)} starts with ${review.letter}, not ${wrong}.`,fixSpoken:`Which letter does ${review.word} start with?`,hint:`Listen: ${review.word}. ${cap(review.sound||SOUNDS[review.letter])}. What sound is first?`}
+    ifYes:`Oops! The ${wrong} key does not fit. Hmm.`,caught:`You said NO! ${cap(review.word)} starts with ${review.letter}, not ${wrong}.`,fixSpoken:`Which letter does ${review.word} start with?`,hint:`Listen: ${review.word}. ${review.sound||SOUNDS[review.letter]}. What sound is first?`}
   ],
-  quest:`Find three things that start with ${L} (${sound}) and show Dad!`,
+  quest:`Find three things that start with ${L} and show Dad!`,
   reward:{key:L}
  };
 }
@@ -129,7 +137,7 @@ export function planChapter(model,{date,profile={},cast=null,collection={},life=
  let base;
  if(early){
   // Today's letter owner must be in today's chapter.
-  base=earlyBeats(model,r,{cast:everyone,collection,things});
+  base=earlyBeats(model,r,{cast:everyone,collection,things,soccer:(model.interests||[]).includes('soccer')||(profile.interests||[]).includes('soccer')});
   const owner=everyone.find(c=>c.id===base.beats[0].owner);if(owner&&!members.some(c=>c.id===owner.id))members.push(owner);
   const noWho=everyone.find(c=>c.id===base.beats[3].who);if(noWho&&!members.some(c=>c.id===noWho.id)){base.beats[3].who=members.find(c=>c.id!==base.beats[0].owner)?.id||members[0].id;base.beats[3].whoName=(members.find(c=>c.id===base.beats[3].who)||members[0]).name;base.beats[3].what=base.beats[3].what.replace(noWho.name,base.beats[3].whoName);}
  }else{
@@ -141,7 +149,7 @@ export function planChapter(model,{date,profile={},cast=null,collection={},life=
  const interests=shuffle(model.interests||[],r).slice(0,3);
  return {player:model.player,name:model.name,date,level:early?'early':'reader',sibling:profile.sibling||null,companion,cast:members,props:chooseProps(model,cast),interests,
   arc:profile.arc||null,compass:profile.compass||[],themes:chooseThemes(life,r),collection:{keys:collection?.keys||[],words:collection?.words||[]},
-  ...base,magic:base.magic||[],
+  ...base,magic:base.magic||[],actions:ACTIONS,minActions:early?2:1,
   dadLines:(model.recent?.dadLines||[]).map(l=>l.text),yesterday:model.recent?.yesterday||null,play:model.recent?.play||[],
   tricks:(model.tricks||[]).map(t=>t.text),previous:model.story?.book||[],running:model.story?.running||[]};
 }
