@@ -280,7 +280,7 @@ export function applyAttempt(p,challenge,payload){
  const xp=result.ok?(payload.helped?8:12):2;p.xp+=xp;
  let lesson=false,chest=false;
  if(result.ok){p.inLesson++;if(p.inLesson>=5){p.inLesson=0;p.completed++;p.xp+=20;lesson=true;if(p.completed%3===0){p.chests++;chest=true;}}}
- p.history.push({at:new Date().toISOString(),key,...(challenge.word?{word:challenge.word}:{}),...(guided?{practice:'guided-tracing'}:{}),ok:result.ok,helped:!!payload.helped,score:Math.round(result.score*100),durationMs:Math.round(payload.durationMs),level:s.level});
+ p.history.push({at:new Date().toISOString(),key,...(challenge.word?{word:challenge.word}:{}),...(challenge.spot?{spot:true}:{}),...(guided?{practice:'guided-tracing'}:{}),ok:result.ok,helped:!!payload.helped,score:Math.round(result.score*100),durationMs:Math.round(payload.durationMs),level:s.level});
  p.history=p.history.slice(-2000);
  p.questBook??={moves:0,words:0,matches:0,claimed:[]};
  if(result.ok){p.questBook.moves++;if(['spell','gap'].includes(challenge.type))p.questBook.words++;}

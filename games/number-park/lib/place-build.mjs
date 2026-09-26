@@ -8,8 +8,10 @@ export const PLACES=[
  {key:'ones',value:1,one:'one',many:'ones',color:'green'}
 ];
 export const BUILD_MAX_PER_PLACE=12;
-export const BUILD_PROMPT_WORDS='Build this number with the blocks. Then press check.';
-export const BUILD_PROMPT_NUMBER='Read the number. Build it with the blocks. Then press check.';
+export const BUILD_PROMPT_WORDS='Build this number with blocks.';
+export const BUILD_PROMPT_NUMBER='Read the number. Build it with blocks.';
+// Saved rounds from before the prompts were shortened.
+const LEGACY_BUILD_PROMPTS=['Build this number with the blocks. Then press check.','Read the number. Build it with the blocks. Then press check.'];
 export const BUILD_HINTS={
  words:'Look at each color. Add that many blocks of each kind.',
  number:'Say the number out loud. Each digit tells you how many blocks of one kind.'
@@ -47,7 +49,7 @@ export function buildFeedback(target,counts,checks=0){
  return {ok,parts,lines,message:lines.join(' ')};
 }
 export function placeVoiceLines(){
- const lines=new Set([BUILD_PROMPT_WORDS,BUILD_PROMPT_NUMBER,...Object.values(BUILD_HINTS)]);
+ const lines=new Set([BUILD_PROMPT_WORDS,BUILD_PROMPT_NUMBER,...LEGACY_BUILD_PROMPTS,...Object.values(BUILD_HINTS)]);
  PLACES.forEach((place,i)=>{
   lines.add(`${place.many[0].toUpperCase()+place.many.slice(1)} are right.`);
   lines.add(`Too many ${place.many}.`);lines.add(`Too few ${place.many}.`);

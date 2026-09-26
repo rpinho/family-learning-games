@@ -6,6 +6,7 @@ import {soccerVoiceLines} from './soccer.mjs';
 import {readingVoiceLines} from './reading.mjs';
 import {briefLine,SHORT_FEEDBACK} from './voice.mjs';
 import {FOUNDATION_WORDS} from './foundation.mjs';
+import {recapVoiceLines} from './recap.mjs';
 export const ROOK_CHEERS = [
   'My hat just did a victory lap!',
   'That answer deserves a tiny trumpet.',
@@ -161,5 +162,6 @@ export function allVoiceLines(){
   for(const name of [...FAMILY_NAMES,'Rook'])lines.push(`Build ${name}. Start at the left. Tap the letters in order.`);
   lines.push(...SHORT_FEEDBACK,...[...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'].map(c=>`Letter ${c}.`));
   for(const word of FOUNDATION_WORDS)lines.push(`Complete the word ${word}. Choose the missing letter.`);
+  lines.push(...recapVoiceLines());
   return [...new Set([...lines,...lines.map(briefLine)])];
 }

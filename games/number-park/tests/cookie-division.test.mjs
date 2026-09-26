@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {freshProfile,action,publicState,gamesFor,prepareProfile} from '../lib/math.mjs';
 import {challengeLevel,EXPLORER_TRACK} from '../lib/explorer.mjs';
-import {cookiePrompt,cookieVoiceLines,cookieQuestion} from '../lib/cookie-division.mjs';
+import {cookiePrompt,cookieVoiceLines,cookieQuestion,isDragCookie,askLine,ASK_ROWS} from '../lib/cookie-division.mjs';
 const act=(p,input)=>action(p,{...input,revision:p.revision});
 // Plates fair → answer the three-choice question (the new last step of a drag round).
 const finish=(p,q)=>{act(p,{kind:'cookie-check',questionId:q.id});if(p.session.cookieAsk)act(p,{kind:'cookie-answer',questionId:q.id,value:q.answer});};
@@ -15,6 +15,7 @@ test('all levels keep drag sharing and every prompt is spoken',()=>{
   const q=cookieQuestion(level,()=>((i*37)%97)/97);
   assert.equal(q.level,level);assert.equal(q.plan,'drag3');assert.ok(lines.has(q.prompt));
   if(q.mode==='bags'){assert.ok(level>=3);assert.equal(q.total,q.bagSize*q.answer);continue;}
+  if(q.mode==='rows'){assert.ok(level>=2);assert.equal(q.total,q.plates*q.answer);continue;}
   assert.equal(q.mode,'share');
   assert.equal(q.total,q.plates*q.answer);assert.ok(q.total<=24);
   assert.equal(q.baked,q.total+q.eaten);assert.ok(lines.has(q.prompt));
@@ -69,7 +70,7 @@ test('old easy wins seed moderate sharing; new independent rounds advance and hi
  assert.equal(challengeLevel(p,'cookies'),2);act(p,{kind:'start',game:'cookies'});
  for(let round=0;round<6;round++){
   const q=p.session.question;
-  assert.ok(['share','bags'].includes(q.mode));assert.equal(q.level,round<4?2:3);
+  assert.ok(['share','bags','rows'].includes(q.mode));assert.equal(q.level,round<4?2:3);
   assert.equal(publicState(p).session.question.answer,undefined);
   for(let id=0;id<q.total;id++){
    const draft=[...p.session.cookieDraft];draft[id]=target(q,id);act(p,{kind:'cookie-place',questionId:q.id,draft});
@@ -87,7 +88,7 @@ test('levels 4-5 start from a lopsided layout that needs reasoning, not just dea
  const lines=new Set(cookieVoiceLines());
  for(const level of [4,5])for(let i=0;i<300;i++){
   const q=cookieQuestion(level,Math.random);
-  if(q.mode==='bags')continue;
+  if(q.mode==='bags'||q.mode==='rows')continue;
   assert.equal(q.mode,level===4?'fix':'mixed');assert.equal(q.total,q.plates*q.answer);assert.ok(lines.has(q.prompt));
   assert.equal(q.start.length,q.total);
   const counts=Array.from({length:q.plates},(_,p)=>q.start.filter(v=>v===p).length),tray=q.start.filter(v=>v===null).length;
@@ -154,4 +155,26 @@ test('an independent share round needs the right count to earn full stars',()=>{
  assert.throws(()=>act(p,{kind:'cookie-answer',questionId:q.id,value:99}));
  act(p,{kind:'cookie-answer',questionId:q.id,value:q.answer});assert.deepEqual(p.session.result,{ok:true,answer:q.answer,xp:10,helped:false});
  act(p,{kind:'next'});assert.equal(p.session.cookieAsk,undefined);
+});
+
+test('rows of cookies: mixed into levels 2+, start at 3 rows, drag like plates, ask per row',()=>{
+ const lines=new Set(cookieVoiceLines()),seen={1:0,2:0,3:0,4:0,5:0};
+ for(const level of [1,2,3,4,5])for(let i=0;i<300;i++){
+  const q=cookieQuestion(level,Math.random);if(q.mode!=='rows')continue;seen[level]++;
+  assert.ok(q.plates>=3&&q.plates<=(level===2?4:5));assert.ok(q.answer>=3);assert.ok(q.total<=24);
+  assert.equal(q.total,q.plates*q.answer);assert.ok(lines.has(q.prompt));assert.equal(q.plan,'drag3');
+  assert.ok(isDragCookie(q),'rows must use the drag screen, never the old button screen');assert.equal(askLine(q),ASK_ROWS);
+ }
+ assert.equal(seen[1],0);for(const level of [2,3,4,5])assert.ok(seen[level]>40,`level ${level} rows ${seen[level]}`);
+ assert.ok(lines.has(ASK_ROWS));
+ let q;for(let i=0;i<200&&!(q&&q.mode==='rows');i++)q=cookieQuestion(2,Math.random);
+ const p=freshProfile('explorer');q={...q,id:'rows1',track:EXPLORER_TRACK};
+ p.session={game:'cookies',round:0,correct:0,independent:0,helped:false,result:null,finished:false,started:0,question:q,cookieDraft:Array(q.total).fill(null)};
+ const put=(id,row)=>{const d=[...p.session.cookieDraft];d[id]=row;act(p,{kind:'cookie-place',questionId:q.id,draft:d});};
+ for(let id=0;id<q.total;id++)put(id,id===0?1:Math.floor(id/q.answer));
+ act(p,{kind:'cookie-check',questionId:q.id});assert.match(p.session.cookieMessage,/long row to a short row/);
+ put(0,0);act(p,{kind:'cookie-check',questionId:q.id});assert.ok(p.session.cookieAsk);
+ const wrong=p.session.cookieAsk.options.find(v=>v!==q.answer);
+ act(p,{kind:'cookie-answer',questionId:q.id,value:wrong});assert.match(p.session.cookieMessage,/one row/);
+ act(p,{kind:'cookie-answer',questionId:q.id,value:q.answer});assert.equal(p.session.result.ok,true);assert.equal(p.history.at(-1).question.mode,'rows');
 });
