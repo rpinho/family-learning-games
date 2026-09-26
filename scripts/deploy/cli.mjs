@@ -230,7 +230,8 @@ function envFor(name, channel, {port, uiPort, data, deployDir} = {}) {
     LETTER_QUEST_DATA: name === 'letter-quest' ? data : dataDir('letter-quest', channel === 'check' ? 'live' : channel),
     FAMILY_CHANNEL: channel, FAMILY_DEPLOY_DIR: deployDir || join(ROOT, channel)};
   if (g.uiPort) env.ARCADE_UI_PORT = String(uiPort || uiPortFor(name, channel));
-  for (const [k, v] of Object.entries(g.env || {})) env[k] = String(v).replace('{data}', data);
+  // deploy.json top-level "env" applies to every service (e.g. FAMILY_EXTRA_HOSTS); a game's own "env" wins.
+  for (const [k, v] of Object.entries({...cfg.env, ...g.env})) env[k] = String(v).replace('{data}', data);
   return env;
 }
 // base = the release directory (checks) or the channel symlink (launchd), so restarts follow the symlink.
