@@ -5,14 +5,15 @@
 #   BOOK_TIMEOUT (seconds, default 2700). Extra arguments go to generate.mjs.
 set -uo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-limit() { perl -e 'alarm shift; exec @ARGV' "$1" "${@:2}"; }
-low() { if command -v taskpolicy >/dev/null; then nice -n 19 taskpolicy -b "$@"; else nice -n 19 "$@"; fi; }
+# Time-boxed, lowest priority. (perl exec needs real programs, not shell functions; exec failure = 127.)
+if command -v taskpolicy >/dev/null; then LOW=(nice -n 19 taskpolicy -b); else LOW=(nice -n 19); fi
+limit() { perl -e '$t=shift; alarm $t; exec @ARGV or exit 127' "$1" "${LOW[@]}" "${@:2}"; }
 echo "== book nightly $(date '+%Y-%m-%d %H:%M:%S')"
 if [ -n "${BOOK_RECAP_SCRIPT:-}" ] && [ -f "$BOOK_RECAP_SCRIPT" ]; then
   yesterday="$(node -e 'const d=new Date(Date.now()-864e5);console.log(new Intl.DateTimeFormat("en-CA",{year:"numeric",month:"2-digit",day:"2-digit"}).format(d))')"
-  limit 120 low node "$BOOK_RECAP_SCRIPT" --date "$yesterday" || echo "recap failed (non-fatal)"
+  limit 120 node "$BOOK_RECAP_SCRIPT" --date "$yesterday" || echo "recap failed (non-fatal)"
 fi
-limit "${BOOK_TIMEOUT:-2700}" low node "$here/generate.mjs" "$@"
+limit "${BOOK_TIMEOUT:-2700}" node "$here/generate.mjs" "$@"
 rc=$?
 [ $rc -eq 142 ] && echo "book nightly: TIMED OUT"
 echo "== done rc=$rc $(date '+%H:%M:%S')"
