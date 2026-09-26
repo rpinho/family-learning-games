@@ -5,7 +5,7 @@ const send=(p,input)=>act(p,{...input,revision:p.revision,questionId:p.session?.
 test('Every activity receives its own instruction, not another game’s prompt',()=>{for(const [game,pattern] of [['asteroids',/picture/],['wordoku',/row and column/],['rhyme',/rhymes/],['sort',/cargo dock/],['cipher',/code key/]])assert.match(question(game,1,0).prompt,pattern);const p=fresh('admin');assert.match(send(p,{kind:'start',game:'pixel'}).line,/Paint anything/);});
 function solve(p){const s=p.session,q=s.q;let draft;
  if(['builder','cipher','transform','orbit'].includes(s.game))draft=[...q.answer];
- if(s.game==='wordoku')draft=[...q.model];if(s.game==='train')draft=q.word.split(' ');if(s.game==='search')draft=q.path.map(String);if(s.game==='beats')draft=Array(Number(q.answer)).fill('beat');
+ if(s.game==='wordoku')draft=[...q.model];if(s.game==='train')draft=q.answer.split(' ');if(s.game==='search')draft=q.path.map(String);if(s.game==='beats')draft=Array(Number(q.answer)).fill('beat');
  if(draft)send(p,{kind:'draft',draft});return send(p,{kind:'answer',answer:q.answer,durationMs:1200});
 }
 for(const game of GAMES.filter(g=>g.id!=='pixel'))test(`${game.name}: eight solvable rounds, single reward, reload, separate skill level`,()=>{

@@ -1,6 +1,8 @@
 import {FLIGHT_MS,challengeFor,movingTargets,aimAt,learningDefaults} from './challenges.mjs';
+import {SLING_TRACK,MODES,STONES,scoreStone,spellingWords,SLING_VERSION} from './sling.mjs';
 export {FLIGHT_MS,challengeFor,movingTargets,aimAt,learningDefaults,READING_NAMES,voiceLines,cueLine,nameLine} from './challenges.mjs';
-export const VERSION='target-trail-2026-09-12-instant-controls';
+export const VERSION='target-trail-2026-09-26-sling-word-breaks';
+export {SLING_VERSION};
 export const PLAYERS={beginner:'Beginner',explorer:'Explorer',admin:'Admin · Admin'};
 export const WORDS={start:'Drag to aim. Lift your finger to shoot.',ready:'Ready for five arrows?',bull:'Bullseye!',done:'Five arrows! Ready for another round?',higher:'Try a little higher.',lower:'Try a little lower.',left:'Try a little left.',right:'Try a little right.',hit:'Nice shot!',move:'This target moves. Take your time.'};
 export const THEMES=[{name:'Golden hour',sky:'#fff0c6',floor:'#f4bb63',ink:'#17455b',accent:'#e76836'},{name:'Blue lagoon',sky:'#d2f7ff',floor:'#67d2d1',ink:'#123f69',accent:'#e75e5e'},{name:'Night lights',sky:'#17254c',floor:'#334b85',ink:'#fff2ca',accent:'#ffd36d'},{name:'Berry bright',sky:'#f9d9f3',floor:'#bb94d9',ink:'#49346d',accent:'#e55683'}];
@@ -28,8 +30,33 @@ function startRound(p,reason){
  p.learning??=learningDefaults(p.id);
  p.round={id:`r-${p.revision}`,rules:2,motion:3,mode:p.mode||'learn',readingLevel:p.learning.level,sequence:p.rounds,seed:(p.rounds+1)*9013+(p.id==='explorer'?79:31),level:p.level,theme:p.rounds%THEMES.length,shots:[],score:0,done:false};
 }
+export function slingState(p){return p.sling??={rounds:0,stones:0,correct:0,stars:0,best:0,stages:{},round:null,history:[]};}
+// literacy is injected by the server from Letter Quest (read-only); clients cannot supply it.
+function startSling(p,literacy){
+ const s=slingState(p),track=SLING_TRACK[p.id]||'mixed',modes=MODES[track],mode=modes[s.rounds%modes.length];
+ if(mode==='spelling')s.stages.spelling??=Math.max(1,Math.min(3,literacy?.wordLevel||1));
+ const stage=s.stages[mode]||1;
+ s.round={id:`s-${p.revision}`,track,mode,stage,seed:(s.rounds+1)*7919+(p.id==='explorer'?53:17),wordOffset:s.rounds*3,shots:[],score:0,correct:0,done:false,
+  ...(mode==='letters'?{letters:(literacy?.letters||[]).filter(c=>/^[A-Z]$/.test(c)).slice(0,26)}:{}),...(mode==='spelling'?{words:spellingWords(stage)}:{})};
+}
 export function action(p,input){
  if(!input||input.revision!==p.revision)fail('Your game changed. Tap Refresh.',409);
+ if(input.type==='sling-start'){const s=slingState(p);if(s.round&&!s.round.done)return p;startSling(p,input.literacy);p.revision++;return p;}
+ if(input.type==='sling-shot'){
+  const s=slingState(p),r=s.round;if(!r||r.done||input.shot!==r.shots.length)fail('That stone has already been used.',409);
+  if(input.roundId!==r.id)fail('The round changed. Aim at the new targets.',409);
+  if(!Number.isFinite(input.dx)||!Number.isFinite(input.dy)||Math.abs(input.dx)>400||Math.abs(input.dy)>400)fail('Invalid pull. Try again.');
+  const score=scoreStone(r,r.shots.length,input.dx,input.dy);
+  r.shots.push({...score,dx:input.dx,dy:input.dy,input:['touch','mouse','pen','keyboard'].includes(input.pointer)?input.pointer:'unknown',at:new Date().toISOString()});
+  r.score+=score.points;s.stones++;if(score.outcome==='correct'){r.correct++;s.correct++;}
+  if(r.shots.length===STONES){
+   r.done=true;s.rounds++;s.best=Math.max(s.best,r.score);s.stars+=r.correct>=4?3:r.correct>=2?2:1;
+   const wrong=r.shots.filter(x=>x.outcome==='wrong-target').length;
+   if(r.mode!=='letters'){if(r.correct>=4)s.stages[r.mode]=Math.min(3,r.stage+1);else if(wrong>=3)s.stages[r.mode]=Math.max(1,r.stage-1);}
+   s.history.push({id:r.id,mode:r.mode,stage:r.stage,score:r.score,correct:r.correct,wrong,misses:r.shots.filter(x=>x.outcome==='miss').length,at:new Date().toISOString()});s.history=s.history.slice(-200);
+  }
+  p.revision++;return p;
+ }
  if(input.type==='level'){if(!Number.isInteger(input.level)||input.level<1||input.level>20)fail('Choose a level from 1 to 20.');p.level=input.level;p.streak=0;p.struggles=0;startRound(p,'level');}
  else if(input.type==='mode'){if(!['learn','aim'].includes(input.mode))fail('Choose letters or aim only.');p.mode=input.mode;p.streak=0;p.struggles=0;startRound(p,'mode');}
  else if(input.type==='reading'){if(!Number.isInteger(input.level)||input.level<1||input.level>5)fail('Choose a practice stage.');p.learning??=learningDefaults(p.id);p.learning.level=input.level;p.learning.streak=0;p.learning.struggles=0;p.mode='learn';startRound(p,'reading');}
@@ -60,4 +87,4 @@ export function action(p,input){
  }else fail('Unknown action.');
  p.revision++;return p;
 }
-export const publicState=p=>({...p,history:p.history.slice(-10)});
+export const publicState=p=>({...p,history:p.history.slice(-10),...(p.sling?{sling:{...p.sling,history:p.sling.history.slice(-10)}}:{})});

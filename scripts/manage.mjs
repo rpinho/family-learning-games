@@ -19,7 +19,7 @@ if(command==='setup'){
  function stop(code=0){if(stopping)return;stopping=true;for(const p of children)p.kill('SIGTERM');setTimeout(()=>process.exit(code),700);}
  for(const [i,[game,key]]of games.entries()){
   const port=Number(process.env.BASE_PORT||4811)+i,data=resolve(root,'.data',game);await mkdir(data,{recursive:true,mode:0o700});
-  const child=spawn(process.execPath,['server.mjs'],{cwd:resolve(root,'games',game),stdio:'inherit',env:{...process.env,[key]:data,HOST:'127.0.0.1',PORT:String(port)}});children.push(child);
+  const child=spawn(process.execPath,['server.mjs'],{cwd:resolve(root,'games',game),stdio:'inherit',env:{...process.env,LETTER_QUEST_DATA:resolve(root,'.data','letter-quest'),[key]:data,HOST:'127.0.0.1',PORT:String(port)}});children.push(child);
   child.on('error',e=>{console.error(e.message);stop(1);});child.on('exit',code=>{if(!stopping){console.error(game+' stopped');stop(code||1);}});
   console.log(`${game}: http://localhost:${port}/?player=beginner (or ?player=explorer)`);
  }

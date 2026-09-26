@@ -88,6 +88,7 @@ Choose live dribbling, feint puzzles, or word penalties. Existing saves stay sep
 | [Maze Garden](games/maze-garden) | Tracing mazes, Make a Maze, 3D letter labyrinths and obstacle rescues | http://localhost:4810/#maze-garden |
 | [Three in a Row](games/three-in-a-row) | Tic-tac-toe against Rook and one-move practice puzzles | http://localhost:4810/#three-in-a-row |
 | [Target Trail](games/target-trail) | Moving targets, adjustable aiming difficulty and spoken letters/words | http://localhost:4810/#target-trail |
+| [Sling Shot](games/target-trail) | Pull back and let go: hit the spoken letter, number, pattern, times-table answer or next spelling letter | http://localhost:4810/#sling |
 | [Rook Academy](hub/CHESS.md) | 270 lessons across beginner and advanced paths, review and local practice games | http://localhost:4810/#chess |
 | [Soccer Club](hub/README.md#dribble-duel) | Live dribbling, feint puzzles and word penalties | http://localhost:4810/#dribble-duel |
 

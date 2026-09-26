@@ -5,8 +5,12 @@ import {fileURLToPath} from 'node:url';
 import {homedir,networkInterfaces} from 'node:os';
 import {randomBytes} from 'node:crypto';
 import {PLAYERS,VERSION,newProfile,action} from './engine.mjs';
+import {literacyFrom,DEFAULT_TRACK} from './public/word-break.mjs';
 const root=dirname(fileURLToPath(import.meta.url)),data=process.env.MAZE_DATA_DIR||resolve(homedir(),'.local/share/family-learning-games/maze-garden'),port=Number(process.env.PORT||4322);
 mkdirSync(resolve(data,'logs'),{recursive:true,mode:0o700});
+const letterData=process.env.LETTER_QUEST_DATA||resolve(homedir(),'.local/share/family-learning-games/letter-quest');
+// Read-only look at Letter Quest progress so word breaks match each child.
+function literacy(id){let save=null;try{save=JSON.parse(readFileSync(resolve(letterData,id+'.json'),'utf8'));}catch{}return literacyFrom(save,DEFAULT_TRACK[id]||'mixed');}
 const hosts=new Set(['localhost','127.0.0.1','localhost',...Object.values(networkInterfaces()).flat().filter(Boolean).map(n=>n.address)]);
 const log=e=>appendFileSync(resolve(data,'logs',new Date().toISOString().slice(0,10)+'.jsonl'),JSON.stringify({at:new Date().toISOString(),version:VERSION,...e})+'\n',{mode:0o600});
 const file=p=>resolve(data,p+'.json');
@@ -20,6 +24,7 @@ const server=http.createServer(async(req,res)=>{res.setHeader('X-Content-Type-Op
  if(url.pathname==='/api/health')return send(res,200,{version:VERSION,name:'Maze Garden'});
  if(url.pathname.startsWith('/api/')){const player=url.searchParams.get('player');if(!Object.hasOwn(PLAYERS,player))return send(res,400,{error:'Choose a player'});
  if(req.method==='GET'&&url.pathname==='/api/state')return send(res,200,{...load(player),serverNow:Date.now()});
+ if(req.method==='GET'&&url.pathname==='/api/word-break')return send(res,200,literacy(player));
  if(req.method!=='POST'||req.headers['content-type']!=='application/json')return send(res,405,{error:'Use JSON POST'});
  let body='',size=0;for await(const chunk of req){size+=chunk.length;if(size>30000)return send(res,413,{error:'Too much data'});body+=chunk;}const input=JSON.parse(body);
  if(url.pathname==='/api/event'){log({player,event:'client',type:String(input.type||'').slice(0,40),detail:String(input.detail||'').slice(0,500)});return send(res,200,{ok:true});}

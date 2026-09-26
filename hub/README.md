@@ -1,6 +1,6 @@
 # One app: Family Learning Games
 
-Run `npm run play` at the repository root, then open **http://localhost:4810/**. This home screen contains nine destinations, including **Guess My Drawing**, **Rook Academy**, **Maze Garden** and **Soccer Club**. Install this home screen once, not each game. Browser installation behavior depends on platform and secure-origin support; plain HTTP on a LAN can retain browser security chrome.
+Run `npm run play` at the repository root, then open **http://localhost:4810/**. This home screen contains ten destinations, including **Guess My Drawing**, **Rook Academy**, **Maze Garden** and **Soccer Club**. Install this home screen once, not each game. Browser installation behavior depends on platform and secure-origin support; plain HTTP on a LAN can retain browser security chrome.
 
 Beginner and Explorer links: `/?player=beginner` and `/?player=explorer`. The hub remembers the selected preset on the device. The name remains large at the top. Use **Grown-ups** on the home screen to change it. The reading-and-code gate adds a deliberate step; it is not authentication.
 
@@ -55,3 +55,7 @@ Player IDs must match the existing game profiles. `games` contains only trusted 
 Optional prerecorded stock narration: with an existing local Kokoro environment, set `FAMILY_VOICE_MODELS` and `FAMILY_DATA`, then run `scripts/build-voice.py` inside `hub/`. It generates finite original American-English prompts using the stock `af_heart` voice. No cloned person, recording uploads or API key. Without the cache, the app uses the device's American-English speech voices when available. Voice quality varies and offline speech is not guaranteed.
 
 The root `npm test` includes hub rule/proxy tests. A feature-detected read-only WebMCP hook reports the current game/preset where supported; it does not play a child's game or change scores.
+
+**Sling Shot** opens Target Trail at `/?mode=sling`. Its stones are saved in Target Trail's profile (`sling`), and `sling-shot` actions rank the Sling Shot card. Arrow rounds still rank Target Trail. Content is chosen automatically per player. There is no picker.
+
+**Word breaks.** Maze Garden, Target Trail (arrows and sling), Three in a Row and Word Arcade pause at natural break points for one short spoken letter or word item. It is always passable: after two misses, the answer glows. Levels come from a read-only view of that player's Letter Quest progress.

@@ -28,7 +28,7 @@ test('Hub persists only the chosen profile, rejects replay/foreign origins, and 
   assert.deepEqual((await readdir(data)).sort(),['admin.json','logs']);
   const savedBeforeMenu=await readFile(join(data,'admin.json'),'utf8');
   const menu=await(await fetch(base+'/api/menu?player=admin')).json();
-  assert.equal(new Set(menu.order).size,9); // Background ranking may still be warming; never wait for it.
+  assert.equal(new Set(menu.order).size,10); // Background ranking may still be warming; never wait for it.
   assert.deepEqual(Object.keys(menu),['order','ready']);
   assert.equal((await(await fetch(base+'/api/menu?player=beginner')).json()).order[0],'letter-quest');
   assert.equal((await fetch(base+'/api/menu?player=unknown')).status,400);

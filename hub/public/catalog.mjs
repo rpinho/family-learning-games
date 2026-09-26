@@ -56,6 +56,16 @@ export const CATALOG = [
     color: "#ffd3b5",
   },
   {
+    id: "sling",
+    name: "Sling Shot",
+    description: "Pull back, let go. Hit the right one.",
+    color: "#cdeaa8",
+    icon: "/sling.svg",
+    preview: "sling",
+    game: "target-trail",
+    query: "mode=sling",
+  },
+  {
     id: "dribble-duel",
     name: "Soccer Club",
     description: "Live dribbling, clever feints and word penalties.",

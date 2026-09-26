@@ -29,6 +29,7 @@ export function activityFor(source, row) {
   if (row.type !== 'action') return null;
   const action = row.input?.kind || row.input?.type;
   if(source === 'number-park'&&['art_guess','art_label','drawing'].includes(action))return 'drawing-studio';
+  if(source === 'target-trail'&&action === 'sling-shot')return 'sling';
   const play = {
     'number-park': ['trace', 'answer', 'plan_cards', 'plan_step', 'plan_run', 'art_part', 'shape', 'reading_answer'],
     'word-arcade': ['answer', 'draft', 'art'],

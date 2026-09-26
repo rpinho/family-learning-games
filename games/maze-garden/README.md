@@ -26,3 +26,11 @@ New word stops draw from 33 short words in 11 three-choice families and avoid th
 First help circles the next junction. After five seconds, More help marks only its outgoing branch. Replaying a junction cue does not inflate assistance. The next maze starts with help off and available on request. Every completion earns three stars; hints alone do not automatically lower the chosen level. Independent completions and substantial extra exploration still inform the provisional difficulty heuristic. Existing boards, previous stars and histories are retained; assistance is recorded separately from completion.
 
 Requested hints enlarge dense boards to tracing size and center the junction. A white-edged purple arrow makes the next branch visible over the existing trail; a short spoken cue explains when the move goes back. The first hint still withholds the branch, the five-second stronger-help pause remains, and Overview/Find me stay available. Sound respects the existing mute preference.
+
+## Word breaks (2026-09-26)
+
+- Tracing mazes: one break at the finish before *You found the way!* opens. Without puzzle stops, there is also one break when the explorer passes half of the solution (on finger lift).
+- Make a Maze: one break when *Play my maze* builds the drawing. The existing sound stop at the flag remains the second checkpoint.
+- Each checkpoint happens once per maze per browser session.
+
+Word breaks use the shared `word-break.mjs` (identical copy in Target Trail, Three in a Row, Maze Garden and Word Arcade; tests compare the copies). Each is one short spoken item, always passable: a wrong tap wiggles, and after two misses the answer glows. No hearts, no skip menu. Levels come from a read-only look at Letter Quest's save (`LETTER_QUEST_DATA`; `npm start` points every game at `.data/letter-quest`) through `GET /api/word-break`, which returns only derived letters/levels. Beginner gets a letter break (find the letter among look-alikes, or which letter a picture starts with). Explorer gets a word break (find a word among look-alikes, or build a spoken sentence from shuffled tiles, where names are not always last, said/asked is never second to last, several tiles are capitalised, and from level 2 there is one look-alike extra tile). Results go to the client event log as `word-break`.
