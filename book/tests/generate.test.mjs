@@ -60,3 +60,10 @@ test('Chapters carry their cast; pages know who is on them; portraits only when 
  assert.deepEqual(ch.pages[0].cast,['dragon','cat']);
  assert.ok(ch.pages.some(pg=>pg.cast.length===1&&pg.cast[0]==='dragon'));
 });
+test('Friends are recognised on a page by a short name too',async()=>{
+ const {castOnPage}=await import('../assemble.mjs');
+ const cast=[{id:'h',name:'Rainbow the hedgehog'},{id:'p',name:'Captain Parrot'},{id:'b',name:'Big Owl'},{id:'t',name:'the Little Cats'}];
+ assert.deepEqual(castOnPage(cast,'Rainbow rolled and Parrot squawked.'),['h','p']);
+ assert.deepEqual(castOnPage(cast,'A big tree. The captain waved.'),[]);
+ assert.deepEqual(castOnPage(cast,'Owl hooted with the little cats.'),['b','t']);
+});

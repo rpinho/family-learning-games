@@ -6,7 +6,7 @@ and only ever added: an existing clip is never rewritten. Prints {"clips": {text
 import hashlib, json, os, sys
 from pathlib import Path
 req = json.loads(Path(sys.argv[1]).read_text())
-out = Path(req['out']); out.mkdir(parents=True, exist_ok=True)
+out = Path(req['out']); out.mkdir(mode=0o700, parents=True, exist_ok=True)
 voice = req.get('voice', 'af_heart'); speed = float(req.get('speed', 0.95))
 def key(text): return hashlib.sha256(f'book-1\0{voice}\0{speed}\0{text}'.encode()).hexdigest()[:16]
 todo = [t for t in dict.fromkeys(req['lines']) if t.strip() and not (out / (key(t) + '.wav')).exists()]

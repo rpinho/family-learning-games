@@ -3,10 +3,20 @@ import {splitLines} from './lint.mjs';
 export const CHAPTER_SCHEMA='family-book-chapter-1';
 // Fixed lines the reader speaks. Content prompts always speak; HOW_TO is said once per session.
 export const UI_LINES={mistakePrompt:'Uh oh. I think I made a mistake. Can you find it?',howTo:'Tap the part that is wrong.',notIt:'That part is right. Keep looking!',fixPrompt:'What should it be?',yes:'Yes!',tryAgain:'Try again.',greatReading:'Great reading!'};
+// Which friends a page mentions: the full name, or its capitalised first/last word
+// ("Rainbow" for "Rainbow the hedgehog", "Parrot" for "Captain Parrot").
+const GENERIC=new Set(['The','Big','Little','Captain','Mr','Mrs','Miss','Doctor','Sir','Lady']);
+export function castOnPage(cast,text){
+ const re=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+ return cast.filter(c=>{const core=c.name.replace(/^the\s+/i,''),words=core.split(/\s+/);
+  if(new RegExp(`\\b${re(core)}\\b`,'i').test(text))return true;
+  return [words[0],words.at(-1)].filter(w=>/^[A-Z][a-z]{2,}$/.test(w)&&!GENERIC.has(w)).some(w=>new RegExp(`\\b${re(w)}\\b`).test(text));
+ }).map(c=>c.id);
+}
 export function assemble(story,plan,{number=1,source='template',lint=[],generatedAt=new Date().toISOString(),dadLines=[],portraits=new Set()}={}){
  const byId=Object.fromEntries(plan.challenges.map(c=>[c.id,c]));
  const cast=(plan.cast||[plan.companion]).map(c=>({id:c.id||c.name,name:c.name,emoji:c.emoji||'⭐',portrait:portraits.has(c.id)?`${c.id}.jpg`:null}));
- const who=text=>cast.filter(c=>new RegExp(`\\b${c.name.replace(/^the\s+/i,'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\\b`,'i').test(text)).map(c=>c.id);
+ const who=text=>castOnPage(cast,text);
  const pages=story.pages.map((p,i)=>{
   const text=p.text.trim().replace(/\s*[—–]\s*/g,', ');
   const base={id:`p${i+1}`,text,lines:splitLines(text),cast:who(text)};
