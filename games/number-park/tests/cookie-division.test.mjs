@@ -4,13 +4,18 @@ import {freshProfile,action,publicState,gamesFor,prepareProfile} from '../lib/ma
 import {challengeLevel,EXPLORER_TRACK} from '../lib/explorer.mjs';
 import {cookiePrompt,cookieVoiceLines,cookieQuestion} from '../lib/cookie-division.mjs';
 const act=(p,input)=>action(p,{...input,revision:p.revision});
+// Plates fair → answer the three-choice question (the new last step of a drag round).
+const finish=(p,q)=>{act(p,{kind:'cookie-check',questionId:q.id});if(p.session.cookieAsk)act(p,{kind:'cookie-answer',questionId:q.id,value:q.answer});};
+const target=(q,id)=>q.mode==='bags'?Math.floor(id/q.bagSize):Math.floor(id/q.answer);
 
 test('all levels keep drag sharing and every prompt is spoken',()=>{
  const p=freshProfile('explorer'),lines=new Set(cookieVoiceLines());
  assert.equal(challengeLevel(p,'cookies'),1);
  for(let level=1;level<=3;level++)for(let i=0;i<100;i++){
   const q=cookieQuestion(level,()=>((i*37)%97)/97);
-  assert.equal(q.level,level);assert.equal(q.mode,'share');assert.equal(q.plan,'drag3');
+  assert.equal(q.level,level);assert.equal(q.plan,'drag3');assert.ok(lines.has(q.prompt));
+  if(q.mode==='bags'){assert.ok(level>=3);assert.equal(q.total,q.bagSize*q.answer);continue;}
+  assert.equal(q.mode,'share');
   assert.equal(q.total,q.plates*q.answer);assert.ok(q.total<=24);
   assert.equal(q.baked,q.total+q.eaten);assert.ok(lines.has(q.prompt));
   assert.equal(q.prompt,cookiePrompt(q.total,q.plates,q.mode,q.baked,q.eaten));
@@ -34,7 +39,7 @@ test('cookie sharing saves each move, rejects shortcuts and gives a non-revealin
  for(let id=1;id<q.total;id++)put(id,0);
  act(p,{kind:'cookie-check',questionId:q.id});assert.match(p.session.cookieMessage,/Not equal/);assert.equal(p.session.result,null);
  for(let id=q.answer;id<q.total;id++)put(id,Math.floor(id/q.answer));
- act(p,{kind:'cookie-check',questionId:q.id});assert.deepEqual(p.session.result,{ok:true,answer:q.answer,xp:4,helped:true});
+ finish(p,q);assert.deepEqual(p.session.result,{ok:true,answer:q.answer,xp:4,helped:true});
  assert.equal(p.history.at(-1).cookieChecks,1);assert.equal(p.history.at(-1).distribution.length,q.plates);
  assert.throws(()=>act(p,{kind:'cookie-check',questionId:q.id}));
  act(p,{kind:'next'});assert.equal(p.session.question.mode,'share');assert.equal(p.session.cookieDraft.length,p.session.question.total);
@@ -64,13 +69,13 @@ test('old easy wins seed moderate sharing; new independent rounds advance and hi
  assert.equal(challengeLevel(p,'cookies'),2);act(p,{kind:'start',game:'cookies'});
  for(let round=0;round<6;round++){
   const q=p.session.question;
-  assert.equal(q.mode,'share');assert.equal(q.level,round<4?2:3);
+  assert.ok(['share','bags'].includes(q.mode));assert.equal(q.level,round<4?2:3);
   assert.equal(publicState(p).session.question.answer,undefined);
   for(let id=0;id<q.total;id++){
-   const draft=[...p.session.cookieDraft];draft[id]=Math.floor(id/q.answer);act(p,{kind:'cookie-place',questionId:q.id,draft});
+   const draft=[...p.session.cookieDraft];draft[id]=target(q,id);act(p,{kind:'cookie-place',questionId:q.id,draft});
   }
   if(round>=4)act(p,{kind:'hint'});
-  act(p,{kind:'cookie-check',questionId:q.id});
+  finish(p,q);
   assert.equal(p.session.result.ok,true);act(p,{kind:'next'});
  }
  assert.equal(p.completed.cookies,1);assert.equal(p.completed.multiply,3);
@@ -82,6 +87,7 @@ test('levels 4-5 start from a lopsided layout that needs reasoning, not just dea
  const lines=new Set(cookieVoiceLines());
  for(const level of [4,5])for(let i=0;i<300;i++){
   const q=cookieQuestion(level,Math.random);
+  if(q.mode==='bags')continue;
   assert.equal(q.mode,level===4?'fix':'mixed');assert.equal(q.total,q.plates*q.answer);assert.ok(lines.has(q.prompt));
   assert.equal(q.start.length,q.total);
   const counts=Array.from({length:q.plates},(_,p)=>q.start.filter(v=>v===p).length),tray=q.start.filter(v=>v===null).length;
@@ -95,7 +101,8 @@ test('a fix round saves plate-to-plate moves, hides the answer, and only fair pl
  const p=freshProfile('explorer');
  p.history=Array.from({length:12},()=>({game:'cookies',question:{track:EXPLORER_TRACK,skill:'cookies',plan:'drag3',mode:'share'},ok:true,helped:false}));
  assert.equal(challengeLevel(p,'cookies'),4);
- act(p,{kind:'start',game:'cookies'});const q=p.session.question;
+ for(let rev=1;rev<80;rev++){p.revision=rev;act(p,{kind:'start',game:'cookies'});if(p.session.question.mode==='fix')break;}
+ const q=p.session.question;
  assert.equal(q.mode,'fix');assert.deepEqual(p.session.cookieDraft,q.start);
  assert.equal(publicState(p).session.question.answer,undefined);
  act(p,{kind:'cookie-check',questionId:q.id});assert.match(p.session.cookieMessage,/Not equal/);assert.equal(p.session.result,null);
@@ -106,7 +113,7 @@ test('a fix round saves plate-to-plate moves, hides the answer, and only fair pl
   const from=counts.findIndex(n=>n>q.answer),to=counts.findIndex(n=>n<q.answer),id=d.indexOf(from);
   const next=[...d];next[id]=to;act(p,{kind:'cookie-place',questionId:q.id,draft:next});
  }
- act(p,{kind:'cookie-check',questionId:q.id});
+ finish(p,q);
  assert.equal(p.session.result.ok,true);assert.equal(p.session.result.helped,true); // one uneven check counts as corrected
  assert.equal(p.history.at(-1).question.mode,'fix');
 });
@@ -117,4 +124,34 @@ test('the adaptive ladder now reaches level 5 and still eases on struggle',()=>{
  assert.equal(challengeLevel(p,'cookies'),5);
  p.history.push(...Array.from({length:2},()=>({game:'cookies',question:{track:EXPLORER_TRACK,skill:'cookies',plan:'drag3'},ok:true,helped:true})));
  assert.equal(challengeLevel(p,'cookies'),4);
+});
+
+test('bags: each bag holds a fixed number, overfilling is refused, and the answer is the number of bags',()=>{
+ let q;for(let i=0;i<200&&!(q&&q.mode==='bags');i++)q=cookieQuestion(4,Math.random);
+ assert.equal(q.mode,'bags');assert.equal(q.total,q.bagSize*q.answer);assert.ok(q.plates>q.answer);
+ const p=freshProfile('explorer');q={...q,id:'bags1',track:EXPLORER_TRACK};
+ p.session={game:'cookies',round:0,correct:0,independent:0,helped:false,result:null,finished:false,started:0,question:q,cookieDraft:Array(q.total).fill(null)};
+ assert.equal(publicState(p).session.question.answer,undefined);
+ const put=(id,bag)=>{const d=[...p.session.cookieDraft];d[id]=bag;act(p,{kind:'cookie-place',questionId:q.id,draft:d});};
+ for(let id=0;id<q.bagSize;id++)put(id,0);
+ assert.throws(()=>put(q.bagSize,0),/full/);
+ for(let id=q.bagSize;id<q.total-1;id++)put(id,Math.floor(id/q.bagSize));
+ put(q.total-1,q.answer); // last cookie in a new bag: one bag not full
+ act(p,{kind:'cookie-check',questionId:q.id});assert.match(p.session.cookieMessage,/not full/);assert.equal(p.session.cookieAsk,undefined);
+ put(q.total-1,q.answer-1);
+ act(p,{kind:'cookie-check',questionId:q.id});assert.equal(p.session.cookieAsk.options.length,3);assert.ok(p.session.cookieAsk.options.includes(q.answer));
+ assert.throws(()=>put(0,1)); // board is frozen while the question is open
+ const wrong=p.session.cookieAsk.options.find(v=>v!==q.answer);
+ act(p,{kind:'cookie-answer',questionId:q.id,value:wrong});assert.equal(p.session.result,null);assert.match(p.session.cookieMessage,/full bags/);
+ act(p,{kind:'cookie-answer',questionId:q.id,value:q.answer});
+ assert.equal(p.session.result.ok,true);assert.equal(p.session.result.helped,true);assert.equal(p.history.at(-1).askTries,1);
+});
+test('an independent share round needs the right count to earn full stars',()=>{
+ const p=freshProfile('explorer'),q={...cookieQuestion(1,()=>0),id:'ask1',track:EXPLORER_TRACK};
+ p.session={game:'cookies',round:0,correct:0,independent:0,helped:false,result:null,finished:false,started:0,question:q,cookieDraft:Array(q.total).fill(null)};
+ for(let id=0;id<q.total;id++){const d=[...p.session.cookieDraft];d[id]=Math.floor(id/q.answer);act(p,{kind:'cookie-place',questionId:q.id,draft:d});}
+ act(p,{kind:'cookie-check',questionId:q.id});assert.equal(p.session.result,null);assert.ok(p.session.cookieAsk);
+ assert.throws(()=>act(p,{kind:'cookie-answer',questionId:q.id,value:99}));
+ act(p,{kind:'cookie-answer',questionId:q.id,value:q.answer});assert.deepEqual(p.session.result,{ok:true,answer:q.answer,xp:10,helped:false});
+ act(p,{kind:'next'});assert.equal(p.session.cookieAsk,undefined);
 });

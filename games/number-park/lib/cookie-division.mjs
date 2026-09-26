@@ -11,7 +11,8 @@ const RANGES={
   5:{plates:[4,5],each:[4,6],mode:'mixed'}
 };
 export const COOKIE_MAX_LEVEL=5;
-export const DRAG_MODES=['share','fix','mixed'];
+export const BAG_SLOTS=8; // bags on screen never reveal the answer: filled ones + one empty
+export const DRAG_MODES=['share','fix','mixed','bags'];
 export const isDragCookie=q=>!q.mode||DRAG_MODES.includes(q.mode);
 export const FIX_PROMPT='Cookie Buddy piled the cookies unevenly. Move cookies between the plates until every friend has the same.';
 export const MIXED_PROMPT='Some cookies are on the plates and some are still on the tray. Make every plate the same. The plates hide their numbers, so count carefully.';
@@ -19,11 +20,16 @@ export const COOKIE_HINTS={
  share:'Give one cookie to each plate, then go around again.',
  fix:'Find the fullest plate. Move one cookie to the plate with the fewest. Keep going.',
  mixed:'Put the tray cookies on the smallest plates first. Then move one from a full plate to a small plate.',
+ bags:'Fill one bag until it is full. Then start the next bag.',
  remainder:'Make full, equal plates. Count the cookies left over.',
  snack:'First take away the cookies Buddy ate. Then share the rest.'
 };
 
-export function cookiePrompt(total,plates,mode='share',baked=total,eaten=0){
+export const bagsPrompt=size=>`Cookie Buddy is packing bags. Each bag holds ${size} cookies. Fill the bags. How many bags do you need?`;
+export const ASK_EACH='How many cookies does each friend get?';
+export const ASK_BAGS='How many bags did you fill?';
+export function cookiePrompt(total,plates,mode='share',baked=total,eaten=0,bagSize=0){
+ if(mode==='bags')return bagsPrompt(bagSize);
  if(mode==='fix')return FIX_PROMPT;
  if(mode==='mixed')return MIXED_PROMPT;
  if(mode==='snack')return `Cookie Buddy baked ${baked} cookies and ate ${eaten}. Share the rest with ${plates} friends. How many does each friend get, and how many are left over?`;
@@ -31,7 +37,8 @@ export function cookiePrompt(total,plates,mode='share',baked=total,eaten=0){
  return `Share ${total} cookies equally onto ${plates} plates. How many cookies go on each plate?`;
 }
 export function cookieVoiceLines(){
- const lines=new Set([...Object.values(COOKIE_HINTS),FIX_PROMPT,MIXED_PROMPT,'Every friend has the same. Fair sharing!']);
+ const lines=new Set([...Object.values(COOKIE_HINTS),FIX_PROMPT,MIXED_PROMPT,'Every friend has the same. Fair sharing!',ASK_EACH,ASK_BAGS,'Count the cookies on one plate.','Count the full bags.','A bag is not full yet. Fill it before you start a new one.']);
+ for(let size=2;size<=6;size++)lines.add(bagsPrompt(size));
  for(const {plates:[minPlates,maxPlates],each:[minEach,maxEach],mode} of Object.values(RANGES))if(!mode)for(let plates=minPlates;plates<=maxPlates;plates++)for(let each=minEach;each<=maxEach;each++)lines.add(cookiePrompt(plates*each,plates));
  for(let plates=2;plates<=4;plates++)for(let each=4;each<=7;each++)for(let leftover=1;leftover<plates;leftover++)lines.add(cookiePrompt(plates*each+leftover,plates,'remainder'));
  for(let plates=3;plates<=5;plates++)for(let each=4;each<=8;each++)for(let leftover=0;leftover<plates;leftover++)for(let eaten=2;eaten<=4;eaten++){
@@ -64,6 +71,12 @@ export function cookieQuestion(level,random){
  const range=RANGES[level]||RANGES[1];
  const plates=range.plates[0]+Math.floor(random()*(range.plates[1]-range.plates[0]+1));
  const each=range.each[0]+Math.floor(random()*(range.each[1]-range.each[0]+1));
+ // From level 3 up, about one round in three is 'bags': the other meaning of
+ // division (how many groups of a known size), dragged the same way.
+ if(level>=3&&random()<0.34){
+  const size=(level===3?2:3)+Math.floor(random()*(level===3?3:4)),bags=3+Math.floor(random()*3),total=size*bags;
+  return {kind:'cookies',skill:'cookies',level,mode:'bags',plan:'drag3',bagSize:size,plates:BAG_SLOTS,total,baked:total,eaten:0,leftover:0,answer:bags,max:total,prompt:bagsPrompt(size),fingerprint:JSON.stringify(['cookies','bags',size,total])};
+ }
  const mode=range.mode||'share';
  const leftover=0,eaten=0;
  const total=plates*each+leftover,baked=total+eaten;
@@ -83,4 +96,16 @@ export function validCookieDraft(draft,total,plates){
 }
 export function cookieCounts(draft,plates){
  return Array.from({length:plates},(_,i)=>draft.filter(n=>n===i).length);
+}
+
+// The ask step: three big choices for the quotient, in a shuffled order that is
+// stable for a question (so a refresh doesn't reshuffle).
+export function askOptions(q){
+ const a=q.answer,near=a>1?[a-1,a,a+1]:[a,a+1,a+2];
+ let h=0;for(const ch of String(q.id||q.fingerprint))h=(h*31+ch.charCodeAt(0))>>>0;
+ return near.map(v=>[(h=(h*1103515245+12345)>>>0),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
+}
+export function bagsValid(draft,q){
+ const counts=cookieCounts(draft,q.plates);
+ return counts.every(n=>n<=q.bagSize);
 }

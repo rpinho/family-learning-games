@@ -5,7 +5,7 @@ import {FREE_DRAWING_SPACE,validFreeInk} from './drawing-space.mjs';
 import {countingQuestion,countingOptions} from './counting.mjs';
 import {patternQuestion} from './play-practice.mjs';
 import {advanced,EXPLORER_GAMES,challengeQuestion} from './explorer.mjs';
-import {validCookieDraft,cookieCounts,isDragCookie,initialCookieDraft} from './cookie-division.mjs';
+import {validCookieDraft,cookieCounts,isDragCookie,initialCookieDraft,askOptions,bagsValid} from './cookie-division.mjs';
 import {readingAction} from './reading.mjs';
 import {artAction} from './art.mjs';
 import {planningAction} from './planning.mjs';
@@ -84,17 +84,25 @@ export function action(p,input,now=Date.now(),services={}){
   const s=p.session;if(!s||s.finished||s.result)fail('No question to help with.');s.helped=true;
  }else if(input.kind==='cookie-place'){
   const s=p.session,q=s?.question;if(!s||s.finished||s.result||q.kind!=='cookies'||!isDragCookie(q)||input.questionId!==q.id||!validCookieDraft(input.draft,q.total,q.plates))fail('Choose a cookie and a plate.');
+  if(s.cookieAsk)fail('Answer the question first.');
   const changed=input.draft.reduce((n,v,i)=>n+Number(v!==s.cookieDraft[i]),0);
   if(changed!==1)fail('Move one cookie at a time.');
+  if(q.mode==='bags'&&!bagsValid(input.draft,q))fail('That bag is full.');
   s.cookieDraft=[...input.draft];s.cookieMessage='';
  }else if(input.kind==='cookie-check'){
   const s=p.session,q=s?.question;if(!s||s.finished||s.result||q.kind!=='cookies'||input.questionId!==q.id)fail('Open a cookie round first.');
   let counts,remaining=0,correct=false;
   if(isDragCookie(q)){
    counts=cookieCounts(s.cookieDraft,q.plates);remaining=s.cookieDraft.filter(v=>v===null).length;
+   if(s.cookieAsk)fail('Answer the question first.');
+   const used=counts.filter(n=>n>0);
    if(remaining)s.cookieMessage=`${remaining} cookies are still in the tray.`;
+   else if(q.mode==='bags'){
+    if(!used.every(n=>n===q.bagSize)){s.cookieChecks=(s.cookieChecks||0)+1;s.cookieMessage='A bag is not full yet. Fill it before you start a new one.';}
+    else{s.cookieAsk={options:askOptions(q),tries:0};s.cookieMessage='';}
+   }
    else if(!counts.every(n=>n===counts[0])){s.cookieChecks=(s.cookieChecks||0)+1;s.cookieMessage='Not equal yet. Move one from a fuller plate to a smaller plate.';}
-   else correct=true;
+   else{s.cookieAsk={options:askOptions(q),tries:0};s.cookieMessage='';}
   }else{
    if(!Number.isInteger(input.perPlate)||input.perPlate<0||input.perPlate>12||!Number.isInteger(input.leftover)||input.leftover<0||input.leftover>=q.plates)fail('Choose cookies per plate and the leftovers.');
    counts=Array(q.plates).fill(input.perPlate);
@@ -106,6 +114,16 @@ export function action(p,input,now=Date.now(),services={}){
    s.result={ok:true,answer:q.answer,xp,helped};s.correct++;s.independent+=Number(!helped);p.xp+=xp;
    p.history.push({at:new Date(now).toISOString(),game:s.game,question:q,answer:counts[0],leftover:q.leftover,ok:true,helped,cookieChecks:s.cookieChecks||0,distribution:[...counts],durationMs:Math.max(0,Math.min(86400000,now-s.started))});p.history=p.history.slice(-2000);
    p.recent=[...p.recent,q.fingerprint].slice(-12);s.cookieMessage='';
+  }
+ }else if(input.kind==='cookie-answer'){
+  const s=p.session,q=s?.question;if(!s||s.finished||s.result||q.kind!=='cookies'||input.questionId!==q.id||!s.cookieAsk)fail('Share the cookies first.');
+  if(!s.cookieAsk.options.includes(input.value))fail('Choose one of the answers.');
+  if(input.value!==q.answer){s.cookieAsk.tries++;s.cookieChecks=(s.cookieChecks||0)+1;s.cookieMessage=q.mode==='bags'?'Count the full bags.':'Count the cookies on one plate.';}
+  else{
+   const counts=cookieCounts(s.cookieDraft,q.plates),helped=s.helped||!!s.cookieChecks,xp=helped?4:10;
+   s.result={ok:true,answer:q.answer,xp,helped};s.correct++;s.independent+=Number(!helped);p.xp+=xp;
+   p.history.push({at:new Date(now).toISOString(),game:s.game,question:q,answer:q.answer,leftover:q.leftover,ok:true,helped,cookieChecks:s.cookieChecks||0,askTries:s.cookieAsk.tries,distribution:[...counts],durationMs:Math.max(0,Math.min(86400000,now-s.started))});p.history=p.history.slice(-2000);
+   p.recent=[...p.recent,q.fingerprint].slice(-12);s.cookieMessage='';delete s.cookieAsk;
   }
  }else if(input.kind==='answer'){
   const s=p.session;if(!s||s.finished||s.result||input.questionId!==s.question.id)fail('This question is already finished.');
@@ -119,7 +137,7 @@ export function action(p,input,now=Date.now(),services={}){
  }else if(input.kind==='next'){
   const s=p.session;if(!s||s.finished||!s.result)fail('Finish this question first.');
   if(s.round===5){s.finished=true;p.lessons++;p.completed[s.game]=(p.completed[s.game]||0)+1;}
-  else{s.round++;s.question=makeQuestion(p,s.game,s.round);s.helped=false;s.result=null;s.started=now;delete s.cookieChecks;delete s.cookieMessage;if(s.question.kind==='cookies'&&isDragCookie(s.question))s.cookieDraft=initialCookieDraft(s.question);else delete s.cookieDraft;}
+  else{s.round++;s.question=makeQuestion(p,s.game,s.round);s.helped=false;s.result=null;s.started=now;delete s.cookieChecks;delete s.cookieMessage;delete s.cookieAsk;if(s.question.kind==='cookies'&&isDragCookie(s.question))s.cookieDraft=initialCookieDraft(s.question);else delete s.cookieDraft;}
  }else if(input.kind==='drawing'){
   if(!validFreeInk(input.strokes))fail('Drawing is too large or invalid.');
   if(input.space!==undefined&&input.space!==FREE_DRAWING_SPACE)fail('Drawing space is invalid.');
