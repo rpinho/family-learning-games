@@ -15,7 +15,12 @@ const base=Number(process.env.BASE_PORT||4811);
 const defaults={players:[{id:'beginner',name:'Beginner',level:1,chess:{band:'steps',strength:'friendly'}},{id:'explorer',name:'Explorer',level:3,chess:{band:'stretch',strength:'club'}},{id:'admin',name:'Admin',level:1}],games:Object.fromEntries(ids.map((id,i)=>[id,base+i])),hosts:[]};
 const config=process.env.FAMILY_CONFIG?JSON.parse(await readFile(process.env.FAMILY_CONFIG,'utf8')):defaults;
 if(!config.players?.length||config.players.some(p=>!/^\w{1,24}$/.test(p.id)||typeof p.name!=='string')||ids.some(id=>!Number.isInteger(config.games[id])||config.games[id]<1024||config.games[id]>65535))throw Error('Invalid local hub configuration');
-const players=config.players.map(p=>p.id),hosts=new Set(['localhost','127.0.0.1',hostname().toLowerCase(),...Object.values(networkInterfaces()).flat().filter(Boolean).map(x=>x.address),...(config.hosts||[])]);
+const players=config.players.map(p=>p.id);
+// Only this machine's own names and addresses. The network interfaces are re-read every few seconds, so a new
+// address (a new router, a VPN) works without a restart. FAMILY_EXTRA_HOSTS (comma or space separated) adds
+// other names this machine answers to, such as a VPN DNS name.
+const BASE_HOSTS=['localhost','127.0.0.1',...(config.hosts||[])];let hostCache=null,hostCacheAt=0;
+function allowedHosts(){if(hostCache&&Date.now()-hostCacheAt<5000)return hostCache;const me=hostname().toLowerCase(),short=me.replace(/\.local$/,'');hostCacheAt=Date.now();return hostCache=new Set([...BASE_HOSTS.map(h=>String(h).toLowerCase()),me,short,short+'.local',...(process.env.FAMILY_EXTRA_HOSTS||'').split(/[\s,]+/).filter(Boolean).map(h=>h.toLowerCase()),...Object.values(networkInterfaces()).flat().filter(Boolean).map(i=>i.family==='IPv6'||i.family===6?'['+i.address.toLowerCase()+']':i.address)]);}
 await mkdir(join(data,'logs'),{recursive:true,mode:0o700});let queue=Promise.resolve(),logError=null;
 async function log(row){try{await appendFile(join(data,'logs',new Date().toISOString().slice(0,10)+'.jsonl'),JSON.stringify({at:new Date().toISOString(),version:VERSION,hubVersion:HUB_VERSION,...row})+'\n',{mode:0o600});logError=null;}catch(e){logError=e.code;console.error('Diagnostics unavailable',e.code);}}
 const send=(res,status,obj)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(obj));};
@@ -41,7 +46,7 @@ const server=http.createServer(async(req,res)=>{
  res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','SAMEORIGIN');
  try{
   const u=new URL(req.url,'http://'+req.headers.host);
-  if(!hosts.has(u.hostname.toLowerCase())||req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host||req.headers['sec-fetch-site']==='cross-site')return send(res,403,{error:'Use the local games address.'});
+  if(!allowedHosts().has(u.hostname.toLowerCase())||req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host||req.headers['sec-fetch-site']==='cross-site')return send(res,403,{error:'Use the local games address.'});
   const match=u.pathname.match(/^\/g\/([a-z-]+)\/(\w+)\/(.*)$/);
   if(match){const [,game,player,path]=match;if(!ids.includes(game)||!players.includes(player))return send(res,404,{error:'Unknown game or player.'});if(!['GET','HEAD','OPTIONS'].includes(req.method))touch(game);return proxy(req,res,{game,player,players,port:config.games[game],prefix:`/g/${game}/${player}/`,path:'/'+path+u.search,releases:{hub:HUB_RELEASE,game:releaseOf(game)}},log);}
   // Some SSR runtimes construct import paths at runtime from "/" + asset name.
