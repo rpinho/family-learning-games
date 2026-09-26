@@ -233,10 +233,11 @@ function envFor(name, channel, {port, uiPort, data, deployDir} = {}) {
   for (const [k, v] of Object.entries(g.env || {})) env[k] = String(v).replace('{data}', data);
   return env;
 }
-function programFor(name) {
+// base = the release directory (checks) or the channel symlink (launchd), so restarts follow the symlink.
+function programFor(name, base) {
   const g = game(name);
   if (g.supervisor === 'word-arcade') return [NODE, join(ROOT, 'bin', 'word-arcade-serve.mjs')];
-  return [NODE, g.main];
+  return [NODE, join(base, g.main)];
 }
 function healthPaths(name) {const g = game(name); return g.health || ['/', ...(g.voice ? ['/voice/manifest.json'] : [])];}
 function get(port, path, timeout = 4000) {
@@ -278,7 +279,7 @@ async function check(name, version) {
       writeJSON(join(data, 'config.json'), conf);
       env.FAMILY_CONFIG = join(data, 'config.json');
     }
-    const [cmd, ...args] = programFor(name);
+    const [cmd, ...args] = programFor(name, rel);
     child = spawn(cmd, args, {cwd: join(rel, g.cwd || ''), env, detached: true, stdio: ['ignore', 'ignore', 'pipe']});
     let err = ''; child.stderr.on('data', b => {err = (err + b).slice(-3000);});
     const h = await health(name, port, g.startTimeout || 40);
@@ -295,7 +296,7 @@ async function check(name, version) {
 // ---------- launchd ----------
 function plistFor(name, channel) {
   const g = game(name), label = labelFor(name, channel), data = dataDir(name, channel);
-  const obj = {Label: label, ProgramArguments: programFor(name), WorkingDirectory: join(channelLink(channel, name), g.cwd || ''),
+  const obj = {Label: label, ProgramArguments: programFor(name, channelLink(channel, name)), WorkingDirectory: join(channelLink(channel, name), g.cwd || ''),
     EnvironmentVariables: envFor(name, channel), RunAtLoad: true, KeepAlive: true,
     StandardOutPath: join(data, 'server.log'), StandardErrorPath: join(data, 'server-error.log')};
   if (g.throttle) obj.ThrottleInterval = g.throttle;
@@ -435,7 +436,8 @@ async function prepareCutover(refs) {
   writeJSON(join(ROOT, 'cutover.json'), {state: 'pending', preparedAt: now(), versions});
   log(`CUTOVER-QUEUED ${JSON.stringify(versions)}`);
 }
-async function cutover(cut) {
+async function cutover(cut, minIdle = null) {
+  const quietEnough = () => minIdle == null ? (idleState().ok || inNight()) : idleState().idleMin >= minIdle;
   const tag = `cutover-${stamp()}`, backupDir = join(BACKUPS, tag);
   mkdirSync(join(backupDir, 'plists'), {recursive: true, mode: 0o700});
   log(`CUTOVER-START backups in ${backupDir}`);
@@ -446,9 +448,9 @@ async function cutover(cut) {
     const b = backupSaves(name, game(name).data, null, join(backupDir, 'saves')); hashes[name] = b.hashes;
   }
   writeJSON(join(backupDir, 'README.json'), {what: 'Pre-cutover launchd plists (services ran from ~/dev trees). To undo: node scripts/deploy/cli.mjs uncutover ' + backupDir, at: now()});
-  cut.backup = backupDir; cut.results = {}; cut.state = 'running'; writeJSON(join(ROOT, 'cutover.json'), cut);
+  cut.backup = backupDir; cut.results ||= {}; cut.state = 'running'; writeJSON(join(ROOT, 'cutover.json'), cut);
   for (const name of cfg.order) {
-    if (!idleState().ok && !inNight()) {log(`CUTOVER-PAUSED before ${name}: activity resumed`); cut.state = 'pending'; writeJSON(join(ROOT, 'cutover.json'), cut); return;}
+    if (!quietEnough()) {log(`CUTOVER-PAUSED before ${name}: activity resumed`); cut.state = 'pending'; writeJSON(join(ROOT, 'cutover.json'), cut); return;}
     const g = game(name), version = cut.versions[name], label = labelFor(name, 'live'), file = plistPath(label);
     if (currentVersion('live', name) === version && cut.results[name] === 'ok') continue;
     try {
@@ -528,6 +530,7 @@ const usage = `usage: cli.mjs <command>
   tick                          promoter step (launchd, every minute)
   install                       install tooling copy + promoter plist
   prepare-cutover               build+check HEAD of every game and queue the one-time cutover
+  cutover-now [--min-idle=3]    run the prepared cutover now (operator-approved window)
   uncutover <backupDir>         restore the pre-cutover plists`;
 try {
   if (cmd === 'build') console.log(await build(pos[0] && game(pos[0]) && pos[0], pos[1], opts));
@@ -543,9 +546,17 @@ try {
     if (flags.has('--now')) {const r = lock('live'); if (!r) die('live lock busy'); try {await applyLive(name, prev, 'ROLLED-BACK');} finally {r();}}
     else {writeJSON(join(ROOT, 'queue', name + '.json'), {game: name, version: prev, queuedAt: now(), by: 'rollback'}); log(`QUEUED ${name} ${prev} (rollback)`);}
   }
+  else if (cmd === 'print-plist') console.log(JSON.stringify(plistFor(pos[0], pos[1] || 'live').obj, null, 1));
   else if (cmd === 'tick') await tick();
   else if (cmd === 'install') install();
   else if (cmd === 'prepare-cutover') await prepareCutover(Object.fromEntries(pos.map(p => p.split('='))));
   else if (cmd === 'uncutover') await uncutover(pos[0]);
+  else if (cmd === 'cutover-now') {
+    // Operator-approved window: run the prepared cutover now if nobody played for --min-idle minutes (default 3).
+    const cut = readJSON(join(ROOT, 'cutover.json'), null); if (!cut || !['pending', 'partial'].includes(cut.state)) die('no prepared cutover');
+    const minIdle = Number((args.find(a => a.startsWith('--min-idle=')) || '--min-idle=3').split('=')[1]);
+    const s = idleState(); if (s.idleMin < minIdle) die(`activity ${s.idleMin.toFixed(1)} min ago (${s.source}); need ${minIdle}`);
+    const r = lock('live'); if (!r) die('live lock busy'); try {await cutover(cut, minIdle);} finally {r();}
+  }
   else {console.log(usage); process.exit(cmd ? 1 : 0);}
 } catch (e) {console.error('error: ' + e.message); process.exit(1);}
