@@ -45,7 +45,7 @@ export default function Home(){
   const now=Date.now();if(breakingRef.current||live.current.p?.resting||free&&!freeBreakDue(now,lastBreak.current))return;
   breakingRef.current=true;setBreaking(true);lastBreak.current=now;const who=live.current.player;
   try{await new Promise(r=>setTimeout(r,500));await voiceSettled();const level=await fetchWordLevel(`/api/${who}/word-break`,(DEFAULT_TRACK as any)[who]||'mixed');
-   await (wordBreak as any)({player:who,level,reason,speak:(line:string,manual:boolean)=>{if(manual||soundRef.current||!(WORD_BREAK_FEEDBACK as string[]).includes(line))void say(line,e=>event('voice',line,e));},log:(r:any)=>event('word-break',reason,JSON.stringify(r))});}
+   await (wordBreak as any)({player:who,level,reason,effects:()=>soundRef.current,speak:(line:string,manual:boolean)=>{if(manual||soundRef.current||!(WORD_BREAK_FEEDBACK as string[]).includes(line))void say(line,e=>event('voice',line,e));},log:(r:any)=>event('word-break',reason,JSON.stringify(r))});}
   catch(e){event('error','word-break',String(e));}
   finally{lastBreak.current=Date.now();breakingRef.current=false;setBreaking(false);const lines=deferred.current;deferred.current=[];if(lines.length)void say(lines,e=>event('voice',lines.join(' | '),e));}
  };

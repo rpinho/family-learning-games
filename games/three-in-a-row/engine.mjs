@@ -1,4 +1,4 @@
-export const VERSION='three-in-a-row-2026-09-26-word-breaks';
+export const VERSION='three-in-a-row-2026-09-26-speech-once';
 export const PLAYERS={beginner:'Beginner',explorer:'Explorer',admin:'Admin · Admin'};
 export const LEVELS=['','Friendly','Clever','Perfect'];
 export const LINES=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];

@@ -32,7 +32,18 @@ test('Every spoken prompt has a voice line',()=>{
 });
 test('Shared copy is identical in sibling game repos',async()=>{
  const mine=createHash('sha256').update(await readFile(new URL('../dist/word-break.mjs',import.meta.url))).digest('hex');
- for(const path of ['../../three-in-a-row/dist/word-break.mjs','../../maze-garden/public/word-break.mjs','../../word-arcade/lib/word-break.mjs']){let other;try{other=await readFile(new URL(path,import.meta.url));}catch{continue;}
+ for(const path of ['../../three-in-a-row/dist/word-break.mjs','../../maze-garden/public/word-break.mjs','../../word-arcade/lib/word-break.mjs','../../letter-quest/public/word-break.mjs','../../number-park/lib/word-break.mjs']){let other;try{other=await readFile(new URL(path,import.meta.url));}catch{continue;}
   assert.equal(createHash('sha256').update(other).digest('hex'),mine,path);}
  assert.match(WORD_BREAK_VERSION,/^word-break-/);
+});
+test('Sentences use the small recurring cast and no odd verbs',()=>{
+ const cast=new Set(['Bo','Max','Mom','Dad','Cookie','Buddy']);
+ for(const s of SENTENCES.flat()){const t=tilesOf(s);t.slice(1).filter(w=>/^[A-Z]/.test(w)).forEach(w=>assert.ok(cast.has(w),`${w} in "${s}"`));
+  assert.ok(t.some(w=>cast.has(w)),`a friend appears in "${s}"`);assert.ok(!/\b(lied|lay|laid)\b/.test(s),s);
+  assert.equal(new Set(t.map(w=>w.toLowerCase())).size,t.length,`no repeated tile in "${s}"`);}
+ for(const s of SENTENCES[0])for(const w of tilesOf(s))assert.ok(w.length<=5,`level 1 stays short: ${w}`);
+});
+test('A break opens with nothing pre-selected: focus goes to the dialog',async()=>{
+ const src=await readFile(new URL('../dist/word-break.mjs',import.meta.url),'utf8');
+ assert.match(src,/d\.tabIndex=-1;d\.autofocus=true;.*d\.showModal\(\).*d\.focus\(/);assert.doesNotMatch(src,/\.wb-choice[^{]*\{[^}]*outline:[^n]/);
 });

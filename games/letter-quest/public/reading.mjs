@@ -1,5 +1,5 @@
 import {useHint} from './hints.mjs';
-import {SENTENCES,scramble,tilesOf,endMark} from './word-break.mjs';
+import {SENTENCES,SENTENCE_DISTRACT,scramble,tilesOf,endMark} from './word-break.mjs';
 // Reading practice is separate from letter mastery and from game XP.
 export const READING_TYPES=[
  ['decode','🔎','Word detective','Read a word. Find what it means.'],
@@ -23,7 +23,6 @@ export const WORD_CHANGES=[
 // Sentence studio uses the shared varied bank (names first/middle/last, said/asked early, several capitals).
 export const READING_SENTENCES=SENTENCES;
 // One look-alike extra tile from level 2, so the last tiles cannot be guessed by position.
-const SENTENCE_DISTRACT={cat:'cot',big:'bag',hen:'pen',pig:'peg',hop:'hip',run:'ran',ran:'run',sat:'sit',got:'get',get:'got',red:'rod',ship:'shop',frog:'from',duck:'dock',rock:'rack',fish:'dish',log:'leg',pond:'pod',flag:'flat',drum:'drop',hill:'hall',fox:'fix',fix:'fox',wet:'wit',cup:'cap',hat:'hot',sun:'son',bus:'bun',jump:'dump',swim:'swam',shop:'chop',stop:'step',step:'stop',snack:'snake',black:'block',whale:'while',sheep:'sheet',brush:'crush',shell:'shelf',train:'trail',fast:'last',spot:'spit',smile:'mile',beach:'bench',found:'round'};
 export const READING_STORIES=[
  [
   ['Sam has a red cap. The cap is in a bag.','Where is the cap?','bag',['bed','box']],

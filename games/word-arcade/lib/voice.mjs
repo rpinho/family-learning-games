@@ -1,5 +1,6 @@
 export const briefLine=text=>text?.match(/^.*?[.!?](?:\s|$)/)?.[0].trim()||text;
 export const SHORT_FEEDBACK=['Nice!','Got it!','Well done!','Try again.'];
+const TOUCH_EVENTS=['pointerup','touchend','click'];
 export class CoachVoice {
   constructor(notify=()=>{},record=()=>{}) {
     this.notify=notify;
@@ -27,14 +28,21 @@ export class CoachVoice {
     this.generation++;if(this.mode)this.lastSpeech=Date.now();this.mode=null;clearTimeout(this.promptTimer);this.promptTimer=null;
     this.cancelWait?.();this.cancelWait=null;
     this.tail=Promise.resolve();this.queued=false;
+    this.pendingText=null;
     this.player.pause();
     this.player.removeAttribute('src');
     this.player.load();
     this.player.dataset.status='stopped';
   }
-  async speak(text){
+  // essential: the word/question the child needs; if autoplay blocks it, it plays on the next touch.
+  async speak(text,essential=false){
     this.stop();this.mode='manual';
-    return this.play(text,this.generation);
+    return this.play(text,this.generation,essential);
+  }
+  retryOnTouch(text){
+    this.pendingText=text;if(this.retryArmed||typeof document==='undefined')return;this.retryArmed=true;
+    const go=()=>{for(const n of TOUCH_EVENTS)document.removeEventListener(n,go,true);this.retryArmed=false;const t=this.pendingText;this.pendingText=null;if(t)void this.speak(t,true);};
+    for(const n of TOUCH_EVENTS)document.addEventListener(n,go,true);
   }
   instruction(text,{key='',essential=true}={}){
     if(!text)return;
@@ -42,7 +50,7 @@ export class CoachVoice {
     if(key)this.seenInstructions.add(key);
     this.stop();this.mode='instruction';this.essentialInstruction=essential;const generation=this.generation;
     // A small settling gap prevents clipped prompts when the child navigates quickly.
-    this.promptTimer=setTimeout(()=>{this.promptTimer=null;void this.play(text,generation);},250);
+    this.promptTimer=setTimeout(()=>{this.promptTimer=null;void this.play(text,generation,essential);},250);
   }
   feedback(ok=true){
     const now=Date.now();
@@ -72,7 +80,7 @@ export class CoachVoice {
     void tail.then(()=>{if(this.tail===tail){this.queued=false;this.mode=null;}});
     return tail;
   }
-  async play(text,generation){
+  async play(text,generation,essential=false){
     let manifest=await this.ready;
     if(!manifest){this.ready=this.load();manifest=await this.ready;}
     if(generation!==this.generation)return;
@@ -103,6 +111,7 @@ export class CoachVoice {
       if(generation!==this.generation||e.name==='AbortError')return;
       this.mode=null;this.player.dataset.status='error';
       this.record('voice_error',{voice:manifest.voice,clip,reason:e.name,message:e.message,code:this.player.error?.code||0});
+      if(e.name==='NotAllowedError'&&essential)this.retryOnTouch(text);
       this.notify('Tap the speaker to hear Nova. Check the device volume if needed.');
     }
   }

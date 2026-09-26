@@ -402,7 +402,7 @@ async function wordBreakNow(reason,key){
  try{
   await voiceIdle();
   const who=demo?'admin':id,level=literacyFrom(profile,DEFAULT_TRACK[who]||'mixed');
-  await wordBreak({player:who,level,reason,speak:(line,manual)=>{if(manual||!WORD_BREAK_FEEDBACK.includes(line)||!mute&&profile.settings.sound)void coachVoice.speak(line);},log:r=>telemetry.record('word_break',{reason,source:r.kind,action:'word-break:'+r.track,answer:Array.isArray(r.answer)?r.answer.join(' '):String(r.answer),durationMs:r.ms,misses:r.misses})});
+  await wordBreak({player:who,level,reason,effects:()=>!mute&&!!profile?.settings.sound,speak:(line,manual)=>{if(manual||!WORD_BREAK_FEEDBACK.includes(line)||!mute&&profile.settings.sound)void coachVoice.speak(line);},log:r=>telemetry.record('word_break',{reason,source:r.kind,action:'word-break:'+r.track,answer:Array.isArray(r.answer)?r.answer.join(' '):String(r.answer),durationMs:r.ms,misses:r.misses})});
  }catch(e){telemetry.record('runtime_error',{source:'word-break',message:e.message});}
  finally{busy=false;render();}
  return true;

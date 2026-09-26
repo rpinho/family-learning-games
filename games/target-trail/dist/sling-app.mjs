@@ -66,7 +66,7 @@ function render(){if(!p)return;const s=p.sling||{},r=s.round,done=!r||r.done,tap
  $('overlay').hidden=!(done||tap)||busy&&!!r&&!tap;$('round-title').textContent=tap?'Ready?':r?.done?`${r.correct} / 5 hits!`:'Pull back. Let go.';$('round-detail').textContent=tap?'Tap to hear what to hit.':r?.done?'Another round has new targets.':'Listen, then hit the right one.';$('start').textContent=tap?'▶ Let’s play':r?.done?'▶ Another round':'▶ Let’s play';$('start').disabled=busy&&!tap;
  $('stats').textContent=`★ ${s.stars||0} · ${s.rounds||0} rounds${p.id==='admin'?' · ADMIN TEST SAVE':''}`;}
 async function sync(){p=await request('state');render();if(live())announce();}
-async function checkpoint(reason){clearTimeout(idleTimer);try{wbLevel??=await fetchWordLevel('/api/word-break?player='+player,DEFAULT_TRACK[player]);stopVoice();drag=null;await wordBreak({player,level:wbLevel,speak:(line,essential)=>void speak(line,{essential}),log:r=>log('word-break',JSON.stringify(r)),reason});}catch(e){log('word-break-error',e.message);}}
+async function checkpoint(reason){clearTimeout(idleTimer);try{wbLevel??=await fetchWordLevel('/api/word-break?player='+player,DEFAULT_TRACK[player]);stopVoice();drag=null;await wordBreak({player,level:wbLevel,speak:(line,essential)=>void speak(line,{essential}),effects:()=>sound,log:r=>log('word-break',JSON.stringify(r)),reason});}catch(e){log('word-break-error',e.message);}}
 // A newer Sling Shot was installed: load it between rounds instead of playing old code.
 function stale(){return p?.slingVersion&&p.slingVersion!==SLING_VERSION;}
 function reloadFresh(){const url=new URL(location.href);url.searchParams.set('v',Date.now());location.replace(url);}

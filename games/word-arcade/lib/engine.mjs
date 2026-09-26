@@ -5,8 +5,8 @@ import {lowerQuestion,lowerAttempt,lowerState} from './lowercase.mjs';
 import {BUILDER_STARTERS,builderState,builderQuestion,builderAttempt} from './builder.mjs';
 import {arcadeQuestion,arcadeAttempt} from './arcade-curriculum.mjs';
 import {chooseWord,rememberWord} from './variety.mjs';
-import {SENTENCES as TRAIN_SENTENCES,scramble,tilesOf,wordBreakLines} from './word-break.mjs';
-export const VERSION='word-arcade-2026-09-26-word-breaks-1';
+import {SENTENCES as TRAIN_SENTENCES,SENTENCE_DISTRACT as TRAIN_DISTRACT,scramble,tilesOf,wordBreakLines} from './word-break.mjs';
+export const VERSION='word-arcade-2026-09-26-speech-once-1';
 export const GAMES=[
  ['blaster','Letter Blaster','SPELLING','Blast the missing letter. Power your starship.','🚀','#48dfec'],
  ['orbit','Orbit Builder','SPELLING','Connect drifting letters. Fly your word through space.','✦','#ffcc73'],
@@ -34,7 +34,6 @@ const BEATS=[['cat',1],['rabbit',2],['banana',3],['dog',1],['tiger',2],['elephan
 export const LINES=['Welcome to Word Arcade. I am Nova. Pick a game and let us play.','Nice! Your engines are getting stronger.','That word has places to be. Launch it!','Mission control approves. Very fancy flying.','A little help is part of learning.','Not quite. You can try again.','Eight missions complete. Your ship deserves a snack.','Read the word, then choose its picture.','Read the word. Choose a word that rhymes.','Read the ending. Choose the matching cargo dock.','Follow the code key. Build the secret word.','Each row and column needs one of each letter. Tap an empty square, then a letter.','Paint anything you like. Your art is saved, not graded.','Find the word across or down. Tap its letters in order.','Tap once for each syllable. Then check your beat.','Build the sentence. Tap the words in order.','Your progress is saved. Come back whenever you like.'];
 export function fresh(id){if(!['explorer','beginner','admin'].includes(id))throw Error('Unknown player');return {id,name:id==='admin'?'Admin':id==='beginner'?'Beginner':'Explorer',revision:0,xp:0,games:{},serial:0,session:null,art:Array(64).fill(0)};}
 export const INSTRUCTIONS={asteroids:'Read the word, then choose its picture.',wordoku:'Each row and column needs one of each letter. Tap an empty square, then a letter.',rhyme:'Listen to the word. Find a word that rhymes.',sort:'Read the ending. Choose the matching cargo dock.',cipher:'Follow the code key. Build the secret word.',pixel:'Paint anything you like. Your art is saved, not graded.'};
-const TRAIN_DISTRACT={cat:'cot',big:'bag',hen:'pen',pig:'peg',hop:'hip',run:'ran',sat:'sit',got:'get',red:'rod',ship:'shop',frog:'from',duck:'dock',rock:'rack',fish:'dish',log:'leg',pond:'pod',flag:'flat',drum:'drop',hill:'hall',wet:'wit',cup:'cap',hat:'hot',bus:'bun',jump:'dump',swim:'swam',stop:'step',snack:'snake',black:'block',whale:'while',sheep:'sheet',brush:'crush',shell:'shelf',train:'trail',fast:'last',spot:'spit',beach:'bench'};
 function seeded(seed){let a=seed|0;return()=>{a+=0x6D2B79F5;let t=Math.imul(a^a>>>15,1|a);t^=t+Math.imul(t^t>>>7,61|t);return ((t^t>>>14)>>>0)/4294967296;};}
 const rotate=(a,n)=>a.slice(n%a.length).concat(a.slice(0,n%a.length));
 const options=(a,n)=>rotate([...new Set(a)],n).reverse();

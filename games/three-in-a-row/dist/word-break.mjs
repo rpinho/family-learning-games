@@ -1,7 +1,7 @@
 // Word break: a short, always-passable letter/word checkpoint shared by the family games.
 // Identical copy in every game repo (tests compare siblings). No dependencies; browser + Node.
 // Content follows each child's Letter Quest progress (read on the server, never written).
-export const WORD_BREAK_VERSION='word-break-2026-09-26-2';
+export const WORD_BREAK_VERSION='word-break-2026-09-26-3';
 // Speech contract for every game: speak(line, essential).
 // essential=true -> CONTENT the child needs to answer (the letter/word/sentence to find). Games play it even when
 // their sound toggle is off. essential=false -> praise/feedback, which obeys the toggle.
@@ -22,13 +22,18 @@ export const WORD_GROUPS=[
  [['ship','shop','chip','chop'],['fish','dish','wish','with'],['frog','from','fog','flop'],['duck','dock','deck','luck'],['drum','drop','drip','trim'],['flag','flat','flap','slap'],['sock','sack','rock','lock'],['king','ring','wing','sing'],['bath','math','path','both'],['crab','grab','crib','cram'],['milk','mill','silk','mint'],['swim','slim','skim','swam']],
  [['train','brain','rain','trail'],['snail','sail','nail','snarl'],['sheep','sheet','sleep','shoot'],['beach','bench','reach','peach'],['brush','crush','blush','bush'],['shark','share','sharp','spark'],['whale','while','white','wheel'],['black','block','blank','clock'],['track','trick','truck','trace'],['stamp','stomp','stump','steam'],['green','greet','grain','queen'],['cloud','clown','proud','cold']]
 ];
-// Sentence carriages vary: names at the start, middle or end; said/asked early; several capitals.
+// One shared sentence bank (word breaks, Sentence Express, Sentence studio). Fun, concrete scenes for a young
+// reader with a few recurring friends (Bo the bear, Max, Mom, Dad, Cookie Buddy): soccer, robots, chess,
+// dinos, rockets, pizza, silly jumps. Names sit at the start, middle or end; said/asked come early, never
+// second to last; most sentences have several capitals. Level 1 stays with short, decodable and sight words.
 export const SENTENCES=[
- ['Sam said the cat is big.','Mom and Pip got a pet.','Can Ben hop to Dad?','Pip asked Mom for a cup.','I see Max and a red hen.','Dad said Sam can run.','Kim and Ben sat in the sun.','Is Max in the bus?','Tom got a hat for Kim.','Ben said the fox is wet.','A big bug sat on Tom.','Mom let Pip pet the pig.'],
- ['Max and Kim swim in the pond.','Dad asked Ben to get the flag.','Can Sam fix the drum for Mom?','Kim said the crab is on a rock.','A duck and Tom sat on a log.','Did Pip get the red ship?','Ben asked Kim for the fish.','The black cat ran past Max.','Pip and Dad went to the shop.','Mom said the frog can jump.','Is the sock under Sam?','Tom and Max ran up the hill.'],
- ['Kim asked Dad to stop the train.','The green frog jumped past Sam and Ben.','Tom said the shark swims fast.','Can Mom and Pip spot the whale?','Max put a snack in the black bag.','Dad said the snail is on the step.','Did Ben brush the dog with Mom?','Pip asked if the sheep can sleep.','The truck stopped next to Kim.','Sam and Tom found a shell at the beach.','Mom gave Max a green brush.','Why did the clown smile at Pip?']
+ ['Bo and Max run to the net.','Dad said Max can kick it.','Can Max hop on a big log?','Mom and Bo got a hot dog.','Max said the pup can jump.','A red bug sat on Bo.','Is Bo in the net?','Mom let Max kick the ball.','Bo and Dad dig in the mud.','Did Max win the cup?','The fox ran up to Bo and Max.','Dad asked Bo to hop up.'],
+ ['Max kicks the ball past Dad.','Bo said the robot can jump.','Cookie Buddy eats six cookies.','Did Max win the chess match?','Mom asked Bo to catch the ball.','A frog jumps on Max at chess.','Dad and Max fix the rocket.','Can Bo spin on one leg?','Max kicks a goal and Bo claps.','The big dino stomps past Mom.','Bo gets a slice of hot pizza.','Is the robot in goal for Max?'],
+ ['Bo asked Dad to build a rocket.','Cookie Buddy and Max bake green cookies.','Max and the robot score a goal.','Dad said the dinosaur is sleeping.','Can Bo beat Mom at chess today?','Why did the rocket zoom past Max?','Bo jumped over three sleeping sheep.','Did Cookie Buddy eat the chess queen?','Mom and Bo eat pizza by the stream.','The goalie dives but Max still scores.','Dad asked Max to clean the chess board.','A dinosaur stole the ball from Bo.']
 ];
-const DISTRACT={cat:'cot',big:'bag',hen:'pen',pig:'peg',hop:'hip',run:'ran',ran:'run',sat:'sit',got:'get',get:'got',red:'rod',ship:'shop',frog:'from',duck:'dock',rock:'rack',fish:'dish',log:'leg',pond:'pod',flag:'flat',drum:'drop',hill:'hall',fox:'fix',fix:'fox',wet:'wit',cup:'cap',hat:'hot',sun:'son',bus:'bun',jump:'dump',swim:'swam',shop:'chop',stop:'step',step:'stop',snack:'snake',black:'block',whale:'while',sheep:'sheet',brush:'crush',shell:'shelf',train:'trail',fast:'last',spot:'spit',smile:'mile',beach:'bench',found:'round'};
+// Look-alike distractor tiles for sentence levels 2-3 (never a word already in the sentence).
+export const SENTENCE_DISTRACT={cat:'cot',big:'bag',hen:'pen',pig:'peg',hop:'hip',hops:'hips',run:'ran',ran:'run',sat:'sit',got:'get',get:'got',gets:'jets',red:'rod',ship:'shop',frog:'from',duck:'dock',rock:'rack',fish:'dish',log:'leg',pond:'pod',flag:'flat',drum:'drop',hill:'hall',fox:'fix',fix:'fox',wet:'wit',cup:'cap',hat:'hot',sun:'son',bus:'bun',jump:'dump',swim:'swam',shop:'chop',stop:'step',step:'stop',snack:'snake',black:'block',whale:'while',sheep:'sheet',brush:'crush',shell:'shelf',train:'trail',fast:'last',spot:'spit',smile:'mile',beach:'bench',found:'round',
+ kicks:'kids',ball:'bell',past:'pest',robot:'robin',chess:'chest',match:'patch',catch:'cash',clock:'click',rocket:'pocket',spin:'spit',leg:'log',goal:'gold',claps:'clips',stomps:'stamps',slice:'slide',hot:'hat',pizza:'pinch',six:'sit',build:'built',bake:'bike',green:'greet',score:'store',sleeping:'sweeping',beat:'boat',zoom:'room',jumped:'bumped',three:'tree',queen:'green',stream:'scream',dives:'dimes',still:'spill',clean:'clear',board:'bored',stole:'stale'};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const pick=(a,r=Math.random)=>a[Math.floor(r()*a.length)];
 export function shuffle(a,r=Math.random){const out=[...a];for(let i=out.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[out[i],out[j]]=[out[j],out[i]];}return out;}
@@ -79,7 +84,7 @@ function wordItem(level,r){
 }
 function sentenceItem(level,r,recent=[]){
  const bank=SENTENCES[level.sentenceLevel-1],fresh=bank.filter(s=>!recent.includes(s)),sentence=pick(fresh.length?fresh:bank,r),answer=tilesOf(sentence);
- const extra=level.sentenceLevel>=2?answer.map(w=>DISTRACT[w.toLowerCase()]).find(w=>w&&!answer.some(a=>a.toLowerCase()===w)):null;
+ const extra=level.sentenceLevel>=2?answer.map(w=>SENTENCE_DISTRACT[w.toLowerCase()]).find(w=>w&&!answer.some(a=>a.toLowerCase()===w)):null;
  const tiles=scramble(extra?[...answer,extra]:answer,r);
  return {kind:'sentence',spoken:sentence,sentence,answer,tiles,mark:endMark(sentence)};
 }
@@ -101,6 +106,8 @@ export function wordBreakLines(){
 }
 // ---------- Browser UI ----------
 const CSS=`dialog.wb{border:0;border-radius:28px;padding:0;max-width:min(94vw,760px);width:94vw;background:#fffaf0;color:#17324a;box-shadow:0 20px 60px #0005;font-family:ui-rounded,'Avenir Next',system-ui,sans-serif}
+dialog.wb:focus{outline:none}
+.wb-choice:focus:not(:focus-visible),.wb-hear:focus:not(:focus-visible){outline:none}
 dialog.wb::backdrop{background:#10284099;backdrop-filter:blur(3px)}
 .wb-card{padding:22px 22px 26px;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center}
 .wb-top{display:flex;width:100%;justify-content:space-between;align-items:center}
@@ -137,7 +144,9 @@ export async function fetchWordLevel(url,fallbackTrack='mixed'){
  return literacyFrom(null,fallbackTrack);
 }
 // Opens the checkpoint and resolves once the child answers. Wrong taps wiggle; after two, the answer glows.
-export function wordBreak({player='admin',level,speak=()=>{},log=()=>{},reason='',doc=globalThis.document,r=Math.random,item}={}){
+// effects: false (or a function returning false) mutes the chimes when the game's effects toggle is off.
+export function wordBreak({player='admin',level,speak=()=>{},log=()=>{},reason='',doc=globalThis.document,r=Math.random,item,effects=true}={}){
+ const ding=ok=>{if(typeof effects==='function'?effects():effects)chime(ok);};
  styles(doc);
  const lvl=level||literacyFrom(null,DEFAULT_TRACK[player]||'mixed'),q=item||wordBreakItem(lvl,{r,recent:readRecent(player)}),started=Date.now();
  const d=doc.createElement('dialog');d.className='wb';d.dataset.kind=q.kind;d.setAttribute('aria-label',q.track==='letters'?'Letter break':'Word break');
@@ -152,11 +161,11 @@ export function wordBreak({player='admin',level,speak=()=>{},log=()=>{},reason='
  // Gentle idle repeat: say the question again after ~6 s without a tap, at most twice.
  const nudge=()=>{clearTimeout(idle);if(finished||repeats>=IDLE_REPEATS)return;idle=setTimeout(()=>{if(finished||!d.isConnected)return;repeats++;speak(q.spoken,true);nudge();},IDLE_REPEAT_MS);};
  return new Promise(resolve=>{
-  const finish=()=>{finished=true;clearTimeout(idle);chime(true);remember(player,q);
+  const finish=()=>{finished=true;clearTimeout(idle);ding(true);remember(player,q);
    const done=doc.createElement('p');done.className='wb-done';done.textContent=q.kind==='sentence'?'Great reading!':'Yes!';card.append(done);speak(q.kind==='sentence'?'Great reading!':'Yes!',false);
    const result={kind:q.kind,track:q.track,answer:q.sentence||q.answer,misses,ms:Date.now()-started,reason};log(result);
    setTimeout(()=>{try{d.close();}catch{}d.remove();resolve(result);},q.kind==='sentence'?1500:1000);};
-  const wrong=b=>{misses++;missesHere++;chime(false);b.classList.remove('wiggle');void b.offsetWidth;b.classList.add('wiggle');
+  const wrong=b=>{misses++;missesHere++;ding(false);b.classList.remove('wiggle');void b.offsetWidth;b.classList.add('wiggle');
    if(missesHere>=2){const want=q.kind==='sentence'?q.answer[step]:q.answer;const right=[...choices.children].find(x=>x.dataset.value===want&&!x.classList.contains('used'));right?.classList.add('glow');speak(q.spoken,true);}
    else speak('Try again.',false);};
   const list=q.kind==='sentence'?q.tiles:q.options;
@@ -167,7 +176,8 @@ export function wordBreak({player='admin',level,speak=()=>{},log=()=>{},reason='
     if(value!==q.answer)return wrong(b);b.classList.remove('glow');b.classList.add('right');finish();};
    choices.append(b);}
   d.addEventListener('cancel',e=>e.preventDefault());
-  doc.body.append(d);try{d.showModal();}catch{d.setAttribute('open','');}
-  chime(true);setTimeout(()=>{if(!finished)speak(q.spoken,true);nudge();},350);
+  // Focus the dialog itself: showModal() would otherwise focus (and ring) the first button, which looks pre-chosen.
+  d.tabIndex=-1;d.autofocus=true;doc.body.append(d);try{d.showModal();}catch{d.setAttribute('open','');}try{d.focus({preventScroll:true});}catch{}
+  ding(true);setTimeout(()=>{if(!finished)speak(q.spoken,true);nudge();},350);
  });
 }
