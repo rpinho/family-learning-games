@@ -130,7 +130,7 @@ export function storyState({saves,chapters=[]}){
  };
 }
 
-// ---------- one day's play across every game (for allegory and the bedtime page) ----------
+// ---------- one day's play across every game (for allegory in the next chapter) ----------
 const DEST={'maze-garden':'Maze Garden','maze-garden/maker':'Make-a-Maze','maze-garden/trace':'maze tracing','maze-garden/letters':'letter mazes','maze-garden/rescue':'maze rescue','number-park':'Number Park','letter-quest':'Letter Quest','word-arcade':'Word Arcade','target-trail':'Target Trail','sling':'Sling Shot','three-in-a-row':'Three in a Row','chess':'chess','soccer':'soccer','drawing-studio':'the drawing studio'};
 export function playOn({saves={},opens=[],date,timeZone}){
  const day=at=>{const t=typeof at==='number'?at:Date.parse(at);return Number.isFinite(t)&&new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(t))===date;};

@@ -21,7 +21,7 @@ export function bookPaths(env=process.env){
  if(env.FAMILY_DATA)data.hub??=exp(env.FAMILY_DATA);
  const book=resolve(exp(env.FAMILY_BOOK||join(root,'book')));
  return {root,data,config,book,voice:join(book,'voice'),learner:resolve(exp(env.FAMILY_LEARNER||join(root,'learner'))),
-  profiles:join(book,'profiles.json'),cast:join(book,'cast.json'),portraits:join(book,'cast'),notes:data.hub?join(data.hub,'book-notes.json'):null,
+  profiles:join(book,'profiles.json'),cast:join(book,'cast.json'),notes:data.hub?join(data.hub,'book-notes.json'):null,
   recap:resolve(exp(env.FAMILY_RECAP_DIR||join(homedir(),'.local/share/family-learning-games-recap'))),
   python:exp(env.FAMILY_BOOK_PYTHON||deploy?.python||'python3'),
   voiceModels:exp(env.FAMILY_VOICE_MODELS||(data['letter-quest']?join(data['letter-quest'],'voice-models'):'')),

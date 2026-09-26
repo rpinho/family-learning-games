@@ -1,0 +1,91 @@
+/* The Book: a full-screen, narrated picture book. Scenes are composed from a picture library. */
+.bk{position:fixed;inset:0;z-index:50;background:#1b2433;overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none;font-family:"Nunito","Trebuchet MS",system-ui,sans-serif;color:#fff}
+.bk-page{position:absolute;inset:0;animation:bk-in .55s ease both}
+.bk-page.out{animation:bk-out .35s ease both}
+@keyframes bk-in{from{opacity:0;transform:scale(1.03)}to{opacity:1;transform:none}}
+@keyframes bk-out{to{opacity:0}}
+.bk-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:bk-drift 24s ease-in-out infinite alternate}
+@keyframes bk-drift{from{transform:scale(1.02) translateX(-.6%)}to{transform:scale(1.08) translateX(.6%)}}
+.bk-actor,.bk-prop{position:absolute;transform-origin:50% 100%;pointer-events:none}
+.bk-actor img,.bk-prop img{width:100%;height:100%;object-fit:contain;display:block;filter:drop-shadow(0 6px 6px rgba(0,0,0,.25))}
+.bk-actor{animation:bk-pop .6s cubic-bezier(.3,1.6,.5,1) both}
+.bk-actor>div{width:100%;height:100%;animation:bk-bob 2.6s ease-in-out infinite;transform-origin:50% 100%}
+.bk-actor.fly>div{animation:bk-float 3.2s ease-in-out infinite}
+.bk-actor.talking>div{animation:bk-talk .45s ease-in-out infinite}
+.bk-actor.hop>div{animation:bk-hop .5s ease 2}
+@keyframes bk-pop{from{opacity:0;transform:translateY(12%) scale(.85)}to{opacity:1;transform:none}}
+@keyframes bk-bob{0%,100%{transform:translateY(0) scale(1,1)}50%{transform:translateY(-1.2%) scale(1.012,.99)}}
+@keyframes bk-float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-6%) rotate(2deg)}}
+@keyframes bk-talk{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-2.5%) scale(1.02,.98)}}
+@keyframes bk-hop{0%,100%{transform:translateY(0)}40%{transform:translateY(-14%)}}
+.bk-prop.train{animation:bk-chug 1s ease-in-out infinite,bk-arrive 1.6s ease-out both}
+@keyframes bk-chug{0%,100%{translate:0 0}50%{translate:0 -1%}}
+@keyframes bk-arrive{from{transform:translateX(-60vw)}to{transform:none}}
+.bk-fx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.bk-fx i{position:absolute;font-style:normal;animation:bk-twinkle 2.4s ease-in-out infinite;opacity:0}
+@keyframes bk-twinkle{0%,100%{opacity:0;transform:scale(.4)}50%{opacity:1;transform:scale(1)}}
+.bk-fx.burst i{animation:bk-burst 1.3s ease-out forwards}
+@keyframes bk-burst{0%{opacity:1;transform:translate(0,0) scale(.3)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1.2)}}
+.bk-caption{position:absolute;left:50%;top:max(14px,env(safe-area-inset-top));transform:translateX(-50%);background:rgba(255,250,236,.93);color:#2b2118;border-radius:22px;padding:.2em .7em;font-weight:900;font-size:clamp(26px,6.5vmin,56px);box-shadow:0 6px 18px rgba(0,0,0,.25);max-width:88vw;text-align:center;cursor:pointer;border:0}
+.bk-early .bk-caption{font-size:clamp(56px,16vmin,140px);padding:.05em .45em;line-height:1.1}
+.bk-chrome{position:absolute;inset:0;pointer-events:none}
+.bk-chrome button{pointer-events:auto}
+.bk-exit,.bk-hear{position:absolute;top:max(10px,env(safe-area-inset-top));width:48px;height:48px;border-radius:50%;border:0;background:rgba(0,0,0,.35);color:#fff;font-size:22px;cursor:pointer}
+.bk-exit{left:10px}.bk-hear{right:10px}
+.bk-dots{position:absolute;left:50%;bottom:max(8px,env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:6px;pointer-events:none}
+.bk-dots i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.45)}.bk-dots i.done{background:#ffd54a}.bk-dots i.now{background:#fff;transform:scale(1.35)}
+.bk-keys{position:absolute;top:max(12px,env(safe-area-inset-top));right:66px;display:flex;gap:4px;pointer-events:none}
+.bk-keys b{background:linear-gradient(#ffe27a,#e0a92a);color:#5a3a00;border-radius:10px;padding:2px 7px;font-size:18px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.bk-tapnext{position:absolute;right:16px;bottom:34px;font-size:40px;opacity:0;transition:opacity .4s;pointer-events:none;animation:bk-nudge 1.2s ease-in-out infinite}
+.bk-tapnext.on{opacity:.9}
+@keyframes bk-nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(8px)}}
+/* cover */
+.bk-cover{position:absolute;inset:0;display:grid;place-items:center;text-align:center;background:radial-gradient(ellipse at 50% 40%,rgba(0,0,0,.05),rgba(0,0,0,.45))}
+.bk-cover .card{background:rgba(255,250,236,.94);color:#2b2118;border-radius:28px;padding:18px 26px 22px;max-width:min(90vw,640px);box-shadow:0 12px 40px rgba(0,0,0,.35)}
+.bk-cover .kicker{font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:14px;color:#b4531a}
+.bk-cover h1{margin:.2em 0 .3em;font-size:clamp(28px,6vmin,52px);line-height:1.1}
+.bk-open{font-size:clamp(60px,14vmin,110px);border:0;background:none;cursor:pointer;animation:bk-bob 1.6s ease-in-out infinite}
+/* play area for the beats */
+.bk-play{position:absolute;left:0;right:0;bottom:0;height:40%;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;align-content:center;gap:2.5vmin;padding:0 12px 34px}
+.bk-btn{border:0;cursor:pointer;font-family:inherit;font-weight:900;color:#2b2118;background:#fffaf0;border-radius:20px;min-width:clamp(64px,14vmin,120px);min-height:clamp(64px,14vmin,120px);font-size:clamp(34px,8vmin,72px);box-shadow:0 6px 0 rgba(0,0,0,.25),0 10px 24px rgba(0,0,0,.25);transition:transform .15s}
+.bk-btn:active{transform:translateY(3px)}
+.bk-btn.word{font-size:clamp(24px,6vmin,48px);padding:.2em .6em;border-radius:14px}
+.bk-btn.stone{background:radial-gradient(circle at 40% 35%,#d9d4c7,#8f8a80);color:#2d2a25;border-radius:48% 52% 45% 55%/55% 45% 55% 45%}
+.bk-btn.sign{background:linear-gradient(#c98b4c,#9a6230);color:#fff8e6;border-radius:10px;text-shadow:0 2px 0 rgba(0,0,0,.3)}
+.bk-btn.ball{border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#e6e6e6 60%,#bbb);color:#1c2b3a}
+.bk-btn.key{background:linear-gradient(#ffe27a,#e0a92a);color:#5a3a00}
+.bk-btn.right,.bk-btn.lit{background:linear-gradient(#ffe27a,#f5b82e);color:#4a2c00;transform:scale(1.08)}
+.bk-btn.used{opacity:.35;pointer-events:none}
+.bk-btn.glow{animation:bk-glow 1s ease-in-out infinite}
+@keyframes bk-glow{0%,100%{box-shadow:0 0 0 0 rgba(255,220,80,.9),0 6px 0 rgba(0,0,0,.25)}50%{box-shadow:0 0 0 14px rgba(255,220,80,0),0 6px 0 rgba(0,0,0,.25)}}
+.bk-btn.wiggle{animation:bk-wiggle .45s ease}
+@keyframes bk-wiggle{20%{transform:rotate(-8deg)}40%{transform:rotate(7deg)}60%{transform:rotate(-5deg)}80%{transform:rotate(3deg)}}
+.bk-btn.no{background:linear-gradient(#ff6b5b,#d8322b);color:#fff;font-size:clamp(48px,13vmin,110px);padding:.05em .5em;animation:bk-bob 1.2s ease-in-out infinite}
+.bk-btn.ok{font-size:clamp(18px,4vmin,28px);min-height:auto;min-width:auto;padding:.4em .8em;background:rgba(255,250,240,.85)}
+.bk-board{position:absolute;left:50%;top:12%;transform:translateX(-50%);background:#1f3b2b;border:8px solid #8a5a2b;border-radius:16px;color:#fffbe6;font-weight:900;font-size:clamp(34px,9vmin,84px);padding:.1em .5em;display:flex;gap:.3em;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,.35);white-space:nowrap}
+.bk-board.buzz{animation:bk-wiggle .5s ease 2}
+.bk-board .pic{font-size:.9em}
+.bk-board button{all:unset;cursor:pointer;padding:0 .1em;border-radius:10px}
+.bk-glyph{position:absolute;left:50%;top:10%;transform:translateX(-50%);font-weight:900;font-size:clamp(120px,34vmin,300px);line-height:1;color:#ffe27a;-webkit-text-stroke:6px #7a4a00;paint-order:stroke;text-shadow:0 10px 30px rgba(0,0,0,.35);cursor:pointer;background:none;border:0;font-family:inherit;animation:bk-pop .7s cubic-bezier(.3,1.6,.5,1) both}
+.bk-glyph.tapped{animation:bk-hop .5s ease 2}
+.bk-magic{position:absolute;left:50%;top:14%;transform:translateX(-50%);border:0;cursor:pointer;font-family:inherit;font-weight:900;font-size:clamp(40px,11vmin,96px);padding:.1em .6em;border-radius:18px;background:linear-gradient(#fff6d6,#ffe07a);color:#3a2200;box-shadow:0 0 0 0 rgba(255,215,90,.9),0 10px 30px rgba(0,0,0,.35);animation:bk-glow 1.3s ease-in-out infinite}
+.bk-magic small{display:block;font-size:.28em;letter-spacing:.14em;text-transform:uppercase;color:#9a5a00}
+.bk-magic.read{animation:bk-hop .5s ease 2;background:linear-gradient(#fffbe6,#ffd54a)}
+.bk-things{position:absolute;left:5%;right:5%;top:18%;height:42%}
+.bk-thing{position:absolute;border:0;background:none;cursor:pointer;padding:0;transform:translate(-50%,-50%)}
+.bk-thing img,.bk-thing span{display:block;width:100%;height:100%;object-fit:contain;font-size:inherit;filter:drop-shadow(0 4px 4px rgba(0,0,0,.25))}
+.bk-thing b{position:absolute;right:-8%;top:-8%;background:#ffd54a;color:#4a2c00;border-radius:50%;width:1.4em;height:1.4em;display:grid;place-items:center;font-size:clamp(18px,4vmin,30px);box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.bk-thing.counted{animation:bk-hop .4s ease}
+.bk-plates{position:absolute;left:4%;right:4%;top:40%;display:flex;justify-content:center;gap:3vmin}
+.bk-plate{width:clamp(70px,16vmin,140px);height:clamp(70px,16vmin,140px);border-radius:50%;background:radial-gradient(#fff,#e9e2d4);box-shadow:0 6px 16px rgba(0,0,0,.3);display:flex;flex-wrap:wrap;align-content:center;justify-content:center;font-size:clamp(16px,4vmin,30px)}
+.bk-pizza{position:absolute;left:50%;top:10%;transform:translateX(-50%);width:clamp(110px,26vmin,230px);border:0;background:none;cursor:pointer}
+.bk-pizza img{width:100%}.bk-pizza b{position:absolute;inset:auto 0 -10px 0;text-align:center;font-size:clamp(20px,5vmin,34px);text-shadow:0 2px 4px #000}
+.bk-slots{position:absolute;left:50%;top:10%;transform:translateX(-50%);display:flex;gap:.3em;flex-wrap:wrap;justify-content:center;background:rgba(255,248,225,.95);color:#3a2200;border-radius:16px;padding:.25em .5em;font-weight:900;font-size:clamp(22px,5.5vmin,44px);max-width:92vw;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.bk-slots span{min-width:2.2em;border-bottom:4px solid #c9a24a;text-align:center}
+.bk-quest{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(255,250,236,.96);color:#2b2118;border-radius:26px;padding:20px 24px;max-width:min(90vw,560px);text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.4);animation:bk-pop .6s ease both}
+.bk-quest h2{margin:.1em 0 .3em;font-size:clamp(24px,5vmin,40px)}.bk-quest p{font-size:clamp(18px,3.6vmin,26px);margin:.3em 0 .8em}
+.bk-quest .bk-btn{font-size:clamp(22px,4.5vmin,34px);padding:.3em .9em;min-height:auto}
+.bk-key-fly{position:absolute;left:50%;top:45%;font-size:clamp(60px,14vmin,120px);animation:bk-keyfly 1.6s ease-in forwards;pointer-events:none}
+@keyframes bk-keyfly{0%{transform:translate(-50%,-50%) scale(.3)}40%{transform:translate(-50%,-50%) scale(1.3)}100%{transform:translate(30vw,-45vh) scale(.3);opacity:.2}}
+.bk-preview-bar{position:absolute;left:50%;top:max(10px,env(safe-area-inset-top));transform:translateX(-50%);background:rgba(0,0,0,.45);border-radius:14px;padding:4px 12px;font:700 13px system-ui;letter-spacing:.08em;pointer-events:none}
+@media (prefers-reduced-motion:reduce){.bk *,.bk *::before{animation:none!important;transition:none!important}.bk-fx{display:none}}

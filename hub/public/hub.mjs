@@ -107,6 +107,18 @@ async function render() {
     return;
   }
   const seq = ++renderSeq;
+  // Grown-ups' preview of a child's book: the same player, same narration, nothing saved.
+  const watch = location.hash.match(/^#book\/([\w-]+)$/);
+  if (watch && config.players.some((k) => k.id === watch[1] && k.id !== "admin")) {
+    const book = await loadBook(watch[1], { preview: true });
+    if (seq !== renderSeq) return;
+    if (book?.chapter) {
+      dispose = mountBook(main, { player: watch[1], book, preview: true, onDone: () => { dispose = null; location.hash = ""; } });
+      return;
+    }
+    main.innerHTML = `<section class="error"><h1>No chapter yet.</h1><p>The next chapter is written overnight.</p><a class="back-link" href="#">← Back</a></section>`;
+    return;
+  }
   if (player !== "admin" && !bookChecked.has(player)) {
     bookChecked.add(player);
     const book = await loadBook(player);
@@ -159,7 +171,9 @@ async function render() {
     return rank(a.id) - rank(b.id);
   });
   const style = menuStyle(player, p.menuStyle, storage);
-  main.innerHTML = `<section class="catalog menu-${style}"><h1>What shall we play?</h1><p>Your games. Your next adventure.</p><div class="cards">${orderedGames.map(item => { const art = gameArtwork(item, style); return `<a class="card" href="#${item.id}" data-game="${item.id}" style="--tint:${item.color}"><img class="${art.className}" src="${art.src}" alt="" width="${style === "logos" ? 192 : 640}" height="${style === "logos" ? 192 : 400}"><h2>${item.name}</h2><p>${item.description}</p></a>`; }).join("")}</div><footer><span>One app · Your progress stays with you.</span><button id="grown-ups">Grown-ups</button></footer></section>`;
+  const kids = config.players.filter((k) => k.id !== "admin");
+  const watchCards = player === "admin" ? `<div class="book-watch-home"><h2>📖 The Book</h2>${kids.map((k) => `<a class="book-watch-btn" href="#book/${esc(k.id)}">Watch ${esc(k.name)}'s book →</a>`).join("")}</div>` : "";
+  main.innerHTML = `<section class="catalog menu-${style}"><h1>What shall we play?</h1><p>Your games. Your next adventure.</p>${watchCards}<div class="cards">${orderedGames.map(item => { const art = gameArtwork(item, style); return `<a class="card" href="#${item.id}" data-game="${item.id}" style="--tint:${item.color}"><img class="${art.className}" src="${art.src}" alt="" width="${style === "logos" ? 192 : 640}" height="${style === "logos" ? 192 : 400}"><h2>${item.name}</h2><p>${item.description}</p></a>`; }).join("")}</div><footer><span>One app · Your progress stays with you.</span><button id="grown-ups">Grown-ups</button></footer></section>`;
   $("#grown-ups").onclick = () => {
     gateAttempts = 0;
     newParentChallenge();
@@ -207,8 +221,10 @@ $("#gate-form").onsubmit = (e) => {
   $("#parent-options").hidden = false;
   $("#menu-style").focus();
   void loadNotes();
+  $("#book-watch").innerHTML = config.players.filter((k) => k.id !== "admin").map((k) => `<button type="button" class="book-watch-btn" data-watch="${esc(k.id)}">Watch ${esc(k.name)}'s book</button>`).join("");
+  $("#book-watch").querySelectorAll("[data-watch]").forEach((b) => (b.onclick = () => { $("#parents").close(); location.hash = "book/" + b.dataset.watch; }));
 };
-// Grown-ups: one line about today becomes tomorrow's chapter; the bedtime page reads it aloud together.
+// Grown-ups: one line about today becomes part of the next chapter.
 async function loadNotes(body) {
   try {
     const r = await fetch("/api/book/notes", body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});

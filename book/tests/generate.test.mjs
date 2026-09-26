@@ -1,69 +1,74 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile,readdir,stat} from 'node:fs/promises';
+import {readFile,readdir,stat,writeFile,mkdir} from 'node:fs/promises';
 import {join} from 'node:path';
-import {writeStory,generateOne,recapLines} from '../generate.mjs';
+import {writeStory,generateOne,readLibrary,actorIdsFor,DEFAULT_MODELS} from '../generate.mjs';
 import {templateChapter} from '../template.mjs';
 import {bookPaths,readProfiles} from '../paths.mjs';
-import {speechLines,assemble} from '../assemble.mjs';
+import {speechLines,assemble,attachClips,voicesFor} from '../assemble.mjs';
+import {buildPrompt} from '../prompt.mjs';
 import {deployment,NOW,plans} from './fixtures.mjs';
 const reply=obj=>({text:'Here you go:\n'+JSON.stringify(obj),source:'fake:model'});
+const library=JSON.parse(await readFile(new URL('../../hub/public/book-art/library.json',import.meta.url),'utf8'));
+const ready=p=>{const ids=actorIdsFor(p,library);p.actorIds=ids;return {library,actors:ids.all,speakers:['narrator','dad',...p.cast.map(c=>c.id)]};};
 
+test('Chapters are written by Claude Opus 5.5, with GPT-6 Sol as the fallback',()=>{
+ assert.deepEqual(DEFAULT_MODELS,{claude:'claude-opus-5-5',codex:'gpt-6-sol'});
+});
 test('A clean model chapter is used as written',async()=>{
- const p=plans(['2026-03-10'])[1];const story={...templateChapter(p),title:'The Model Wrote This'};
- const r=await writeStory(p,{ask:async()=>reply(story)});
+ const p=plans(['2026-03-10'])[1],o=ready(p);const story={...templateChapter(p,library),title:'The Model Wrote This'};
+ const r=await writeStory(p,{...o,ask:async()=>reply(story)});
  assert.equal(r.source,'fake:model');assert.equal(r.story.title,'The Model Wrote This');assert.deepEqual(r.lint,[]);
 });
 test('One repair pass, then the template',async()=>{
- const p=plans(['2026-03-10'])[0],good=templateChapter(p),bad={...good,pages:good.pages.map(x=>({...x,text:x.text+' A scary ghost!'}))};
+ const p=plans(['2026-03-10'])[0],o=ready(p),good=templateChapter(p,library),bad={...good,pages:good.pages.map(x=>({...x,say:[...x.say,['narrator','A scary ghost!']]}))};
  let calls=0;
- let r=await writeStory(p,{ask:async(prompt)=>{calls++;return calls===1?reply(bad):reply(good);}});
+ let r=await writeStory(p,{...o,ask:async()=>{calls++;return calls===1?reply(bad):reply(good);}});
  assert.equal(calls,2);assert.match(r.source,/repaired/);assert.ok(r.lint.some(i=>i.startsWith('scary')));
- calls=0;r=await writeStory(p,{ask:async()=>{calls++;return reply(bad);}});
- assert.equal(calls,2);assert.match(r.source,/^template/);assert.deepEqual(r.story,templateChapter(p));
- r=await writeStory(p,{ask:async()=>({text:'not json at all',source:'x'})});assert.match(r.source,/^template/);
- r=await writeStory(p,{ask:async()=>null});assert.equal(r.source,'template (no model reachable)');
+ calls=0;r=await writeStory(p,{...o,ask:async()=>{calls++;return reply(bad);}});
+ assert.equal(calls,2);assert.match(r.source,/^template/);assert.deepEqual(r.story,templateChapter(p,library));
+ r=await writeStory(p,{...o,ask:async()=>({text:'not json at all',source:'x'})});assert.match(r.source,/^template/);
+ r=await writeStory(p,{...o,ask:async()=>null});assert.equal(r.source,'template (no model reachable)');
 });
-test('The repair prompt carries the lint issues',async()=>{
- const p=plans(['2026-03-10'])[1],good=templateChapter(p);const prompts=[];
- await writeStory(p,{ask:async(prompt)=>{prompts.push(prompt);return prompts.length===1?reply({...good,title:''}):reply(good);}});
- assert.match(prompts[1],/title missing/);assert.match(prompts[0],/CATCH THE MISTAKE/);assert.ok(prompts[0].includes(p.mistake.claim));
+test('The brief lists the beats, the picture library and the magic words',()=>{
+ const [young,older]=plans(['2026-03-10']);ready(young);ready(older);
+ const a=buildPrompt(young,{library,actors:young.actorIds.all});
+ assert.match(a,/teach-letter/);assert.match(a,/stones/);assert.match(a,/NO!/);assert.match(a,/meadow/);assert.match(a,/cannot read yet/);
+ const b=buildPrompt(older,{library,actors:older.actorIds.all});
+ assert.match(b,/MAGIC WORDS/);for(const w of older.magic)assert.ok(b.includes(`"${w}"`));assert.match(b,/spell/);
 });
-test('Nightly generation publishes chapter, markdown and bedtime page atomically, and is idempotent',async()=>{
+test('Nightly generation publishes a picture-book chapter atomically, is idempotent, and replaces an older format',async()=>{
  const {root,env}=await deployment();const paths=bookPaths(env),profiles=readProfiles(paths);const logs=[];
  const r=await generateOne('older',{paths,profiles,date:'2026-03-10',noVoice:true,now:NOW,log:m=>logs.push(m),ask:async()=>null});
  const ch=JSON.parse(await readFile(r.file,'utf8'));
- assert.equal(ch.schema,'family-book-chapter-1');assert.equal(ch.name,'Leo');assert.equal(ch.number,1);assert.equal(ch.companion.name,'Gizmo');
- assert.ok(ch.pages.some(p=>p.kind==='mistake')&&ch.pages.filter(p=>p.kind==='challenge').length===4);
+ assert.equal(ch.schema,'family-book-chapter-2');assert.equal(ch.name,'Leo');assert.equal(ch.number,1);
+ assert.ok(ch.pages.every(p=>p.scene&&library.backgrounds[p.scene.bg]),'every page is a picture from the library');
+ assert.ok(ch.pages.every(p=>p.scene.actors.length<=4));
+ assert.deepEqual(ch.pages.filter(p=>p.kind==='beat').map(p=>p.beat.kind),['signs','spell',ch.pages.find(p=>['share','score'].includes(p.beat?.kind)).beat.kind,'no']);
+ assert.ok(ch.pages.some(p=>p.magic),'magic words he reads himself');
+ assert.ok(Object.keys(ch.art.backgrounds).length>=3);assert.ok(ch.art.actors.hero);
  assert.ok(ch.meta.dadLines.includes('Leo scored a goal'));
- const html=await readFile(join(root,'book','older','2026-03-10.html'),'utf8');
- assert.match(html,/Catch the mistake/);assert.match(html,/Leo scored a goal/);assert.match(html,/about 12 min/);assert.doesNotMatch(html,/Smithers/);
+ assert.ok(!(await readdir(join(root,'book','older'))).some(f=>f.endsWith('.html')),'no printable bedtime page any more');
  assert.deepEqual((await readdir(join(root,'book','.staging'))),[],'no half-published files');
  assert.equal(((await stat(r.file)).mode&0o777),0o600);
- assert.ok((await readdir(join(root,'learner'))).includes('older.json'));
  const again=await generateOne('older',{paths,profiles,date:'2026-03-10',noVoice:true,now:NOW,log:()=>{},ask:async()=>null});assert.equal(again.skipped,true);
+ await mkdir(join(root,'book','young'),{recursive:true});await writeFile(join(root,'book','young','2026-03-10.json'),JSON.stringify({schema:'family-book-chapter-1',pages:[]}));
  const young=await generateOne('young',{paths,profiles,date:'2026-03-10',noVoice:true,now:NOW,log:()=>{},ask:async()=>null});
- assert.equal(young.chapter.level,'early');assert.ok(young.chapter.pages.some(p=>p.teach));
+ assert.equal(young.skipped,undefined,'an older-format chapter is replaced');
+ assert.equal(young.chapter.level,'early');assert.deepEqual(young.chapter.pages.filter(p=>p.beat).map(p=>p.beat.kind),['teach-letter','stones','count','no']);
+ assert.ok(young.chapter.quest.text.includes(young.chapter.pages.find(p=>p.beat?.kind==='stones').beat.letter));
 });
-test('Every line a chapter can speak is in its narration list',()=>{
- const p=plans(['2026-03-10'])[1],ch=assemble(templateChapter(p),p);const lines=new Set(speechLines(ch));
- for(const pg of ch.pages){pg.lines.forEach(l=>assert.ok(lines.has(l)));if(pg.item)assert.ok(lines.has(pg.item.spoken));if(pg.mistake){assert.ok(lines.has(pg.mistake.caught));assert.ok(lines.has(pg.mistake.fix.spoken));}}
- assert.ok(lines.has(ch.cover));assert.ok(lines.has('Uh oh. I think I made a mistake. Can you find it?'));
+test('Every spoken line carries a voice and gets its clip; friends and Dad have their own voices',()=>{
+ const p=plans(['2026-03-10'])[0],o=ready(p);p.cast=[{...p.cast[0],voice:'am_puck',speed:1.05}];
+ const v=voicesFor(p);const ch=assemble(templateChapter(p,library),p,{library,actors:o.actors,voices:v});
+ const lines=speechLines(ch);assert.ok(lines.every(l=>l.voice&&l.speed&&l.text));
+ assert.ok(lines.some(l=>l.voice==='am_michael'),'Dad speaks');assert.ok(lines.some(l=>l.voice==='am_puck'),'the friend speaks in its own voice');
+ const clips=Object.fromEntries(lines.map((l,i)=>[`${l.voice}|${l.speed}|${l.text}`,String(i).padStart(16,'0')+'.wav']));attachClips(ch,clips);
+ const all=[];const walk=x=>{if(!x||typeof x!=='object')return;if(Array.isArray(x))return x.forEach(walk);if(typeof x.text==='string'&&x.voice)return all.push(x);Object.values(x).forEach(walk);};walk(ch);
+ assert.ok(all.length>30&&all.every(l=>l.clip),'every line on every page has narration');
+ for(const pg of ch.pages)assert.ok(pg.say.length||pg.beat,`page ${pg.id} is narrated`);
 });
-test('Recap lines for one child only',()=>{
- assert.deepEqual(recapLines('## Leo\n- **Time:** 5 min\n- **Worth a look:**\n\n## Ada\n- x','Leo'),['Time: 5 min']);
-});
-test('Chapters carry their cast; pages know who is on them; portraits only when the file exists',()=>{
- const p={...plans(['2026-03-10'])[1]};p.cast=[{id:'dragon',name:'Dragon',emoji:'🐉'},{id:'cat',name:'the Twin Cats',emoji:'🐱'}];p.companion=p.cast[0];
- const ch=assemble(templateChapter(p),p,{portraits:new Set(['dragon'])});
- assert.deepEqual(ch.cast.map(c=>[c.id,c.portrait]),[['dragon','dragon.jpg'],['cat',null]]);
- assert.deepEqual(ch.pages[0].cast,['dragon','cat']);
- assert.ok(ch.pages.some(pg=>pg.cast.length===1&&pg.cast[0]==='dragon'));
-});
-test('Friends are recognised on a page by a short name too',async()=>{
- const {castOnPage}=await import('../assemble.mjs');
- const cast=[{id:'h',name:'Rainbow the hedgehog'},{id:'p',name:'Captain Parrot'},{id:'b',name:'Big Owl'},{id:'t',name:'the Little Cats'}];
- assert.deepEqual(castOnPage(cast,'Rainbow rolled and Parrot squawked.'),['h','p']);
- assert.deepEqual(castOnPage(cast,'A big tree. The captain waved.'),[]);
- assert.deepEqual(castOnPage(cast,'Owl hooted with the little cats.'),['b','t']);
+test('The generic picture library ships with the repository and resolves',()=>{
+ const lib=readLibrary(bookPaths({FAMILY_DEPLOY_ROOT:'/nonexistent'}));
+ assert.equal(lib.private,false);assert.ok(lib.actors.hero&&lib.actors['grown-up']&&lib.backgrounds.meadow);
 });

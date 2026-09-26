@@ -1,82 +1,76 @@
-// The Book: turn the story JSON + plan into the chapter the hub plays, and its read-aloud copies.
-import {splitLines} from './lint.mjs';
-export const CHAPTER_SCHEMA='family-book-chapter-1';
-// Fixed lines the reader speaks. Content prompts always speak; HOW_TO is said once per session.
-export const UI_LINES={mistakePrompt:'Uh oh. I think I made a mistake. Can you find it?',howTo:'Tap the part that is wrong.',notIt:'That part is right. Keep looking!',fixPrompt:'What should it be?',yes:'Yes!',tryAgain:'Try again.',greatReading:'Great reading!'};
-// Which friends a page mentions: the full name, or its capitalised first/last word
-// ("Rainbow" for "Rainbow the hedgehog", "Parrot" for "Captain Parrot").
-const GENERIC=new Set(['The','Big','Little','Captain','Mr','Mrs','Miss','Doctor','Sir','Lady']);
-export function castOnPage(cast,text){
- const re=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
- return cast.filter(c=>{const core=c.name.replace(/^the\s+/i,''),words=core.split(/\s+/);
-  if(new RegExp(`\\b${re(core)}\\b`,'i').test(text))return true;
-  return [words[0],words.at(-1)].filter(w=>/^[A-Z][a-z]{2,}$/.test(w)&&!GENERIC.has(w)).some(w=>new RegExp(`\\b${re(w)}\\b`).test(text));
- }).map(c=>c.id);
+// The Book: turn the story JSON + plan + picture library into the chapter the hub plays.
+// Every spoken line carries its voice (the narrator, Dad, each friend) and, after narration, its clip.
+import {sayOf} from './lint.mjs';
+import {normalizeScene,artFor} from '../hub/public/book-scene.mjs';
+export const CHAPTER_SCHEMA='family-book-chapter-2';
+// Fixed lines the player speaks (content prompts always speak).
+export const UI_LINES={yes:'Yes!',tryAgain:'Try again.',great:'Great job!',noPrompt:'What do you say?',readIt:'Can you read it?',nextTime:'See you in the next chapter!',tapToGo:'Tap to turn the page.'};
+export const DEFAULT_VOICES={narrator:{voice:'af_heart',speed:0.95},dad:{voice:'am_michael',speed:0.95}};
+const FRIEND_VOICES=[{voice:'am_puck',speed:1},{voice:'af_bella',speed:1},{voice:'bm_fable',speed:1},{voice:'af_nova',speed:1.05}];
+export function voicesFor(plan,{narrator}={}){
+ const v={narrator:{...DEFAULT_VOICES.narrator,...(narrator||{})},dad:{...DEFAULT_VOICES.dad}};
+ (plan.cast||[]).forEach((c,i)=>{v[c.id]=c.voice?{voice:c.voice,speed:Number(c.speed)||1}:FRIEND_VOICES[i%FRIEND_VOICES.length];});
+ return v;
 }
-export function assemble(story,plan,{number=1,source='template',lint=[],generatedAt=new Date().toISOString(),dadLines=[],portraits=new Set()}={}){
- const byId=Object.fromEntries(plan.challenges.map(c=>[c.id,c]));
- const cast=(plan.cast||[plan.companion]).map(c=>({id:c.id||c.name,name:c.name,emoji:c.emoji||'⭐',portrait:portraits.has(c.id)?`${c.id}.jpg`:null}));
- const who=text=>castOnPage(cast,text);
+const clean=t=>String(t||'').trim().replace(/\s*[—–]\s*/g,', ').replace(/\s+/g,' ');
+export function assemble(story,plan,{number=1,source='template',lint=[],generatedAt=new Date().toISOString(),dadLines=[],library,actors,voices}){
+ const V=voices||voicesFor(plan),line=(who,text)=>{const w=V[who]?who:'narrator';return {who:w,text:clean(text),...V[w]};};
+ const N=t=>line('narrator',t);
+ const beats=Object.fromEntries(plan.beats.map(b=>[b.id,b]));
+ const notes=[];let lastBg=null;
  const pages=story.pages.map((p,i)=>{
-  const text=p.text.trim().replace(/\s*[—–]\s*/g,', ');
-  const base={id:`p${i+1}`,text,lines:splitLines(text),cast:who(text)};
-  if(p.challenge)return {...base,kind:'challenge',challenge:p.challenge,practises:byId[p.challenge].practises,item:byId[p.challenge].item};
-  if(p.mistake){const m=plan.mistake;return {...base,kind:'mistake',mistake:{kind:m.kind,claim:m.claim,wrong:m.wrong,right:m.right,tokens:m.tokens||null,hint:m.hint,caught:m.caught,fix:m.fix}};}
-  return {...base,kind:'story',scene:p.scene||'',...(p.teach&&plan.teach?{teach:plan.teach}:{})};
+  const {scene,notes:n}=normalizeScene(p,library,{allowed:actors,fallbackBg:lastBg});notes.push(...n.map(x=>`page ${i+1}: ${x}`));lastBg=scene.bg;
+  const base={id:`p${i+1}`,kind:'story',scene,caption:clean(p.caption).slice(0,60),say:sayOf(p).map(l=>line(l.who,l.text)).filter(l=>l.text)};
+  if(p.magic&&plan.magic.includes(String(p.magic.word).toLowerCase())){const w=String(p.magic.word).toLowerCase();
+   base.magic={word:w,object:clean(p.magic.object).slice(0,60),read:N(`${w[0].toUpperCase()+w.slice(1)}!`),after:sayOf({say:p.magic.after||[]}).map(l=>line(l.who,l.text))};}
+  if(p.beat&&beats[p.beat])return {...base,kind:'beat',beat:beatLines(beats[p.beat],{N,line,plan})};
+  return base;
  });
- const cover=`${plan.name}'s Book. Chapter ${number}. ${story.title.replace(/[.!?]*$/,'.')}`;
- return {schema:CHAPTER_SCHEMA,player:plan.player,name:plan.name,date:plan.date,number,title:story.title,cover,
-  companion:{name:plan.companion.name,emoji:plan.companion.emoji||'⭐'},cast,level:plan.level,pages,
-  summary:story.summary,hook:story.hook,bedtimeQuestion:story.bedtimeQuestion,
-  meta:{generatedAt,source,lint,practises:[...plan.challenges.map(c=>c.practises),`catch the mistake: ${plan.mistake.claim}`],dadLines,yesterday:plan.yesterday}};
+ const art=artFor(pages,library);
+ const first=pages[0];
+ const cover={title:clean(story.title),line:N(`${plan.name}'s Book. Chapter ${number}. ${clean(story.title).replace(/[.!?]*$/,'.')}`),scene:first.scene};
+ const ui=Object.fromEntries(Object.entries(UI_LINES).map(([k,t])=>[k,N(t)]));
+ ui.numbers=Object.fromEntries(Array.from({length:12},(_,i)=>[String(i+1),N(String(i+1))]));
+ return {schema:CHAPTER_SCHEMA,player:plan.player,name:plan.name,date:plan.date,number,title:cover.title,level:plan.level,cover,
+  cast:(plan.cast||[]).map(c=>({id:c.id,name:c.name,emoji:c.emoji||'⭐'})),art,pages,ui,
+  quest:plan.quest?N(`A quest for you and Dad: ${plan.quest}`):null,reward:plan.reward||null,
+  summary:clean(story.summary),hook:clean(story.hook),
+  meta:{generatedAt,source,lint,sceneNotes:notes,practises:plan.beats.map(b=>`${b.kind}: ${b.what}`),magic:plan.magic,dadLines,themes:(plan.themes||[]).map(t=>t.id||t.seed),yesterday:plan.yesterday}};
 }
-export function speechLines(ch){
- const lines=new Set([ch.cover,...Object.values(UI_LINES)]);
- for(const p of ch.pages){for(const l of p.lines)lines.add(l);
-  if(p.item)lines.add(p.item.spoken);
-  if(p.mistake){lines.add(p.mistake.hint);lines.add(p.mistake.caught);lines.add(p.mistake.fix.spoken);}}
- return [...lines].filter(Boolean);
-}
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function itemText(it){
- if(it.kind==='sentence')return `Build the sentence: "${it.sentence}" (tiles: ${it.tiles.join(' · ')})`;
- if(it.kind==='math')return `${it.display||it.spoken} (answer ${it.answer})`;
- if(it.kind==='count')return `${it.spoken} ${it.picture} (answer ${it.answer})`;
- if(it.kind==='first-letter')return `${it.spoken} ${it.picture||''} (answer ${it.answer})`;
- return `${it.spoken} (answer ${it.answer})`;
-}
-export function markdown(ch,{did=[]}={}){
- const out=[`# ${ch.title}`,'',`*${ch.name}'s Book, chapter ${ch.number} · ${ch.date}*`,''];
- for(const p of ch.pages){
-  if(p.kind==='challenge')out.push(`> **Challenge:** ${p.text}  `,`> ${itemText(p.item)}`,'');
-  else if(p.kind==='mistake')out.push(`> **Catch the mistake:** ${p.text}  `,`> The slip: "${p.mistake.claim}" (should be ${p.mistake.right})`,'');
-  else out.push(p.text,'');
+// The spoken lines of each beat, in the right voices. The words the child must find are never spoken first.
+function beatLines(b,{N,line,plan}){
+ const who=b.who&&plan.cast.some(c=>c.id===b.who)?b.who:'narrator';
+ switch(b.kind){
+  case 'teach-letter':return {...b,lines:b.lines.map(([w,t])=>line(w,t)),tap:N(b.tap)};
+  case 'stones':return {...b,spoken:N(b.spoken),notIt:N(b.notIt),done:N(b.done),tap:N(`${b.letter}! ${b.sound[0].toUpperCase()+b.sound.slice(1)}!`)};
+  case 'count':return {...b,spoken:N(b.spoken),ask:N(b.ask),done:N(`Yes! ${b.answer} ${b.things}!`)};
+  case 'signs':return {...b,spoken:N(b.spoken),notIt:N(b.notIt),done:N(`Yes! It says ${b.target}!`)};
+  case 'spell':return {...b,spoken:N(b.spoken),done:N(b.sentence)};
+  case 'share':return {...b,spoken:N(b.spoken),ask:N(b.ask),done:N(`Yes! ${b.answer} slices on each plate. Fair for everyone!`)};
+  case 'score':return {...b,spoken:N(b.spoken),done:N(`Yes! ${b.answer} points!`)};
+  case 'no':return {...b,claim:line(who,b.claim),ask:line(who,b.ask),ifYes:line(who,b.ifYes),caught:N(b.caught),fixSpoken:N(b.fixSpoken),hint:N(b.hint)};
  }
- if(did.length){out.push('## What he did','');for(const d of did)out.push('- '+d);out.push('');}
- out.push(`**Bedtime question:** ${ch.bedtimeQuestion}`,'');
- return out.join('\n');
+ return b;
 }
-// Printable bedtime page: read it aloud together (Dad is the voice). Self-contained, light/dark aware.
-export function bedtimeHTML(ch,{did=[],dadLines=[],portraitData={}}={}){
- const faces=(ids=[])=>ids.map(id=>ch.cast?.find(c=>c.id===id)).filter(c=>c&&portraitData[c.id]).map(c=>`<img class="face" src="${portraitData[c.id]}" alt="${esc(c.name)}">`).join('');
- const pages=ch.pages.map(p=>{
-  if(p.kind==='challenge')return `<aside class="ask"><b>Ask ${esc(ch.name)}</b><p>${esc(p.text)}</p><p class="q">${esc(itemText(p.item))}</p></aside>`;
-  if(p.kind==='mistake')return `<aside class="slip"><b>Catch the mistake</b><p>${esc(p.text)}</p><p class="q">Read it as if it's true and let him catch it. (Right answer: ${esc(p.mistake.right)})</p></aside>`;
-  return `${p.cast?.length&&faces(p.cast)?`<div class="faces">${faces(p.cast)}</div>`:''}<p>${p.scene?`<span class="scene" aria-hidden="true">${esc(p.scene)}</span> `:''}${esc(p.text)}</p>`;
- }).join('\n');
- return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(ch.name)}'s Book: ${esc(ch.title)}</title>
-<style>:root{--bg:#fffaf0;--ink:#1f2a36;--muted:#5d6b78;--card:#fff;--line:#e8dcc4;--ask:#eef6ff;--slip:#fff1e6;--accent:#b4531a}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171a1f;--ink:#ece6da;--muted:#a9b1ba;--card:#20242b;--line:#343a44;--ask:#1c2a3a;--slip:#3a2618;--accent:#f0a36a}}
-:root[data-theme="dark"]{--bg:#171a1f;--ink:#ece6da;--muted:#a9b1ba;--card:#20242b;--line:#343a44;--ask:#1c2a3a;--slip:#3a2618;--accent:#f0a36a}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 Georgia,'Iowan Old Style',serif}
-main{max-width:720px;margin:0 auto;padding:32px 16px 64px}h1{font-size:1.9rem;line-height:1.2;margin:.2em 0}.kicker{color:var(--accent);font:700 .8rem/1 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase}
-.scene{font-size:1.3em}.faces{display:flex;gap:8px;margin:18px 0 -6px}.face{width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--line)}.cast{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 18px}.cast figure{margin:0;text-align:center;font:600 .78rem system-ui,sans-serif;color:var(--muted)}.cast img{width:84px;height:84px;border-radius:50%;object-fit:cover;display:block;margin-bottom:4px;border:2px solid var(--line)}aside{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:14px 0;font-family:system-ui,sans-serif;font-size:.95rem}aside b{font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}aside p{margin:.3em 0}.ask{background:var(--ask)}.slip{background:var(--slip)}.q{color:var(--muted)}
-section.did{margin-top:28px;border-top:1px solid var(--line);padding-top:12px;font-family:system-ui,sans-serif;font-size:.95rem}section.did li{margin:.2em 0}.bedtime{margin-top:18px;font-style:italic}
-@media print{body{background:#fff;color:#000;font-size:14pt}aside{break-inside:avoid;background:none!important}main{padding:0}}</style></head>
-<body><main><div class="kicker">${esc(ch.name)}'s Book · Chapter ${ch.number} · ${esc(ch.date)}</div><h1>${esc(ch.title)}</h1>
-${(ch.cast||[]).some(c=>portraitData[c.id])?`<div class="cast">${ch.cast.map(c=>portraitData[c.id]?`<figure><img src="${portraitData[c.id]}" alt="">${esc(c.name)}</figure>`:`<figure><span style="font-size:60px;line-height:84px">${esc(c.emoji)}</span>${esc(c.name)}</figure>`).join('')}</div>`:''}
-${pages}
-<p class="bedtime">Bedtime question: ${esc(ch.bedtimeQuestion)}</p>
-${did.length||dadLines.length?`<section class="did"><b>What ${esc(ch.name)} did</b><ul>${[...did,...dadLines.map(l=>'Dad: '+l)].map(d=>`<li>${esc(d)}</li>`).join('')}</ul></section>`:''}
-</main></body></html>`;
+// Every line to narrate: [{text, voice, speed}] (deduplicated by voice + speed + text).
+export function speechLines(ch){
+ const out=new Map();const add=l=>{if(l&&l.text&&l.voice)out.set(`${l.voice}|${l.speed}|${l.text}`,{text:l.text,voice:l.voice,speed:l.speed});};
+ const walk=v=>{if(!v||typeof v!=='object')return;if(Array.isArray(v))return v.forEach(walk);if(typeof v.text==='string'&&v.voice)return add(v);for(const x of Object.values(v))walk(x);};
+ walk(ch.cover);walk(ch.pages);walk(ch.ui);walk(ch.quest);
+ return [...out.values()];
+}
+// Attach narration clips: clips maps "voice|speed|text" to a file name.
+export function attachClips(ch,clips){
+ const walk=v=>{if(!v||typeof v!=='object')return;if(Array.isArray(v))return v.forEach(walk);if(typeof v.text==='string'&&v.voice){const f=clips[`${v.voice}|${v.speed}|${v.text}`];if(f)v.clip=f;return;}for(const x of Object.values(v))walk(x);};
+ walk(ch.cover);walk(ch.pages);walk(ch.ui);walk(ch.quest);return ch;
+}
+// A short plain-text summary for grown-ups (what he will practise, the lines in order).
+export function markdown(ch){
+ const out=[`# ${ch.title}`,'',`*${ch.name}'s Book, chapter ${ch.number} · ${ch.date}*`,''];
+ for(const p of ch.pages){out.push(`**[${p.scene.bg}${p.scene.actors.length?' · '+p.scene.actors.map(a=>a.id+(a.pose!=='idle'?':'+a.pose:'')).join(', '):''}]**${p.caption?` _${p.caption}_`:''}`);
+  for(const l of p.say)out.push(`- ${l.who}: ${l.text}`);
+  if(p.magic)out.push(`- MAGIC WORD on ${p.magic.object}: **${p.magic.word}**`,...p.magic.after.map(l=>`  - ${l.who}: ${l.text}`));
+  if(p.beat)out.push(`- BEAT (${p.beat.kind}): ${p.beat.what}`);out.push('');}
+ if(ch.quest)out.push(`**Quest:** ${ch.quest.text}`,'');
+ return out.join('\n');
 }

@@ -1,43 +1,41 @@
-// The Book: the fallback chapter. Used when no language model is reachable or its chapter fails the
-// lint twice. Deterministic, always passes the lint (tests check this for both levels).
-const PLACES={
- soccer:{where:'the green park pitch',scene:'⚽🥅🌳',thing:'a shiny golden ball',fun:'kicked the ball high into the sky'},
- dinosaurs:{where:'Dino Valley',scene:'🦕🌋🌳',thing:'a big, round dinosaur egg',fun:'stomped like a friendly dinosaur'},
- robots:{where:'the robot workshop',scene:'🤖🔧⚙️',thing:'a tiny silver gear',fun:'danced a beeping robot dance'},
- cookies:{where:'the little bakery',scene:'🍪🏠🧁',thing:'a warm cookie jar',fun:'shared the cookies with everyone'},
- chess:{where:'the chessboard castle',scene:'♟️🏰👑',thing:'a lost wooden knight',fun:'marched across the squares'},
- mazes:{where:'the twisty maze garden',scene:'🌳🗺️🌸',thing:'a hidden garden key',fun:'raced along the twisty paths'}
-};
-const others=plan=>(plan.cast||[plan.companion]).slice(1).map(c=>c.name);
+// The Book: the fallback chapter, used when no language model is reachable or its chapter fails the lint
+// twice. Deterministic, built from the same beats and picture library; always passes the lint (tested).
 const list=names=>names.length<2?names.join(''):names.slice(0,-1).join(', ')+' and '+names.at(-1);
-const placeFor=plan=>PLACES[plan.interests.find(i=>PLACES[i])]||PLACES.soccer;
-function early(plan){
- const {name,companion:c,teach,challenges:[c1,c2,c3],mistake:m}=plan,P=placeFor(plan),W=teach.word,Wc=W[0].toUpperCase()+W.slice(1);
- return {title:`${name}, ${c.name} and the ${P.thing.split(' ').slice(-2).join(' ')}`,pages:[
-  {text:`Good morning, ${name}! ${c.name} is here too${others(plan).length?`, with ${list(others(plan))}`:''}. Today we go to ${P.where}. Off we go!`,scene:P.scene},
-  {text:`Look! ${c.name} sees something. It is ${P.thing}! But it is stuck behind a gate.`,scene:P.scene},
-  {teach:true,text:`On the gate is a picture. It is a ${W}. ${Wc} starts with ${teach.letter}. ${teach.letter}, ${teach.letter}, ${W}!`,scene:c.emoji||'🐻'},
-  {challenge:c1.id,text:`The gate has letters on it. Can you help ${c.name} find the right one?`},
-  {text:`Click! The gate opens. ${c.name} jumps for joy. ${name} is a great helper!`,scene:P.scene},
-  {challenge:c2.id,text:`Now a door with a picture. The door opens with the first letter. Can you find it?`},
-  {mistake:m.id,text:`${c.name} points and says: ${m.claim} Hmm. Is that right?`},
-  {challenge:c3.id,text:`${c.name} has a snack for the trip. How many are there? Let us count together.`},
-  {text:`${name} and ${c.name} ${P.fun}. What a happy day! Tomorrow, a new door is waiting. The end, for today.`,scene:P.scene}
- ],summary:`${name} and ${c.name} opened a letter gate at ${P.where} and found ${P.thing}.`,hook:`A new door with a new letter is waiting.`,bedtimeQuestion:`What was behind the gate today, ${name}?`};
+const bg=(lib,...prefs)=>prefs.find(p=>lib.backgrounds[p])||Object.keys(lib.backgrounds)[0];
+const idsOf=(plan,lib)=>plan.actorIds||{hero:lib.actors[plan.player]?plan.player:'hero',dad:lib.actors.dad?'dad':'grown-up'};
+const pose=(lib,id,p)=>lib.actors[id]?.poses[p]?`${id}:${p}`:id;
+function early(plan,lib){
+ const {name}=plan,ids=idsOf(plan,lib),cast=plan.cast,[b1,b2,b3,b4]=plan.beats;
+ const owner=cast.find(c=>c.id===b1.owner)||cast[0],noWho=cast.find(c=>c.id===b4.who)||cast[0],others=cast.filter(c=>c.id!==owner.id).slice(0,2);
+ const A=(...xs)=>xs.filter(Boolean).filter((x,i,a)=>lib.actors[x.split(':')[0]]&&a.indexOf(x)===i).slice(0,4);
+ const H=ids.hero,D=ids.dad;
+ return {title:`${name} and the ${b1.letter} Key`,pages:[
+  {scene:bg(lib,'castle-forest','castle','meadow'),actors:A(H,D,owner.id,others[0]?.id),fx:'sparkles',say:[['narrator',`Good morning, ${name}! Today is an adventure day.`],['dad',`Come on, ${name}! ${list([owner.name,...others.map(o=>o.name)])} are coming too.`],['narrator','Off they go, down the sunny path.']]},
+  {beat:'b1',scene:bg(lib,'castle-gate','castle','meadow'),actors:A(H,owner.id),fx:'sparkles',caption:b1.letter,say:[['narrator',`A big door blocks the way. It has a lock with a funny shape.`],['narrator',`${owner.name} has a secret.`]]},
+  {scene:bg(lib,'forest-path','forest','meadow'),actors:A(pose(lib,H,'cheer'),owner.id,D),fx:'stars',say:[['narrator',`${name} has the ${b1.letter} key now! Click! The door swings open.`],['dad','Well done! Let us go and see what is inside.']]},
+  {beat:'b2',scene:bg(lib,'river-bridge','forest','meadow'),actors:A(H,others[0]?.id||owner.id),say:[['narrator','Oh no, a wide river! There are stones to hop on.'],['narrator','Only some stones are strong enough.']]},
+  {scene:bg(lib,'train-valley','meadow'),actors:A(pose(lib,H,'cheer'),D,owner.id),props:['train'],ride:true,fx:'sparkles',say:[['narrator','Across! And look, a little train is waiting.'],['dad','All aboard! Toot, toot!']]},
+  {beat:'b3',scene:bg(lib,'dino-land','meadow','forest'),actors:A(H,others[1]?.id||owner.id),say:[['narrator','The train stops in a sunny valley.'],['narrator',`Everyone wants to know how many there are.`]]},
+  {beat:'b4',scene:bg(lib,'castle-forest','castle','meadow'),actors:A(H,noWho.id),say:[['narrator',`${noWho.name} has a very cheeky idea.`]]},
+  {scene:bg(lib,'pizza-party','meadow'),actors:A(pose(lib,H,'cheer'),pose(lib,D,'cheer'),noWho.id,owner.id),fx:'confetti',say:[['narrator',`${noWho.name} laughs and laughs. What a silly idea that was!`],['dad',`${name}, you are a great helper.`],['narrator','Everyone shares a big warm pizza.']]},
+  {scene:bg(lib,'night-hill','castle-moon-hill','night'),actors:A(H,D,owner.id),fx:'stars',say:[['narrator',`The moon comes up. ${name} holds the ${b1.letter} key tight.`],['narrator','Far away, another door is waiting. Who has the next key?']]}
+ ],summary:`${name} got the ${b1.letter} key from ${owner.name}, crossed the river on the ${b1.letter} stones and counted with his friends.`,hook:'Another locked door is waiting for the next key.'};
 }
-function reader(plan){
- const {name,companion:c,challenges:[c1,c2,c3,c4],mistake:m}=plan,P=placeFor(plan);
- return {title:`${name} and the Puzzle at ${P.where.replace(/^the /,'The ')}`,pages:[
-  {text:`${name} woke up early and grabbed his bag. ${c.name} was already waiting by the door${others(plan).length?` with ${list(others(plan))}`:''}. "Today we go to ${P.where}," said ${c.name}. "Someone left us a puzzle map!"`,scene:P.scene},
-  {text:`The map had a big red X and four little locks drawn around it. Each lock needed a clue. "Four locks," said ${name}. "We can do this, one at a time." ${c.name} bounced happily and led the way.`,scene:'🗺️🔑'},
-  {challenge:c1.id,text:`The first lock had a row of words on it. Some words looked almost the same. "Read every letter," said ${c.name}. "The lock only opens for the right word."`},
-  {text:`Click! The first lock sprang open. Behind it was a note: "Well read, explorer. Now put my words back in order." The words had tumbled all over the path like fallen leaves.`,scene:'🍂📖'},
-  {challenge:c2.id,text:`${c.name} tried to guess by where the words were lying. ${name} smiled. "Let's read each word and build the sentence properly."`},
-  {text:`The sentence clicked together and a small bridge folded down over the stream. On the other side was a picnic table with cookies and a row of empty plates.`,scene:'🌉🍪'},
-  {challenge:c3.id,text:`A sign said: "Share me fairly and the next lock opens." ${name} looked at the cookies and at the plates, and started to think.`},
-  {mistake:m.id,text:`"I know the last clue!" said ${c.name} proudly. "It is easy. ${m.claim}. I am sure of it!"`},
-  {challenge:c4.id,text:`The last lock had a number pad. It flashed a times table question. ${name} took a deep breath and thought it through.`},
-  {text:`The last lock opened with a happy ding, and there was ${P.thing}! ${name} and ${c.name} ${P.fun}. "Tomorrow," said ${c.name}, "the map shows another path." The end, for today.`,scene:P.scene}
- ],summary:`${name} and ${c.name} followed a puzzle map at ${P.where}, opened four locks and found ${P.thing}.`,hook:`The map shows another path.`,bedtimeQuestion:`Which lock was the trickiest today, ${name}, and how did you open it?`};
+function reader(plan,lib){
+ const {name}=plan,ids=idsOf(plan,lib),cast=plan.cast,[b1,b2,b3,b4]=plan.beats,m=plan.magic;
+ const c=cast[0],d=cast[1]||cast[0],noWho=cast.find(x=>x.id===b4.who)||d,H=ids.hero,D=ids.dad;
+ const A=(...xs)=>xs.filter(Boolean).filter((x,i,a)=>lib.actors[x.split(':')[0]]&&a.indexOf(x)===i).slice(0,4);
+ const magic=(i,object,after)=>m[i]?{magic:{word:m[i],object,after:[['narrator',after]]}}:{};
+ return {title:`${name} and the Lost Map`,pages:[
+  {scene:bg(lib,'treehouse-town','castle','meadow'),actors:A(H,D,c.id,d.id),fx:'sparkles',say:[['narrator',`${name} found an old map under the treehouse stairs.`],['dad','A treasure map! Shall we follow it?'],['narrator','A word is painted on the map. Can you read it?']],...magic(0,'the old map','The map glows, and a dotted path appears!')},
+  {beat:'b1',scene:bg(lib,'train-valley','meadow'),actors:A(H,c.id),props:['train'],say:[['narrator','At the station, three trains are ready to go.'],['narrator',`${c.name} yawns. "Which one is ours?"`]]},
+  {scene:bg(lib,'dino-land','meadow','forest'),actors:A(pose(lib,H,'cheer'),d.id,D),fx:'stars',say:[['narrator','The train chugs into a valley full of giant ferns.'],['narrator','A tall sign stands by the lake. What does it say?']],...magic(1,'the tall sign','The ground rumbles softly, and a secret path opens!')},
+  {beat:'b2',scene:bg(lib,'castle-gate','castle','forest'),actors:A(H,d.id,c.id),say:[['narrator','A gate blocks the path. Its spell has fallen to pieces!'],['dad',`Read each word, ${name}. Not where they lie. What they say.`]]},
+  {scene:bg(lib,'chess-courtyard','castle','meadow'),actors:A(pose(lib,H,'cheer'),c.id,D),fx:'sparkles',say:[['narrator','The gate creaks open. Inside is a sunny courtyard.'],['narrator','A chest has a word on its lid.']],...magic(2,'the chest lid','The lid pops open. Inside is the next piece of the map!')},
+  {beat:'b3',scene:bg(lib,'pizza-party','soccer-pitch','meadow'),actors:A(H,c.id,d.id,D),say:[['narrator','Time for a snack before the big game!'],['narrator','Everyone must get the same. That is the rule.']]},
+  {beat:'b4',scene:bg(lib,'soccer-pitch','pitch','meadow'),actors:A(H,noWho.id),props:['ball'],say:[['narrator',`After the game, ${noWho.name} runs to the scoreboard with a big grin.`]]},
+  {scene:bg(lib,'soccer-pitch','pitch','meadow'),actors:A(pose(lib,H,'kick'),pose(lib,D,'cheer'),noWho.id),props:['ball'],fx:'confetti',say:[['narrator',`${noWho.name} giggles. You were right, ${name}!`],['dad','Great thinking, champ.']],...magic(3,'the goal flag','The goal net sparkles and a cheer goes up!')},
+  {scene:bg(lib,'night-hill','castle-moon-hill','night'),actors:A(H,D,c.id,d.id),fx:'stars',say:[['narrator',`The map has one more stop. ${name} rolls it up carefully.`],['narrator','Tomorrow, the train goes somewhere new.']]}
+ ],summary:`${name} followed the lost map by train with ${list(cast.map(x=>x.name))} and Dad, reading signs and fixing a spell.`,hook:'The map has one more stop.'};
 }
-export function templateChapter(plan){return plan.level==='early'?early(plan):reader(plan);}
+export function templateChapter(plan,library){return plan.level==='early'?early(plan,library):reader(plan,library);}

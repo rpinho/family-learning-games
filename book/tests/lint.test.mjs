@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {safetyIssues,wrongEquations,lintChapter,safeDadLine,tokens} from '../lint.mjs';
 import {planChapter,chooseCast,chooseProps} from '../plan.mjs';
 import {templateChapter} from '../template.mjs';
-import {plans} from './fixtures.mjs';
+import {plans,saves,NOW} from './fixtures.mjs';
+import {buildLearner} from '../learner.mjs';
 
 test('Safety lint flags every forbidden category',()=>{
  const cases={'violence':'The knight had a sword.','scary':'A scary ghost appeared.','death or loss':'The fish died.','abuse or danger':'A stranger gave him candy.','illness or medical':'She went to the hospital.','grandparents':'Grandma baked bread.','brand':'They built a Lego castle.','personal data':'Call 555-123-4567 today.'};
@@ -18,32 +19,67 @@ test('Arithmetic checker finds only wrong statements',()=>{
  assert.deepEqual(wrongEquations('3 × 4 = 12, 12 ÷ 3 = 4, 7 + 5 = 12, 9 - 2 = 7'),[]);
  assert.deepEqual(wrongEquations('5 × 4 = 25 and 2 + 2 = 4'),['5 × 4 = 25']);
 });
-test('Template chapters pass the lint for both reading levels on many days',()=>{
- for(const p of plans())assert.deepEqual(lintChapter(templateChapter(p),p,{extra:['Smithers']}),[],`${p.player} ${p.date}`);
+import {readFileSync} from 'node:fs';
+import {actorIdsFor} from '../generate.mjs';
+import {layoutActors,normalizeScene} from '../../hub/public/book-scene.mjs';
+const library=JSON.parse(readFileSync(new URL('../../hub/public/book-art/library.json',import.meta.url),'utf8'));
+const opts=p=>{const ids=actorIdsFor(p,library);p.actorIds=ids;return {extra:['Smithers'],actors:ids.all,dadId:ids.dad};};
+test('No clinical, therapy or school-report language, and no staff names (private list)',()=>{
+ for(const t of ['The OT came to see him.','He had a meltdown.','His teacher was concerned.','They had a meeting about it.','Big feelings and sensory breaks.','She wrote an evaluation.','He is struggling.'])
+  assert.ok(safetyIssues(t).some(i=>i.startsWith('clinical or school-report language')),t);
+ assert.deepEqual(safetyIssues('He got the ball, sat in the boat and ate a big hot pizza with Dad.'),[]);
+ assert.ok(safetyIssues('Miss Honeybun waved.',{extra:['Honeybun']}).some(i=>i.startsWith('private word')));
+ assert.deepEqual(safetyIssues('A brown bear in the wood.',{extra:['Ann Brown','Ella Wood']}),[],'colour and common words stay usable');
 });
-test('Plans are deterministic and their mistakes are real, fixable mistakes',()=>{
+test('Template chapters pass the lint for both reading levels on many days',()=>{
+ for(const p of plans())assert.deepEqual(lintChapter(templateChapter(p,library),p,opts(p)),[],`${p.player} ${p.date}`);
+});
+test('Plans are deterministic, learning is in beats, and the NO! beat is a real, fixable mistake',()=>{
  for(const p of plans()){
   assert.deepEqual(plans([p.date]).find(x=>x.player===p.player),p);
-  const m=p.mistake;assert.notEqual(m.wrong,m.right);assert.ok(m.fix.options.includes(m.right));
-  if(m.kind==='math'){assert.equal(wrongEquations(m.claim).length,1);const [a,b]=m.claim.split(/[×=]/).map(Number);assert.equal(a*b,Number(m.right));}
-  else{assert.equal(p.teach.letter,m.right,'teach first, then the mistake contradicts what was taught');assert.ok(p.teach.word.toUpperCase().startsWith(m.right));}
-  for(const c of p.challenges){const it=c.item;assert.ok(it.spoken);if(it.options)assert.ok(it.options.map(String).includes(String(it.answer)),c.id);if(it.kind==='sentence')assert.notDeepEqual(it.tiles,it.answer,'never in sentence order');}
+  const no=p.beats.find(b=>b.kind==='no');assert.notEqual(no.wrong,no.right);assert.ok(no.options.includes(no.right)&&no.options.includes(no.wrong));
+  if(p.level==='reader'){const [a,b]=no.display.split(/[×=]/).map(Number);assert.equal(a*b,Number(no.right));assert.notEqual(a*b,Number(no.wrong));assert.ok(p.magic.length>=2);
+   const sp=p.beats.find(b=>b.kind==='spell');assert.notDeepEqual(sp.tiles.slice(0,sp.answer.length),sp.answer,'never in order');
+   const sg=p.beats.find(b=>b.kind==='signs');assert.ok(sg.options.includes(sg.target));assert.equal(new Set(sg.options).size,sg.options.length);}
+  else{const [teach,stones,count]=p.beats;assert.equal(stones.letter,teach.letter);assert.equal(stones.stones.filter(l=>l===teach.letter).length,stones.need);
+   assert.ok(count.options.includes(count.answer));assert.ok(p.quest.includes(teach.letter));}
  }
 });
-test('Chapter lint catches structure, level, answer give-aways and unplanned mistakes',()=>{
- const p=plans(['2026-03-10'])[1],good=templateChapter(p);
+test('A young reader collects each friend’s letter key once, then reviews earlier keys in the NO! beat',()=>{
+ const young=buildLearner({player:'young',name:'Ada',profile:{age:5,mathTrack:'early'},now:NOW,saves:saves('young')});
+ const cast={cast:[{id:'snake',name:'Sparkle',letter:'S',word:'snake',shape:'curl into an S'},{id:'robo',name:'Robo',letter:'R',word:'robot',shape:'draw an R'},{id:'pup',name:'Loop',letter:'L',word:'loop',shape:'make an L'}],children:{young:{fixed:['pup'],rotate:['snake','robo'],perChapter:1}}};
+ const a=planChapter(young,{date:'2026-03-10',cast,collection:{keys:[]}});
+ const b=planChapter(young,{date:'2026-03-10',cast,collection:{keys:[a.beats[0].letter]}});
+ assert.notEqual(b.beats[0].letter,a.beats[0].letter,'a new key next time');
+ assert.equal(b.beats.find(x=>x.kind==='no').right,a.beats[0].letter,'the NO! beat reviews the earlier key');
+ assert.ok(b.cast.some(c=>c.id===b.beats[0].owner),'the owner of today’s letter is in today’s chapter');
+ assert.match(a.beats[0].lines[0][1],/Look, I /);
+});
+test('Chapter lint catches beats, magic words, speakers, give-aways, Dad and level',()=>{
+ const p=plans(['2026-03-10'])[1],o=opts(p),good=templateChapter(p,library);
  const clone=()=>JSON.parse(JSON.stringify(good));
- let c=clone();c.pages=c.pages.filter(x=>x.challenge!=='c2');assert.ok(lintChapter(c,p).some(i=>i.includes('c2')));
- c=clone();c.pages.find(x=>x.mistake).text='Gizmo was very sure.';assert.ok(lintChapter(c,p).some(i=>i.includes('must contain exactly')));
- c=clone();c.pages[0].text+=' And 2 + 2 = 5, said the cat.';assert.ok(lintChapter(c,p).some(i=>i.startsWith('unplanned arithmetic')));
- c=clone();const math=p.challenges.find(x=>x.item.kind==='math');c.pages.find(x=>x.challenge===math.id).text+=` It is ${math.item.answer}.`;assert.ok(lintChapter(c,p).some(i=>i.includes('gives away')));
- c=clone();const s=p.challenges.find(x=>x.item.kind==='sentence');c.pages.find(x=>x.challenge===s.id).text+=' '+s.item.sentence;assert.ok(lintChapter(c,p).some(i=>i.includes('writes out the sentence')));
- c=clone();c.pages[0].text='Leo Smithers went out. '+c.pages[0].text;assert.ok(lintChapter(c,p,{extra:['Smithers']}).some(i=>i.startsWith('private word')));
- c=clone();c.pages[0].text='Leo Parker went out. '+c.pages[0].text;assert.ok(lintChapter(c,p).some(i=>i.startsWith('looks like a full name')));
- c=clone();c.pages=c.pages.slice(0,5);assert.ok(lintChapter(c,p).some(i=>/story has \d+ words/.test(i)));
- c=clone();c.pages[0].scene='🔫';assert.ok(lintChapter(c,p).some(i=>i.includes('scene')));
- const y=plans(['2026-03-10'])[0],yc=templateChapter(y);yc.pages=yc.pages.filter(x=>!x.teach);assert.ok(lintChapter(yc,y).some(i=>i.includes('teach')));
+ let c=clone();c.pages=c.pages.filter(x=>x.beat!=='b2');assert.ok(lintChapter(c,p,o).some(i=>i.includes('b2')));
+ c=clone();const bi=c.pages.findIndex(x=>x.beat==='b1'),ci=c.pages.findIndex(x=>x.beat==='b3');[c.pages[bi],c.pages[ci]]=[c.pages[ci],c.pages[bi]];assert.ok(lintChapter(c,p,o).some(i=>i.includes('must come after')));
+ c=clone();const mp=c.pages.find(x=>x.magic);mp.say.push(['narrator',`It says ${mp.magic.word}.`]);assert.ok(lintChapter(c,p,o).some(i=>i.includes('must not say the magic word')));
+ c=clone();c.pages.find(x=>x.magic).magic.word='zebra';assert.ok(lintChapter(c,p,o).some(i=>i.includes('not one of today')));
+ c=clone();c.pages[0].say.push([p.player,'I can talk!']);assert.ok(lintChapter(c,p,o).some(i=>i.includes('cannot speak')));
+ c=clone();const n=p.beats.find(b=>['share','score'].includes(b.kind));c.pages.find(x=>x.beat===n.id).say.push(['narrator',`It is ${n.answer}.`]);assert.ok(lintChapter(c,p,o).some(i=>i.includes('gives away')));
+ c=clone();for(const pg of c.pages){pg.actors=(pg.actors||[]).filter(a=>!a.startsWith(o.dadId));pg.say=pg.say.filter(l=>l[0]!=='dad');}assert.ok(lintChapter(c,p,o).some(i=>i.startsWith('Dad must')));
+ c=clone();c.pages[0].say.push(['narrator','And 2 + 2 = 5, said the cat.']);assert.ok(lintChapter(c,p,o).some(i=>i.startsWith('arithmetic mistakes')));
+ c=clone();c.pages[0].say.unshift(['narrator','Leo Parker went out.']);assert.ok(lintChapter(c,p,o).some(i=>i.startsWith('looks like a full name')));
+ c=clone();c.pages[0].caption='a very long caption with far too many words';assert.ok(lintChapter(c,p,o).some(i=>i.includes('caption')));
+ c=clone();c.pages[1].actors=['robot-unicorn'];assert.ok(lintChapter(c,p,o).some(i=>i.includes('unknown actor')));
+ const y=plans(['2026-03-10'])[0],yo=opts(y),yc=templateChapter(y,library);yc.pages[0].caption='Hello there';assert.ok(lintChapter(yc,y,yo).some(i=>i.includes('caption must be at most 1 word')));
  assert.deepEqual(lintChapter(null,p),['not a chapter object with pages']);
+});
+test('Scenes: unknown pictures are replaced, and groups shrink to fit a tall phone screen',()=>{
+ const {scene,notes}=normalizeScene({scene:'moon-base',actors:['hero:dance','bo','ghost'],props:['ball:3','ball'],fx:'lasers'},library,{fallbackBg:'forest'});
+ assert.equal(scene.bg,'forest');assert.deepEqual(scene.actors,[{id:'hero',pose:'idle'},{id:'bo',pose:'idle'}]);assert.deepEqual(scene.props,[{id:'ball',n:3}]);assert.equal(scene.fx,'none');assert.equal(notes.length,2);
+ const art={actors:{a:{h:.5,poses:{idle:{ar:.6}}},b:{h:.5,poses:{idle:{ar:.6}}},c:{h:.5,poses:{idle:{ar:.6}}}}};
+ const actors=[{id:'a',pose:'idle'},{id:'b',pose:'idle'},{id:'c',pose:'idle'}];
+ const wide=layoutActors(actors,art,{width:1366,height:768}),tall=layoutActors(actors,art,{width:390,height:844});
+ assert.equal(wide[0].height,.5,'room to spare on a wide screen');assert.ok(tall[0].height<.5,'smaller on a phone');
+ for(const l of [wide,tall]){assert.ok(l[0].left>=0&&l.at(-1).left+l.at(-1).width<=1.0001);for(let i=1;i<l.length;i++)assert.ok(l[i].left>=l[i-1].left+l[i-1].width-1e-9,'no overlap');}
 });
 test('Dad’s line is used only when it is safe',()=>{
  assert.equal(safeDadLine('we built the robot track'),'we built the robot track');
@@ -62,9 +98,10 @@ test('Cast: each child’s own toys, fixed friends every chapter, a rotating few
  assert.equal(chooseCast({player:'nobody'},{date:'2026-03-10',cast:{cast:cast.cast,perChapter:{early:3}},level:'early'}).length,3,'shared cast when ownership is unknown');
  assert.equal(chooseCast({player:'x',companions:[{name:'Pip',kind:'k'}]},{date:'d',cast:null})[0].name,'Pip');
  for(const [p,who] of [[y,'young'],[o,'older']]){const withCast={...p,cast:chooseCast({player:who},{date:p.date,cast})};withCast.companion=withCast.cast[0];
-  assert.deepEqual(lintChapter(templateChapter(withCast),withCast),[],who);
-  const t=templateChapter(withCast);const name=withCast.cast.at(-1).name.replace(/^the /,'');for(const pg of t.pages)pg.text=pg.text.split(name).join('someone');
-  assert.ok(lintChapter(t,withCast).some(i=>i.startsWith('the friend')),'every friend must appear');}
+  const o=opts(withCast);
+  assert.deepEqual(lintChapter(templateChapter(withCast,library),withCast,o),[],who);
+  const t=templateChapter(withCast,library);const name=withCast.cast.at(-1).name.replace(/^the /,'');for(const pg of t.pages){pg.say=pg.say.map(([w,x])=>[w,x.split(name).join('someone')]);if(pg.magic)pg.magic.after=pg.magic.after.map(([w,x])=>[w,x.split(name).join('someone')]);}
+  assert.ok(lintChapter(t,withCast,o).some(i=>i.startsWith('the friend')),'every friend must appear');}
 });
 test('A family’s own toy names pass the brand rule only when allowed, and no other brand does',()=>{
  assert.ok(safetyIssues('Little Mario naps.').some(i=>i.startsWith('brand')));
