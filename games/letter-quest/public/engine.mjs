@@ -167,7 +167,25 @@ function buildChallenge(p){
  const char=ranked[0].c,s=ranked[0].s;
  const level=hard&&type==='trace'?Math.max(2,s.level):advanced&&type==='find'&&s.seen===0?(p.id==='beginner'?1:2):s.level;
  const all=Object.keys(GLYPHS).filter(c=>c!==char && (/^[a-z]$/.test(char)?/^[a-z]$/:/^[0-9]$/.test(char)?/^[0-9]$/:/^[A-Z]$/).test(c));
- return {id:`${advanced?'variety6:':''}${p.revision}:${p.seq}`,type,char,level,probe:advanced&&(type==='find'||hard&&type==='trace'),options:shuffle([char,...shuffle(all,r).slice(0,level>=2?3:1)],r),paths:GLYPHS[char]};
+ const found={id:`${advanced?'variety6:':''}${p.revision}:${p.seq}`,type,char,level,probe:advanced&&(type==='find'||hard&&type==='trace'),options:shuffle([char,...shuffle(all,r).slice(0,level>=2?3:1)],r),paths:GLYPHS[char]};
+ // Beginner: about half of the letter finds become "tap every one" grids with
+ // look-alike letters (b/d/p, M/N/W). Pattern borrowed from Duolingo ABC's
+ // "tap the letter every time you see it" item.
+ if(type==='find'&&p.id==='beginner'&&(p.seq*7+p.completed)%2===0)return {...found,id:`${found.id}:spot1`,spot:true,grid:spotGrid(char,r)};
+ return found;
+}
+const CONFUSABLE={b:'dpqh',d:'bpqa',p:'qbd',q:'pgd',m:'nwh',n:'mhu',u:'nvy',w:'mvu',v:'wyu',i:'ljt',l:'itj',t:'lif',e:'cao',c:'eo',a:'odg',o:'acd',g:'qjy',h:'nbk',j:'ig',k:'hx',f:'tl',r:'nv',s:'zc',x:'kz',y:'vgj',z:'sx',
+ E:'FLB',F:'EPT',L:'ITJ',M:'NWH',N:'MZH',O:'QCD',P:'RBF',R:'PBK',B:'PRD',C:'OGQ',G:'COQ',W:'MVN',V:'WYU',U:'VJO',I:'LTJ',T:'ILF',K:'XRH',X:'KYZ',Y:'VXT',Z:'NSX',S:'ZG',D:'OBP',H:'NAK',A:'HVR',J:'LUI',Q:'OGC'};
+export const SPOT_TARGETS=3;
+// Nine tiles: three copies of the letter plus six look-alikes (never the letter).
+export function spotGrid(char,r=Math.random){
+ const lower=/^[a-z]$/.test(char),digit=/^[0-9]$/.test(char);
+ const pool=digit?[...'0123456789']:[...(lower?alphabet.toLowerCase():alphabet)];
+ const near=[...(CONFUSABLE[char]||'')].filter(c=>c!==char);
+ const extra=shuffle(pool.filter(c=>c!==char&&!near.includes(c)),r);
+ const kinds=[...near,...extra].slice(0,3);
+ const distractors=Array.from({length:9-SPOT_TARGETS},(_,i)=>kinds[i%kinds.length]);
+ return shuffle([...Array(SPOT_TARGETS).fill(char),...distractors],r);
 }
 export function taskPrompt(c,showModel=false){
  if(c.foundation)return `Complete the word ${c.word.toLowerCase()}. Choose the missing letter.`;
@@ -181,6 +199,7 @@ export function taskPrompt(c,showModel=false){
 export function visibleTaskPrompt(c,showModel=false){
  if(c.type==='spell'&&!showModel)return 'Listen to the word. Spell it using the alphabet below.';
  if(c.type==='gap'&&!showModel)return 'One letter is missing. Listen to the word and complete it.';
+ if(c.type==='find'&&c.spot)return c.level===0||showModel?`Tap every ${/^[a-z]$/.test(c.char)?'little ':''}${c.char} you can see. There are ${SPOT_TARGETS}.`:`Listen. Tap every letter that matches. There are ${SPOT_TARGETS}.`;
  if(c.type==='find'&&c.level>0&&!showModel)return 'Listen, then choose the letter. Tap the speaker to hear it again.';
  if(c.type==='name'&&c.memory&&!showModel)return 'Listen, then build the family name. Two extra letters are hiding here!';
  return taskPrompt(c,showModel);

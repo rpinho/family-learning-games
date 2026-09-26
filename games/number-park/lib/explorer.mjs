@@ -1,4 +1,5 @@
 import {COOKIE_GAME,cookieQuestion,COOKIE_MAX_LEVEL} from './cookie-division.mjs';
+import {buildQuestion} from './place-build.mjs';
 export const EXPLORER_TRACK='explorer-math-1';
 export const EXPLORER_GAMES=[
  {id:'mix',icon:'🚀',title:'Math mission',description:'Multiplication, sums and number puzzles.'},
@@ -6,7 +7,7 @@ export const EXPLORER_GAMES=[
  {id:'factor',icon:'🔐',title:'Factor detective',description:'Find the missing number in a multiplication.'},
  {id:'sums',icon:'⚡',title:'Number builder',description:'Two-digit addition and subtraction.'},
  {id:'skip',icon:'🦘',title:'Number jumps',description:'Find the next number in a counting pattern.'},
- {id:'place',icon:'🏗️',title:'Tens & ones',description:'Build numbers. Decode their place values.'},
+ {id:'place',icon:'🏗️',title:'Tens & ones',description:'Build numbers with blocks. Decode their place values.'},
  COOKIE_GAME
 ];
 export const advanced=p=>p.id==='explorer';
@@ -71,13 +72,17 @@ export function challengeQuestion(p,game,round,r){
    const sequence=Array.from({length:4},(_,i)=>start+i*step),answer=start+4*step;
    q={...base,kind:'skip',sequence,step,answer,prompt:'Count in equal jumps. What comes next?'};
    q.options=options(answer,200,r,[answer-step,answer+step,answer+1]);
+  }else if(level<3||roll(3)>0){
+   // Block builder replaces the old "pick the number" mode, which was answered
+   // in a few seconds every time; decoding a numeral into places is the skill.
+   q={...base,...buildQuestion(level,r),track:EXPLORER_TRACK};
   }else{
    const tens=2+roll(8),ones=roll(10),total=tens*10+ones;
    const placeMode=level===3?['tens','ones'][roll(2)]:'number',answer=placeMode==='number'?total:placeMode==='tens'?tens:ones;
    q={...base,kind:'place',tens,ones,total,placeMode,answer,max:99,prompt:placeMode==='number'?'Build the number from tens and ones.':placeMode==='tens'?'How many tens?':'How many ones?'};
    q.options=options(answer,99,r,placeMode==='number'?[ones*10+tens,total-10,total+10]:[answer-1,answer+1,answer+2]);
   }
-  q.fingerprint=JSON.stringify([q.track,skill,q.a,q.b,q.blank,q.operator,q.sequence,q.tens,q.ones,q.placeMode]);
+  q.fingerprint=JSON.stringify([q.track,skill,q.a,q.b,q.blank,q.operator,q.sequence,q.tens,q.ones,q.placeMode,q.target]);
   if(!(p.recent||[]).includes(q.fingerprint))break;
  }
  q.id=`${p.revision}:${p.history.length}:${round}:f1`;return q;

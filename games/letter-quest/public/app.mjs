@@ -35,6 +35,7 @@ if(!demo)try{localStorage.setItem('letter-quest-player',id);}catch{}
 let busy=false,feedback=null,strokes=[],current=[],drawing=false,pointer=null,started=0,helped=false,showModel=false,nameAnswer='',nameUsed=[],resizeObserver;
 let mute=false,mazeClient=null,mazeMessage='',mazeStarted=performance.now(),mazeTaskId='',mazeEntryId='',leagueSelection;
 let resetConfirmation=false;
+let spotFound=[],spotMissed=[];
 let saveError='';
 let soccerMessage='',soccerAnimating=false,soccerStarted=0,soccerQuestionId='';
 let readingServerOffset=0;
@@ -146,7 +147,7 @@ function parentView(){const skills=Object.entries(profile.skills).sort(([a],[b])
 function prompt(){return taskPrompt(challenge,showModel);}
 function start(){if(feedback?.next)challenge=feedback.next;view='lesson';feedback=null;newExercise();}
 let rail;
-function newExercise(){rail=challenge.guided?new GuidedTrace(challenge.paths):null;strokes=[];current=[];drawing=false;pointer=null;helped=!!challenge.guided||wasHinted(profile,`lesson:${challenge.id}`)||!!challenge.retry||!!challenge.duel&&profile.duel?.hintedRound===profile.duel?.round;showModel=helped;nameAnswer='';nameUsed=[];saveError='';started=performance.now();render();window.scrollTo(0,0);telemetry.record('challenge_shown',{retry:!!challenge.retry,guided:!!challenge.guided});speak(prompt());}
+function newExercise(){rail=challenge.guided?new GuidedTrace(challenge.paths):null;strokes=[];current=[];drawing=false;pointer=null;helped=!!challenge.guided||wasHinted(profile,`lesson:${challenge.id}`)||!!challenge.retry||!!challenge.duel&&profile.duel?.hintedRound===profile.duel?.round;showModel=helped;nameAnswer='';nameUsed=[];spotFound=[];spotMissed=[];saveError='';started=performance.now();render();window.scrollTo(0,0);telemetry.record('challenge_shown',{retry:!!challenge.retry,guided:!!challenge.guided});speak(prompt());}
 function resetTrace(withHint=false){
  if(feedback?.ok)return;
  telemetry.record('trace_reset',{reason:withHint?'hint':'try_again'});
@@ -164,6 +165,7 @@ function lessonBoard(){
   const letters=challenge.type==='gap'?[...challenge.word]:challenge.letters;
   return `<div class="recognition">${challenge.foundation?`<p>BIG LETTERS · Three-letter words · Family ${challenge.stage} / 4</p>`:''}${challenge.picture?`<div class="word-picture" aria-hidden="true">${challenge.picture}</div>`:''}<div class="letter-sequence">${letters.map((c,i)=>`<span>${i===challenge.blank&&!showModel?'?':c}</span>`).join('')}</div><div class="letter-options">${challenge.options.map(c=>btn(c,`answer:${c}`,'letter-option',`aria-label="Letter ${c}" ${busy||feedback?'disabled':''}`)).join('')}</div>${!showModel?btn('Show me','hint','text-button',feedback?'disabled':''):''}</div>`;
  }
+ if(challenge.type==='find'&&challenge.spot)return `<div class="recognition spot-game">${challenge.level===0||showModel?`<div class="letter-model">${escape(challenge.char)}</div>`:'<div class="ear-icon">♪</div>'}<p class="spot-count" aria-live="polite">Found ${spotFound.length} of ${challenge.grid.filter(c=>c===challenge.char).length}</p><div class="spot-grid">${challenge.grid.map((c,i)=>btn(escape(c),`spot:${i}`,'letter-option spot-tile'+(spotFound.includes(i)?' spot-found':'')+(spotMissed.includes(i)?' spot-miss':''),`aria-label="Letter tile ${i+1}: ${escape(c)}" ${busy||feedback||spotFound.includes(i)?'disabled':''}`)).join('')}</div>${challenge.level>0&&!showModel?btn('Show me','hint','text-button',feedback?'disabled':''):''}</div>`;
  if(challenge.type==='find')return `<div class="recognition" style="font-family:${challenge.font||'inherit'}">${challenge.level===0||showModel?`<div class="letter-model">${challenge.char}</div><p>Find its match.</p>`:challenge.upperCue?`<div class="letter-model">${challenge.upperCue}</div><p>Find its little partner.</p>`:'<div class="ear-icon">♪</div><p>Listen. Which letter is it?</p>'}<div class="letter-options">${challenge.options.map(c=>btn(c,`answer:${c}`,'letter-option',`aria-label="Letter ${c}" ${busy||feedback?'disabled':''}`)).join('')}</div>${challenge.level>0&&!showModel?btn('Show me','hint','text-button',feedback?'disabled':''):''}</div>`;
  if(challenge.type==='name'||challenge.type==='spell')return `<div class="name-game">${challenge.picture?`<div class="word-picture" aria-hidden="true">${challenge.picture}</div>`:''}${!challenge.memory||showModel?`<p class="name-model">${challenge.word}</p>`:'<p class="name-model listening-label">🔊 Listen and build</p>'}<div class="name-slots" aria-label="Your letters so far">${[...challenge.word].map((_,i)=>`<span class="${i===nameAnswer.length?'next':''}">${escape(nameAnswer[i]||'')}</span>`).join('')}</div><div class="direction-strip"><span>START HERE</span> → → →</div><div class="name-tiles ${challenge.reusable?'alphabet-keyboard':''}">${challenge.options.map((c,i)=>btn(c,`name:${i}`,'letter-option',`${busy||!challenge.reusable&&nameUsed.includes(i)||!!feedback||nameAnswer.length>=challenge.word.length?'disabled':''} aria-label="Name tile ${i+1}: ${c}"`)).join('')}</div><div class="name-tools">${btn('⌫ Undo a letter','name-undo','text-button',!nameAnswer||busy||feedback?'disabled':'')}${challenge.memory&&!showModel?btn('Show me','hint','text-button',busy||feedback?'disabled':''):''}${btn('Check my word ✓','name-check','button primary',nameAnswer.length!==challenge.word.length||busy||feedback?'disabled':'')}</div></div>`;
  return `<div class="writing ${profile.settings.leftHanded?'left-handed':''}"><div class="writing-surface"><div class="writing-caption"><span>✦ START AT THE DOT</span><span>${strokes.length} / ${challenge.paths.length} strokes</span></div><canvas id="writing-canvas" aria-label="Writing pad for ${challenge.char}. Touch or drag to draw each stroke." role="img"></canvas><div class="direction-strip"><span>LEFT</span> → → → <span>RIGHT</span></div></div><div class="writing-tools">${btn('↻<span>Try again</span>','clear','tool-button',`${busy||feedback?.ok?'disabled':''}`)}${btn('✧<span>Show me</span>','hint','tool-button',`${busy||feedback?.ok?'disabled':''}`)}${btn('✓<span>Check it</span>','check','tool-button check-tool',`${busy||!!feedback?'disabled':''}`)}<div class="stroke-legend">${challenge.level>=3&&!showModel?'Your turn.<br>From memory.':challenge.level>=2&&!showModel?'Look up.<br>Copy below.':'Gold dot.<br>Follow the arrow.'}</div></div></div>`;
@@ -399,6 +401,15 @@ async function act(action){telemetry.record('action',{action});if(busy)return;co
  if(kind==='sound'){await settings({sound:!profile.settings.sound});return;}if(kind==='repeat'){coachVoice.speak(prompt());return;}
  if(kind==='preview-voice'){coachVoice.speak(FIXED_LINES[1]);return;}
  if(kind==='rook-joke'){coachVoice.speak(FIXED_LINES[2]);return;}
+ if(kind==='spot'){
+  const i=Number(value);if(!challenge?.spot||busy||feedback||spotFound.includes(i)||!(i>=0&&i<challenge.grid.length))return;
+  if(challenge.grid[i]===challenge.char){spotFound=[...spotFound,i];spotMissed=spotMissed.filter(j=>j!==i);telemetry.record('action',{action:'spot:hit',tile:i});
+   if(spotFound.length===challenge.grid.filter(c=>c===challenge.char).length){await submit(challenge.char);return;}
+   chime();render();return;}
+  // A look-alike: gentle wiggle, no penalty screen. The round still finishes,
+  // but it is recorded as supported rather than independent.
+  helped=true;spotMissed=[...spotMissed.filter(j=>j!==i),i];telemetry.record('action',{action:'spot:miss',tile:i,letter:challenge.grid[i]});render();speak(prompt());return;
+ }
  if(kind==='answer'){await submit(value);return;}
  if(kind==='skip'){
   if(feedback?.ok)return;busy=true;coachVoice.stop();

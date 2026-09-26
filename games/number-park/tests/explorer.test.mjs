@@ -11,6 +11,7 @@ test('Explorer has a separate menu and varied mathematically valid grade-2 chall
   for(let i=0;i<400;i++){
    p.revision=i;const q=makeQuestion(p,game.id,i%6);unique.add(q.fingerprint);
    assert.equal(q.track,EXPLORER_TRACK);assert.equal(q.level,2);
+   if(q.placeMode==='build'){assert.equal(q.target[0]*100+q.target[1]*10+q.target[2],q.total);assert.equal(q.answer,q.total);assert.ok(q.target[1]>=1&&q.total<=99);p.recent=[...p.recent,q.fingerprint].slice(-12);unique.add(q.fingerprint);continue;}
    assert.equal(q.options.length,4);assert.equal(new Set(q.options).size,4);assert.ok(q.options.includes(q.answer));
    assert.ok(q.options.every(n=>Number.isInteger(n)&&n>=0&&n<=q.max));assert.ok(q.max<=200);
    if(['multiply','factor'].includes(q.kind)){assert.equal(q.a*q.b,q.total);assert.equal([q.a,q.b,q.total][q.blank],q.answer);assert.ok(q.a>=2&&q.a<=10&&q.b>=2&&q.b<=10);}
@@ -37,6 +38,7 @@ test('all challenge tiers have bounded options, valid arithmetic and a hidden-fa
   const p=freshProfile('explorer');p.history=Array.from({length:level===1?2:6},()=>({ok:level===3,helped:false,question:{track:EXPLORER_TRACK,skill:game}}));
   for(let i=0;i<150;i++){
    p.revision=i;const q=makeQuestion(p,game,i%6);assert.equal(q.level,level);
+   if(q.placeMode==='build'){assert.equal(q.answer,q.total);assert.ok(q.total<=q.max);if(level===3)assert.ok(q.total>=100);continue;}
    assert.ok(q.answer>=0&&q.answer<=q.max);assert.equal(q.options.length,4);assert.equal(new Set(q.options).size,4);assert.ok(q.options.includes(q.answer));assert.ok(q.options.every(n=>n>=0&&n<=q.max));
    if(q.operator)assert.equal(q.operator==='×'?q.a*q.b:q.operator==='+'?q.a+q.b:q.a-q.b,q.total);
    if(game==='place'&&level===3){assert.ok(['tens','ones'].includes(q.placeMode));assert.equal(q.answer,q[q.placeMode]);}

@@ -7,9 +7,10 @@ import {patternQuestion} from './play-practice.mjs';
 import {advanced,EXPLORER_GAMES,challengeQuestion} from './explorer.mjs';
 import {validCookieDraft,cookieCounts,isDragCookie,initialCookieDraft,askOptions,bagsValid} from './cookie-division.mjs';
 import {readingAction} from './reading.mjs';
+import {validBuild,buildFeedback,buildValue} from './place-build.mjs';
 import {artAction} from './art.mjs';
 import {planningAction} from './planning.mjs';
-export const VERSION='number-park-2026-09-26-cookie-ask-bags-public';
+export const VERSION='number-park-2026-09-26-block-builder-public';
 export const GAMES=[
  {id:'mix',icon:'🎲',title:'Little sums',description:'A mix just like the first unit.'},
  {id:'line',icon:'📏',title:'Number hop',description:'Slide to the missing number.'},
@@ -125,9 +126,19 @@ export function action(p,input,now=Date.now(),services={}){
    p.history.push({at:new Date(now).toISOString(),game:s.game,question:q,answer:q.answer,leftover:q.leftover,ok:true,helped,cookieChecks:s.cookieChecks||0,askTries:s.cookieAsk.tries,distribution:[...counts],durationMs:Math.max(0,Math.min(86400000,now-s.started))});p.history=p.history.slice(-2000);
    p.recent=[...p.recent,q.fingerprint].slice(-12);s.cookieMessage='';delete s.cookieAsk;
   }
+ }else if(input.kind==='place-check'){
+  const s=p.session,q=s?.question;if(!s||s.finished||s.result||q.kind!=='place'||q.placeMode!=='build'||input.questionId!==q.id)fail('Open a block-building round first.');
+  if(!validBuild(input.counts))fail('Build the number with the blocks first.');
+  const feedback=buildFeedback(q.target,input.counts,s.placeChecks||0);
+  if(feedback.ok){
+   const helped=s.helped||!!s.placeChecks,xp=helped?4:10;
+   s.result={ok:true,answer:q.total,xp,helped};s.correct++;s.independent+=Number(!helped);p.xp+=xp;
+   p.history.push({at:new Date(now).toISOString(),game:s.game,question:q,answer:buildValue(input.counts),counts:[...input.counts],ok:true,helped,placeChecks:s.placeChecks||0,durationMs:Math.max(0,Math.min(86400000,now-s.started))});p.history=p.history.slice(-2000);
+   p.recent=[...p.recent,q.fingerprint].slice(-12);delete s.placeMessage;delete s.placeLines;
+  }else{s.placeChecks=(s.placeChecks||0)+1;s.placeMessage=feedback.message;s.placeLines=feedback.lines;s.placeParts=feedback.parts;}
  }else if(input.kind==='answer'){
   const s=p.session;if(!s||s.finished||s.result||input.questionId!==s.question.id)fail('This question is already finished.');
-  const q=s.question;if(q.kind==='cookies')fail('Share the cookies on the plates first.');if(q.kind==='pattern'?!q.options.includes(input.answer):!Number.isInteger(input.answer)||input.answer<0||input.answer>q.max)fail('Choose a valid answer.');
+  const q=s.question;if(q.kind==='cookies')fail('Share the cookies on the plates first.');if(q.placeMode==='build')fail('Build the number with the blocks first.');if(q.kind==='pattern'?!q.options.includes(input.answer):!Number.isInteger(input.answer)||input.answer<0||input.answer>q.max)fail('Choose a valid answer.');
   if(q.kind==='subtract'&&input.removedIndices!==undefined&&(!Array.isArray(input.removedIndices)||input.removedIndices.length>q.total||new Set(input.removedIndices).size!==input.removedIndices.length||!input.removedIndices.every(i=>Number.isInteger(i)&&i>=0&&i<q.total)))fail('Invalid removed objects.');
   const ok=input.answer===q.answer,independent=ok&&!s.helped,xp=ok?(independent?10:4):0;
   s.result={ok,answer:q.answer,xp,helped:s.helped};p.xp+=xp;s.correct+=Number(ok);s.independent+=Number(independent);
@@ -137,7 +148,7 @@ export function action(p,input,now=Date.now(),services={}){
  }else if(input.kind==='next'){
   const s=p.session;if(!s||s.finished||!s.result)fail('Finish this question first.');
   if(s.round===5){s.finished=true;p.lessons++;p.completed[s.game]=(p.completed[s.game]||0)+1;}
-  else{s.round++;s.question=makeQuestion(p,s.game,s.round);s.helped=false;s.result=null;s.started=now;delete s.cookieChecks;delete s.cookieMessage;delete s.cookieAsk;if(s.question.kind==='cookies'&&isDragCookie(s.question))s.cookieDraft=initialCookieDraft(s.question);else delete s.cookieDraft;}
+  else{s.round++;s.question=makeQuestion(p,s.game,s.round);s.helped=false;s.result=null;s.started=now;delete s.cookieChecks;delete s.cookieMessage;delete s.cookieAsk;delete s.placeChecks;delete s.placeMessage;delete s.placeLines;delete s.placeParts;if(s.question.kind==='cookies'&&isDragCookie(s.question))s.cookieDraft=initialCookieDraft(s.question);else delete s.cookieDraft;}
  }else if(input.kind==='drawing'){
   if(!validFreeInk(input.strokes))fail('Drawing is too large or invalid.');
   if(input.space!==undefined&&input.space!==FREE_DRAWING_SPACE)fail('Drawing space is invalid.');
