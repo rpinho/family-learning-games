@@ -9,6 +9,7 @@ import {actLive} from './live-state.mjs';
 import {proxy} from './proxy.mjs';
 import {chessService} from './chess-service.mjs';
 import {cachedMenuOrderService} from './menu-cache.mjs';
+import {bookService,gameSummaries} from './book-service.mjs';
 const here=fileURLToPath(new URL('.',import.meta.url)),root=resolve(here,'..'),data=process.env.FAMILY_DATA||join(root,'.data','hub');
 const ids=['letter-quest','word-arcade','number-park','maze-garden','three-in-a-row','target-trail'];
 const base=Number(process.env.BASE_PORT||4811);
@@ -22,8 +23,8 @@ const send=(res,status,obj)=>{res.writeHead(status,{'Content-Type':'application/
 async function load(player){try{return JSON.parse(await readFile(join(data,player+'.json'),'utf8'));}catch(e){if(e.code==='ENOENT')return fresh(player,config.players.find(x=>x.id===player).level||1);throw e;}}
 const icons={'letter-quest':'games/letter-quest/public/icons/app-192-v2.png','word-arcade':'games/word-arcade/public/icons/app-192-v1.png','number-park':'games/number-park/public/icons/number-park-192.png','maze-garden':'games/maze-garden/public/icon-192.png','three-in-a-row':'games/three-in-a-row/dist/icon-192.png','target-trail':'games/target-trail/dist/icon-192.png'};
 const types={'.html':'text/html','.mjs':'text/javascript','.css':'text/css','.jpg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml','.webmanifest':'application/manifest+json','.woff2':'font/woff2'};
-const files=['chess/request.mjs','menu-cache.mjs','chess/tokens.mjs','chess/steps-curriculum.mjs','chess/foundations-curriculum.mjs','chess/sequel-curriculum.mjs','chess/bridge-curriculum.mjs','chess/practice-curriculum.mjs','chess/teaching.mjs','chess/audio.mjs','menu-options.mjs','soccer-logo.svg','drawing-studio.svg','sling.svg','chess/path.mjs','chess/narration.mjs','chess/pieces.mjs','chess/academy-world.png','catalog.mjs','letter-book.svg','chess/rook.mjs','chess/app.mjs','chess/style.css','chess/art.mjs','chess/board.mjs','chess/rules.mjs','chess/curriculum.mjs','chess/icon.svg','chess/CHESS-JS-LICENSE.txt','index.html','hub.mjs','style.css','embedded.css','bridge.mjs','dribble-ui.mjs','dribble-classic.mjs','soccer-mode.mjs','dribble-live.mjs','dribble-live-v1.mjs','dribble-live-v2.mjs','reading-reward.mjs','live-pitch.mjs','pitch.mjs','save-request.mjs','icon.svg','icon-192.png','icon-512.png','manifest.webmanifest'];
-const HUB_VERSION='family-games-2026-09-26-sling-shot';
+const files=['chess/request.mjs','menu-cache.mjs','chess/tokens.mjs','chess/steps-curriculum.mjs','chess/foundations-curriculum.mjs','chess/sequel-curriculum.mjs','chess/bridge-curriculum.mjs','chess/practice-curriculum.mjs','chess/teaching.mjs','chess/audio.mjs','menu-options.mjs','soccer-logo.svg','drawing-studio.svg','sling.svg','chess/path.mjs','chess/narration.mjs','chess/pieces.mjs','chess/academy-world.png','catalog.mjs','letter-book.svg','chess/rook.mjs','chess/app.mjs','chess/style.css','chess/art.mjs','chess/board.mjs','chess/rules.mjs','chess/curriculum.mjs','chess/icon.svg','chess/CHESS-JS-LICENSE.txt','index.html','hub.mjs','style.css','embedded.css','bridge.mjs','dribble-ui.mjs','dribble-classic.mjs','soccer-mode.mjs','dribble-live.mjs','dribble-live-v1.mjs','dribble-live-v2.mjs','reading-reward.mjs','live-pitch.mjs','pitch.mjs','save-request.mjs','book.mjs','word-break.mjs','bedtime.html','bedtime.mjs','icon.svg','icon-192.png','icon-512.png','manifest.webmanifest'];
+const HUB_VERSION='family-games-2026-09-27-the-book';
 // Optional managed deployment (see DEPLOY.md). A release directory carries .release.json;
 // FAMILY_DEPLOY_DIR holds current.json (running game releases) and activity.json (last real play).
 const deployDir=process.env.FAMILY_DEPLOY_DIR||null,channel=process.env.FAMILY_CHANNEL||'';
@@ -36,6 +37,11 @@ function flushActivity(){if(!activityDirty)return;activityDirty=false;try{const 
 if(deployDir)setInterval(flushActivity,5000).unref();
 const releaseOf=game=>game==='hub'?HUB_RELEASE:String(currentReleases()[game]||'');
 const menu=cachedMenuOrderService({players,onError:detail=>void log({type:'menu_refresh_error',detail}),sources:{...Object.fromEntries(ids.map(id=>[id,join(config.gameData?.[id]||join(data,'..',id),'logs')])),hub:join(data,'logs')}});
+// The Book: chapters are generated nightly into the deployment's book directory (read-only here).
+// Staging reads its own copy (staging-data/book), like its copy of the saves.
+const bookDir=process.env.FAMILY_BOOK||(deployDir?join(deployDir,'..',channel==='staging'?join('staging-data','book'):'book'):join(data,'book'));
+const timeZone=process.env.FAMILY_TZ||Intl.DateTimeFormat().resolvedOptions().timeZone;
+const book=bookService({data,bookDir,players,config,log,timeZone,summaries:gameSummaries({ports:config.games,hubLogs:join(data,'logs'),timeZone})});
 const chess=chessService({data,players,log,settingsFor:Object.fromEntries(config.players.map(p=>[p.id,p.chess||{}]))});
 const server=http.createServer(async(req,res)=>{
  res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','SAMEORIGIN');
@@ -54,6 +60,7 @@ const server=http.createServer(async(req,res)=>{
   if(u.pathname==='/__deploy/version'&&req.method==='GET'){const g=u.searchParams.get('game'),idle=Number(u.searchParams.get('idle'));if(Number.isFinite(idle)&&idle>=0&&idle<120)touch(g,Date.now()-idle*1000);const games=Object.fromEntries(ids.map(id=>[id,releaseOf(id)]));return send(res,200,{hub:HUB_RELEASE,games,channel});}
   if(u.pathname.startsWith('/api/')&&!['GET','HEAD'].includes(req.method))touch('hub');
   if(u.pathname==='/api/chess')return await chess.handle(req,res,u);
+  if(u.pathname.startsWith('/api/book')||u.pathname.startsWith('/book-voice/')){const handled=await book.handle(req,res,u);if(handled!==false)return;}
   if(u.pathname==='/health')return send(res,200,{ok:true,version:HUB_VERSION,release:HUB_RELEASE||null,channel:channel||null,physicsVersion:VERSION,diagnostics:{ok:!logError,error:logError}});
   if(/^\/(?:voice|chess-voice)\/(manifest\.json|[a-f0-9]{16}\.wav)$/.test(u.pathname)&&req.method==='GET'){try{const bytes=await readFile(join(data,u.pathname.slice(1)));res.writeHead(200,{'Content-Type':u.pathname.endsWith('.wav')?'audio/wav':'application/json'});res.end(bytes);}catch(e){if(e.code==='ENOENT')send(res,404,{error:'Use device narration.'});else throw e;}return;}
   if(u.pathname==='/api/config'&&req.method==='GET')return send(res,200,{players:config.players,version:HUB_VERSION,release:HUB_RELEASE});

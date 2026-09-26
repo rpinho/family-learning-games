@@ -6,7 +6,7 @@ const root=fileURLToPath(new URL('..',import.meta.url));
 const games=[['letter-quest','LETTER_QUEST_DATA'],['word-arcade','WORD_ARCADE_DATA'],['number-park','NUMBER_PARK_DATA'],['maze-garden','MAZE_DATA_DIR'],['three-in-a-row','TTT_DATA'],['target-trail','TARGET_DATA']];
 const command=process.argv[2],children=[];
 const [major,minor]=process.versions.node.split('.').map(Number);if(major<22||major===22&&minor<13)throw Error('Please install Node.js 22.13 or newer, then run npm run play again.');
-function run(exe,args,game,env=process.env){return new Promise((ok,fail)=>{const p=spawn(exe,args,{cwd:game==='hub'?resolve(root,'hub'):resolve(root,'games',game),stdio:'inherit',env,shell:process.platform==='win32'&&exe==='npm'});p.on('error',fail);p.on('exit',code=>code===0?ok():fail(Error(game+' exited '+code)));});}
+function run(exe,args,game,env=process.env){return new Promise((ok,fail)=>{const p=spawn(exe,args,{cwd:game==='hub'||game==='book'?resolve(root,game):resolve(root,'games',game),stdio:'inherit',env,shell:process.platform==='win32'&&exe==='npm'});p.on('error',fail);p.on('exit',code=>code===0?ok():fail(Error(game+' exited '+code)));});}
 if(command==='setup'){
  for(const game of ['word-arcade','number-park']){await run('npm',['ci'],game);await run('npm',['run','build'],game);}
  console.log('Ready. Run npm start.');
@@ -14,6 +14,7 @@ if(command==='setup'){
  // Run app suites sequentially: several existing integration tests share fixture ports.
  for(const [game]of games){const files=(await readdir(resolve(root,'games',game,'tests'))).filter(f=>f.endsWith('.test.mjs')).map(f=>'tests/'+f);await run(process.execPath,['--test',...files],game);}
  const hubTests=(await readdir(resolve(root,'hub','tests'))).filter(f=>f.endsWith('.test.mjs')).map(f=>'tests/'+f);await run(process.execPath,['--test',...hubTests],'hub');
+ const bookTests=(await readdir(resolve(root,'book','tests'))).filter(f=>f.endsWith('.test.mjs')).map(f=>'tests/'+f);await run(process.execPath,['--test',...bookTests],'book');
 }else if(command==='start'){
  let stopping=false;
  function stop(code=0){if(stopping)return;stopping=true;for(const p of children)p.kill('SIGTERM');setTimeout(()=>process.exit(code),700);}

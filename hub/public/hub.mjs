@@ -4,6 +4,7 @@ import { mountSoccer } from "./soccer-mode.mjs";
 import { CATALOG, FAMILIES, destination, movedRoute } from "./catalog.mjs";
 import { mountChess } from "./chess/app.mjs";
 import { parentChallenge, parentAnswerMatches, menuStyle, gameArtwork } from "./menu-options.mjs";
+import { loadBook, mountBook, lastPlace, rememberPlace } from "./book.mjs";
 const $ = (s) => document.querySelector(s),
   main = $("#main");
 let config,
@@ -16,6 +17,8 @@ let config,
 let storage;try{storage=localStorage;}catch{}
 const menuOrders = createMenuCache({storage});
 let leaveCheck=null;
+// The Book opens by itself once per page load (and at most a few times a day, server-side), before any game.
+const bookChecked=new Set();let renderSeq=0;
 const games = CATALOG.map((g) => [g.id, g.name, g.description, g.color]);
 const esc = (s) =>
   String(s).replace(
@@ -103,9 +106,20 @@ async function render() {
     choose();
     return;
   }
+  const seq = ++renderSeq;
+  if (player !== "admin" && !bookChecked.has(player)) {
+    bookChecked.add(player);
+    const book = await loadBook(player);
+    if (seq !== renderSeq) return;
+    if (book?.open && book.chapter) {
+      dispose = mountBook(main, { player, book, event, onDone: () => { dispose = null; afterBook(); } });
+      return;
+    }
+  }
   const dest = destination(location.hash),
     game = dest.item?.id,
     item = dest.item;
+  if (["chess", "soccer", "frame"].includes(dest.type)) rememberPlace(player, location.hash);
   if (dest.type === "chess") {
     dispose = mountChess(main, { player, name: p.name, event });
     return;
@@ -157,6 +171,12 @@ async function render() {
   };
   event("home");
 }
+// After today's chapter: back to where he was (the page he opened, or the game he last played).
+function afterBook() {
+  const target = location.hash ? "" : lastPlace(player);
+  if (target && target !== location.hash) location.hash = target.replace(/^#/, "");
+  else render();
+}
 function activityToolbar(item) {
   $("#activity-toolbar").innerHTML =
     `<nav class="activity-toolbar" aria-label="${esc(item.name)} activities"><a href="#${item.id}">← ${esc(item.name)}</a>${FAMILIES[item.id].map((m) => `<a href="#${item.id}/${m.id}" ${location.hash === `#${item.id}/${m.id}` ? 'aria-current="page"' : ""}><img src="/previews/${m.preview}.jpg" alt=""><span>${m.name}</span></a>`).join("")}</nav>`;
@@ -186,7 +206,30 @@ $("#gate-form").onsubmit = (e) => {
   $("#gate-form").hidden = true;
   $("#parent-options").hidden = false;
   $("#menu-style").focus();
+  void loadNotes();
 };
+// Grown-ups: one line about today becomes tomorrow's chapter; the bedtime page reads it aloud together.
+async function loadNotes(body) {
+  try {
+    const r = await fetch("/api/book/notes", body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});
+    const j = await r.json();
+    if (!r.ok) throw Error(j.error || "Could not save.");
+    const today = (j.notes || []).filter((n) => n.date === j.today);
+    $("#book-notes").innerHTML = today.map((n) => `<li><span>${esc(n.text)}</span><button type="button" data-remove="${esc(n.id)}" aria-label="Remove">✕</button></li>`).join("");
+    $("#book-notes").querySelectorAll("[data-remove]").forEach((b) => (b.onclick = () => void loadNotes({ remove: b.dataset.remove })));
+    $("#book-note-status").textContent = "";
+    return true;
+  } catch (e) {
+    $("#book-note-status").textContent = e.message;
+    return false;
+  }
+}
+$("#book-note-add").onclick = async () => {
+  const text = $("#book-note").value.trim();
+  if (!text) return;
+  if (await loadNotes({ text })) $("#book-note").value = "";
+};
+$("#book-note").onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); $("#book-note-add").click(); } };
 $("#gate-cancel").onclick = $("#parent-done").onclick = () => $("#parents").close();
 $("#change-player").onclick = () => { $("#parents").close(); choose(); };
 $("#menu-style").onchange = () => {
