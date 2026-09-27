@@ -11,7 +11,9 @@ const BLOCK=['ones','tens','hundreds','thousands'];
 export function PlaceWorth({q,disabled,result,helped,onAnswer}:Props){
  const which=q.placeMode==='which',labels=helped||!!result,n=q.digits.length;
  const col=(i:number)=>BLOCK[n-1-i];
+ const prompt=String(q.prompt||'').split(/(ones|tens|hundreds|thousands)/);
  return <section className="place-worth" aria-label={which?'Find the digit in the named place':'What is the lit digit worth?'}>
+  {which&&<p className="pw-prompt">{prompt.map((part:string,i:number)=>i%2?<b key={i} className={'pw-word pw-'+part}>{part}</b>:part)}</p>}
   <div className="pw-numeral">{q.digits.map((d:number,i:number)=>{
    const lit=!which&&i===q.lit,shown=result&&i===q.lit,picked=which&&result&&!result.ok&&i===result.picked;
    const cls='pw-digit pw-'+col(i)+(lit?' pw-lit':'')+(shown?' pw-answer':'')+(picked?' pw-picked':'');
