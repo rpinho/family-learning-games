@@ -1,5 +1,16 @@
 # Word Arcade
 
+## September 27: Letter Slalom (3D)
+
+A calm downhill ski run in the Arcade tab. The child steers a skier (finger or mouse: the skier goes where the finger is; optional tilt; arrow keys) through eight gate rows of two or three gates, each carrying a letter or a word. The question is spoken as each row approaches, and the skier glides slowly until it has been said.
+
+- **Letters track (`beginner`):** "Find the letter F." among look-alikes, or "Which letter does fox start with?" with a picture; letters come from Letter Quest (read-only). Pairs first, then triplets.
+- **Words track (`explorer`):** "Find the word ship." among look-alikes (ship/shop/chip), or the next word of a spoken sentence (the start of the sentence is shown). Starter sentences until Letter Quest shows sentences built independently.
+- **No score, no streaks, no fail state.** A missed gate names the answer and the run continues; the next triplet becomes a pair. About 75–90 seconds, then a spoken recap, the shared word break and a calm finish card.
+- **Calm wind-down (`lib/rest.mjs`):** after 20 minutes of continuous play, the mission or run that is finishing is the last one for an hour; grown-ups can hold the button on the calm screen to keep playing.
+- **3D:** three.js, loaded only when a run starts; everything procedural (valley, pines, ridges, clouds, skier, ski tracks, spray, sun shadows). Three quality tiers; the game measures its own frame times and steps down automatically (`?slalomQuality=low|medium|high` forces one). Without WebGL a simple 2D version with the same gates is shown.
+- **Check:** `node scripts/check-slalom-browser.mjs --base http://localhost:4319 --player beginner [--mobile --size 390x844] [--miss 2] [--shots dir] [--record]` skis a full run in headless Chrome (muted), steering with real pointer or touch input.
+
 ## September 26: word breaks and Sentence Express without position cues
 
 - Word break after round 4 of every mission except Sentence Express, and when a mission is complete. Pixel Studio pauses at 2 and 6 minutes.

@@ -1,0 +1,41 @@
+/* Letter Slalom: full-bleed 3D run under the player banner, with a small calm HUD. */
+.slalom-root{position:fixed;inset:52px 0 0 0;z-index:20;background:#dfe9f4;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+.slalom-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.slalom-loading{position:absolute;inset:0;display:grid;place-content:center;text-align:center;color:#1d3b5c;font-weight:800;font-size:22px;background:linear-gradient(#5d9be0,#dfe9f4 60%,#fff)}
+.slalom-loading span{font-size:72px;animation:slalom-bob 1.4s ease-in-out infinite alternate}
+@keyframes slalom-bob{to{transform:translateY(-10px) rotate(-6deg)}}
+.slalom-hud{position:absolute;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:12px 14px calc(14px + env(safe-area-inset-bottom))}
+.slalom-hud button{pointer-events:auto}
+.slalom-top{display:grid;grid-template-columns:auto auto 1fr auto;align-items:start;gap:10px}
+.slalom-btn{min-width:52px;min-height:52px;border-radius:16px;border:2px solid #ffffffcc;background:#123a66cc;color:#fff;font-size:22px;font-weight:800;box-shadow:0 4px 14px #0a1f3a33;padding:0 12px}
+.slalom-btn.tilt{font-size:17px}.slalom-btn.tilt.on{background:#1f8a5bdd}
+.slalom-prompt{justify-self:center;display:flex;align-items:center;gap:14px;min-height:64px;padding:6px 20px 6px 8px;border-radius:40px;background:#fffdf8ee;color:#15304d;box-shadow:0 8px 24px #0a1f3a2e;font-weight:850;font-size:clamp(20px,3.2vw,30px);max-width:min(620px,100%)}
+.slalom-hear{width:56px;height:56px;flex:none;border-radius:50%;border:0;background:#e3eef8;font-size:28px;cursor:pointer}
+.slalom-picture{font-size:48px;line-height:1}
+.slalom-sentence{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.slalom-sentence b{color:#2f7fe0;letter-spacing:2px}
+.slalom-listen{color:#35587c;font-size:.8em}
+.slalom-dots{display:flex;gap:6px;padding:10px 12px;border-radius:20px;background:#123a6699}
+.slalom-dots i{width:12px;height:12px;border-radius:50%;background:#ffffff55;border:2px solid #ffffffaa}
+.slalom-dots i.done{background:#fff}.slalom-dots i.now{background:#ffd35c;border-color:#fff}
+.slalom-bottom{display:flex;align-items:end;justify-content:center;gap:12px;position:relative}
+.slalom-bottom .tilt{position:absolute;right:0;bottom:0}
+.slalom-hint{padding:10px 18px;border-radius:24px;background:#123a66bb;color:#fff;font-weight:800;font-size:19px;animation:slalom-fade 6s ease-in forwards}
+@keyframes slalom-fade{0%,70%{opacity:1}100%{opacity:0}}
+.slalom-recap{position:absolute;inset:auto 0 0 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:14px;background:linear-gradient(#0c2a4d00,#0c2a4d77 45%);color:#fff;text-align:center;padding:60px 20px 26px}
+.slalom-recap h2{margin:0;font-size:clamp(28px,4vw,42px);text-shadow:0 3px 12px #0a1f3a88}
+.slalom-recap-row{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;max-width:900px}
+.slalom-card{min-width:78px;min-height:78px;padding:8px 16px;border-radius:20px;background:#fffdf8;color:#15304d;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:850;font-size:clamp(28px,4.4vw,44px);border:4px solid #cfe0ef;box-shadow:0 6px 0 #b9cde0;transition:transform .25s,border-color .25s,opacity .25s}
+.slalom-card i{font-style:normal;font-size:.8em}
+.slalom-recap .slalom-card{opacity:.55}.slalom-recap .slalom-card.seen{opacity:.9}.slalom-recap .slalom-card.now{opacity:1;transform:translateY(-8px) scale(1.12);border-color:#ffd35c;box-shadow:0 10px 0 #e8b634}
+.slalom-flat{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;background:linear-gradient(#5d9be0,#eef4fb 55%,#fff);color:#15304d;text-align:center;padding:90px 20px 20px;font-weight:700}
+.slalom-flat-gates{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
+.slalom-flat-gates button{min-width:130px;min-height:110px;font-size:48px;font-weight:850;border-radius:22px;border:6px solid #e5484d;background:#fffdf8;color:#15304d}
+.slalom-finish.complete{max-width:none;margin:0}.slalom-finish.over{position:absolute;inset:auto 0 0 0;min-height:0;background:linear-gradient(#0c2a4d00,#0c2a4dcc 38%);padding:70px 20px 26px}.slalom-finish.over .medal{display:none}
+.slalom-finish{position:fixed;inset:52px 0 0 0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(ellipse at 50% 20%,#8cc0f0,#2c6cb4 70%);color:#fff;text-align:center;padding:24px}
+.slalom-finish h2{margin:0;font-size:clamp(30px,4.5vw,48px)}.slalom-finish p{margin:0;font-size:20px;color:#e8f2ff}
+.slalom-finish .medal{font-size:78px;line-height:1}
+.slalom-finish button{min-width:220px;min-height:54px;font-size:20px}
+.slalom-rest-hold{margin-top:24px;opacity:.75;font-size:15px!important;min-height:40px!important;min-width:0!important}
+@media(max-height:500px){.slalom-root,.slalom-finish:not(.over){inset:42px 0 0 0}.slalom-finish.over{padding-top:30px;gap:8px}.slalom-prompt{min-height:52px;font-size:20px}.slalom-hear{width:46px;height:46px;font-size:22px}.slalom-picture{font-size:36px}.slalom-btn{min-width:46px;min-height:46px}.slalom-card{min-width:60px;min-height:60px;font-size:26px}.slalom-finish .medal{font-size:54px}}
+@media(max-width:600px){.slalom-top{grid-template-columns:auto auto 1fr;}.slalom-dots{grid-column:1/-1;justify-self:center;order:3}.slalom-prompt{grid-column:3;justify-self:stretch;padding-right:12px}.slalom-hint{font-size:16px}}
+@media(prefers-reduced-motion:reduce){.slalom-loading span,.slalom-hint{animation:none}}

@@ -18,6 +18,7 @@ function describe(q){
  if(!q)return 'a question';
  if(q.kind==='cookies'){const d=q.mode==='bags'?q.bagSize:q.plates,mode={share:'sharing',fix:'fix the plates',mixed:'hidden counts',bags:'bags',rows:'rows',leftover:'remainders'}[q.mode]||'sharing';return `cookies ${q.total} ÷ ${d} (${mode}, level ${q.level}${q.fade?', '+q.fade:''})`;}
  if(q.placeMode==='build')return `build ${q.total??(q.target||[]).reduce((n,v)=>n*10+v,0)} from blocks (level ${q.level})`;
+ if(q.skill==='worth')return q.placeMode==='which'?`which digit is in the ${['ones','tens','hundreds','thousands'][q.place]} place of ${q.total}`:`what the ${q.digit} in ${q.total} is worth`;
  if(q.kind==='place')return `place value ${q.total} (${q.placeMode})`;
  if(q.kind==='skip')return `jumps ${q.sequence.join(', ')}, …`;
  if(['multiply','factor','sums'].includes(q.kind))return `${q.blank===0?'?':q.a} ${q.operator} ${q.blank===1?'?':q.b} = ${q.blank===2?'?':q.total}`;
@@ -28,7 +29,7 @@ function describe(q){
 }
 function stuckReason(h){
  const r=[];
- if(!h.ok)r.push(`answered ${h.answer}`);
+ if(!h.ok)r.push(h.question?.placeMode==='which'?`tapped the ${h.question.digits?.[h.answer]}`:`answered ${h.answer}`);
  if(h.cookieChecks)r.push(`${h.cookieChecks} uneven/extra check${h.cookieChecks>1?'s':''}`);
  if(h.askTries)r.push(`${h.askTries} wrong count${h.askTries>1?'s':''}`);
  if(h.predicted!==undefined&&h.predicted!==h.answer)r.push(`guessed ${h.predicted}`);
@@ -47,7 +48,7 @@ export function daySummary(p,date,timeZone){
  const levels={};
  if(advanced(p)){
   const c=cookieProgress(p);levels.cookies={level:c.level,stage:c.fade,...(c.toMastery!==null?{toMastery:c.toMastery}:{})};
-  for(const skill of ['multiply','factor','sums','skip','place'])levels[skill]=challengeLevel(p,skill);
+  for(const skill of ['multiply','factor','sums','skip','place','worth'])levels[skill]=challengeLevel(p,skill);
  }
  const time=stretches([...rows,...reading,...planning.map(r=>({...r,durationMs:r.durationMs||0})),...art.map(r=>({at:r.at,durationMs:0}))],timeZone);
  const story=(p.story?.beats||[]).filter(today).map(b=>b.line);

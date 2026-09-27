@@ -8,7 +8,8 @@ function solve(p){const s=p.session,q=s.q;let draft;
  if(s.game==='wordoku')draft=[...q.model];if(s.game==='train')draft=q.answer.split(' ');if(s.game==='search')draft=q.path.map(String);if(s.game==='beats')draft=Array(Number(q.answer)).fill('beat');
  if(draft)send(p,{kind:'draft',draft});return send(p,{kind:'answer',answer:q.answer,durationMs:1200});
 }
-for(const game of GAMES.filter(g=>g.id!=='pixel'))test(`${game.name}: eight solvable rounds, single reward, reload, separate skill level`,()=>{
+// Letter Slalom has its own flow (one pass per gate, no retries): tests/slalom.test.mjs.
+for(const game of GAMES.filter(g=>!['pixel','slalom'].includes(g.id)))test(`${game.name}: eight solvable rounds, single reward, reload, separate skill level`,()=>{
  let p=fresh('admin');send(p,{kind:'start',game:game.id});for(let i=0;i<8;i++){assert.equal(solve(p).ok,true);p=JSON.parse(JSON.stringify(p));assert.throws(()=>send(p,{kind:'answer',answer:p.session.q.answer,durationMs:1}),/Already/);send(p,{kind:'next'});}assert.equal(p.session.phase,'complete');assert.equal(p.session.score,800);assert.equal(p.games[game.id].played,1);assert.equal(p.games[game.id].level,['builder','orbit','flashcards'].includes(game.id)?2:3);assert.equal(Object.keys(p.games).length,1);assert.throws(()=>send(p,{kind:'next'}));assert.equal(p.xp,['wordoku','cipher'].includes(game.id)?0:96);
 });
 test('Wrong answers retain a question, restore help after two errors, and lower future difficulty',()=>{const p=fresh('explorer');send(p,{kind:'start',game:'rhyme',level:3});const id=p.session.q.id;send(p,{kind:'answer',answer:'!',durationMs:100});send(p,{kind:'answer',answer:'!',durationMs:100});assert.equal(p.session.q.id,id);assert.equal(p.session.q.level,3);assert.equal(p.session.level,1);assert.equal(p.session.help,true);assert.equal(solve(p).independent,false);assert.equal(p.xp,6);send(p,{kind:'next'});assert.equal(p.session.q.level,1);});

@@ -13,5 +13,6 @@ export const GAME_IDENTITIES={
  cipher:{icon:'🔐',example:'◆ = A',label:'Secret code lock'},
  train:{icon:'🚂',example:'The dog runs.',label:'Sentence train'},
  search:{icon:'🔎',example:'F I N D',label:'Word-search magnifying glass'},
- pixel:{icon:'🎨',example:'MAKE ART',label:'Painting palette'}
+ pixel:{icon:'🎨',example:'MAKE ART',label:'Painting palette'},
+ slalom:{icon:'⛷️',example:'F | E | T',label:'Skier and letter gates'}
 };

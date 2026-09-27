@@ -5,8 +5,10 @@ import {lowerQuestion,lowerAttempt,lowerState} from './lowercase.mjs';
 import {BUILDER_STARTERS,builderState,builderQuestion,builderAttempt} from './builder.mjs';
 import {arcadeQuestion,arcadeAttempt} from './arcade-curriculum.mjs';
 import {chooseWord,rememberWord} from './variety.mjs';
-import {SENTENCES as TRAIN_SENTENCES,SENTENCE_DISTRACT as TRAIN_DISTRACT,scramble,tilesOf,wordBreakLines} from './word-break.mjs';
-export const VERSION='word-arcade-2026-09-26-speech-once-1';
+import {SENTENCES as TRAIN_SENTENCES,SENTENCE_DISTRACT as TRAIN_DISTRACT,scramble,tilesOf,wordBreakLines,literacyFrom,DEFAULT_TRACK} from './word-break.mjs';
+import {slalomRun,slalomLines,easeGate} from './slalom.mjs';
+import {trackPlay,windDownDue,startRest,resting,clearRest,REST_LINE,REST_COACH} from './rest.mjs';
+export const VERSION='word-arcade-2026-09-27-letter-slalom-1';
 export const GAMES=[
  ['blaster','Letter Blaster','SPELLING','Blast the missing letter. Power your starship.','🚀','#48dfec'],
  ['orbit','Orbit Builder','SPELLING','Connect drifting letters. Fly your word through space.','✦','#ffcc73'],
@@ -21,7 +23,8 @@ export const GAMES=[
  ['builder','Word Builder','SPELLING','Assemble a word to launch your rocket.','🛠️','#f9a9db'],
  ['train','Sentence Express','SENTENCES','Put the carriages in order. Send the train.','🚂','#6de4cb'],
  ['search','Word Radar','WORD SEARCH','Find a hidden word across or down the grid.','⌕','#bcacff'],
- ['pixel','Pixel Studio','CREATIVE PLAY','Paint with light. Make letters, pictures, anything.','🎨','#ffa776']
+ ['pixel','Pixel Studio','CREATIVE PLAY','Paint with light. Make letters, pictures, anything.','🎨','#ffa776'],
+ ['slalom','Letter Slalom','LETTERS & WORDS','Ski down the mountain. Glide through the gate you hear.','⛷️','#8fd3ff']
 ].map(([id,name,category,description,icon,color])=>({id,name,category,description,icon,color}));
 export const WORDS=[
  [['cat','🐈'],['dog','🐕'],['sun','☀️'],['hat','🎩'],['pig','🐖'],['cup','☕'],['bed','🛏️'],['fox','🦊'],['map','🗺️'],['hen','🐔'],['pen','🖊️'],['bug','🐞'],['bat','🦇'],['web','🕸️'],['van','🚐'],['bus','🚌'],['ant','🐜'],['egg','🥚'],['red','🟥'],['leg','🦵'],['net','🥅'],['pot','🍲'],['bag','👜'],['ram','🐏']],
@@ -38,6 +41,7 @@ function seeded(seed){let a=seed|0;return()=>{a+=0x6D2B79F5;let t=Math.imul(a^a>
 const rotate=(a,n)=>a.slice(n%a.length).concat(a.slice(0,n%a.length));
 const options=(a,n)=>rotate([...new Set(a)],n).reverse();
 export function question(game,level,n){
+ if(game==='slalom'){const track=n%2?'words':'letters',run=slalomRun({...literacyFrom(null,track),wordLevel:level},{seed:n});return {...run[n%run.length],id:`slalom:${n}`,level};}
  if(['orbit','flashcards'].includes(game)){const fake={id:'admin',drills:{[game+':words']:{stage:level,serial:n,recent:[],skills:{},wins:[],misses:0}}};return arcadeQuestion(fake,game,WORDS);}
  const pool=WORDS[level-1], [word,picture]=pool[n%pool.length], q={id:`${game}:${n}`,game,level,word,picture,answer:'',prompt:'',help:'',options:[],tiles:[],model:null};
  if(game==='lowercase'){const lower=lowerQuestion({lowercase:{...lowerState({}),serial:n,stage:level}});Object.assign(q,lower,{answer:lower.char,prompt:lower.prompt,help:`Big ${lower.char.toUpperCase()} pairs with little ${lower.char.toUpperCase()}.`});}
@@ -54,9 +58,12 @@ export function question(game,level,n){
  if(game==='search'){q.size=6;const chars='abcdefghijklmnopqrstuvwxyz';q.grid=Array.from({length:36},(_,i)=>chars[(i*7+n)%26]);q.path=Array.from({length:word.length},(_,i)=>n%2===0?(n%6)*6+i:i*6+n%6);q.path.forEach((j,i)=>q.grid[j]=word[i]);q.answer=q.path.join(',');q.prompt=`Find the word ${word}. Tap its letters in order, across or down.`;q.help=`Find ${word}. Follow the highlighted path.`;}
  return q;
 }
-export function act(p,input){
+// ctx: {now, literacy} from the server (literacy = read-only Letter Quest levels for Letter Slalom).
+export function act(p,input,ctx={}){
  if(!input||input.revision!==p.revision)throw Error('Your game changed in another tab. Refresh to continue.');
- const s=p.session;let result={kind:input.kind};
+ const now=ctx.now??Date.now(),s=p.session;let result={kind:input.kind};
+ if(input.kind==='rest'){clearRest(p,now);p.revision++;return {kind:'rest',resting:false};}
+ if(input.kind==='start'&&resting(p,now))return {kind:'resting',resting:true,line:REST_LINE};
  if(input.kind==='start'){
   if(!GAMES.some(g=>g.id===input.game))throw Error('Choose a game');if(input.focus!==undefined&&!['words','lowercase'].includes(input.focus))throw Error('Choose a practice focus');
   if(s?.game==='builder'&&!p.builder)p.builder=builderState(p);
@@ -65,12 +72,14 @@ export function act(p,input){
   if(input.mode!==undefined&&!['practice','arcade'].includes(input.mode))throw Error('Choose a flight mode');
   if(input.deck!==undefined&&!['words','letters','spelling'].includes(input.deck))throw Error('Choose a deck');
   p.session={game:input.game,focus:input.focus||'words',mode:input.mode||'practice',deck:input.deck||'words',run:p.serial,round:0,level,score:0,correct:0,assisted:0,phase:'question',help:false,misses:0,draft:[],results:[],started:Date.now()};
-  if(input.game==='pixel'){p.session.phase='art';}else setup(p);result.line=p.session.q?.prompt||INSTRUCTIONS.pixel;
+  if(input.game==='pixel'){p.session.phase='art';}
+  else if(input.game==='slalom'){const level=ctx.literacy||literacyFrom(null,DEFAULT_TRACK[p.id]||'mixed');const s2=p.session;s2.gates=slalomRun(level,{seed:p.serial*31+(p.id==='beginner'?7:p.id==='explorer'?3:1)}).map((g,i)=>({...g,id:`${s2.run}:${i}`}));s2.level=level.track==='letters'?1:level.wordLevel;s2.track=level.track;s2.q=s2.gates[0];s2.draft=[];}
+  else setup(p);result.line=input.game==='slalom'?'':p.session.q?.prompt||INSTRUCTIONS.pixel;
  }else if(input.kind==='art'){
   if(s?.game!=='pixel'||!Array.isArray(input.pixels)||input.pixels.length!==64||input.pixels.some(x=>!Number.isInteger(x)||x<0||x>7))throw Error('Invalid painting');p.art=[...input.pixels];
  }else{
   if(!s||!s.q||input.questionId!==s.q.id)throw Error('This mission is no longer active.');const q=s.q;
-  if(input.kind==='next'){if(s.phase!=='result')throw Error('Finish this round first');s.round++;if(s.round===8){s.phase='complete';const g=p.games[s.game]||{};p.games[s.game]={...g,level:s.level,played:(g.played||0)+1,best:Math.max(g.best||0,s.score)};result.line=LINES[6];}else {setup(p);result.line=s.q.prompt;}}
+  if(input.kind==='next'){if(s.phase!=='result')throw Error('Finish this round first');s.round++;if(s.round===8){s.phase='complete';const g=p.games[s.game]||{};p.games[s.game]={...g,level:s.level,played:(g.played||0)+1,best:Math.max(g.best||0,s.score)};result.line=LINES[6];result.complete=true;}else {setup(p);result.line=s.q.prompt;}}
   else if(s.phase!=='question')throw Error('Already submitted');
   else if(input.kind==='help'){s.help=true;result.line=q.help;}
   else if(input.kind==='draft'){
@@ -81,6 +90,17 @@ export function act(p,input){
    if(s.game==='search'&&d.some(x=>!/^\d+$/.test(x)||+x>35))throw Error('Invalid radar position');
    if(s.game==='wordoku'&&(d.length!==16||q.grid.some((x,i)=>x&&d[i]!==x)))throw Error('Keep the given letters');
    if(s.game==='beats'&&d.some(x=>x!=='beat'))throw Error('Invalid beat');s.draft=[...d];
+  }else if(input.kind==='answer'&&s.game==='slalom'){
+   // One pass per gate: never retried, never failed. A miss names the right answer and the run continues.
+   if(!Number.isFinite(input.durationMs)||input.durationMs<0||input.durationMs>86400000)throw Error('Invalid duration');
+   if(!q.options.includes(input.answer))throw Error('Choose a gate');
+   const ok=input.answer===q.answer;s.activeMs=(s.activeMs||0)+input.durationMs;
+   s.results.push({q:{id:q.id,kind:q.kind,answer:q.answer,options:q.options,prompt:q.prompt},answer:input.answer,independent:ok,points:0,misses:ok?0:1,help:false,durationMs:input.durationMs});
+   if(ok){s.correct++;p.xp+=12;}else s.misses++;
+   s.round++;
+   if(s.round>=s.gates.length){s.phase='complete';const g=p.games.slalom||{};p.games.slalom={...g,level:s.level,played:(g.played||0)+1};result.complete=true;}
+   else{if(!ok)s.gates[s.round]=easeGate(s.gates[s.round]);s.q=s.gates[s.round];}
+   result={...result,kind:ok?'correct':'wrong',ok,answer:q.answer,correction:ok?'':q.correction,line:''};
   }else if(input.kind==='answer'){
    if(!Number.isFinite(input.durationMs)||input.durationMs<0||input.durationMs>86400000)throw Error('Invalid duration');
    let answer=input.answer;
@@ -109,7 +129,10 @@ export function act(p,input){
    if(['orbit','flashcards'].includes(s.game))s.level=arcadeAttempt(p,q,{ok,helped:s.help||s.misses>0});
   }else throw Error('Unknown action');
  }
- p.revision++;return result;
+ p.revision++;
+ // Calm wind-down: real moves count as play; a finishing mission or run becomes the last one for now.
+ if(['start','answer','next','draft','help','art'].includes(input.kind)){trackPlay(p,now);if(result.complete&&windDownDue(p,now)){startRest(p,now);result.windDown=true;}}
+ return result;
 }
 function setup(p){
  const s=p.session;
@@ -131,4 +154,4 @@ function setup(p){
  rememberWord(p,s.q.word);
  s.q.id=`${s.run}:${s.round}`;s.phase='question';s.help=false;s.misses=0;s.draft=s.game==='wordoku'?[...s.q.grid]:s.game==='transform'?[...s.q.from]:[];
 }
-export function voiceLines(){const all=new Set([...wordBreakLines(),...LINES,...SHORT_FEEDBACK,...FAMILIES.flatMap(f=>f.slice(1).map(w=>`The word is ${w}.`))]);for(const g of GAMES)for(let l=1;l<=3;l++)for(let n=0;n<120;n++){const q=question(g.id,l,n);if(q.prompt){all.add(q.prompt);all.add(shortPrompt(q));}if(q.help)all.add(q.help);}for(const word of [...new Set([...FOUNDATION_WORDS,...BUILDER_STARTERS,...WORDS.flat().map(x=>x[0])])]){all.add(`Build the word ${word}. Tap the letters in order.`);all.add(`Yes! ${word}.`);all.add(`The word is ${word}.`);for(const c of word.toUpperCase())all.add(`The word is ${word}. The missing letter is ${c}.`);}for(const c of 'abcdefghijklmnopqrstuvwxyz'){all.add(`Find little ${c.toUpperCase()}.`);all.add(`Big ${c.toUpperCase()} pairs with little ${c.toUpperCase()}.`);all.add(`The letter ${c.toUpperCase()}.`);all.add(`Letter ${c.toUpperCase()}.`);}return [...all];}
+export function voiceLines(){const all=new Set([...wordBreakLines(),...slalomLines(),REST_LINE,REST_COACH,...LINES,...SHORT_FEEDBACK,...FAMILIES.flatMap(f=>f.slice(1).map(w=>`The word is ${w}.`))]);for(const g of GAMES)for(let l=1;l<=3;l++)for(let n=0;n<120;n++){const q=question(g.id,l,n);if(q.prompt){all.add(q.prompt);all.add(shortPrompt(q));}if(q.help)all.add(q.help);}for(const word of [...new Set([...FOUNDATION_WORDS,...BUILDER_STARTERS,...WORDS.flat().map(x=>x[0])])]){all.add(`Build the word ${word}. Tap the letters in order.`);all.add(`Yes! ${word}.`);all.add(`The word is ${word}.`);for(const c of word.toUpperCase())all.add(`The word is ${word}. The missing letter is ${c}.`);}for(const c of 'abcdefghijklmnopqrstuvwxyz'){all.add(`Find little ${c.toUpperCase()}.`);all.add(`Big ${c.toUpperCase()} pairs with little ${c.toUpperCase()}.`);all.add(`The letter ${c.toUpperCase()}.`);all.add(`Letter ${c.toUpperCase()}.`);}return [...all];}
