@@ -10,6 +10,7 @@ import {proxy} from './proxy.mjs';
 import {chessService} from './chess-service.mjs';
 import {cachedMenuOrderService} from './menu-cache.mjs';
 import {bookService} from './book-service.mjs';
+import {listenService,listenSettings} from './listen-service.mjs';
 import {literacyFrom,DEFAULT_TRACK} from './public/word-break.mjs';
 const here=fileURLToPath(new URL('.',import.meta.url)),root=resolve(here,'..'),data=process.env.FAMILY_DATA||join(root,'.data','hub');
 const ids=['letter-quest','word-arcade','number-park','maze-garden','three-in-a-row','target-trail'];
@@ -49,6 +50,7 @@ const menu=cachedMenuOrderService({players,onError:detail=>void log({type:'menu_
 const bookDir=process.env.FAMILY_BOOK||(deployDir?join(deployDir,'..',channel==='staging'?join('staging-data','book'):'book'):join(data,'book'));
 const timeZone=process.env.FAMILY_TZ||Intl.DateTimeFormat().resolvedOptions().timeZone;
 const book=bookService({data,bookDir,players,config,log,timeZone});
+const listen=listenService({settings:listenSettings({deployDir}),players,log});
 const chess=chessService({data,players,log,settingsFor:Object.fromEntries(config.players.map(p=>[p.id,p.chess||{}]))});
 const server=http.createServer(async(req,res)=>{
  res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','SAMEORIGIN');
@@ -70,6 +72,7 @@ const server=http.createServer(async(req,res)=>{
   if(u.pathname==='/__deploy/version'&&req.method==='GET'){const g=u.searchParams.get('game'),idle=Number(u.searchParams.get('idle'));if(Number.isFinite(idle)&&idle>=0&&idle<120)touch(g,Date.now()-idle*1000);const games=Object.fromEntries(ids.map(id=>[id,releaseOf(id)]));return send(res,200,{hub:HUB_RELEASE,games,channel});}
   if(u.pathname.startsWith('/api/')&&!['GET','HEAD'].includes(req.method))touch('hub');
   if(u.pathname==='/api/chess')return await chess.handle(req,res,u);
+  if(u.pathname.startsWith('/api/listen')){const handled=await listen.handle(req,res,u);if(handled!==false)return;}
   if(u.pathname.startsWith('/api/book')||u.pathname.startsWith('/book-voice/')||u.pathname.startsWith('/book-art/')){const handled=await book.handle(req,res,u);if(handled!==false)return;}
   if(u.pathname==='/health')return send(res,200,{ok:true,version:HUB_VERSION,release:HUB_RELEASE||null,channel:channel||null,physicsVersion:VERSION,diagnostics:{ok:!logError,error:logError}});
   if(/^\/(?:voice|chess-voice)\/(manifest\.json|[a-f0-9]{16}\.wav)$/.test(u.pathname)&&req.method==='GET'){try{const bytes=await readFile(join(data,u.pathname.slice(1)));res.writeHead(200,{'Content-Type':u.pathname.endsWith('.wav')?'audio/wav':'application/json'});res.end(bytes);}catch(e){if(e.code==='ENOENT')send(res,404,{error:'Use device narration.'});else throw e;}return;}

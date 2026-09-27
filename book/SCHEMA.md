@@ -39,7 +39,7 @@ library the generic one in `hub/public/book-art/` is used (a hero, a grown-up, B
 
 ```json
 {"allowNames": ["names of the family's toys that the brand rule would otherwise reject"],
- "children": {"<player>": {"fixed": ["<id>"], "rotate": ["<id>"], "perChapter": 2, "props": ["<id>"]}},
+ "children": {"<player>": {"fixed": ["<id>"], "rotate": ["<id>"], "weights": {"<id>": 3}, "perChapter": 2, "props": ["<id>"]}},
  "cast": [{"id": "owl", "name": "Captain Owl", "kind": "personality in one line", "emoji": "🦉",
    "letter": "O", "word": "owl", "shape": "spread my wings into a round O", "voice": "bm_fable", "speed": 1.0}],
  "props": [{"id": "kite", "name": "the kite", "kind": "a red kite"}]}

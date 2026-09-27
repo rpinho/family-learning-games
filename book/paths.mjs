@@ -28,7 +28,7 @@ export function bookPaths(env=process.env){
   timeZone:env.FAMILY_TZ||Intl.DateTimeFormat().resolvedOptions().timeZone};
 }
 export function readProfiles(paths){try{return JSON.parse(readFileSync(paths.profiles,'utf8'));}catch{return {};}}
-// The shared cast (a family's real toys), private: {cast:[{id,name,kind,emoji}], fixed:{player:[ids]}, perChapter:{early,reader}, allowNames:[]}
+// The shared cast (a family's real toys), private: {cast:[{id,name,kind,emoji}], children:{player:{fixed,rotate,perChapter,weights?}}, allowNames:[]}
 export function readCast(paths){try{const c=JSON.parse(readFileSync(paths.cast,'utf8'));return Array.isArray(c.cast)?c:null;}catch{return null;}}
 export const localDate=(ms,timeZone)=>new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(ms));
 export function addDays(date,n){const [y,m,d]=date.split('-').map(Number);return new Date(Date.UTC(y,m-1,d+n)).toISOString().slice(0,10);}

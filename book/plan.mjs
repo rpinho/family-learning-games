@@ -5,6 +5,7 @@
 // many seats; magic words on signs and doors make the world respond when the child reads them; a spell
 // only works when its words are put back in order; pizza is shared fairly; and once per chapter a friend
 // insists on something wrong and the child says NO! (then fixes it). Same learner model + date = same plan.
+import {letterQuest,readerQuest} from './quests.mjs';
 import {FIRST_WORDS,WORD_GROUPS,SENTENCES,SENTENCE_DISTRACT,scramble,tilesOf,endMark,shuffle} from '../hub/public/word-break.mjs';
 
 export function rng(seedText){let h=2166136261;for(const c of String(seedText)){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return()=>{h+=0x6D2B79F5;let t=h;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
@@ -59,7 +60,7 @@ function earlyBeats(m,r,{cast,collection,things,soccer=false}){
     claim:`${cap(review.word)} starts with ${wrong}!`,ask:`Can I put the ${wrong} key in the ${review.word} lock? Can I? Please?`,wrong,right:review.letter,options:shuffle([review.letter,wrong,near(review.letter).find(c=>c!==wrong)||'O'],r),
     ifYes:`Oops! The ${wrong} key does not fit. Hmm.`,caught:`You said NO! ${cap(review.word)} starts with ${review.letter}, not ${wrong}.`,fixSpoken:`Which letter does ${review.word} start with?`,hint:`Listen: ${review.word}. ${review.sound||SOUNDS[review.letter]}. What sound is first?`}
   ],
-  quest:`Find three things that start with ${L} and show Dad!`,
+  quest:letterQuest(L,{sound,friend:owner.id?{name:owner.name,emoji:owner.emoji}:null}),
   reward:{key:L}
  };
 }
@@ -118,7 +119,11 @@ export function chooseCast(model,{date,cast,level}){
  const mine=cast.children?.[model.player];
  if(mine){
   const fixed=(mine.fixed||[]).map(id=>byId[id]).filter(Boolean),pool=(mine.rotate||[]).map(id=>byId[id]).filter(Boolean);
-  const out=[...fixed,...shuffle(pool,r).slice(0,Math.max(0,Number(mine.perChapter??2)))];
+  // Optional weights ({id: n}) make favourites appear more often; without them every friend is equally likely.
+  const w=mine.weights||{},left=shuffle(pool,r),picks=[];
+  for(let k=Math.max(0,Number(mine.perChapter??2));k>0&&left.length;k--){const tot=left.reduce((s,c)=>s+Math.max(0,Number(w[c.id]??1)),0);let x=r()*tot,i=0;
+   for(;i<left.length-1;i++){x-=Math.max(0,Number(w[left[i].id]??1));if(x<0)break;}picks.push(left.splice(i,1)[0]);}
+  const out=[...fixed,...picks];
   return out.length?out:fallback;
  }
  const n=Math.max(1,Number(cast.perChapter?.[level])||2);
@@ -144,7 +149,7 @@ export function planChapter(model,{date,profile={},cast=null,collection={},life=
   base=readerBeats(model,r,{collection});
   const who=members[1]||members[0];base.beats[3].who=who?.id||null;base.beats[3].whoName=who?.name||'a friend';base.beats[3].what=`${who?.name||'A friend'} ${base.beats[3].what.replace(/^a friend /,'')}`;
   base.magic=magicWords(model,r,{collection});
-  base.quest=`Find the word "${base.magic[0]||base.beats[0].target}" somewhere at home, on a box or in a book, and show Dad!`;
+  base.quest=readerQuest(base.magic.length?base.magic:[base.beats[0].target],{seed:Number(String(date).replace(/-/g,''))||0});
  }
  const interests=shuffle(model.interests||[],r).slice(0,3);
  return {player:model.player,name:model.name,date,level:early?'early':'reader',sibling:profile.sibling||null,companion,cast:members,props:chooseProps(model,cast),interests,

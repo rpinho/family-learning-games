@@ -48,7 +48,7 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
    const page=Math.max(0,Math.min(60,Number(input.page)||0));
    if(input.type==='open')day.opens++;
    else if(input.type==='page')day.page=Math.max(day.page,page);
-   else if(input.type==='result'){const r=input.result||{};collect(p,r.earned);day.results=[...day.results.filter(x=>x.page!==page),{page,kind:String(r.kind||'').slice(0,20),misses:Math.max(0,Math.min(99,Number(r.misses)||0)),ms:Math.max(0,Math.min(36e5,Number(r.ms)||0)),hints:Math.max(0,Math.min(9,Number(r.hints)||0))}].slice(-20);}
+   else if(input.type==='result'){const r=input.result||{};collect(p,r.earned);day.results=[...day.results.filter(x=>x.page!==page),{page,kind:String(r.kind||'').slice(0,20),misses:Math.max(0,Math.min(99,Number(r.misses)||0)),ms:Math.max(0,Math.min(36e5,Number(r.ms)||0)),hints:Math.max(0,Math.min(9,Number(r.hints)||0)),...(['voice','echo','tap'].includes(r.via)?{via:r.via}:{})}].slice(-20);}
    else if(input.type==='finish'){day.finished=true;day.finishedAt=new Date(now()).toISOString();day.page=Math.max(day.page,page);}
    else if(input.type==='leave'){day.leftAt=new Date(now()).toISOString();day.page=Math.max(day.page,page);}
    else throw Object.assign(Error('Unsupported action.'),{status:400});
@@ -72,6 +72,14 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
     const player=u.searchParams.get('player');if(!kids.some(k=>k.id===player))return send(res,400,{error:'Choose a child.'});
     const {date,chapter:ch}=await latest(player,u.searchParams.get('date'));const p=await progress(player);
     return send(res,200,{date,chapter:ch,progress:progressView(null),collection:collectionOf(p),open:!!ch,preview:true});
+   }
+   // Word cards for Dad to print and hide (one page, big letters) when today's quest needs words on paper.
+   if(u.pathname==='/api/book/cards'&&req.method==='GET'){
+    const player=u.searchParams.get('player');if(!kids.some(k=>k.id===player))return send(res,400,{error:'Choose a child.'});
+    const {chapter:ch}=await latest(player,u.searchParams.get('date'));const cards=(ch?.quest?.cards||[]).filter(w=>/^[a-z' -]{1,20}$/i.test(w)).slice(0,6);
+    const e=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const html=`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Word cards</title><style>@page{size:letter;margin:.4in}body{font-family:"Nunito","Trebuchet MS",system-ui,sans-serif;margin:0;color:#2b2118}.tip{font-size:14px;margin:0 0 .2in}.cards{display:grid;grid-template-columns:1fr;gap:.25in}.card{border:3px dashed #b99a6a;border-radius:18px;height:2.9in;display:grid;place-items:center;font-weight:900;font-size:1.6in;letter-spacing:.04em}@media print{.tip button{display:none}}</style></head><body><p class="tip">${cards.length?`${e(ch.name)}'s quest: cut out ${cards.length===1?'this card':'these cards'} and hide ${cards.length===1?'it':'them'} around the house. <button onclick="print()">Print</button>`:'Today\'s chapter needs no word cards.'}</p><div class="cards">${cards.map(w=>`<div class="card">${e(w)}</div>`).join('')}</div></body></html>`;
+    res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(html);return;
    }
    if(u.pathname==='/api/book/notes'){
     if(req.method==='GET'){const since=localDate(now()-6*864e5,timeZone);return send(res,200,{today:today(),notes:(await notes()).filter(n=>n.date>=since)});}

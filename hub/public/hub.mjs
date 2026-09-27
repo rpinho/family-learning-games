@@ -108,12 +108,12 @@ async function render() {
   }
   const seq = ++renderSeq;
   // Grown-ups' preview of a child's book: the same player, same narration, nothing saved.
-  const watch = location.hash.match(/^#book\/([\w-]+)$/);
+  const watch = location.hash.match(/^#book\/([\w-]+)(?:\/p(\d{1,2}))?$/);
   if (watch && config.players.some((k) => k.id === watch[1] && k.id !== "admin")) {
     const book = await loadBook(watch[1], { preview: true });
     if (seq !== renderSeq) return;
     if (book?.chapter) {
-      dispose = mountBook(main, { player: watch[1], book, preview: true, onDone: () => { dispose = null; location.hash = ""; } });
+      dispose = mountBook(main, { player: watch[1], book, preview: true, startPage: watch[2] ? Number(watch[2]) - 1 : 0, onDone: () => { dispose = null; location.hash = ""; } });
       return;
     }
     main.innerHTML = `<section class="error"><h1>No chapter yet.</h1><p>The next chapter is written overnight.</p><a class="back-link" href="#">← Back</a></section>`;
@@ -221,7 +221,7 @@ $("#gate-form").onsubmit = (e) => {
   $("#parent-options").hidden = false;
   $("#menu-style").focus();
   void loadNotes();
-  $("#book-watch").innerHTML = config.players.filter((k) => k.id !== "admin").map((k) => `<button type="button" class="book-watch-btn" data-watch="${esc(k.id)}">Watch ${esc(k.name)}'s book</button>`).join("");
+  $("#book-watch").innerHTML = config.players.filter((k) => k.id !== "admin").map((k) => `<button type="button" class="book-watch-btn" data-watch="${esc(k.id)}">Watch ${esc(k.name)}'s book</button><a class="book-watch-btn book-cards-link" href="/api/book/cards?player=${encodeURIComponent(k.id)}" target="_blank" rel="noopener">🖨️ ${esc(k.name)}'s word cards</a>`).join("");
   $("#book-watch").querySelectorAll("[data-watch]").forEach((b) => (b.onclick = () => { $("#parents").close(); location.hash = "book/" + b.dataset.watch; }));
 };
 // Grown-ups: one line about today becomes part of the next chapter.

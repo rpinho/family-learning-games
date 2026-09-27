@@ -1,7 +1,7 @@
 """The Book: build a household's picture library from source images.
 Usage: python3 book/build-art.py <art dir>   (reads <art>/spec.json and <art>/src/<id>.png, writes <art>/lib/)
 spec.json: {"actors": {"<actor>": {"name", "h"}}, "fly": ["<actor>-<pose>"], "items": [{"id", "type": "sprite"|"background",
-"about"?, "h"?, "seats"?, "goal"?: [x, y, w, h] of a soccer goal in the picture}]}. Sprites are "<actor>-<pose>" when <actor> is listed in "actors", otherwise props.
+"about"?, "h"?, "seats"?, "cars"? (a train's wagons and engine, see hub/public/book-scene.mjs), "goal"?: [x, y, w, h] of a soccer goal in the picture}]}. Sprites are "<actor>-<pose>" when <actor> is listed in "actors", otherwise props.
 Sprites are trimmed to their visible pixels; everything becomes WebP. Needs Pillow."""
 import json, sys
 from pathlib import Path
@@ -51,7 +51,7 @@ for it in spec['items']:
         a['poses'][pose] = {'file': name, 'ar': ar, **({'fly': True} if it['id'] in fly else {})}
     else:
         name = f"props/{it['id']}.webp"
-        out['props'][it['id']] = {'file': name, 'h': it.get('h', 0.12), 'ar': ar, 'about': it.get('about', it['id'].replace('-', ' ')), **({'seats': it['seats']} if it.get('seats') else {})}
+        out['props'][it['id']] = {'file': name, 'h': it.get('h', 0.12), 'ar': ar, 'about': it.get('about', it['id'].replace('-', ' ')), **({'seats': it['seats']} if it.get('seats') else {}), **({'cars': it['cars']} if it.get('cars') else {})}
     im.save(lib / name, 'WEBP', quality=86, method=5)
 (lib / 'library.json').write_text(json.dumps(out, indent=1))
 print(f"{len(out['backgrounds'])} backgrounds, {len(out['actors'])} actors ({sum(len(a['poses']) for a in out['actors'].values())} poses), {len(out['props'])} props")

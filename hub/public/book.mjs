@@ -4,18 +4,19 @@
 // The first tap on the cover unlocks sound for the session; one <audio> element is reused for every line.
 // Learning happens inside the story ("beats"): letter keys, stepping-stones, counting, magic words he
 // reads to make things happen, spells, sharing, and the NO! beat where a friend wants to do something wrong.
-import {layoutActors} from './book-scene.mjs';
+import {layoutActors,layoutTrain,coverBand} from './book-scene.mjs';
 import {IDLE_REPEAT_MS,IDLE_REPEATS,shuffle} from './word-break.mjs';
 import {fetchJSON} from './save-request.mjs';
+import {listenOnce,recognise,listenAvailable,checkMic,micState} from './listen.mjs';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-export const AUTO_ADVANCE_MS=2200,TAP_GUARD_MS=700,LINE_GAP_MS=320;
+export const THROW_X=0.44,AUTO_ADVANCE_MS=2200,TAP_GUARD_MS=700,LINE_GAP_MS=320;
 export async function loadBook(player,{preview=false,date=''}={}){try{return await fetchJSON(`/api/book${preview?'/preview':''}?player=${encodeURIComponent(player)}${date?'&date='+date:''}`,{},6000);}catch{return null;}}
 export function lastPlace(player,storage=globalThis.localStorage){try{const v=JSON.parse(storage.getItem('family-games-last:'+player)||'null');return v&&Date.now()-v.at<36*36e5&&typeof v.hash==='string'?v.hash:'';}catch{return '';}}
 export function rememberPlace(player,hash,storage=globalThis.localStorage){try{if(hash&&hash!=='#')storage.setItem('family-games-last:'+player,JSON.stringify({hash,at:Date.now()}));}catch{}}
 function post(player,body,keepalive=false){return fetch('/api/book?player='+encodeURIComponent(player),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),keepalive}).then(r=>r.ok?r.json():null).catch(()=>null);}
 // Test hook: every play() attempt is recorded (clip, page, whether the browser allowed it).
 const audit=globalThis.__bookAudio||(globalThis.__bookAudio=[]);
-export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=false}){
+export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=false,startPage=0}){
  const ch=book.chapter,date=book.date,art=ch.art||{backgrounds:{},actors:{},props:{}},early=ch.level==='early';
  const keys=new Set(book.collection?.keys||[]);
  let page=preview?0:Math.min(Math.max(0,book.progress?.page||0),ch.pages.length-1),alive=true,finished=false,turn=0,timers=[],shownAt=0,canNext=false,autoTimer=null;
@@ -25,6 +26,8 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  root.innerHTML=`<div class="bk-view"></div><div class="bk-chrome"><button class="bk-exit" type="button" aria-label="Back to the games">✕</button><button class="bk-hear" type="button" aria-label="Hear it again">🔊</button>${early?'<div class="bk-keys" aria-hidden="true"></div>':''}<div class="bk-dots" aria-hidden="true"></div><div class="bk-tapnext" aria-hidden="true">👉</div>${preview?'<div class="bk-preview-bar">PREVIEW · nothing is saved</div>':''}</div>`;
  main.innerHTML='';main.append(root);
  const view=root.querySelector('.bk-view'),dots=root.querySelector('.bk-dots'),tapnext=root.querySelector('.bk-tapnext');
+ // ---- listening: is there a recogniser on this machine, and is the microphone allowed? (never asks here) ----
+ let canListen=false;void listenAvailable().then(v=>{canListen=v;});void checkMic();
  // ---- sound: one element, reused (unlocked by the first tap on the cover) ----
  const audio=new Audio();audio.preload='auto';let current=null;
  function deviceSpeak(text){return new Promise(res=>{try{const u=new SpeechSynthesisUtterance(text);u.rate=.92;u.onend=u.onerror=()=>res();speechSynthesis.speak(u);setTimeout(res,Math.max(2500,text.length*85));}catch{res();}});}
@@ -50,15 +53,25 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   for(const f of files)fetch('/book-voice/'+f).catch(()=>{});const b=art.backgrounds[p.scene?.bg];if(b){const im=new Image();im.src=b.url;}}
  function talking(who){view.querySelectorAll('.bk-actor').forEach(a=>a.classList.toggle('talking',!!who&&a.dataset.id===who));}
  // ---- pictures ----
- function actorsHTML(scene,{ground=0.93,scale=1}={}){
+ function actorsHTML(scene,{ground=0.93,scale=1,maxHeight=1,avoid=null}={}){
   const W=root.clientWidth||innerWidth,H=root.clientHeight||innerHeight;
   // A train in the picture always carries the friends (all aboard!).
   if((scene.ride||scene.props.some(p=>p.id==='train'))&&art.props.train?.seats){return trainHTML(scene,W,H);}
-  return layoutActors(scene.actors,art,{width:W,height:H,ground,scale}).map((a,i)=>{const P=art.actors[a.id].poses[a.pose];
+  return layoutActors(scene.actors,art,{width:W,height:H,ground,scale,maxHeight,avoid}).map((a,i)=>{const P=art.actors[a.id].poses[a.pose];
    return `<div class="bk-actor${P.fly||a.pose==='fly'?' fly':''}" data-id="${esc(a.id)}" data-pose="${esc(a.pose)}" style="left:${(a.left*100).toFixed(2)}%;width:${(a.width*100).toFixed(2)}%;height:${(a.height*100).toFixed(2)}%;bottom:${(a.bottom*100).toFixed(2)}%;--from:${a.left+a.width/2<0.5?-40:40}vw;animation-delay:${i*0.15}s"><div style="animation-delay:${-i*0.7}s;animation-duration:${(2.2+i*0.37).toFixed(2)}s"><img src="${esc(P.url)}" alt="${esc(art.actors[a.id].name)}"></div></div>`;}).join('');
  }
  function trainHTML(scene,W,H){
-  const T=art.props.train,h=Math.min(T.h*1.2,0.4),w=h*T.ar*H/W,left=(1-w)/2,bottom=0.06;
+  const T=art.props.train,L=layoutTrain(scene.actors,art,{width:W,height:H});
+  if(L){
+   // Wagons repeat so every friend has his own; each is drawn after its rider (the front wall hides only his legs).
+   const t=L.train,pc=v=>(v*100).toFixed(3)+'%';
+   const piece=p=>{const span=p.src[1]-p.src[0];return `<div class="bk-car ${p.kind}" style="left:${pc((p.left-t.left)/t.width)};width:${pc(p.width/t.width)}"><img src="${esc(T.url)}" alt="" style="width:${pc(1/span)};margin-left:${pc(-p.src[0]/span)}"></div>`;};
+   const rider=r=>{const P=art.actors[r.id].poses[r.pose]||Object.values(art.actors[r.id].poses)[0];
+    return `<div class="bk-actor rider" data-id="${esc(r.id)}" data-pose="${esc(r.pose)}" style="left:${pc((r.left-t.left)/t.width)};width:${pc(r.width/t.width)};height:${pc(r.height/t.height)};bottom:${pc((r.bottom-t.bottom)/t.height)}"><div><img src="${esc(P.url)}" alt="${esc(art.actors[r.id].name)}"></div></div>`;};
+   const inner=L.parts.map(p=>p.kind==='wagon'?(L.riders.find(r=>r.wagon===p.i)?rider(L.riders.find(r=>r.wagon===p.i)):'')+piece(p):piece(p)).join('');
+   return `<div class="bk-prop train cars" style="left:${pc(t.left)};width:${pc(t.width)};height:${pc(t.height)};bottom:${pc(t.bottom)}">${inner}</div>`;
+  }
+  const h=Math.min(T.h*1.2,0.4),w=h*T.ar*H/W,left=(1-w)/2,bottom=0.06;
   const seats=T.seats||[[.5,.4]];
   const riders=scene.actors.slice(0,seats.length).map((a,i)=>{const P=art.actors[a.id].poses[a.pose]||Object.values(art.actors[a.id].poses)[0];const rh=h*0.8*Math.min(1,(art.actors[a.id].h||0.4)/0.6),rw=rh*P.ar*H/W,[sx,sy]=seats[i];
    return `<div class="bk-actor" data-id="${esc(a.id)}" style="left:${((left+sx*w-rw/2)*100).toFixed(2)}%;width:${(rw*100).toFixed(2)}%;height:${(rh*100).toFixed(2)}%;bottom:${((bottom+h*(1-sy))*100).toFixed(2)}%"><div><img src="${esc(P.url)}" alt=""></div></div>`;}).join('');
@@ -95,14 +108,29 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  root.addEventListener('pointermove',e=>parallax(e.clientX/innerWidth-.5,e.clientY/innerHeight-.5),{passive:true});
  const tilt=e=>{if(e.gamma!=null)parallax(Math.max(-1,Math.min(1,e.gamma/30))/2,Math.max(-1,Math.min(1,(e.beta-45)/30))/2);};addEventListener('deviceorientation',tilt);
  function page_(){return ch.pages[page];}
+ // Where the characters may stand on this page so the page's words, buttons and play things never cover them.
+ function stage(p,beat){
+  const W=root.clientWidth||innerWidth,H=root.clientHeight||innerHeight,wide=W>H*1.05,kind=p.beat?.kind;
+  const ground=beat?0.64:0.93,scale=beat?0.72:1;
+  // The top band belongs to the page's words: a beat's board, letter or pizza (30%), a magic word (34%), a caption (14%).
+  const maxHeight=ground-(beat?0.30:p.magic?0.34:p.caption?0.15:0.05);
+  // Bands the characters step out of: the goal (keeper) and the ball's column, the things he counts or shares,
+  // the big letter a friend teaches, and the spot where he holds the ball to throw.
+  const ball=Math.max(56,Math.min(W,H)*0.16)/W,mid=(a,b)=>[a,b];let avoid=null;
+  if(p.action?.kind==='kick'||kind==='kick-letter'){if(wide){const g=art.backgrounds[p.scene.bg]?.goal||[0.38,0.3,0.24,0.17];const [a,b]=coverBand(g,{width:W,height:H});avoid=[Math.min(a,0.5-ball)-0.04,Math.max(b,0.5+ball)+0.04];}else avoid=mid(0.5-ball*0.75,0.5+ball*0.75);}
+  else if(p.action?.kind==='throw')avoid=[THROW_X-ball*0.6,THROW_X+ball*0.6];
+  else if(wide&&['count','share'].includes(kind))avoid=[0.26,0.74];
+  else if(wide&&kind==='teach-letter')avoid=[0.5-Math.min(W,H)*0.13/W,0.5+Math.min(W,H)*0.13/W];
+  return {ground,scale,maxHeight,avoid};
+ }
  function pageFrame(p,{beat=false}={}){
   const b=art.backgrounds[p.scene.bg];
-  const ground=beat?0.64:0.93,scale=beat?0.72:1;
+  const st=stage(p,beat),{ground,scale}=st;
   const cap=p.caption&&!p.magic&&!(p.beat&&['teach-letter'].includes(p.beat.kind))?`<button class="bk-caption" type="button">${esc(p.caption)}</button>`:'';
   view.querySelector('.bk-page')?.classList.add('out');
   const old=view.querySelector('.bk-page');if(old)setTimeout(()=>old.remove(),350);
   const el=document.createElement('div');el.className='bk-page';
-  el.innerHTML=`${b?`<img class="bk-bg" src="${esc(b.url)}" alt="">`:''}<div class="bk-layer">${propsHTML(p.scene,{ground,play:!!p.action||p.beat?.kind==='kick-letter'})}${actorsHTML(p.scene,{ground,scale})}</div>${fxHTML(p.scene.fx)}${cap}<div class="bk-play"></div>`;
+  el.innerHTML=`${b?`<img class="bk-bg" src="${esc(b.url)}" alt="">`:''}<div class="bk-layer">${propsHTML(p.scene,{ground,play:!!p.action||p.beat?.kind==='kick-letter'})}${actorsHTML(p.scene,st)}</div>${fxHTML(p.scene.fx)}${cap}<div class="bk-play"></div>`;
   view.append(el);
   el.querySelector('.bk-caption')?.addEventListener('click',()=>{const l=(p.say||[]).find(x=>x.text.toLowerCase().includes(p.caption.toLowerCase()));if(l)void speak(l);});
   return el;
@@ -116,7 +144,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   view.querySelector('.bk-open').onclick=async e=>{
    e.currentTarget.disabled=true;if(!preview)event('book_open',`${date}:${page}`);
    // This tap is the user gesture that unlocks sound for the whole session.
-   const start=book.progress?.page&&!preview?Math.min(book.progress.page,ch.pages.length-1):0;
+   const start=preview?Math.min(Math.max(0,startPage|0),ch.pages.length-1):book.progress?.page?Math.min(book.progress.page,ch.pages.length-1):0;
    await speak(ch.cover?.line);if(alive)go(start);
   };
   preload(0);
@@ -175,36 +203,83 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
    await shoot(el,p,my,ball,aim);
   }else if(a.kind==='throw'){
    const fetcher=a.fetcher||p.scene.actors.map(x=>x.id).find(id=>id!==player&&id!=='dad');const f=fetcher&&el.querySelector(`.bk-actor[data-id="${CSS.escape(fetcher)}"]`);
-   const ball=ballEl(el,{x:W*0.3,y:H*0.72,size:size*0.7});ball.classList.add('pulse');
+   const ball=ballEl(el,{x:W*THROW_X,y:H*0.74,size:size*0.7});ball.classList.add('pulse');
    const aim=await flick(ball,my);if(my!==turn)return;ball.classList.remove('pulse');setPose(el,player,'throw');void speak(ch.ui.fetch);
    const to={x:Math.min(W*0.9,Math.max(W*0.55,W*0.75+aim.dx*0.3)),y:H*0.8};await flyTo(ball,to,{ms:900,scale:0.6,arc:H*0.35,spin:540});if(my!==turn)return;
    if(f){setPose(el,fetcher,'run');const fr=rectOf(f);await f.animate([{transform:'translateX(0)'},{transform:`translateX(${to.x-(fr.x+fr.w/2)}px)`}],{duration:900,easing:'ease-in-out',fill:'forwards'}).finished.catch(()=>{});
     if(my!==turn)return;ball.remove();setPose(el,fetcher,art.actors[fetcher].poses.happy?'happy':'idle');f.classList.add('hop');}
    burst('hearts');setPose(el,player,'cheer');
   }else if(a.kind==='drive'){
-   const lever=document.createElement('button');lever.type='button';lever.className='bk-btn go';lever.textContent='🚂 GO!';el.querySelector('.bk-play').append(lever);
+   const lever=document.createElement('button');lever.type='button';lever.className='bk-btn go';lever.textContent='🚂 GO!';el.append(lever);
    await new Promise(res=>{lever.onclick=()=>{lever.remove();res();};});if(my!==turn)return;void speak(ch.ui.go);
-   const train=el.querySelectorAll('.bk-prop.train, .bk-actor');const dx=W*0.9;
+   const train=el.querySelectorAll('.bk-prop.train, .bk-layer > .bk-actor');const dx=W*0.9;
    el.insertAdjacentHTML('beforeend','<div class="bk-puffs"><i></i><i></i><i></i></div>');
    await Promise.all([...train].map(n=>n.animate([{translate:'0 0'},{translate:`${dx}px 0`}],{duration:2600,easing:'ease-in',fill:'forwards'}).finished.catch(()=>{})));
   }
   if(my!==turn)return;if(!preview)event('book_action',`${a.kind}:${Date.now()-started}`);
   await speakAll(a.after,my);
  }
+ // ---- say it aloud (push-to-talk) ----
+ // Tap the word (or the letter), say it, and the world responds. One miss: "so close, once more". Two misses: the
+ // word glows and the narrator says it; then whatever he says counts (he is echoing her). Never a scolding.
+ // No recogniser, or the microphone blocked: the tap itself counts (and a blocked microphone shows a card once).
+ const micUsable=()=>canListen&&!micState().blocked;let cardShown=false;
+ function micCard(why){
+  cardShown=true;const c=document.createElement('div');c.className='bk-card';
+  const head=why==='no-mic'?"There's no microphone here.":why==='insecure'?'The microphone needs the secure address.':'Ask a grown-up to turn on the microphone.';
+  c.innerHTML=`<div class="bk-card-in"><div class="bk-card-mic">🎤</div><h2>${esc(head)}</h2>
+   <p class="grown">For grown-ups: in Chrome tap the icon left of the address, then <b>Permissions → Microphone → Allow</b> (or ⋮ → Settings → Site settings → Microphone). In the installed app: long-press its icon → <b>App info → Permissions → Microphone → Allow</b>. On a Chromebook: the icon in the address bar, or Settings → Privacy and security → Site settings → Microphone. Everything he says stays on this home computer and is never recorded.</p>
+   <div class="bk-card-btns"><button class="bk-btn" type="button" data-a="tap">Tap instead 👆</button><button class="bk-btn" type="button" data-a="retry">Try again 🎤</button></div></div>`;
+  view.querySelector('.bk-page:last-child')?.append(c);if(why!=='insecure'&&why!=='no-mic')void speak(ch.ui.askGrownUp);
+  return new Promise(res=>c.querySelectorAll('button').forEach(b=>b.onclick=e=>{e.stopPropagation();c.remove();res(b.dataset.a);}));
+ }
+ function sayIt(btn,{target,kind,my,help=[],onDone}){
+  let attempts=0,misses=0,busy=false,done=false;
+  const badge=document.createElement('span');badge.className='bk-mic-badge';badge.setAttribute('aria-hidden','true');btn.append(badge);
+  const paint=()=>{badge.textContent=micUsable()?'🎤':'';};paint();const paintTimer=setInterval(()=>{if(!alive||done)clearInterval(paintTimer);else paint();},1000);
+  const finish=via=>{done=true;clearInterval(paintTimer);badge.remove();btn.classList.remove('listening','thinking');onDone({via,misses,attempts});};
+  btn.onclick=e=>{e?.stopPropagation?.();if(done||busy||my!==turn)return;
+   if(!micUsable()){
+    if(canListen&&micState().blocked&&!cardShown){void micCard(micState().why).then(a=>{if(a==='tap'&&my===turn)finish('tap');});return;}
+    return finish('tap');}
+   busy=true;stopSound();attempts++;btn.classList.add('listening');
+   // Called inside the tap: this is when the browser shows its permission prompt the first time.
+   listenOnce({onLevel:v=>btn.style.setProperty('--lvl',v.toFixed(2))}).then(async({pcm,speech})=>{
+    btn.classList.remove('listening');if(my!==turn||done)return void(busy=false);
+    if(!speech){busy=false;await speak(ch.ui.listenNothing);return;}
+    btn.classList.add('thinking');let r=null;try{r=await recognise({player,target,kind,attempt:attempts,preview,pcm});}catch{}
+    btn.classList.remove('thinking');busy=false;if(my!==turn||done)return;
+    if(preview&&r){el_heard(btn,r);}
+    // If the recogniser is having a bad moment, he is never stuck: it counts.
+    if(!r)return finish('tap');
+    if(r.match)return finish('voice');
+    if(misses>=2)return finish('echo');
+    misses++;btn.classList.remove('soft-miss');void btn.offsetWidth;btn.classList.add('soft-miss');
+    if(misses===1)await speak(ch.ui.listenAgain);
+    else{btn.classList.add('glow');await speakAll(help,turn);if(my===turn)await speak(ch.ui.listenEcho);}
+   },async err=>{btn.classList.remove('listening');busy=false;paint();if(my!==turn||done)return;
+    const a=await micCard(micState().why||(err?.name==='NotFoundError'?'no-mic':'denied'));paint();if(a==='tap'&&my===turn)finish('tap');});
+  };
+  return {nudge:()=>micUsable()&&!done};
+ }
+ // Grown-ups' preview: show what the recogniser heard, to try it out.
+ function el_heard(btn,r){const b=document.createElement('div');b.className='bk-heard';b.textContent=`heard: “${r.heard||'…'}” ${r.match?'✓':'✗'} (${r.ms} ms)`;btn.parentElement?.append(b);setTimeout(()=>b.remove(),4000);}
  // A magic word: the narrator goes quiet, the word glows on something in the picture, he reads it.
  function magic(el,p,my){
   return new Promise(resolve=>{
    const btn=document.createElement('button');btn.type='button';btn.className='bk-magic';btn.innerHTML=`<small>${esc(p.magic.object||'magic word')}</small>${esc(p.magic.word)}`;el.append(btn);
    const started=Date.now();let repeats=0,done=false;
    const nudge=()=>later(()=>{if(done||my!==turn||repeats>=IDLE_REPEATS)return;repeats++;void speak(ch.ui.readIt);nudge();},IDLE_REPEAT_MS);
-   void speak(ch.ui.readIt).then(nudge);
-   btn.onclick=async()=>{if(done)return;done=true;btn.classList.add('read');burst('sparkles');cheer();
-    if(!preview){void post(player,{type:'result',date,page,result:{kind:'magic',misses:0,ms:Date.now()-started,earned:{word:p.magic.word}}});event('book_magic',p.magic.word);}
+   // With a microphone, the word itself is the button he taps to read it aloud.
+   void speak(ch.ui.readIt).then(async()=>{if(micUsable()&&!done&&my===turn)await speak(ch.ui.listenTap);nudge();});
+   const respond=async({via,misses})=>{if(done)return;done=true;btn.classList.add('read');burst('sparkles');cheer();
+    if(!preview){void post(player,{type:'result',date,page,result:{kind:'magic',misses,ms:Date.now()-started,via,...(via!=='echo'?{earned:{word:p.magic.word}}:{})}});event('book_magic',`${p.magic.word}:${via}`);}
     await speak(p.magic.read);if(my!==turn)return resolve();await speakAll(p.magic.after,my);resolve();};
+   sayIt(btn,{target:{kind:'word',word:p.magic.word},kind:'magic',my,help:[p.magic.read],onDone:respond});
   });
  }
  function finishBeat(p,my,result){
-  if(!preview){void post(player,{type:'result',date,page,result:{kind:p.beat.kind,misses:result.misses||0,ms:result.ms||0,...(result.earned?{earned:result.earned}:{})}});event('book_beat',`${p.beat.kind}:${result.misses||0}`);}
+  if(!preview){void post(player,{type:'result',date,page,result:{kind:p.beat.kind,misses:result.misses||0,ms:result.ms||0,...(result.via?{via:result.via}:{}),...(result.earned?{earned:result.earned}:{})}});event('book_beat',`${p.beat.kind}:${result.misses||0}`);}
   setNext(true);later(()=>{if(my===turn&&canNext)go(page+1);},1600);
  }
  // Buttons with the usual rules: wrong wiggles and says try again; two misses glow the right one.
@@ -227,9 +302,14 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
     // The letter can be tapped at any moment; the friend finishes showing it first.
     const g=document.createElement('button');g.type='button';g.className='bk-glyph';g.textContent=b.letter;g.setAttribute('aria-label',`The letter ${b.letter}`);el.append(g);
     let tapped=false,shown=false;
-    const finish=async()=>{g.classList.add('tapped');burst('sparkles');await speak(b.tap);if(my===turn)done({misses:0});};
+    const finish=async(r={misses:0})=>{g.classList.add('tapped');burst('sparkles');await speak(b.tap);if(my===turn)done({misses:r.misses||0,...(r.via?{via:r.via}:{})});};
     g.onclick=()=>{if(tapped||my!==turn)return;tapped=true;if(shown)void finish();else g.classList.add('tapped');};
     if(!await speakAll(b.lines,my))return;shown=true;
+    // With a microphone he says it: its sound, its name, or the friend's name ("Lll!", "L!", "Loona!").
+    if(micUsable()){g.classList.remove('tapped');let said=false;
+     sayIt(g,{target:{kind:'letter',letter:b.letter,names:[b.ownerName||art.actors[b.owner]?.name].filter(Boolean)},kind:'letter',my,help:[b.tap],onDone:r=>{said=true;void finish(r);}});
+     await speak(ch.ui.sayLetter);
+     let n=0;const again=()=>later(()=>{if(said||my!==turn||n>=IDLE_REPEATS)return;n++;void speak(ch.ui.sayLetter);again();},IDLE_REPEAT_MS);again();return;}
     if(tapped)return void finish();
     let repeats=0;const nudge=()=>later(()=>{if(tapped||my!==turn||repeats>=IDLE_REPEATS)return;repeats++;void speak(b.tap);nudge();},IDLE_REPEAT_MS);nudge();
     return;}
@@ -330,12 +410,18 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   const my=++turn;finished=true;setNext(false);
   if(!preview){void post(player,{type:'finish',date,page:ch.pages.length});event('book_finish',date);}
   const el=view.querySelector('.bk-page')||view;
-  el.insertAdjacentHTML('beforeend',`<div class="bk-quest">${ch.quest?`<h2>🗺️ A quest for you and Dad</h2><p>${esc(ch.quest.text.replace(/^A quest for you and Dad:\s*/,''))}</p>`:'<h2>The end, for today</h2>'}<button class="bk-btn" type="button">${preview?'Close':'Play games →'}</button></div>`);
-  el.querySelector('.bk-quest .bk-btn').onclick=()=>{stop();onDone({finished:true});};
+  const q=ch.quest;
+  el.insertAdjacentHTML('beforeend',`<div class="bk-quest">${q?`<h2>🗺️ A quest for you and Dad</h2><p>${esc(q.text.replace(/^A quest for you and Dad:\s*/,''))}</p>${q.hints?.length?`<div class="bk-hint"></div><button class="bk-btn bk-hintbtn" type="button">🔍 A hint, please</button>`:''}${q.dad?`<p class="bk-dadnote">${esc(q.dad)}</p>`:''}`:'<h2>The end, for today</h2>'}<button class="bk-btn bk-done" type="button">${preview?'Close':'Play games →'}</button></div>`);
+  el.querySelector('.bk-quest .bk-done').onclick=()=>{stop();onDone({finished:true});};
+  // Came back empty-handed? One hint picture at a time (things most homes have).
+  let hint=0;const hb=el.querySelector('.bk-hintbtn');
+  if(hb)hb.onclick=async()=>{const h=q.hints[hint++];if(!h)return;el.querySelector('.bk-hint').innerHTML=`<span class="pic">${esc(h.emoji)}</span><b>${esc(h.word)}</b>`;if(hint>=q.hints.length)hb.remove();if(!preview)event('book_hint',`${date}:${hint}`);await speak(h.line);};
   if(ch.quest)await speak(ch.quest);if(my===turn)await speak(ch.ui.nextTime);
  }
  function stop(){alive=false;clearTimers();stopSound();removeEventListener('deviceorientation',tilt);try{audio.removeAttribute('src');audio.load();}catch{}}
  if(!preview)void post(player,{type:'open',date,page});
+ // Grown-ups' preview only: checks and dad can jump to a page.
+ if(preview)globalThis.__bookGo=n=>go(n);
  cover();
  const dispose=()=>{if(!alive)return;if(!finished&&!preview){void post(player,{type:'leave',date,page:Math.max(0,page)},true);event('book_leave',`${date}:${page}`);}stop();root.remove();};
  dispose.book=true;

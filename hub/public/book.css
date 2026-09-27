@@ -18,6 +18,10 @@
 @keyframes bk-float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-6%) rotate(2deg)}}
 @keyframes bk-talk{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-2.5%) scale(1.02,.98)}}
 @keyframes bk-hop{0%,100%{transform:translateY(0)}40%{transform:translateY(-14%)}}
+.bk-prop.train.cars{overflow:visible}
+.bk-car{position:absolute;bottom:0;height:100%;overflow:hidden}
+.bk-car.wagon{clip-path:inset(50% 0 0 0)}
+.bk-car img{height:100%;max-width:none;object-fit:fill;display:block;filter:drop-shadow(0 6px 6px rgba(0,0,0,.25))}
 .bk-prop.train{animation:bk-chug 1s ease-in-out infinite,bk-arrive 1.6s ease-out both}
 @keyframes bk-chug{0%,100%{translate:0 0}50%{translate:0 -1%}}
 @keyframes bk-arrive{from{transform:translateX(-60vw)}to{transform:none}}
@@ -116,3 +120,35 @@
 .bk-puffs i{position:absolute;width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.85);animation:bk-puff 1.4s ease-out infinite}
 .bk-puffs i:nth-child(2){animation-delay:.45s}.bk-puffs i:nth-child(3){animation-delay:.9s}
 @keyframes bk-puff{from{transform:translate(0,0) scale(.3);opacity:.9}to{transform:translate(40vw,-18vh) scale(1.6);opacity:0}}
+
+/* Layout rules (v2.2): play things never sit on the characters. Wide screens: the characters stand either side of
+   the middle band where he counts and shares; tall screens: the play things go above the characters. */
+@media (min-aspect-ratio:21/20){.bk-things{left:27%;right:27%}.bk-plates{left:27%;right:27%;flex-wrap:wrap}}
+@media (max-aspect-ratio:21/20){.bk-things{top:9%;height:30%}.bk-plates{top:31%;flex-wrap:wrap}}
+.bk-btn.go{position:absolute;right:5%;top:24%}
+
+/* Say it aloud (v2.2): the word or letter is the talk button. */
+.bk-mic-badge{position:absolute;right:-.35em;top:-.35em;font-size:clamp(20px,4.5vmin,36px);background:#fff;border-radius:50%;width:1.6em;height:1.6em;display:grid;place-items:center;box-shadow:0 3px 10px rgba(0,0,0,.3);pointer-events:none}
+.bk-mic-badge:empty{display:none}
+.bk-magic,.bk-glyph{position:absolute}
+.bk-magic.listening,.bk-glyph.listening{animation:none;box-shadow:0 0 0 calc(6px + var(--lvl,0)*26px) rgba(255,90,70,.55),0 10px 30px rgba(0,0,0,.35);transition:box-shadow .08s}
+.bk-glyph.listening{border-radius:24px;background:rgba(255,255,255,.12)}
+.bk-magic.thinking .bk-mic-badge,.bk-glyph.thinking .bk-mic-badge{animation:bk-think .6s ease-in-out infinite alternate}
+@keyframes bk-think{from{transform:scale(.8);opacity:.5}to{transform:scale(1.1);opacity:1}}
+.soft-miss{animation:bk-softmiss .5s ease}
+@keyframes bk-softmiss{0%,100%{translate:0}30%{translate:-6px}60%{translate:6px}}
+.bk-heard{position:absolute;left:50%;top:4%;transform:translateX(-50%);background:rgba(0,0,0,.6);color:#fff;border-radius:12px;padding:4px 12px;font:700 15px system-ui;pointer-events:none;z-index:6}
+.bk-card{position:absolute;inset:0;background:rgba(20,26,40,.72);display:grid;place-items:center;z-index:8;padding:16px}
+.bk-card-in{background:#fffaf0;color:#2b2118;border-radius:24px;max-width:min(560px,92vw);padding:18px 20px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.4)}
+.bk-card-mic{font-size:clamp(48px,12vmin,90px);position:relative;display:inline-block}
+.bk-card-mic::after{content:"";position:absolute;left:-8%;right:-8%;top:48%;height:8px;background:#d9362b;border-radius:4px;transform:rotate(-35deg)}
+.bk-card h2{font-size:clamp(22px,5vmin,34px);margin:.2em 0 .4em}
+.bk-card .grown{font-size:14px;line-height:1.4;color:#5a4a3a;text-align:left}
+.bk-card-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+.bk-card-btns .bk-btn{font-size:clamp(20px,4.5vmin,30px);min-height:auto;padding:.3em .8em}
+
+/* Quest hints and the note for Dad (v2.2) */
+.bk-hint{display:flex;align-items:center;justify-content:center;gap:.4em;font-weight:900;font-size:clamp(26px,6vmin,44px);min-height:0}
+.bk-hint .pic{font-size:1.8em}
+.bk-hintbtn{font-size:clamp(20px,4vmin,28px)!important;min-height:auto!important;padding:.25em .8em!important;background:#e8f4ff!important}
+.bk-dadnote{font-size:14px!important;color:#6a5a4a;font-style:italic}
