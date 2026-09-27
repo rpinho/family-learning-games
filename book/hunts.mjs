@@ -14,6 +14,7 @@ import {join,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {bookPaths,readProfiles,localDate,addDays} from './paths.mjs';
 import {SOUNDS} from './plan.mjs';
+import {hasSound} from '../hub/public/word-families.mjs';
 import {repeatedWords} from './lint.mjs';
 import {voiceHunts} from '../hub/scripts/hunt-voice.mjs';
 const here=dirname(fileURLToPath(import.meta.url));
@@ -39,7 +40,7 @@ const hash=s=>{let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h=M
 // The two letters for tomorrow: the next one he is still learning, then a weak one to revisit (never today's).
 export function nextLetters(model,{today=[],lower=false,date=''}={}){
  const lit=model?.literacy||{},norm=c=>lower?String(c).toLowerCase():String(c).toUpperCase();
- const ok=c=>/^[a-z]$/i.test(c)&&!'xXqQ'.includes(c)&&THINGS[c.toLowerCase()]?.length>=2&&!today.map(norm).includes(norm(c));
+ const ok=c=>/^[a-z]$/i.test(c)&&hasSound(c)&&THINGS[c.toLowerCase()]?.length>=2&&!today.map(norm).includes(norm(c));
  const mastered=new Set((lower?[...(lit.lettersMastered||[])].filter(c=>c===c.toLowerCase()):[...(lit.lettersMastered||[])].filter(c=>c===c.toUpperCase())).map(norm));
  const learning=(lower?(lit.learning||[]).filter(c=>c===c.toLowerCase()):(lit.learning||[]).filter(c=>c===c.toUpperCase())).map(norm).filter(c=>ok(c)&&!mastered.has(c));
  const weak=(model?.stuck||[]).filter(s=>s.area==='letters'&&s.item).map(s=>norm(s.item)).filter(ok);

@@ -7,7 +7,7 @@
 // insists on something wrong and the child says NO! (then fixes it). Same learner model + date = same plan.
 import {letterQuest,readerQuest} from './quests.mjs';
 import {FIRST_WORDS,WORD_GROUPS,SENTENCES,SENTENCE_DISTRACT,scramble,tilesOf,endMark,shuffle} from '../hub/public/word-break.mjs';
-import {FAMILIES,familyOf,isFamilyWord,lookAlikes,soundOut,familyTarget,DECODABLE_SENTENCES} from '../hub/public/word-families.mjs';
+import {FAMILIES,familyOf,isFamilyWord,lookAlikes,soundOut,familyTarget,DECODABLE_SENTENCES,hasSound} from '../hub/public/word-families.mjs';
 
 export function rng(seedText){let h=2166136261;for(const c of String(seedText)){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return()=>{h+=0x6D2B79F5;let t=h;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
 const pick=(a,r)=>a[Math.floor(r()*a.length)];
@@ -32,14 +32,15 @@ const pictureFor=l=>FIRST_WORDS.filter(([w])=>w[0].toUpperCase()===l&&!w.include
 // first letter of the friend's name.
 export function letterOwners(cast){
  return (cast||[]).map(c=>{const name=c.name.replace(/^the\s+/i,'');const letter=(c.letter||name[0]).toUpperCase();
-  return {id:c.id,name:c.name,letter,sound:SOUNDS[letter]||letter,word:(c.word||name.split(/\s+/)[0]).toLowerCase(),shape:c.shape||`make the shape of the letter ${letter}`};}).filter(o=>/^[A-Z]$/.test(o.letter));
+  return {id:c.id,name:c.name,letter,sound:hasSound(letter)?SOUNDS[letter]:null,word:(c.word||name.split(/\s+/)[0]).toLowerCase(),shape:c.shape||`make the shape of the letter ${letter}`};}).filter(o=>/^[A-Z]$/.test(o.letter));
 }
 function earlyBeats(m,r,{cast,collection,things,soccer=false,focus=null,grown='Dad'}){
  const keys=new Set((collection?.keys)||[]),known=new Set(m.literacy.letters),learning=m.literacy.learning.filter(c=>/^[A-Z]$/.test(c));
- const owners=letterOwners(cast);
+ // Only a letter with a recorded sound is taught with its sound (see word-families.mjs SOUND_LETTERS).
+ const owners=letterOwners(cast).filter(o=>o.sound);
  // Today's letter: a friend's letter he is still learning, else a friend's letter not yet collected, else any.
  // A grown-up can ask for a letter to be revisited (e.g. the home hunt found nothing): focusLetter in the profile.
- const owner=(focus&&owners.find(o=>o.letter===String(focus).toUpperCase()))||owners.find(o=>learning.includes(o.letter)&&!keys.has(o.letter))||owners.find(o=>!keys.has(o.letter))||pick(owners,r)||{id:null,name:'Bo',letter:'B',sound:'buh',word:'bear',shape:'make the shape of the letter B'};
+ const owner=(focus&&owners.find(o=>o.letter===String(focus).toUpperCase()))||owners.find(o=>learning.includes(o.letter)&&!keys.has(o.letter))||owners.find(o=>!keys.has(o.letter))||pick(owners,r)||{id:null,name:'Bo',letter:'B',sound:SOUNDS.B,word:'bear',shape:'make the shape of the letter B'};
  const L=owner.letter,sound=owner.sound;
  const others=shuffle(near(L),r).slice(0,2);while(others.length<2)others.push(pick('MTKZX'.split('').filter(c=>c!==L),r));
  const stones=shuffle([L,L,L,...others,others[0]],r);
@@ -107,7 +108,7 @@ function readerBeats(m,r,{collection,decodable=false}){
   options=shuffle(group.slice(0,4).includes(word)?group.slice(0,3).includes(word)?group.slice(0,3):[word,...group.filter(w=>w!==word).slice(0,2)]:[word,...group.filter(w=>w!==word).slice(0,2)],r);
   sentence=pick(SENTENCES[Math.max(0,Math.min(2,lit.sentenceLevel-1))],r);answer=tilesOf(sentence);
   extra=lit.sentenceLevel>=2?answer.map(w=>SENTENCE_DISTRACT[w.toLowerCase()]).find(w=>w&&!answer.some(a=>a.toLowerCase()===w)):null;}
- const sounds=decodable?Object.fromEntries([...options,...answer.filter(isFamilyWord),...(extra?[extra]:[])].map(w=>[w.toLowerCase(),soundOut(w)])):null;
+ const sounds=decodable?Object.fromEntries([...options,...answer.filter(isFamilyWord),...(extra?[extra]:[])].map(w=>[w.toLowerCase(),soundOut(w)]).filter(([,t])=>t)):null;
  const share=(math.hardShares||[]).filter(s=>s.total&&s.groups&&s.total%s.groups===0&&s.groups<=5&&s.total<=24).at(-1)||pick([{total:12,groups:3},{total:15,groups:5},{total:16,groups:4},{total:12,groups:4}],r);
  const each=share.total/share.groups;
  const facts=(math.factsStuck||[]).map(f=>f.split('x').map(Number)).filter(([a,b])=>a>=2&&b>=2&&a<=10&&b<=10);

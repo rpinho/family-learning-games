@@ -2,9 +2,9 @@
 // voices a friend's name): names the voice must never guess from their spelling go to it as explicit Kokoro
 // phonemes ([[...]]). The household can add or override names in its private cast.json ("pronounce").
 //  - Pikachu: stress on the last syllable (pee-ka-CHOO).
-//  - Pika: PEE-ka.
+//  - Pika: PEE-ka. Pika-pi: PEE-ka-PEE (spelled, the "pi" came out as "pie").
 //  - Picos: European Portuguese, stress on the i, /ˈpi.kuʃ/ (PEE-koosh).
-export const PRONOUNCE={Pikachu:'pˌikəʧˈu',Pikachus:'pˌikəʧˈuz',Pika:'pˈikə',Picos:'pˈikuʃ'};
+export const PRONOUNCE={Pikachu:'pˌikəʧˈu',Pikachus:'pˌikəʧˈuz','Pika-pi':'pˈikəpˌi',Pika:'pˈikə',Picos:'pˈikuʃ'};
 const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 function table(extra){const m={...PRONOUNCE,...(extra||{})};const names=Object.keys(m).sort((a,b)=>b.length-a.length);
  return {m,re:names.length?new RegExp(`(\\[\\[[^\\]]*\\]\\])|\\b(${names.map(esc).join('|')})\\b`,'gi'):null,lower:Object.fromEntries(names.map(n=>[n.toLowerCase(),m[n]]))};}

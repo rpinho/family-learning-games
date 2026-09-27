@@ -25,7 +25,11 @@ export function bookPaths(env=process.env){
   recap:resolve(exp(env.FAMILY_RECAP_DIR||join(homedir(),'.local/share/family-learning-games-recap'))),
   python:exp(env.FAMILY_BOOK_PYTHON||deploy?.python||'python3'),
   voiceModels:exp(env.FAMILY_VOICE_MODELS||(data['letter-quest']?join(data['letter-quest'],'voice-models'):'')),
-  timeZone:env.FAMILY_TZ||Intl.DateTimeFormat().resolvedOptions().timeZone};
+  timeZone:env.FAMILY_TZ||Intl.DateTimeFormat().resolvedOptions().timeZone,
+  // Letter sounds: the family's shared recordings, processed and checked by word-arcade's scripts (soundout.py and
+  // letter_sound_check.py) from the same channel's installed word-arcade (live unless FAMILY_CHANNEL says staging).
+  letterSounds:resolve(exp(env.FAMILY_LETTER_SOUNDS||join(root,'letter-sounds'))),
+  soundout:[env.FAMILY_SOUNDOUT&&exp(env.FAMILY_SOUNDOUT),join(root,env.FAMILY_CHANNEL==='staging'?'staging':'live','word-arcade','scripts'),join(homedir(),'dev','word-arcade','scripts')].find(d=>d&&existsSync(join(d,'soundout.py')))||null};
 }
 export function readProfiles(paths){try{return JSON.parse(readFileSync(paths.profiles,'utf8'));}catch{return {};}}
 // The shared cast (a family's real toys), private: {cast:[{id,name,kind,emoji}], children:{player:{fixed,rotate,perChapter,weights?}}, allowNames:[]}
@@ -39,3 +43,5 @@ export const exists=existsSync;
 export const NAMED_VOICES={rook:'am_michael'};
 export const resolveVoice=(v,named={})=>v&&typeof v.voice==='string'&&v.voice.startsWith('@')?{...v,voice:named?.[v.voice.slice(1)]||NAMED_VOICES[v.voice.slice(1)]||'am_michael'}:v;
 export const resolveVoices=(voices,named={})=>Object.fromEntries(Object.entries(voices||{}).map(([k,v])=>[k,resolveVoice(v,named)]));
+// What narrate.py needs to voice letter sounds (added to every narration request).
+export const soundSource=paths=>({letter_sounds:paths.letterSounds,soundout:paths.soundout});

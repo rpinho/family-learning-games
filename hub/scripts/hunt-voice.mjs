@@ -10,8 +10,9 @@ import {join,dirname} from 'node:path';
 import {tmpdir} from 'node:os';
 import {fileURLToPath} from 'node:url';
 import {bareSound,repeatedWords} from '../../book/lint.mjs';
-import {bookPaths} from '../../book/paths.mjs';
+import {bookPaths,soundSource} from '../../book/paths.mjs';
 import {phonemize,rawNames} from '../public/pronounce.mjs';
+import {clipName} from '../book-service.mjs';
 const here=dirname(fileURLToPath(import.meta.url));
 const args=process.argv.slice(2),arg=(k,d=null)=>{const i=args.indexOf(k);return i>=0?args[i+1]:d;},flag=k=>args.includes(k);
 export async function voiceHunts(book,{check=false,f:given=null,paths=bookPaths()}={}){
@@ -26,11 +27,12 @@ for(const [p,l] of lines){const said=phonemize(l.shown||l.text,pronounce);if(sai
  const raw=rawNames(l.text,pronounce);if(raw.length)issues.push(`${p}: ${raw[0]} without its pronunciation`);}
 if(issues.length)throw Object.assign(Error(issues.join('\n')),{issues});
 if(check)return {lines:lines.length,made:0,f};
-// A clip that is gone from disk (moved to the Trash after a failed check, or never copied) is rendered again.
-for(const [,l] of lines)if(l.clip&&!existsSync(join(book,'voice',l.clip)))delete l.clip;
+// A clip that is gone from disk (moved to the Trash after a failed check, or never copied), or that was made the old
+// way (its name no longer matches how the line is made now, e.g. letter sounds from the shared recordings), is rendered again.
+for(const [,l] of lines)if(l.clip&&(!existsSync(join(book,'voice',l.clip))||l.clip!==clipName(l)))delete l.clip;
 const want=lines.filter(([,l])=>!l.clip).map(([,l])=>({text:l.text,voice:l.voice,speed:l.speed}));
 if(want.length){const dir=await mkdtemp(join(tmpdir(),'hunt-voice-'));const req=join(dir,'req.json');
- await writeFile(req,JSON.stringify({lines:want,out:join(book,'voice'),models:paths.voiceModels,lq_voice:paths.data['letter-quest']?join(paths.data['letter-quest'],'voice'):null}));
+ await writeFile(req,JSON.stringify({lines:want,out:join(book,'voice'),models:paths.voiceModels,...soundSource(paths)}));
  const out=execFileSync('nice',['-n','19','taskpolicy','-b',paths.python,join(here,'..','..','book','narrate.py'),req],{encoding:'utf8',maxBuffer:1<<24});
  await rm(dir,{recursive:true,force:true});const r=JSON.parse(out.trim().split('\n').at(-1));
  for(const [,l] of lines)if(!l.clip)l.clip=r.clips[`${l.voice}|${l.speed}|${l.text}`];}

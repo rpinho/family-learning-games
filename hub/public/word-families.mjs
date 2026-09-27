@@ -19,21 +19,30 @@ export const isFamilyWord=w=>WORD.has(String(w||'').toLowerCase());
 export function readable(w,{sight=[]}={}){const x=String(w||'').toLowerCase().replace(/[^a-z']/g,'');return !!x&&(isFamilyWord(x)||sight.map(s=>String(s).toLowerCase()).includes(x));}
 // Look-alikes: same first letter, one letter different in the vowel or the end (one of each when possible).
 export function lookAlikes(word,n=2,r=Math.random){const w=String(word).toLowerCase();if(!isFamilyWord(w))return [];
- const same=[...WORD.keys()].filter(x=>x!==w&&x[0]===w[0]),vowel=same.filter(x=>x[2]===w[2]&&x[1]!==w[1]),end=same.filter(x=>x[1]===w[1]&&x[2]!==w[2]);
+ const same0=[...WORD.keys()].filter(x=>x!==w&&x[0]===w[0]),same=same0.filter(canSoundOut).length>=n?same0.filter(canSoundOut):same0,vowel=same.filter(x=>x[2]===w[2]&&x[1]!==w[1]),end=same.filter(x=>x[1]===w[1]&&x[2]!==w[2]);
  const pick=a=>a.length?a[Math.floor(r()*a.length)]:null,out=[];
  for(const pool of [end,vowel,end,vowel]){if(out.length>=n)break;const c=pick(pool.filter(x=>!out.includes(x)));if(c)out.push(c);}
  return out.slice(0,n);}
 export function isLookAlike(target,option){const a=String(target).toLowerCase(),b=String(option).toLowerCase();return a!==b&&a.length===3&&b.length===3&&a[0]===b[0]&&(a[1]!==b[1])!==(a[2]!==b[2]);}
-// A word sounded out slowly for the narrator's voice (letter sounds as phonemes: "[[kə]]... [[æ]]... [[tə]]. Cat!").
-// One clean phoneme per letter, as Letter Quest voices them (see book/narrate.py).
+// Letter sounds come from ONE place: the family's shared recorded letter sounds (private folder
+// ~/.local/share/family-games/letter-sounds, one <letter>.wav each, provenance in letter-sounds.json; processed for
+// playback by word-arcade's scripts/soundout.py, see book/narrate.py). These are the letters it has. A letter it does
+// not have is never given an isolated sound (no sound-out, no "says" line, no sound hunt): narrate.py refuses it.
+export const SOUND_LETTERS=new Set('abcdefghimnoprstu');
+// The recording that says a letter's sound (K sounds like C).
+export const soundFileLetter=c=>({k:'c'})[String(c).toLowerCase()]||String(c).toLowerCase();
+export const hasSound=c=>/^[a-z]$/i.test(String(c))&&SOUND_LETTERS.has(soundFileLetter(c));
+export const canSoundOut=w=>{const x=String(w||'').toLowerCase();return !!x&&[...x].every(hasSound);};
+// A word sounded out slowly for the narrator's voice (letter sounds as phonemes: "[[k]]... [[æ]]... [[t]]. Cat!"),
+// or null when one of its letters has no recorded sound.
 const PH={a:'æ',e:'ɛ',i:'ɪ',o:'ɑ',u:'ʌ',b:'b',c:'k',d:'d',f:'f',g:'ɡ',h:'h',j:'dʒ',k:'k',l:'l',m:'m',n:'n',p:'p',r:'ɹ',s:'s',t:'t',v:'v',w:'w',x:'ks',y:'j',z:'z'};
-export function soundOut(word){const w=String(word).toLowerCase();return [...w].map(c=>`[[${PH[c]||c}]]`).join('... ')+`. ${w[0].toUpperCase()+w.slice(1)}!`;}
+export function soundOut(word){const w=String(word).toLowerCase();if(!canSoundOut(w))return null;return [...w].map(c=>`[[${PH[c]||c}]]`).join('... ')+`. ${w[0].toUpperCase()+w.slice(1)}!`;}
 // Today's word for a reader: a family word he is stuck on, else the first family (in teaching order) he has not
 // mastered yet (fewer than three of its words), else a review.
 export function familyTarget(model,r=Math.random){
  const lit=model?.literacy||{},mastered=new Set((lit.wordsMastered||[]).map(s=>String(s).toLowerCase())),stuck=(lit.wordsStuck||[]).map(s=>String(s).toLowerCase()).filter(isFamilyWord);
- if(stuck.length)return stuck[0];
- for(const f of ORDER){const ws=FAMILIES[f],known=ws.filter(w=>mastered.has(w));if(known.length<3){const fresh=ws.filter(w=>!mastered.has(w));return fresh[Math.floor(r()*fresh.length)]||ws[0];}}
+ if(stuck.length)return stuck.find(canSoundOut)||stuck[0];
+ for(const f of ORDER){const ws=FAMILIES[f],known=ws.filter(w=>mastered.has(w));if(known.length<3){const all=ws.filter(w=>!mastered.has(w)),fresh=all.filter(canSoundOut).length?all.filter(canSoundOut):all;return fresh[Math.floor(r()*fresh.length)]||ws[0];}}
  const all=ORDER.flatMap(f=>FAMILIES[f]);return all[Math.floor(r()*all.length)];
 }
 // Short decodable sentences for a spell (only family words and the family's own CVC names).

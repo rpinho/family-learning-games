@@ -11,7 +11,7 @@ import {existsSync,readFileSync} from 'node:fs';
 import {join,dirname} from 'node:path';
 import {tmpdir} from 'node:os';
 import {fileURLToPath} from 'node:url';
-import {bookPaths,readProfiles,readCast,localDate,addDays} from './paths.mjs';
+import {bookPaths,readProfiles,readCast,localDate,addDays,soundSource} from './paths.mjs';
 import {learnerFor,writeLearner,bookPlayers} from './build-learner.mjs';
 import {planChapter} from './plan.mjs';
 import {lintChapter,safeDadLine} from './lint.mjs';
@@ -76,7 +76,7 @@ export async function writeStory(plan,{extra=[],allow=[],dadLines=[],ask=askMode
 // lines: [{text, voice, speed}]. Returns {made, clips: {"voice|speed|text": file}}.
 export async function narrate(lines,{paths,env=process.env}){
  const req=join(tmpdir(),`book-voice-${process.pid}-${Date.now()}.json`);
- await writeFile(req,JSON.stringify({lines,out:paths.voice,models:paths.voiceModels,lq_voice:paths.data['letter-quest']?join(paths.data['letter-quest'],'voice'):null}));
+ await writeFile(req,JSON.stringify({lines,out:paths.voice,models:paths.voiceModels,...soundSource(paths)}));
  try{const r=await run(paths.python,[join(here,'narrate.py'),req],{env:{...env,BOOK_VOICE_THREADS:env.BOOK_VOICE_THREADS||'2'},timeoutMs:15*60000});
   if(r.code!==0)throw Error(r.err.slice(-600)||'narration failed');
   const j=JSON.parse(r.out.trim().split('\n').at(-1));return {made:j.made,clips:j.clips};}

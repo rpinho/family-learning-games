@@ -57,3 +57,10 @@ test('Names reach the voice as phonemes, never as spelling',async()=>{
  assert.deepEqual(rawNames('Hello Pikachu'),['Pikachu']);assert.equal(unphonemize(t),'Pika and Picos meet Pikachu with Hat.');
  assert.equal(phonemize('L says [[l]].'),'L says [[l]].');
 });
+
+test('letter sounds only for letters with a shared recording', async()=>{
+ const {soundOut,hasSound,familyTarget,lookAlikes}=await import('../../hub/public/word-families.mjs');
+ assert.equal(soundOut('win'),null);assert.equal(soundOut('jug'),null);assert.ok(soundOut('pig'));
+ assert.ok(hasSound('K')&&hasSound('b')&&!hasSound('L')&&!hasSound('z'));
+ for(let i=0;i<30;i++){const r=()=>((i*37)%100)/100;const w=familyTarget({literacy:{wordsMastered:[]}},r);assert.ok(soundOut(w),w);for(const x of lookAlikes(w,2,r))assert.ok(soundOut(x),x);}
+});

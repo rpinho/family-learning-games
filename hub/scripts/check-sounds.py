@@ -1,16 +1,32 @@
-"""Letter-sound clip check: every clip a child hears a letter sound in must sound whole.
-For each WAV: the voiced part is long enough (not cut short), the clip starts and ends in silence (not cut
-mid-sound), nothing is digitally clipped, and there is no click (a sudden jump in otherwise quiet audio,
-which is what a bad join sounds like). Isolated sound clips (Letter Quest's and the shared letter-sounds
-folder) must also have a gentle attack and release.
---whole: the clips are single voice renders with no joins; the click test (which is about joins) is skipped
-there, because a plosive after a pause ("...cat") looks like a click to it. Edges and clipping are still checked.
-Usage: python check-sounds.py [--isolated|--whole] <wav or folder> ... [--json]
+"""Clip check for every line a child hears a letter sound in (and the Letter Hunt lines): the clip must sound whole.
+For each WAV: the clip starts and ends in silence (not cut mid-sound), nothing is digitally clipped, and there is no
+click at a join. A click is judged by the family's shared checker (word-arcade scripts/letter_sound_check.py:
+a jump straight out of or into digital silence, which is what a bad join is); the letter sounds themselves are
+checked by the same shared checker when a line is made (book/narrate.py). A plosive inside the voice's own speech
+("Kick") is not a join and is not flagged.
+--soundout DIR: where letter_sound_check.py is (default: $FAMILY_SOUNDOUT, the live word-arcade, ~/dev/word-arcade).
+--isolated: a clip that is only a letter sound (also: long enough, gentle attack). --whole: accepted for older callers.
+Usage: python check-sounds.py [--isolated|--whole] [--soundout DIR] <wav or folder> ... [--json]
 Exit 1 when any clip fails."""
-import json, sys
+import json, os, sys
 from pathlib import Path
 import numpy as np, soundfile as sf
 
+def find_checker(given=None):
+    for d in [given, os.environ.get('FAMILY_SOUNDOUT'), os.path.expanduser('~/.local/share/family-games/live/word-arcade/scripts'), os.path.expanduser('~/dev/word-arcade/scripts')]:
+        if d and os.path.exists(os.path.join(d, 'letter_sound_check.py')): return d
+    raise SystemExit('check-sounds: letter_sound_check.py not found (pass --soundout DIR)')
+def shared_clicks(a):
+    import letter_sound_check
+    return letter_sound_check.clicks(a) or edge_jumps(a)
+def edge_jumps(a, run=24, jump=0.02):
+    """The same definition, measured causally: a jump > 0.02 right after >= 24 digitally silent samples, or right
+    before them. (The shared checker centres its silence window, so a step at the very edge of silence slips past it.)"""
+    silent = (np.abs(a) < 1e-4).astype(int); c = np.concatenate([[0], np.cumsum(silent)])
+    i = np.arange(run, len(a) - run)
+    before = (c[i] - c[i - run]) == run; after = (c[i + 1 + run] - c[i + 1]) == run
+    big = np.abs(a[i] - a[i - 1]) > jump; big_next = np.abs(a[i + 1] - a[i]) > jump
+    return bool(np.any(before & big) or np.any(after & big_next))
 def analyse(path, isolated=False, whole=False):
     a, r = sf.read(str(path), dtype='float32')
     if a.ndim > 1: a = a.mean(axis=1)
@@ -23,14 +39,7 @@ def analyse(path, isolated=False, whole=False):
     if env[:edge].max() > 0.02: out['issues'].append(f'starts mid-sound ({env[:edge].max():.3f} in the first 10 ms)')
     if env[-edge:].max() > 0.02: out['issues'].append(f'ends mid-sound ({env[-edge:].max():.3f} in the last 10 ms)')
     if env.max() >= 0.98: out['issues'].append('digitally clipped (peak at full scale)')
-    # Clicks: a jump between neighbouring samples that is large for how quiet the audio around it is.
-    # A click is a lone discontinuity: a spike in the second difference that stands far above the second
-    # difference around it (speech and hiss have plenty of high-frequency energy all around, so they do not count).
-    sd = np.abs(np.diff(a, 2)); w = int(r * .005)
-    kernel = np.ones(2 * w + 1); kernel[w - 2:w + 3] = 0; kernel /= kernel.sum()
-    floor = np.sqrt(np.convolve(sd * sd, kernel, mode='same'))
-    clicks = np.flatnonzero((sd > 0.08) & (sd > 10 * np.maximum(floor, 1e-4)))
-    if len(clicks) and not whole: out['issues'].append(f'{len(clicks)} click(s), first at {clicks[0] / r:.3f} s')
+    if shared_clicks(a): out['issues'].append('click at a join (jump out of or into digital silence)')
     if isolated:
         if voiced < 0.06: out['issues'].append(f'sound too short ({voiced:.3f} s voiced)')
         if len(loud):
@@ -41,6 +50,9 @@ def analyse(path, isolated=False, whole=False):
 
 def main(args):
     iso = '--isolated' in args; whole = '--whole' in args; as_json = '--json' in args
+    given = args[args.index('--soundout') + 1] if '--soundout' in args else None
+    if given: args = [x for i, x in enumerate(args) if x != '--soundout' and (i == 0 or args[i - 1] != '--soundout')]
+    sys.path.insert(0, find_checker(given))
     files = []
     for x in [a for a in args if not a.startswith('--')]:
         p = Path(x); files += sorted(p.glob('*.wav')) if p.is_dir() else [p]

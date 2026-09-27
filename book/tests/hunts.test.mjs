@@ -36,3 +36,9 @@ test('an older hunts file is migrated: legacy word hunts kept, friend from the c
  assert.equal(cfg.byMode.letter.label,'Letter hunt');
  const again=JSON.stringify(cfg);migrate(cfg,'francisco',{cast});assert.equal(JSON.stringify(cfg),again);
 });
+
+test('hunt letters always have a shared recorded sound', async()=>{
+ const {nextLetters}=await import('../hunts.mjs');const {hasSound}=await import('../../hub/public/word-families.mjs');
+ const m={literacy:{learning:['L','W','J','Z','F'],letters:['L','V','Y','R']},stuck:[{area:'letters',item:'L'}]};
+ const [a,b]=nextLetters(m,{date:'2026-09-28'});assert.ok(hasSound(a)&&hasSound(b),`${a} ${b}`);
+});
