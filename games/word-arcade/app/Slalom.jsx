@@ -37,8 +37,9 @@ export default function Slalom({p,session,voice,soundRef,audio,paused,onPause,on
   pending.current.push(submitGate(g.id,answer,Math.min(86400000,Math.round(performance.now()-gateStart.current))).then(d=>{if(d?.result)lastResult.current=d.result;return d;}));
   const next=gates.current[i+1];
   if(!ok&&next){const eased=easeGate(next);gates.current[i+1]=eased;setShown([...gates.current]);scene.current?.replaceGate(i+1,eased);}
-  // A miss names the right answer (content, always spoken); then the next gate's question.
-  queue(async()=>{if(!ok)await say(g.correction);else await sleep(450);if(next)await ask(i+1);});
+  // Words: every gate is sounded out afterwards ("m, a, t: mat"), right or wrong. Letters: a miss names the right
+  // letter. Both are content, always spoken (Kokoro clips only). Then the next gate's question.
+  queue(async()=>{if(g.after)await say(g.after);else if(!ok)await say(g.correction);else await sleep(450);if(next)await ask(i+1);});
  }
  async function finish(){
   await Promise.allSettled(pending.current);if(!alive.current)return;
