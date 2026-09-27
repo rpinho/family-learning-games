@@ -102,6 +102,10 @@ if todo:
         else:
             samples, rate = kokoro.create(l['text'], voice=l['voice'], speed=l['speed'], lang=lang)
         if not len(samples) or not np.isfinite(samples).all(): raise ValueError('invalid audio for: ' + l['text'][:60])
+        # Some voices run hot (am_adam reaches full scale): never write a clipped line (the clip check refuses it).
+        # Only the level of new renders changes; clip names and every existing clip stay as they are.
+        peak = float(np.abs(samples).max())
+        if peak > 0.9: samples = samples * (0.9 / peak)
         final = out / (k + '.wav'); temp = out / (k + f'.{os.getpid()}.tmp.wav')
         sf.write(str(temp), samples, rate, subtype='PCM_16'); temp.replace(final)
 # The caller's speed spelling (e.g. 1 vs 1.0) is echoed back so it can match its own lines.

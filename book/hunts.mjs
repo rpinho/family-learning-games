@@ -7,6 +7,7 @@
 // and the no-repeat / pronunciation lint and the clip check run before anything is published. If any step fails,
 // yesterday's hunts stay (marked replayable), so a child never has an empty day. Yesterday's file is kept.
 // Usage: node book/hunts.mjs [--date YYYY-MM-DD] [--player id] [--dry]
+import {existsSync} from 'node:fs';
 import {readFile,writeFile,rename,copyFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {join,dirname} from 'node:path';
@@ -26,7 +27,7 @@ export const THINGS={
  n:[['nose','👃'],['nut','🥜'],['net','🥅'],['napkin','🧻']],o:[['octopus toy','🐙'],['olive','🫒'],['otter toy','🦦']],p:[['pizza','🍕'],['pen','🖊️'],['pillow','🛏️'],['plate','🍽️'],['pear','🍐'],['puzzle','🧩'],['pencil','✏️']],
  q:[['queen','♛'],['quilt','🛌']],r:[['robot','🤖'],['rug','🟫'],['ring','💍'],['rook','♜'],['rabbit toy','🐰']],s:[['sock','🧦'],['spoon','🥄'],['sofa','🛋️'],['soap','🧼'],['star','⭐'],['soccer ball','⚽']],
  t:[['train','🚂'],['table','🪑'],['towel','🧺'],['toothbrush','🪥'],['target','🎯'],['tomato','🍅']],u:[['umbrella','☂️']],v:[['vase','🏺'],['van','🚐'],['violin','🎻']],
- w:[['window','🪟'],['watch','⌚'],['water','💧'],['wall','🧱']],y:[['yogurt','🥛'],['yo-yo','🪀'],['yarn','🧶']],z:[['zipper','🤐'],['zebra toy','🦓']]};
+ w:[['window','🪟'],['watch','⌚'],['water','💧'],['wall','🧱']],y:[['yogurt','🥛'],['yellow crayon','🖍️'],['yarn','🧶']],z:[['zipper','🤐'],['zebra toy','🦓']]};
 // Interests that bring their own things (a soccer fan finds a goal; an archer finds a bow and a target).
 const INTEREST_THINGS={soccer:['ball','goal','net','soccer ball'],dinosaurs:['dinosaur'],dragons:['dragon'],pizza:['pizza','plate'],trains:['train'],archery:['bow','arrow','target'],
  robots:['robot'],mazes:['maze','map'],chess:['king','queen','rook','knight'],'slingshots and targets':['target']};
@@ -60,10 +61,10 @@ export function dayHunts(model,{date,today=[],interests=[],who}){
   return {id:`${L}-sound-${date}`,mode:'letter',kind:'sound',letter:L.toUpperCase(),generated:date,
    intro:V(`${who.greet} Let's hunt! This is ${who.lower?'little ':''}${L}. It says ${sound(L)}, like ${w0}.`),
    tip:`${L} says /${sound(L).replace(/\[|\]/g,'')}/`,goal:{text:`Find things that start with /${sound(L).replace(/\[|\]/g,'')}/`,line:V(`Your hunt: find things that start with ${sound(L)}. Go and look!`)},
-   hints:H.slice(1).map(([w,e])=>({word:w,emoji:e,line:V(`Hint: maybe a ${w}?`)})),done:V(`${who.cheer} You found things that start with ${sound(L)}!`)};};
+   hints:H.slice(1).map(([w,e])=>({word:w,emoji:e,line:V(`Hint: maybe ${/^[aeiou]/i.test(w)?'an':'a'} ${w}?`)})),done:V(`${who.cheer} You found things that start with ${sound(L)}!`)};};
  const shapeHunt=L=>({id:`${L}-written-${date}`,mode:'letter',kind:'written',letter:L.toUpperCase(),generated:date,
-  intro:V(`${who.greet} A letter hunt! Look at ${who.lower?'little ':''}${L}: ${shape(L)}.`),tip:`${L}: ${shape(L)}`,places:PLACES,
-  goal:{text:`Find ${who.lower?'a little':'a big'} ${L} written somewhere`,line:V(`Your hunt: find ${who.lower?'a little':'a big'} ${L} written somewhere. Letters hide on boxes, books and keyboards!`)},
+  intro:V(`${who.greet} A letter hunt! Look at ${who.lower?'little ':''}${L}. It looks like ${shape(L)}.`),tip:`${L}: ${shape(L)}`,places:PLACES,
+  goal:{text:`Find the letter ${L} written somewhere`,line:V(`Your hunt: find the letter ${L} written somewhere. Letters hide on boxes, books and keyboards!`)},
   hints:[['a box','📦'],['a book','📚'],['a keyboard','⌨️']].map(([w,e])=>({word:w,emoji:e,line:V(`Hint: look on ${w}.`)})),done:V(`${who.cheer} You found the letter ${L}!`)});
  return [soundHunt(L1,1),shapeHunt(L1),soundHunt(L2,2)];
 }
@@ -75,16 +76,21 @@ export async function writeHunts({paths=bookPaths(),date,players=null,dry=false,
  for(const [player,cfg] of Object.entries(f.players||{})){if(players&&!players.includes(player))continue;
   try{const model=JSON.parse(await readFile(join(paths.learner,player+'.json'),'utf8'));
    const who={...(WHO[player]||{greet:`Let's go, ${model.name||player}!`,cheer:'Hooray!',voice:{voice:'af_bella',speed:0.95},lower:false}),...(cfg.generator||{})};
-   const current=(cfg.hunts||[]).filter(h=>(h.mode||'letter')==='letter');const today=[...new Set(current.map(h=>h.letter).filter(Boolean))];
+   // Today's letters are not repeated tomorrow. A rerun for the same date keeps the letters that date was based on.
+   const current=(cfg.hunts||[]).filter(h=>(h.mode||'letter')==='letter');
+   const today=cfg.generatedFor===date&&Array.isArray(cfg.basedOn)?cfg.basedOn:[...new Set(current.map(h=>h.letter).filter(Boolean))];
    const interests=[...new Set([...(model.interests||[]),...((profiles[player]||{}).interests||[])])];
    const fresh=dayHunts(model,{date,today,interests,who});
-   cfg.hunts=[...fresh,...(cfg.hunts||[]).filter(h=>h.mode==='word')];cfg.generatedFor=date;delete cfg.replayable;
+   cfg.hunts=[...fresh,...(cfg.hunts||[]).filter(h=>h.mode==='word')];cfg.generatedFor=date;cfg.basedOn=today;delete cfg.replayable;
    results[player]={letters:[...new Set(fresh.map(h=>h.letter))],ids:fresh.map(h=>h.id)};
   }catch(e){results[player]={error:String(e.message).slice(0,200)};cfg.replayable=true;log(`hunts ${player}: kept yesterday's (${e.message})`);}}
  // Voice, lint and clip check before anything is published.
  const r=await voiceHunts(paths.book,{f,paths,check:dry});
- if(!dry){const fresh=Object.values(f.players).flatMap(c=>c.hunts.filter(h=>h.generated===date)).flatMap(h=>[h.intro,h.goal?.line,h.done,...(h.hints||[]).map(x=>x.line)]).filter(l=>l?.clip&&/\[\[/.test(l.text)).map(l=>join(paths.book,'voice',l.clip));
-  if(fresh.length){try{execFileSync(paths.python,[join(here,'..','hub','scripts','check-sounds.py'),...fresh],{encoding:'utf8'});}catch(e){throw Error('letter-sound clip check failed:\n'+String(e.stdout||e.message).slice(0,600));}}
+ if(!dry){// Every clip the published file points at must exist and sound whole (not only today's letter-sound lines).
+  const clips=new Set();JSON.stringify(f.players,(k,v)=>{if(k==='clip'&&typeof v==='string')clips.add(v);return v;});
+  const fresh=[...clips].map(c=>join(paths.book,'voice',c));const gone=fresh.filter(p=>!existsSync(p));
+  if(gone.length)throw Error(`clip check failed: ${gone.length} clip(s) missing, first ${gone[0]}`);
+  if(fresh.length){try{execFileSync(paths.python,[join(here,'..','hub','scripts','check-sounds.py'),...fresh],{encoding:'utf8'});}catch(e){throw Error('clip check failed:\n'+String(e.stdout||e.message).split('\n').filter(l=>!l.startsWith('ok ')).join('\n').slice(0,800));}}
   await copyFile(file,join(paths.book,`hunts.json.${date}.bak`));const tmp=file+'.tmp';await writeFile(tmp,JSON.stringify(f,null,1),{mode:0o600});await rename(tmp,file);}
  return {date,results,lines:r.lines,made:r.made};
 }

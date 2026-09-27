@@ -4,6 +4,7 @@
 // bare hum, and gets its clip from the local voice (letter sounds from Letter Quest's own clips, see narrate.py).
 // Usage: node hub/scripts/hunt-voice.mjs --book <dir> [--check]
 import {readFile,writeFile,rename,mkdtemp,rm} from 'node:fs/promises';
+import {existsSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {join,dirname} from 'node:path';
 import {tmpdir} from 'node:os';
@@ -25,6 +26,8 @@ for(const [p,l] of lines){const said=phonemize(l.shown||l.text,pronounce);if(sai
  const raw=rawNames(l.text,pronounce);if(raw.length)issues.push(`${p}: ${raw[0]} without its pronunciation`);}
 if(issues.length)throw Object.assign(Error(issues.join('\n')),{issues});
 if(check)return {lines:lines.length,made:0,f};
+// A clip that is gone from disk (moved to the Trash after a failed check, or never copied) is rendered again.
+for(const [,l] of lines)if(l.clip&&!existsSync(join(book,'voice',l.clip)))delete l.clip;
 const want=lines.filter(([,l])=>!l.clip).map(([,l])=>({text:l.text,voice:l.voice,speed:l.speed}));
 if(want.length){const dir=await mkdtemp(join(tmpdir(),'hunt-voice-'));const req=join(dir,'req.json');
  await writeFile(req,JSON.stringify({lines:want,out:join(book,'voice'),models:paths.voiceModels,lq_voice:paths.data['letter-quest']?join(paths.data['letter-quest'],'voice'):null}));
