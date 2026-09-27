@@ -56,7 +56,8 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
     // A hunt away from the screen: started (counts toward today's limit) and found (with how many, if a grown-up said).
     const id=String(input.id||'').slice(0,24),hs=day.hunts??=[];let h=hs.find(x=>x.id===id&&!x.foundAt);
     if(input.stage==='start'){if(!h){if(hs.length>=HUNTS_PER_DAY)throw Object.assign(Error('That is enough hunting for today.'),{status:429});hs.push(h={id,startedAt:new Date(now()).toISOString()});}}
-    else if(input.stage==='found'&&h){h.foundAt=new Date(now()).toISOString();h.found=Math.max(0,Math.min(20,Number(input.found)||0));h.ms=Date.parse(h.foundAt)-Date.parse(h.startedAt);
+    // Only a grown-up-confirmed count of at least one completes a hunt (zero: keep looking, it stays open).
+    else if(input.stage==='found'&&h&&input.confirmed===true&&Number(input.found)>=1){h.foundAt=new Date(now()).toISOString();h.found=Math.max(0,Math.min(20,Number(input.found)||0));h.ms=Date.parse(h.foundAt)-Date.parse(h.startedAt);
      const c=p.collection??={keys:[],words:[]};c.hunts=[...new Set([...(c.hunts||[]),id])].slice(-100);}
    }
    else if(input.type==='leave'){day.leftAt=new Date(now()).toISOString();day.page=Math.max(day.page,page);}
