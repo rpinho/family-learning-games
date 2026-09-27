@@ -55,7 +55,8 @@ export function layoutActors(actors,art,{width=16,height=9,ground=0.93,maxShare=
  if(cap<1)items=items.map(i=>({...i,h:i.h*cap,w:i.w*cap}));
  const gap=0.02;
  const row=(list,from,to)=>{const room=(to-from)*0.96,total=list.reduce((s,i)=>s+i.w,0)+gap*(list.length-1),k=Math.min(1,room/total);
-  let x=from+((to-from)-total*k)/2;return list.map(i=>{const w=i.w*k,h=i.h*k,out={id:i.id,pose:i.pose,left:x,width:w,height:h,bottom:1-ground+(i.fly?0.22:0)};x+=w+gap*k;return out;});};
+  // A flying friend is lifted, but never into the band above maxHeight (the page's words).
+  let x=from+((to-from)-total*k)/2;return list.map(i=>{const w=i.w*k,h=i.h*k,lift=i.fly?Math.max(0,Math.min(0.22,maxHeight-h)):0,out={id:i.id,pose:i.pose,left:x,width:w,height:h,bottom:1-ground+lift};x+=w+gap*k;return out;});};
  if(avoid&&avoid[1]>avoid[0]){
   const L=Math.max(0,avoid[0]),R=Math.min(1,avoid[1]),leftRoom=L-(1-maxShare)/2,rightRoom=(1+maxShare)/2-R;
   if(leftRoom>0.08||rightRoom>0.08){

@@ -56,12 +56,13 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  function actorsHTML(scene,{ground=0.93,scale=1,maxHeight=1,avoid=null}={}){
   const W=root.clientWidth||innerWidth,H=root.clientHeight||innerHeight;
   // A train in the picture always carries the friends (all aboard!).
-  if((scene.ride||scene.props.some(p=>p.id==='train'))&&art.props.train?.seats){return trainHTML(scene,W,H);}
+  if((scene.ride||scene.props.some(p=>p.id==='train'))&&(art.props.train?.seats||art.props.train?.cars)){return trainHTML(scene,W,H,{ground,maxHeight});}
   return layoutActors(scene.actors,art,{width:W,height:H,ground,scale,maxHeight,avoid}).map((a,i)=>{const P=art.actors[a.id].poses[a.pose];
    return `<div class="bk-actor${P.fly||a.pose==='fly'?' fly':''}" data-id="${esc(a.id)}" data-pose="${esc(a.pose)}" style="left:${(a.left*100).toFixed(2)}%;width:${(a.width*100).toFixed(2)}%;height:${(a.height*100).toFixed(2)}%;bottom:${(a.bottom*100).toFixed(2)}%;--from:${a.left+a.width/2<0.5?-40:40}vw;animation-delay:${i*0.15}s"><div style="animation-delay:${-i*0.7}s;animation-duration:${(2.2+i*0.37).toFixed(2)}s"><img src="${esc(P.url)}" alt="${esc(art.actors[a.id].name)}"></div></div>`;}).join('');
  }
- function trainHTML(scene,W,H){
-  const T=art.props.train,L=layoutTrain(scene.actors,art,{width:W,height:H});
+ function trainHTML(scene,W,H,{ground=0.93,maxHeight=1}={}){
+  // On a beat page the train rides above the play band (the answers are below it), never into the words above.
+  const T=art.props.train,L=layoutTrain(scene.actors,art,{width:W,height:H,bottom:1-ground+0.02,maxHeight:Math.min(0.5,maxHeight*0.75)});
   if(L){
    // Wagons repeat so every friend has his own; each is drawn after its rider (the front wall hides only his legs).
    const t=L.train,pc=v=>(v*100).toFixed(3)+'%';

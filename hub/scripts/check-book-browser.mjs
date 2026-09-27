@@ -16,7 +16,7 @@ const shots=arg('--shots'),shotPages=new Set((arg('--shot-pages','')||'').split(
 const chrome=arg('--chrome',process.env.CHROME||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const profile=await mkdtemp(join(tmpdir(),'book-check-chrome-'));
-const proc=spawn(chrome,['--headless=new','--remote-debugging-port=0',`--user-data-dir=${profile}`,'--no-first-run','--no-default-browser-check','--autoplay-policy=document-user-activation-required','--mute-audio',`--window-size=${W},${H}`,'about:blank'],{stdio:'ignore'});
+const proc=spawn(chrome,['--headless=new','--remote-debugging-port=0',`--user-data-dir=${profile}`,'--no-first-run','--no-default-browser-check','--autoplay-policy=document-user-activation-required','--mute-audio','--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream',`--window-size=${W},${H}`,'about:blank'],{stdio:'ignore'});
 let port=null;for(let i=0;i<100&&!port;i++){await sleep(100);try{port=Number((await readFile(join(profile,'DevToolsActivePort'),'utf8')).split('\n')[0]);}catch{}}
 if(!port){proc.kill();throw Error('Chrome did not start');}
 const target=(await(await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find(t=>t.type==='page');
@@ -58,13 +58,16 @@ try{
    if(k==='drive'){await until(`!!document.querySelector('.bk-btn.go')`,40000);await click('.bk-btn.go');}
    else{await until(`!!document.querySelector('.bk-ball')`,40000);await sleep(300);await flickEl(`document.querySelector('.bk-ball')`);}
    if(shotPages.has(i)){await sleep(700);await shot(`${player}-${label}-p${i+1}-${k}-action.png`);}}
-  if(p.magic){await until(`!!document.querySelector('.bk-magic')`,30000);await sleep(400);await click('.bk-magic');}
+  // With a recogniser the word is a talk button: the fake microphone plays a tone, so it takes the misses and the
+  // narrator's help before anything counts; keep tapping, like a child would, until the page moves on.
+  const tapUntilNext=async sel=>{for(let k=0;k<8;k++){if(await nowPage()!==i)return;await click(sel);if(await until(`[...document.querySelectorAll('.bk-dots i')].findIndex(x=>x.classList.contains('now'))!==${i}||!!document.querySelector('.bk-card')`,9000))break;}if(await js(`!!document.querySelector('.bk-card')`))await click('.bk-card [data-a="tap"]');};
+  if(p.magic){await until(`!!document.querySelector('.bk-magic')`,30000);await sleep(400);await tapUntilNext('.bk-magic');}
   if(b){
    const ans=v=>`.bk-play [data-v="${String(v).replace(/"/g,'\\"')}"]`;
    if(b.kind==='teach-letter'){await until(`!!document.querySelector('.bk-glyph')`,30000);
     // The trace step (if any): three taps without tracing move on, like a child who taps instead.
     if(await until(`!!document.querySelector('.bk-trace')`,25000)){for(let k=0;k<3;k++){await js(`(()=>{const c=document.querySelector('.bk-trace');if(!c)return;const r=c.getBoundingClientRect(),o={bubbles:true,clientX:r.x+5,clientY:r.y+5,pointerId:1};c.dispatchEvent(new PointerEvent('pointerdown',o));c.dispatchEvent(new PointerEvent('pointerup',o));})()`);await sleep(150);}}
-    await sleep(1500);await click('.bk-glyph');}
+    await sleep(1500);await tapUntilNext('.bk-glyph');}
    if(b.kind==='order'){await until(`document.querySelectorAll('.bk-play .bk-btn.ball').length>=5`,30000);for(let k=1;k<=5;k++){await click(`.bk-play [data-v="${k}"]`);await sleep(700);}}
    if(b.kind==='stones'){await until(`document.querySelectorAll('.bk-btn.stone').length>0`,30000);for(let k=0;k<b.need;k++){await js(`(()=>{const s=[...document.querySelectorAll('.bk-btn.stone')].find(x=>x.textContent===${JSON.stringify(b.letter)}&&!x.classList.contains('lit'));s&&s.click()})()`);await sleep(700);}}
    if(b.kind==='count'){await until(`document.querySelectorAll('.bk-thing').length===${b.n}`,30000);for(let k=0;k<b.n;k++){await js(`(()=>{const t=[...document.querySelectorAll('.bk-thing')].find(x=>!x.dataset.n);t&&t.click()})()`);await sleep(900);}await until(`!!document.querySelector('${ans(b.answer)}')`,20000);await click(ans(b.answer));}
