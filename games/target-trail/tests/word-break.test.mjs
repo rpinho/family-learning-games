@@ -21,7 +21,7 @@ test('Sentence tiles defeat position guessing',()=>{
  assert.ok(tiles.some(t=>['said','asked'].includes(t[1])));
  const r=seq(3);for(const t of tiles)for(let k=0;k<20;k++){const s=scramble(t,r);assert.deepEqual([...s].sort(),[...t].sort());assert.notDeepEqual(s,t);assert.ok(s.filter((w,i)=>w===t[i]).length<=1);
   for(let n=1;n<t.length;n++)assert.notDeepEqual(s,[...t.slice(n),...t.slice(0,n)]);}
- const level=literacyFrom({completed:39,reading:{skills:{sentence:{level:2}}}},'words');let distractors=0;
+ const level=literacyFrom({completed:39,reading:{skills:{sentence:{level:2,independent:2}}}},'words');let distractors=0;
  for(let i=0;i<200;i++){const q=wordBreakItem(level,{r});if(q.kind!=='sentence')continue;assert.ok(q.answer.every(w=>q.tiles.includes(w)));if(q.tiles.length>q.answer.length)distractors++;}
  assert.ok(distractors>0);
 });
