@@ -1792,8 +1792,8 @@ body:has(.chess-lesson) > .top .home {
 }
 
 @media (min-width: 701px) and (max-width: 979px) and (min-height: 800px) {
-  .play-table:has(.rook-local) .arena-coach { height: 160px; }
-  .play-table:has(.rook-local) .rook-replay { width: 178px; min-width: 178px; height: 159px; }
+  .play-table:has(.rook-local) .arena-coach { height: 180px; }
+  .play-table:has(.rook-local) .rook-replay { width: 178px; min-width: 178px; height: 179px; }
   .chess-lesson .play-table .rook-replay .rook-local { width: 182px; height: 197px; left: -4px; bottom: -11px; }
 }
 
