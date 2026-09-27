@@ -178,7 +178,8 @@ async function main(){
   state.steerHint=()=>{const d=m.nextStep(m.goal);const p=m.hero.root.position.clone(),a=p.clone().add(new THREE.Vector3(d.x,0,d.z));const pa=p.clone().project(camera),pb=a.project(camera);const dx=pb.x-pa.x,dy=-(pb.y-pa.y),n=Math.hypot(dx,dy)||1;const h=heroScreen();const lag=Math.max(0,...[m.small,m.guide].filter(f=>f&&!f._lead).map(f=>Math.hypot(f.root.position.x-m.hero.root.position.x,f.root.position.z-m.hero.root.position.z)));const hp=m.hero.root.position;return {hero:h,dir:{x:dx/n,y:dy/n},moving:m.moving,pos:[+hp.x.toFixed(3),+hp.z.toFixed(3)],cell:m.cellOf(hp),noShown,lag:+lag.toFixed(2)};};
   const noBtn=$('#no');
   const watch=setInterval(async()=>{const c=m.cellOf(m.hero.root.position);
-   if(!forkDone&&c[0]===m.fork[0]&&c[1]===m.fork[1]){forkDone=true;const d=m.W(...m.dead);if(m.small){m.small._lead=true;m.small.walkTo([[lerp(m.small.root.position.x,d.x,.3),0,lerp(m.small.root.position.z,d.z,.3)]],1.8);m.small.hop(.2);}m.frameAlso(m.signG.position);
+   if(!forkDone&&c[0]===m.fork[0]&&c[1]===m.fork[1]){forkDone=true;// The friend hops and points the wrong way from where he stands (stepping into the dead end would hide him behind a hedge).
+    if(m.small){m.small.hop(.25);setTimeout(()=>m.small?.hop(.2),700);}m.frameAlso(m.signG.position);
     noShown=true;noBtn.hidden=false;noLog=ui.beatLog('no');mark('fork');expect({kind:'no'});await checkpoint('fork');await say('fork');}
    if(c[0]===m.dead[0]&&c[1]===m.dead[1]&&noShown){noShown=false;noBtn.hidden=true;m.frameAlso(null);if(m.small)m.small._lead=false;state.expect=steerE;mark('dead-end');await say('oops');}
    if(!atGoal&&c[0]===m.goal[0]&&c[1]===m.goal[1]){atGoal=true;}},150);
@@ -188,7 +189,9 @@ async function main(){
   // Found it.
   mark('found');m.setFound(true);sound?.play('sparkle');dir.setFollow(null);m.steer(null);m.hero.setPose('cheer');m.hero.hop(.3);
   // His friends come up beside him (not between him and the camera).
-  {const h=m.hero.root.position,side=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0).setY(0).normalize();for(const [f,k] of [[m.small,-.8],[m.guide,.9]])if(f){f._lead=true;f.walkTo([[h.x+side.x*k,0,h.z+side.z*k]],2.2);}}
+  {const h=m.hero.root.position,side=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0).setY(0).normalize(),back=new THREE.Vector3();camera.getWorldDirection(back);back.setY(0).normalize().multiplyScalar(-1);
+   // Inside the path (it is narrow): a step behind him, a little to each side.
+   for(const [f,k,b] of [[m.small,-.42,.55],[m.guide,.45,.95]])if(f){f._lead=true;f.walkTo([[h.x+side.x*k+back.x*b,0,h.z+side.z*k+back.z*b]],2.2);}}
   await shot('goal',{pos:camera.position.toArray(),look:m.hero.root.position.toArray(),fov:camera.fov,raw:true},m.shots.goal,{dur:3.5,focusFrom:8,focusTo:3.4,aperture:.45});
   await checkpoint('found');await say('found');m.guide?.setPose('happy');await say('big2');
   const rise=shot('rise',m.shots.goal,m.shots.rise,{dur:9,focusFrom:3.6,focusTo:12,aperture:.3});await say('end');await rise;
