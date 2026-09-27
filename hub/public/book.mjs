@@ -40,7 +40,8 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
    audio.onended=fin;audio.onerror=()=>{if(!done){audit.push({clip:line.clip,page,ok:false,err:'load'});deviceSpeak(line.text).then(fin);}};
    audio.src='/book-voice/'+line.clip;
    let p;try{p=audio.play();}catch(e){p=Promise.reject(e);}
-   Promise.resolve(p).then(()=>audit.push({clip:line.clip,page,turn:my,ok:true,at:Date.now()}),e=>{audit.push({clip:line.clip,page,turn:my,ok:false,err:String(e?.name||e)});if(!done)deviceSpeak(line.text).then(fin);});
+   // Interrupted by the next line (AbortError) just ends this one; only a refusal falls back to the device voice.
+   Promise.resolve(p).then(()=>audit.push({clip:line.clip,page,turn:my,ok:true,at:Date.now()}),e=>{const err=String(e?.name||e);audit.push({clip:line.clip,page,turn:my,ok:false,err});if(done)return;if(err==='AbortError')fin();else deviceSpeak(line.text).then(fin);});
   });
  }
  // A short breath between lines, like a person reading aloud.

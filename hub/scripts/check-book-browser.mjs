@@ -73,7 +73,7 @@ try{
   }
  }
  if(await until(`!!document.querySelector('.bk-quest')`,40000)){await sleep(800);await shot(`${player}-${label}-end.png`);result.ended=true;}
- const audit=await js('__bookAudio');result.refused=audit.filter(a=>a.clip&&!a.ok).length;result.plays=audit.filter(a=>a.clip&&a.ok).length;
+ const audit=await js('__bookAudio');result.refused=audit.filter(a=>a.clip&&!a.ok&&a.err!=='AbortError').length;result.interrupted=audit.filter(a=>a.err==='AbortError').length;result.failures=audit.filter(a=>a.clip&&!a.ok&&a.err!=='AbortError');result.plays=audit.filter(a=>a.clip&&a.ok).length;
  result.ok=result.beforeTap==='NotAllowedError'&&result.pages.length===ch.pages.length&&result.pages.every(p=>p.played)&&result.refused===0&&result.ended===true&&!result.errors.length;
 }catch(e){result.errors.push(String(e.message||e));result.ok=false;}
 finally{try{ws.close();}catch{}proc.kill();}
