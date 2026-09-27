@@ -377,11 +377,15 @@ export function createSlalomScene(container,opts){
   }catch{/* a missing toy never blocks the run or the finish */}
   finally{friendLoading=false;if(st.finished&&friendQueue.length)void loadNextFriend();}
  }
- // In a line beside the stopped rider, across the finish camera's view (left, right, further left, ...), facing the camera.
+ // In a line through the stopped rider, across the finish camera's final view (left, right, further left, ...), a little
+ // behind the rider as the camera sees it, facing the camera. The finish camera ends 2.1 rad round from behind.
  function placeFriends(){
-  if(!st.showFriends)return;const d=stopD;forward(d,fwd);side.set(-fwd.z,0,fwd.x);const u0=clamp(st.u,-(COURSE.piste-3.5),COURSE.piste-3.5);
-  friends.forEach((obj,k)=>{const n=Math.floor(k/2)+1,sgn=k%2?1:-1,du=sgn*(0.6+1.15*n);world(clamp(u0+du,-(COURSE.piste-0.8),COURSE.piste-0.8),d-0.6-0.25*n,obj.position);
-   obj.position.y+=obj.userData.lift||0;obj.visible=true;if(obj.userData.mixer){obj.userData.mixer.timeScale=1;obj.userData.mixer.setTime(k*0.37);}});
+  if(!st.showFriends)return;const d=stopD; // where the rider stops (they are already there as he glides in)
+ forward(d,fwd);side.set(-fwd.z,0,fwd.x);world(st.u,d,skPos);
+  const c=tmp2.copy(fwd).multiplyScalar(-Math.cos(2.1)).addScaledVector(side,Math.sin(2.1)).normalize(),h=new Vector3(-c.z,0,c.x);
+  friends.forEach((obj,k)=>{const n=Math.floor(k/2)+1,sgn=k%2?1:-1,off=sgn*(0.25+1.05*n);
+   obj.position.copy(skPos).addScaledVector(h,off).addScaledVector(c,-0.9-0.15*n);obj.position.y=groundY(obj.position.x-cx(-obj.position.z),-obj.position.z)+(obj.userData.lift||0);
+   obj.visible=true;if(obj.userData.mixer){obj.userData.mixer.timeScale=1;obj.userData.mixer.setTime(k*0.37);}});
  }
  function frame(now){
   raf=requestAnimationFrame(frame);

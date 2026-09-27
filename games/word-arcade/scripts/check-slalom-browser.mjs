@@ -7,7 +7,7 @@
 // short recording (needs ffmpeg).
 // Usage: node scripts/check-slalom-browser.mjs --base http://127.0.0.1:5319 --player beginner [--size 1280x800]
 //        [--mobile] [--miss 2] [--shots <dir>] [--label tablet] [--record] [--cpu 4] [--quality medium]
-//        [--ride ski|board] [--deep (open through ?play=slalom)] [--boost 1,4 (hold Up after those rows' questions)]
+//        [--ride ski|board] [--card (open from a Word Arcade card; default: the hub's ?play=slalom deep link)] [--boost 1,4 (hold Up after those rows' questions)]
 import {spawn,spawnSync} from 'node:child_process';
 import {mkdtemp,readFile,writeFile,mkdir,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
@@ -15,7 +15,7 @@ import {join} from 'node:path';
 import {easeGate} from '../lib/slalom.mjs';
 const args=process.argv.slice(2),arg=(k,d=null)=>{const i=args.indexOf(k);return i>=0?args[i+1]:d;},flag=k=>args.includes(k);
 const base=arg('--base','http://127.0.0.1:5319'),player=arg('--player','admin'),[W,H]=arg('--size','1280x800').split('x').map(Number),mobile=flag('--mobile');
-const shots=arg('--shots'),label=arg('--label',`${W}x${H}`),miss=new Set((arg('--miss','')||'').split(',').filter(Boolean).map(Number)),record=flag('--record'),cpu=Number(arg('--cpu','1')),quality=arg('--quality'),ride=arg('--ride','ski'),deep=flag('--deep'),boostRows=new Set((arg('--boost','')||'').split(',').filter(Boolean).map(Number));
+const shots=arg('--shots'),label=arg('--label',`${W}x${H}`),miss=new Set((arg('--miss','')||'').split(',').filter(Boolean).map(Number)),record=flag('--record'),cpu=Number(arg('--cpu','1')),quality=arg('--quality'),ride=arg('--ride','ski'),deep=!flag('--card'),boostRows=new Set((arg('--boost','')||'').split(',').filter(Boolean).map(Number));
 const chrome=arg('--chrome',process.env.CHROME||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const profile=await mkdtemp(join(tmpdir(),'slalom-check-chrome-'));
@@ -94,6 +94,7 @@ try{
  await sleep(1200);await shot('4-finish-line');
  if(!await until(`!!document.querySelector('.slalom-recap')`,15000))result.errors.push('no recap');
  result.friendsShown=await js('__slalom?.friendCount?.()');
+ result.friendsListed=(await(await fetch(`${base}/api/${player}/companions`)).json()).friends?.length??0;
  await until(`!!document.querySelector('.slalom-card.now')`,8000);await shot('5-recap');
  // the shared word break: tap choices until it is solved (always passable)
  if(await until(`!!document.querySelector('dialog.wb[open]')`,60000)){
@@ -115,7 +116,7 @@ try{
  result.gaps=[];for(let k=0;k+1<passes.length;k++){const p0=passes[k].at,p1=passes[k+1].at,after=timeline.filter(a=>a.at>=p0-50&&a.at<p1);const fb=after[0],q=after.find(a=>(textOf[a.src]||'')===gates[k+1].prompt);
   if(fb&&q)result.gaps.push({gate:k,feedback:textOf[fb.src],feedbackSec:+(((fb.end??q.at)-fb.at)/1000).toFixed(2),prompt:textOf[q.src],promptSec:q.end?+((q.end-q.at)/1000).toFixed(2):null,feedbackStartsAfterPass:+((fb.at-p0)/1000).toFixed(2),toRowSec:+((p1-p0)/1000).toFixed(2),speedAtPass:passes[k].v,leftAfterPromptSec:q.end?+((p1-q.end)/1000).toFixed(2):null,overlap:!!(fb.end&&q.at<fb.end-20)});}
  result.audio.recap=saidText.filter(t=>/lovely run/.test(t)).length;result.audio.deviceVoice=await js('window.__deviceVoice');result.audio.lines=saidText;
- result.ok=result.gaps.length>=6&&result.gaps.every(g=>!g.overlap&&g.leftAfterPromptSec>=1.5&&g.feedbackSec<=0.3*g.toRowSec)&&result.ride===ride&&(!deep||result.deepNoLobby)&&result.gates.filter(g=>g.boostDown).every(g=>g.vMax>9.5&&(g.vWhilePrompt===undefined||g.vWhilePrompt<9))&&result.audio.deviceVoice.length===0&&result.audio.beforeTap==='NotAllowedError'&&result.complete&&result.gates.length===gates.length&&result.gates.every(g=>g.promptHeard&&(!g.miss||g.correctionHeard))&&result.audio.refused===0&&result.audio.recap>=1&&!!result.wordBreak&&!result.errors.length;
+ result.ok=(result.friendsShown?.loaded??0)===result.friendsListed&&result.gaps.length>=6&&result.gaps.every(g=>!g.overlap&&g.leftAfterPromptSec>=1.5&&g.feedbackSec<=0.3*g.toRowSec)&&result.ride===ride&&(!deep||result.deepNoLobby)&&result.gates.filter(g=>g.boostDown).every(g=>g.vMax>9.5&&(g.vWhilePrompt===undefined||g.vWhilePrompt<9))&&result.audio.deviceVoice.length===0&&result.audio.beforeTap==='NotAllowedError'&&result.complete&&result.gates.length===gates.length&&result.gates.every(g=>g.promptHeard&&(!g.miss||g.correctionHeard))&&result.audio.refused===0&&result.audio.recap>=1&&!!result.wordBreak&&!result.errors.length;
  if(record&&frames.length&&shots){const dir=await mkdtemp(join(tmpdir(),'slalom-frames-'));const t1=frames[0].t;let list='';
   for(let k=0;k<frames.length;k++){const f=join(dir,`f${String(k).padStart(5,'0')}.jpg`);await writeFile(f,Buffer.from(frames[k].data,'base64'));const dur=k+1<frames.length?frames[k+1].t-frames[k].t:0.1;list+=`file '${f}'\nduration ${Math.max(0.01,dur).toFixed(3)}\n`;}
   await writeFile(join(dir,'list.txt'),list);const out=join(shots,`${player}-${label}-run.mp4`);

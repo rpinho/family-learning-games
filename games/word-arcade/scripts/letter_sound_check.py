@@ -9,6 +9,7 @@ CLI:  letter_sound_check.py sound FILE LETTER      one isolated sound (as it wil
       letter_sound_check.py folder DIR             every <letter>.wav in a letter-sounds folder
       letter_sound_check.py soundout FILE WORD     one sound-out clip
       letter_sound_check.py voice DIR              every "Sound out <word>." clip in a voice store (manifest.json)
+      letter_sound_check.py selftest               synthetic cases (edge clicks, hard onsets/stops, fades, length)
 Exit status 1 if anything fails."""
 import json, sys
 from pathlib import Path
@@ -33,8 +34,26 @@ def envelope(x, rate):
     h = int(rate*0.001); w = 2*h; n = max(1, (len(x)-w)//h+1)
     return np.sqrt(np.array([np.mean(x[k*h:k*h+w]**2) for k in range(n)]))
 def clicks(x):
-    z = np.abs(x) < 1e-4; runs = np.convolve(z.astype(int), np.ones(24, int), 'same') >= 24
-    return bool(np.any((np.abs(np.diff(x)) > 0.02) & (runs[:-1] | runs[1:])))
+    """A hard cut: a jump straight out of, or straight into, digital silence. The silence is looked for on ONE side of the
+    jump (the 24 samples just before it, or just after it), so a click right at the edge of silence is caught."""
+    x = np.asarray(x, dtype='float32'); n = 24; z = (np.abs(x) < 1e-4).astype(int); c = np.concatenate([[0], np.cumsum(z)])
+    k = np.arange(len(x)-1); step = np.abs(np.diff(x)) > 0.02
+    before = (k+1 >= n) & ((c[np.minimum(k+1, len(x))]-c[np.maximum(k+1-n, 0)]) >= n)       # x[k+1-n .. k] all silent
+    after = (k+1+n <= len(x)) & ((c[np.minimum(k+1+n, len(x))]-c[k+1]) >= n)               # x[k+1 .. k+n] all silent
+    return bool(np.any(step & (before | after)))
+def selftest():
+    """Synthetic cases (the book agent's edge click included). Returns a list of failures."""
+    r = 24000; t = np.arange(int(r*0.5))/r; tone = (0.4*np.sin(2*np.pi*220*t)).astype('float32'); sil = np.zeros(int(r*0.2), 'float32')
+    fade = lambda s, a, b: np.concatenate([s[:a]*np.linspace(0, 1, a), s[a:len(s)-b], s[len(s)-b:]*np.linspace(1, 0, b)]).astype('float32')
+    edge = np.concatenate([sil, np.float32([0.5]), tone*0.0+0.0, sil]); edge[len(sil)+1:len(sil)+1+len(tone)] = 0   # a lone spike at the silence edge
+    hard_in = np.concatenate([sil, np.float32([0.3])+tone[:1]*0, tone, sil]); hard_out = np.concatenate([sil, fade(tone, 480, 1), np.float32([0.3]), sil])
+    smooth = np.concatenate([sil, fade(tone, 600, 1200), sil])
+    cases = [('lone spike at the edge of silence', clicks(edge), True), ('hard onset out of silence', clicks(hard_in), True),
+             ('hard stop into silence', clicks(hard_out), True), ('smooth fades', clicks(smooth), False),
+             ('smooth sound passes check_sound', bool(check_sound(smooth, r, 'm')), False),
+             ('hard onset fails check_sound', bool(check_sound(hard_in, r, 'm')), True),
+             ('too short fails', bool(check_sound(np.concatenate([sil, fade(tone[:int(r*0.15)], 200, 600), sil]), r, 'm')), True)]
+    return [f'{name}: got {got}, want {want}' for name, got, want in cases if got != want]
 def check_part(x, rate, a, b, c):
     bad = []; d = (b-a)/rate; s = x[a:b]; pk = float(np.max(np.abs(s))) or 1.0
     if d < min_len(c): bad.append(f'{c}: {d:.2f}s is too short (min {min_len(c)})')
@@ -80,6 +99,8 @@ def main(argv):
     elif mode == 'soundout': x, r = load(rest[0]); report(rest[0], check_soundout(x, r, rest[1]))
     elif mode == 'folder':
         for f in sorted(Path(rest[0]).glob('?.wav')): x, r = load(f); report(f.name, check_sound(x, r, f.stem))
+    elif mode == 'selftest':
+        bad = selftest(); print('\n'.join(bad) or 'selftest ok'); return 1 if bad else 0
     elif mode == 'voice':
         d = Path(rest[0]); m = json.loads((d/'manifest.json').read_text())
         for text, url in sorted(m['clips'].items()):

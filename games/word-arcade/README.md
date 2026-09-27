@@ -1,5 +1,9 @@
 # Word Arcade
 
+## September 28: Letter Slalom on the Games home screen
+
+The hub has its own Letter Slalom card (deep link `?play=slalom`); the card inside Word Arcade is gone. Finish-line friends use page-relative URLs (standees load inside the hub) and stand in a line across the finish camera's view. The letter-sound check catches a click right at the edge of silence (`letter_sound_check.py selftest`).
+
 ## September 27 (late): short feedback within a timing budget; go faster on the rider; rarer hint; reviewed pictures
 
 - After a gate only the word or letter ("mat!", "F!") or "It's mat." on a miss; sound-outs move to the end-of-run recap. `lib/slalom-timing.mjs` (the speed model the scene uses) with `scripts/check-slalom-timing.mjs` and `tests/slalom-timing.test.mjs` check from clip lengths that the feedback takes at most 25% of the time to the next row and the next question ends with >= 2.2 s to spare, at base and go-faster speed, for both tracks.
