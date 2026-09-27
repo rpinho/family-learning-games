@@ -7,7 +7,6 @@ import {spawn} from 'node:child_process';
 import {fresh,act,voiceLines,GAMES} from '../lib/engine.mjs';
 import {slalomRun,easeGate,SLALOM_LINES,SLALOM_GATES,CVC_WORDS,CVC_FAMILIES} from '../lib/slalom.mjs';
 import {literacyFrom,tilesOf} from '../lib/word-break.mjs';
-import {WIND_DOWN_MS,REST_MS,REST_LINE} from '../lib/rest.mjs';
 const send=(p,input,ctx)=>act(p,{...input,revision:p.revision,questionId:p.session?.q?.id},ctx);
 const beginner={...literacyFrom(null,'letters'),source:'letter-quest',letters:[...'SATPINMDGOE'],lower:['s','a','t'],learning:[...'SATPINMDGOE','s','a','t']};
 const explorer={...literacyFrom(null,'words'),source:'letter-quest',wordLevel:2};
@@ -40,7 +39,7 @@ test('Explorer: CVC words only; look-alikes share the first letter and differ in
 });
 test('A missed gate makes the next triplet a pair, keeping the answer',()=>{const g=slalomRun(beginner,{seed:4})[6],e=easeGate(g);assert.equal(e.options.length,2);assert.ok(e.options.includes(g.answer));assert.equal(e.options[e.lane],g.answer);assert.equal(easeGate(e),e);});
 test('A run never fails: one pass per gate, misses name the answer and continue, then it completes',()=>{
- const p=fresh('beginner');send(p,{kind:'start',game:'slalom'},{literacy:beginner,now:0});
+ const p=fresh('beginner');send(p,{kind:'start',game:'slalom'},{literacy:beginner});
  assert.equal(p.session.gates.length,8);assert.equal(p.session.q.id,`${p.session.run}:0`);
  let xp=0;
  for(let i=0;i<8;i++){const q=p.session.q,wrong=i===1||i===4,choice=wrong?q.options.find(o=>o!==q.answer):q.answer;
@@ -58,19 +57,11 @@ test('Gate answers must be one of the gate letters; stale gates are rejected',()
  const first=p.session.q.id;send(p,{kind:'answer',answer:p.session.q.answer,durationMs:10});
  assert.throws(()=>act(p,{kind:'answer',answer:'x',durationMs:1,revision:p.revision,questionId:first}),/no longer active/);
 });
-test('Calm wind-down: a run finishing after 20 minutes of play is the last one; new starts rest; grown-ups can lift it',()=>{
- const p=fresh('explorer');let t=0;
- send(p,{kind:'start',game:'rhyme'},{now:t});
- while(t<WIND_DOWN_MS){t+=5*60000;send(p,{kind:'help'},{now:t});}
- send(p,{kind:'start',game:'slalom'},{literacy:explorer,now:t});let last;
- for(let i=0;i<8;i++)last=send(p,{kind:'answer',answer:p.session.q.answer,durationMs:1},{now:t+i*1000});
- assert.equal(last.windDown,true);assert.equal(p.play.restUntil,t+7000+REST_MS);
- const r=send(p,{kind:'start',game:'blaster'},{now:t+60000});assert.equal(r.kind,'resting');assert.equal(r.line,REST_LINE);assert.equal(p.session.game,'slalom');assert.ok(lines.has(REST_LINE));
- send(p,{kind:'rest'},{now:t+61000});assert.equal(send(p,{kind:'start',game:'blaster'},{now:t+62000}).kind,'start');
- // A 10-minute pause starts a fresh stretch; Admin is never put to rest.
- const q=fresh('beginner');send(q,{kind:'start',game:'slalom'},{literacy:beginner,now:0});send(q,{kind:'help'},{now:0});
- for(let i=0;i<8;i++)send(q,{kind:'answer',answer:q.session.q.answer,durationMs:1},{now:(i<7?0:WIND_DOWN_MS+11*60000)});assert.equal(q.play.restUntil,undefined);
- const a=fresh('admin');send(a,{kind:'start',game:'slalom'},{now:0});for(let i=0;i<8;i++)send(a,{kind:'answer',answer:a.session.q.answer,durationMs:1},{now:i*4*60000});assert.equal(a.play.restUntil,undefined);
+test('No play-time limit: long play never locks a player out, and old saved wind-down state is ignored',()=>{
+ const p=fresh('explorer');p.play={since:0,last:0,restUntil:Date.now()+3600000};const saved=structuredClone(p.play);
+ for(let run=0;run<6;run++){const r=send(p,{kind:'start',game:'slalom'},{literacy:explorer});assert.equal(r.kind,'start');for(let i=0;i<8;i++){const a=send(p,{kind:'answer',answer:p.session.q.answer,durationMs:1});assert.equal(a.windDown,undefined);}assert.equal(p.session.phase,'complete');}
+ assert.equal(send(p,{kind:'start',game:'blaster'}).kind,'start');assert.deepEqual(p.play,saved,'old state left alone, unused');
+ assert.throws(()=>send(p,{kind:'rest'}),/Unknown action/);
 });
 test('Every spoken slalom line has a voice clip',()=>{for(const l of Object.values(SLALOM_LINES))assert.ok(lines.has(l),l);
  for(let seed=0;seed<120;seed++)for(const level of [beginner,explorer,{...explorer,sentenceReady:true,sentenceLevel:3,wordLevel:3},{...literacyFrom(null,'mixed')},literacyFrom(null,'letters')])slalomRun(level,{seed}).forEach(checkGate);});
@@ -97,4 +88,4 @@ test('Finish-line friends: only models listed for that player and present on dis
   assert.equal((await fetch(base+'/api/beginner/companions',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).status,405);
  }finally{child.kill();}
 });
-test('Every spoken slalom line is in the voice line list',()=>{for(const l of [REST_LINE,...Object.values(SLALOM_LINES)])assert.ok(lines.has(l),l);});
+test('Every spoken slalom line is in the voice line list',()=>{for(const l of Object.values(SLALOM_LINES))assert.ok(lines.has(l),l);});
