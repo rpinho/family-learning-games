@@ -37,7 +37,7 @@ test('Frequency uses distinct sessions, not click volume, and keeps the players 
   assert.equal(ranked.order[0],'chess');
   assert.equal(rankPlay(events,'explorer',NOW).order[0],'number-park');
   assert.equal(JSON.stringify(events),before);
-  assert.equal(new Set(ranked.order).size,10);
+  assert.equal(new Set(ranked.order).size,11);
 });
 test('Recent visits outweigh old play, stale/future rows expire, ties are stable and daily repeats capped', () => {
   const events=[point('chess',1),point('maze-garden',12*1440),point('maze-garden',13*1440),point('word-arcade',15*1440),point('target-trail',-1)];

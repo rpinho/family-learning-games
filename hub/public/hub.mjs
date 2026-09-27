@@ -5,6 +5,7 @@ import { CATALOG, FAMILIES, destination, movedRoute } from "./catalog.mjs";
 import { mountChess } from "./chess/app.mjs";
 import { parentChallenge, parentAnswerMatches, menuStyle, gameArtwork } from "./menu-options.mjs";
 import { loadBook, mountBook, lastPlace, rememberPlace } from "./book.mjs";
+import { mountHunt } from "./hunt.mjs";
 const $ = (s) => document.querySelector(s),
   main = $("#main");
 let config,
@@ -132,6 +133,11 @@ async function render() {
     game = dest.item?.id,
     item = dest.item;
   if (["chess", "soccer", "frame"].includes(dest.type)) rememberPlace(player, location.hash);
+  if (dest.type === "hunt") {
+    // Letter Hunt: a real-world hunt at home, announced by a friend from the book.
+    dispose = mountHunt(main, { player, event, onClose: () => { location.hash = ""; } });
+    return;
+  }
   if (dest.type === "chess") {
     dispose = mountChess(main, { player, name: p.name, event });
     return;

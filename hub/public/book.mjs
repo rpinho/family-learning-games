@@ -330,8 +330,9 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   const my=++turn;finished=true;setNext(false);
   if(!preview){void post(player,{type:'finish',date,page:ch.pages.length});event('book_finish',date);}
   const el=view.querySelector('.bk-page')||view;
-  el.insertAdjacentHTML('beforeend',`<div class="bk-quest">${ch.quest?`<h2>🗺️ A quest for you and Dad</h2><p>${esc(ch.quest.text.replace(/^A quest for you and Dad:\s*/,''))}</p>`:'<h2>The end, for today</h2>'}<button class="bk-btn" type="button">${preview?'Close':'Play games →'}</button></div>`);
-  el.querySelector('.bk-quest .bk-btn').onclick=()=>{stop();onDone({finished:true});};
+  el.insertAdjacentHTML('beforeend',`<div class="bk-quest">${ch.quest?`<h2>🗺️ A quest for you and Dad</h2><p>${esc(ch.quest.text.replace(/^A quest for you and Dad:\s*/,''))}</p>`:'<h2>The end, for today</h2>'}${preview?'':'<a class="bk-btn bk-hunt" href="#hunt">🔍 Want to go hunting?</a> '}<button class="bk-btn" type="button">${preview?'Close':'Play games →'}</button></div>`);
+  el.querySelector('.bk-quest button.bk-btn').onclick=()=>{stop();onDone({finished:true});};
+  const hl=el.querySelector('.bk-hunt');if(hl)hl.onclick=()=>{stop();};
   if(ch.quest)await speak(ch.quest);if(my===turn)await speak(ch.ui.nextTime);
  }
  function stop(){alive=false;clearTimers();stopSound();removeEventListener('deviceorientation',tilt);try{audio.removeAttribute('src');audio.load();}catch{}}
