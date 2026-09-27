@@ -19,6 +19,9 @@ const cookieRow=h=>h.question?.track===EXPLORER_TRACK&&h.question.skill==='cooki
 // ladder, so the level he had reached is never taken away; faded rounds then
 // move him through show -> hide -> own, and the quiet mastery check (five
 // clean rounds in a row on his own) moves him up a level.
+// A round won with only a Help tap (no uneven check, no wrong answer) is not a
+// struggle: it earns no progress but never eases the level or stage.
+const helpOnly=h=>h.helped&&h.cookieChecks===0;
 export function cookieProgress(p){
  const history=p.history||[];
  const oldWins=history.filter(h=>cookieRow(h)&&h.question.plan!=='drag3'&&(!h.question.mode||h.question.mode==='share')&&h.ok&&!h.helped).length;
@@ -26,6 +29,7 @@ export function cookieProgress(p){
  for(const h of history){
   if(!cookieRow(h)||h.question.plan!=='drag3'||h.question.fade)continue;
   if(h.ok&&!h.helped){streak++;struggles=0;if(streak>=4){level=Math.min(5,level+1);streak=0;}}
+  else if(h.ok&&helpOnly(h))streak=0;
   else{streak=0;struggles++;if(struggles>=2){level=Math.max(1,level-1);struggles=0;}}
  }
  let stage=0,clean=0,rough=0,mastered=0;
@@ -35,7 +39,8 @@ export function cookieProgress(p){
    clean++;rough=0;
    if(stage<2&&clean>=STAGE_WINS){stage++;clean=0;}
    else if(stage===2&&clean>=MASTERY_RUN){mastered++;clean=0;if(level<COOKIE_MAX_LEVEL){level++;stage=0;}}
-  }else{
+  }else if(h.ok&&helpOnly(h))clean=0;
+  else{
    clean=0;rough++;
    if(rough>=2){rough=0;if(stage>0)stage--;else if(level>1){level--;stage=1;}}
   }

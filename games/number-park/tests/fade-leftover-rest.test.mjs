@@ -137,3 +137,19 @@ test('HTTP: the parent summary is read-only and rest-clear ends a wind-down',asy
   assert.equal(r.resting,false);
  }finally{child.kill();}
 });
+
+test('a round won with only a Help tap earns nothing but never eases the level or stage',()=>{
+ const legacy=(ok,helped,cookieChecks)=>({...row(undefined,ok,helped),question:{...row().question,fade:undefined},cookieChecks});
+ // Eight clean legacy rounds reach level 3, then two Help-only wins.
+ const p=freshProfile('explorer');p.history=[...Array.from({length:8},()=>legacy(true,false,0)),legacy(true,true,0),legacy(true,true,0)];
+ assert.equal(cookieProgress(p).level,3);
+ // Help taps reset the run: four more clean rounds are needed, not three.
+ p.history.push(legacy(true,false,0),legacy(true,false,0),legacy(true,false,0));assert.equal(cookieProgress(p).level,3);
+ p.history.push(legacy(true,false,0));assert.equal(cookieProgress(p).level,4);
+ // A round with an uneven check still counts as a struggle.
+ p.history.push(legacy(true,true,1),legacy(true,true,2));assert.equal(cookieProgress(p).level,3);
+ // Faded rounds: Help-only wins hold the stage; corrected wins ease it.
+ const q=freshProfile('explorer');q.history=[row('show'),row('show'),{...row('hide',true,true),cookieChecks:0},{...row('hide',true,true),cookieChecks:0}];
+ assert.equal(cookieProgress(q).fade,'hide');
+ q.history.push({...row('hide',true,true),cookieChecks:1},{...row('hide',true,true),cookieChecks:1});assert.equal(cookieProgress(q).fade,'show');
+});
