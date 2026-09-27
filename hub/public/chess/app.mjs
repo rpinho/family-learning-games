@@ -208,8 +208,9 @@ export function mountChess(root, { player, name, event = () => {} }) {
           data.result?.correct === false
             ? "retry"
             : body.type === 'match-move' && matchKind
-              ? ['youCapture', 'youQueen', 'youCheck', 'youWin', 'scholar', 'youPromote'].includes(matchKind)
-                ? 'shock' : ['meCapture', 'pounce', 'trade', 'meCheck', 'meWin', 'mePromote'].includes(matchKind)
+              ? ['youQueen', 'youWin', 'scholar'].includes(matchKind)
+                ? 'dismay' : ['youCapture', 'youCheck', 'youPromote'].includes(matchKind)
+                  ? 'shock' : ['meCapture', 'pounce', 'trade', 'meCheck', 'meWin', 'mePromote'].includes(matchKind)
                   ? 'smug' : 'nod'
             : ["move", "game-move", "match-move"].includes(body.type)
               ? (profile.session?.phase === "solved" && body.type === "move") ||
@@ -354,6 +355,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
       "react-capture",
       "react-select",
       "react-shock",
+      "react-dismay",
       "react-smug",
     );
     if (!kind || kind === "idle" || kind === "land") return;

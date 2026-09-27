@@ -874,6 +874,13 @@
 .rook-puppet.react-shock .rook-hand {
   animation: rook-hands-up 850ms cubic-bezier(.2,.85,.2,1);
 }
+.rook-puppet.react-dismay .rook-head {
+  animation: rook-dramatic-dismay 1100ms cubic-bezier(.2,.85,.2,1);
+}
+.rook-puppet.react-dismay .rook-arm,
+.rook-puppet.react-dismay .rook-hand {
+  animation: rook-hands-up 1100ms cubic-bezier(.2,.85,.2,1);
+}
 .rook-puppet.react-smug .rook-head {
   animation: rook-smug-bob 850ms cubic-bezier(.2,.85,.2,1);
 }
@@ -885,6 +892,13 @@
   22% { transform: translateY(-6px) rotate(-7deg); }
   48% { transform: translateY(4px) rotate(5deg); }
   75% { transform: translateY(1px) rotate(-2deg); }
+}
+@keyframes rook-dramatic-dismay {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  18% { transform: translateY(-8px) rotate(-6deg); }
+  42% { transform: translateY(6px) rotate(5deg); }
+  63% { transform: translateY(4px) rotate(-4deg); }
+  83% { transform: translateY(1px) rotate(2deg); }
 }
 @keyframes rook-gasp {
   25%, 65% { transform: scale(.8, 1.8); }
