@@ -52,29 +52,42 @@ export function lookalikes(word){
  for(const [k,v] of Object.entries(SENTENCE_DISTRACT))if(v===w)out.push(k);
  return [...new Set(out)].filter(x=>x!==w);
 }
+// Words track = CVC words only (an early reader works with CVC word families before digraphs). Every
+// distractor starts with the same letter and differs only in the vowel or the last letter (mat / map / man), because
+// a child who is guessing picks by the first letter.
+export const CVC_WORDS='bad bag bat bed bet big bin bit box bug bun bus but cab can cap cat cot cub cup cut dad dig dip dog dot dug fan fat fig fin fit fog fun get gum had ham hat hen hid him hip hit hog hop hot hug hut jam jet jog jug kid kit leg let lid lip log lot man map mat men met mop mud mug nap net not nut pan pat pen pet pig pin pit pop pot pup ram ran rat red rib rip rod rot rub rug run sad sat set sip sit sun tag tan tap ten tin tip top tub tug van web wet wig win zip'.split(' ');
+export const CVC_FAMILIES=['at','an','ig','op','ug','in'];
+export function cvcDistractors(word){
+ const out=CVC_WORDS.filter(w=>w!==word&&w[0]===word[0]&&((w[1]===word[1])!==(w[2]===word[2])));
+ return [...out.filter(w=>w[1]===word[1]),...out.filter(w=>w[1]!==word[1])]; // last-letter changes first (mat/map/man)
+}
+export const CVC_TARGETS=CVC_WORDS.filter(w=>CVC_FAMILIES.includes(w.slice(1))&&cvcDistractors(w).length>=2);
+export const soundOutLine=w=>`Sound out ${w}.`;
 function readWordGate(level,r,n,avoid){
- const groups=WORD_GROUPS[level.wordLevel-1],fresh=groups.filter(g=>!g.some(w=>avoid.has(w))),group=pick(fresh.length?fresh:groups,r),answer=pick(group,r);
- return {kind:'read-word',track:'words',answer,...wordLines(answer),options:[answer,...shuffled(group.filter(w=>w!==answer),r).slice(0,n-1)]};
+ const fresh=CVC_TARGETS.filter(w=>!avoid.has(w)&&![...avoid].some(a=>typeof a==='string'&&a.length===3&&a.slice(1)===w.slice(1))),answer=pick(fresh.length?fresh:CVC_TARGETS,r),near=cvcDistractors(answer);
+ // one last-letter look-alike and one vowel look-alike when there is room for both
+ const last=near.filter(w=>w[1]===answer[1]),vowel=near.filter(w=>w[1]!==answer[1]);
+ const picks=n>=3&&last.length&&vowel.length?[pick(last,r),pick(vowel,r)]:shuffled(near,r).slice(0,n-1);
+ return {kind:'read-word',track:'words',answer,...wordLines(answer),correction:soundOutLine(answer),after:soundOutLine(answer),options:[answer,...picks]};
 }
 // The next word of a spoken sentence: the start of the sentence is shown, the child picks the word that comes next.
 // Only lowercase words with a real look-alike (never a name, never the first word).
 export function nextWordGate(level,r,n,avoid){
- const bank=level.sentenceReady?SENTENCES[level.sentenceLevel-1]:STARTER_SENTENCES;
+ const bank=[...STARTER_SENTENCES,...SENTENCES[0]];
  const candidates=[];
- for(const sentence of bank){if(avoid.has(sentence))continue;const words=tilesOf(sentence);words.forEach((w,k)=>{if(k>0&&/^[a-z]+$/.test(w)&&lookalikes(w).length&&!avoid.has(w))candidates.push({sentence,words,k});});}
+ for(const sentence of bank){if(avoid.has(sentence))continue;const words=tilesOf(sentence);words.forEach((w,k)=>{if(k>0&&CVC_WORDS.includes(w)&&cvcDistractors(w).length&&!avoid.has(w))candidates.push({sentence,words,k});});}
  if(!candidates.length)return null;
- const {sentence,words,k}=pick(candidates,r),answer=words[k],near=lookalikes(answer);
- const others=[...new Set(words.filter(w=>w!==answer&&/^[a-z]+$/.test(w)&&!near.includes(w)))];
- return {kind:'next-word',track:'words',sentence,before:words.slice(0,k),answer,prompt:sentence,correction:`The word is ${answer}.`,recap:`${answer}.`,options:[answer,...[...shuffled(near,r),...shuffled(others,r)].slice(0,n-1)]};
+ const {sentence,words,k}=pick(candidates,r),answer=words[k],near=cvcDistractors(answer);
+ return {kind:'next-word',track:'words',sentence,before:words.slice(0,k),answer,prompt:sentence,correction:soundOutLine(answer),after:soundOutLine(answer),recap:`${answer}.`,options:[answer,...shuffled(near,r).slice(0,n-1)]};
 }
-// Gate rows for one run. Beginner (letters): pairs first, then triplets. Explorer (words): two pairs, then triplets,
-// with a next-word-of-a-sentence gate at rows 3, 6 and 8. The answer never sits in the same lane three times running.
+// Gate rows for one run. Beginner (letters): pairs first, then triplets. Explorer (words): CVC words, two pairs then triplets;
+// next-word-of-a-sentence gates (rows 3, 6, 8) only once Letter Quest shows he builds sentences on his own. The answer never sits in the same lane three times running.
 export function slalomRun(levelIn,{seed=1,count=SLALOM_GATES}={}){
  const level={...literacyFrom(null),...levelIn},r=rng(seed*7919+13),gates=[],recent=[],used=new Set();
  for(let i=0;i<count;i++){
   const track=level.track==='mixed'?(i%2?'words':'letters'):level.track;
   const n=track==='letters'?(i<4?2:3):(i<2?2:3),avoid=new Set([...recent.slice(track==='letters'?-4:-3),...used]);
-  let g=track==='letters'?letterGate(level,r,n,avoid):([2,5,7].includes(i)&&nextWordGate(level,r,n,avoid))||readWordGate(level,r,n,avoid);
+  let g=track==='letters'?letterGate(level,r,n,avoid):(level.sentenceReady&&[2,5,7].includes(i)&&nextWordGate(level,r,n,avoid))||readWordGate(level,r,n,avoid);
   let options=shuffled(g.options,r);
   const lane=options.indexOf(g.answer),prev=gates.slice(-2).map(x=>x.lane);
   if(prev.length===2&&prev.every(x=>x===lane)&&options.length>1){const j=(lane+1)%options.length;[options[lane],options[j]]=[options[j],options[lane]];}
@@ -94,8 +107,9 @@ export function slalomLines(){
  const lines=new Set(Object.values(SLALOM_LINES));
  for(const c of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'){for(const l of [false,true])for(const v of Object.values(letterLines(l?c.toLowerCase():c,l)))lines.add(v);}
  for(const [w] of FIRST_WORDS){lines.add(`Which letter does ${w} start with?`);lines.add(firstLine(w,upper(w[0])));}
- const words=new Set(WORD_GROUPS.flat().flat());
+ const words=new Set([...WORD_GROUPS.flat().flat(),...CVC_WORDS]);
  for(const s of [...SENTENCES.flat(),...STARTER_SENTENCES]){lines.add(s);tilesOf(s).forEach((w,k)=>{if(k>0&&/^[a-z]+$/.test(w)&&lookalikes(w).length)words.add(w);});}
  for(const w of words)for(const v of Object.values(wordLines(w)))lines.add(v);
+ for(const w of CVC_WORDS)lines.add(soundOutLine(w));
  return [...lines];
 }

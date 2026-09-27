@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawn} from 'node:child_process';
 import {fresh,act,voiceLines,GAMES} from '../lib/engine.mjs';
-import {slalomRun,easeGate,lookalikes,SLALOM_LINES,SLALOM_GATES} from '../lib/slalom.mjs';
+import {slalomRun,easeGate,SLALOM_LINES,SLALOM_GATES,CVC_WORDS,CVC_FAMILIES} from '../lib/slalom.mjs';
 import {literacyFrom,tilesOf} from '../lib/word-break.mjs';
 import {WIND_DOWN_MS,REST_MS,REST_LINE} from '../lib/rest.mjs';
 const send=(p,input,ctx)=>act(p,{...input,revision:p.revision,questionId:p.session?.q?.id},ctx);
@@ -14,7 +14,7 @@ const explorer={...literacyFrom(null,'words'),source:'letter-quest',wordLevel:2}
 const lines=new Set(voiceLines());
 function checkGate(g){
  assert.equal(new Set(g.options).size,g.options.length,g.options.join());assert.ok(g.options.includes(g.answer));assert.equal(g.options[g.lane],g.answer);
- for(const line of [g.prompt,g.correction,g.recap])assert.ok(lines.has(line),line);
+ for(const line of [g.prompt,g.correction,g.recap,g.after].filter(Boolean))assert.ok(lines.has(line),line);
 }
 test('Letter Slalom is one arcade mission with its own identity',()=>{assert.ok(GAMES.some(g=>g.id==='slalom'&&g.name==='Letter Slalom'));});
 test('Beginner: letters the child knows from Letter Quest, pairs first then triplets, with look-alike distractors',()=>{
@@ -26,17 +26,17 @@ test('Beginner: letters the child knows from Letter Quest, pairs first then trip
  }
  const kinds=new Set(Array.from({length:30},(_,s)=>slalomRun(beginner,{seed:s}).map(g=>g.kind)).flat());assert.deepEqual([...kinds].sort(),['find-letter','first-letter']);
 });
-test('Explorer: the spoken word among look-alikes, or the next word of a spoken sentence',()=>{
- let nextWords=0;
- for(let seed=1;seed<60;seed++)slalomRun(explorer,{seed}).forEach((g,i)=>{checkGate(g);assert.equal(g.track,'words');assert.ok(g.options.length<=(i<2?2:3));
-  if(g.kind==='read-word')assert.ok(g.options.filter(o=>o!==g.answer).every(o=>lookalikes(g.answer).includes(o)),g.options.join());
-  if(g.kind==='next-word'){nextWords++;const words=tilesOf(g.sentence);assert.equal(words[g.before.length],g.answer);assert.ok(g.before.length>0);assert.match(g.answer,/^[a-z]+$/);assert.equal(g.prompt,g.sentence);assert.ok(g.options.some(o=>lookalikes(g.answer).includes(o)));}
+test('Explorer: CVC words only; look-alikes share the first letter and differ in the vowel or last letter; sounded out after',()=>{
+ for(let seed=1;seed<80;seed++)slalomRun(explorer,{seed}).forEach((g,i)=>{checkGate(g);assert.equal(g.track,'words');assert.equal(g.kind,'read-word','no sentences before Letter Quest shows sentence building');assert.ok(g.options.length<=(i<2?2:3));
+  assert.ok(CVC_FAMILIES.includes(g.answer.slice(1)),g.answer);assert.equal(g.after,`Sound out ${g.answer}.`);assert.ok(lines.has(g.after));
+  for(const o of g.options.filter(o=>o!==g.answer)){assert.ok(CVC_WORDS.includes(o),o);assert.equal(o[0],g.answer[0],`${o} vs ${g.answer}`);assert.equal([...o].filter((c,k)=>c!==g.answer[k]).length,1);assert.notEqual(o[0],'');}
  });
- assert.ok(nextWords>100);
- for(let seed=1;seed<60;seed++){const sentences=slalomRun(explorer,{seed}).filter(g=>g.sentence).map(g=>g.sentence);assert.equal(new Set(sentences).size,sentences.length,'a sentence repeats in one run');}
- // Not yet sentence-ready: starter sentences only; ready readers get the level bank.
- assert.ok(slalomRun(explorer,{seed:3}).filter(g=>g.kind==='next-word').every(g=>tilesOf(g.sentence).length<=4));
- assert.ok(slalomRun({...explorer,sentenceReady:true,sentenceLevel:2},{seed:3}).filter(g=>g.kind==='next-word').some(g=>tilesOf(g.sentence).length>4));
+ // no digraphs or blends anywhere in his run
+ for(let seed=1;seed<40;seed++)assert.ok(slalomRun(explorer,{seed}).every(g=>g.options.every(o=>/^[a-z]{3}$/.test(o)&&!/(sh|ch|th|wh|ck)/.test(o))));
+ // sentences (the next word of a spoken sentence) only once Letter Quest shows he builds sentences on his own; still CVC targets
+ const ready=Array.from({length:20},(_,seed)=>slalomRun({...explorer,sentenceReady:true},{seed})).flat().filter(g=>g.kind==='next-word');
+ assert.ok(ready.length>10);for(const g of ready){assert.equal(tilesOf(g.sentence)[g.before.length],g.answer);assert.ok(CVC_WORDS.includes(g.answer));assert.ok(g.options.every(o=>o[0]===g.answer[0]));}
+ for(let seed=1;seed<60;seed++){const sentences=slalomRun({...explorer,sentenceReady:true},{seed}).filter(g=>g.sentence).map(g=>g.sentence);assert.equal(new Set(sentences).size,sentences.length,'a sentence repeats in one run');}
 });
 test('A missed gate makes the next triplet a pair, keeping the answer',()=>{const g=slalomRun(beginner,{seed:4})[6],e=easeGate(g);assert.equal(e.options.length,2);assert.ok(e.options.includes(g.answer));assert.equal(e.options[e.lane],g.answer);assert.equal(easeGate(e),e);});
 test('A run never fails: one pass per gate, misses name the answer and continue, then it completes',()=>{
@@ -97,3 +97,4 @@ test('Finish-line friends: only models listed for that player and present on dis
   assert.equal((await fetch(base+'/api/beginner/companions',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).status,405);
  }finally{child.kill();}
 });
+test('Every spoken slalom line is in the voice line list',()=>{for(const l of [REST_LINE,...Object.values(SLALOM_LINES)])assert.ok(lines.has(l),l);});

@@ -44,6 +44,9 @@ try{
  if(mobile)await send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:5});
  if(cpu>1)await send('Emulation.setCPUThrottlingRate',{rate:cpu});
  // Record every media play() with its clip, time and outcome.
+ // Keep the check silent: --mute-audio does not silence the device voice on macOS, so replace it before any page
+ // script runs (this edition speaks through it; the calls are counted, not played).
+ await send('Page.addScriptToEvaluateOnNewDocument',{source:`window.__deviceVoice=[];(()=>{const s={speak(u){window.__deviceVoice.push(String(u&&u.text||''));},cancel(){},pause(){},resume(){},getVoices(){return [];},speaking:false,pending:false,paused:false,addEventListener(){},removeEventListener(){},onvoiceschanged:null};try{Object.defineProperty(window,'speechSynthesis',{value:s,configurable:false});}catch{}})();`});
  await send('Page.addScriptToEvaluateOnNewDocument',{source:`window.__audio=[];const _play=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=function(){const e={src:this.currentSrc||this.src,at:performance.now()};window.__audio.push(e);const p=_play.call(this);Promise.resolve(p).then(()=>{e.ok=true;},x=>{e.err=x&&x.name;});return p;};`});
  await send('Page.navigate',{url:`${base}/?player=${player}${quality?`&slalomQuality=${quality}`:''}`});
  if(!await until(`!!document.querySelector('section.lobby')`,30000))throw Error('lobby did not load');
@@ -99,7 +102,7 @@ try{
  result.audio.plays=said.length;result.audio.refused=audio.filter(a=>a.err&&a.err!=='AbortError').length;
  const saidText=said.map(a=>a.text);
  for(const g of result.gates){if(!g)continue;g.promptHeard=saidText.includes(g.prompt);const full=gates[g.gate];if(g.miss)g.correctionHeard=saidText.includes(full.correction);}
- result.audio.recap=saidText.filter(t=>/lovely run/.test(t)).length;result.audio.lines=saidText;
+ result.audio.recap=saidText.filter(t=>/lovely run/.test(t)).length;result.audio.deviceVoice=await js('window.__deviceVoice');result.audio.lines=saidText;
  result.ok=result.audio.beforeTap==='NotAllowedError'&&result.complete&&result.gates.length===gates.length&&result.gates.every(g=>g.promptHeard&&(!g.miss||g.correctionHeard))&&result.audio.refused===0&&result.audio.recap>=1&&!!result.wordBreak&&!result.errors.length;
  if(record&&frames.length&&shots){const dir=await mkdtemp(join(tmpdir(),'slalom-frames-'));const t1=frames[0].t;let list='';
   for(let k=0;k<frames.length;k++){const f=join(dir,`f${String(k).padStart(5,'0')}.jpg`);await writeFile(f,Buffer.from(frames[k].data,'base64'));const dur=k+1<frames.length?frames[k+1].t-frames[k].t:0.1;list+=`file '${f}'\nduration ${Math.max(0.01,dur).toFixed(3)}\n`;}
