@@ -60,13 +60,14 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  function trainHTML(scene,W,H){
   const T=art.props.train,h=Math.min(T.h*1.2,0.4),w=h*T.ar*H/W,left=(1-w)/2,bottom=0.06;
   const seats=T.seats||[[.5,.4]];
-  const riders=scene.actors.slice(0,seats.length).map((a,i)=>{const P=art.actors[a.id].poses[a.pose]||Object.values(art.actors[a.id].poses)[0];const rh=h*0.62,rw=rh*P.ar*H/W,[sx,sy]=seats[i];
+  const riders=scene.actors.slice(0,seats.length).map((a,i)=>{const P=art.actors[a.id].poses[a.pose]||Object.values(art.actors[a.id].poses)[0];const rh=h*0.8*Math.min(1,(art.actors[a.id].h||0.4)/0.6),rw=rh*P.ar*H/W,[sx,sy]=seats[i];
    return `<div class="bk-actor" data-id="${esc(a.id)}" style="left:${((left+sx*w-rw/2)*100).toFixed(2)}%;width:${(rw*100).toFixed(2)}%;height:${(rh*100).toFixed(2)}%;bottom:${((bottom+h*(1-sy))*100).toFixed(2)}%"><div><img src="${esc(P.url)}" alt=""></div></div>`;}).join('');
   return riders+`<div class="bk-prop train" style="left:${(left*100).toFixed(2)}%;width:${(w*100).toFixed(2)}%;height:${(h*100).toFixed(2)}%;bottom:${(bottom*100).toFixed(2)}%"><img src="${esc(T.url)}" alt="the train"></div>`;
  }
- function propsHTML(scene,{ground=0.93}={}){
+ function propsHTML(scene,{ground=0.93,play=false}={}){
   const W=root.clientWidth||innerWidth,H=root.clientHeight||innerHeight;
-  return scene.props.filter(p=>p.id!=='train'||!art.props.train?.seats).map((p,i)=>{const P=art.props[p.id];if(!P)return '';const h=P.h,w=h*P.ar*H/W;const x=[0.8,0.12,0.62][i%3]-w/2;
+  // On a page where he plays with a ball, the only ball is the one he kicks or throws.
+  return scene.props.filter(p=>(p.id!=='train'||!art.props.train?.seats)&&!(play&&p.id==='ball')).map((p,i)=>{const P=art.props[p.id];if(!P)return '';const h=P.h,w=h*P.ar*H/W;const x=[0.8,0.12,0.62][i%3]-w/2;
    return `<div class="bk-prop" style="left:${(x*100).toFixed(2)}%;width:${(w*100).toFixed(2)}%;height:${(h*100).toFixed(2)}%;bottom:${((1-ground)*100).toFixed(2)}%"><img src="${esc(P.url)}" alt=""></div>`;}).join('');
  }
  function fxHTML(fx,burst=false){
@@ -101,7 +102,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   view.querySelector('.bk-page')?.classList.add('out');
   const old=view.querySelector('.bk-page');if(old)setTimeout(()=>old.remove(),350);
   const el=document.createElement('div');el.className='bk-page';
-  el.innerHTML=`${b?`<img class="bk-bg" src="${esc(b.url)}" alt="">`:''}<div class="bk-layer">${propsHTML(p.scene,{ground})}${actorsHTML(p.scene,{ground,scale})}</div>${fxHTML(p.scene.fx)}${cap}<div class="bk-play"></div>`;
+  el.innerHTML=`${b?`<img class="bk-bg" src="${esc(b.url)}" alt="">`:''}<div class="bk-layer">${propsHTML(p.scene,{ground,play:!!p.action||p.beat?.kind==='kick-letter'})}${actorsHTML(p.scene,{ground,scale})}</div>${fxHTML(p.scene.fx)}${cap}<div class="bk-play"></div>`;
   view.append(el);
   el.querySelector('.bk-caption')?.addEventListener('click',()=>{const l=(p.say||[]).find(x=>x.text.toLowerCase().includes(p.caption.toLowerCase()));if(l)void speak(l);});
   return el;
