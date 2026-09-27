@@ -11,7 +11,7 @@ import {station,ride,maze} from './station.mjs';
 import {pitch} from './pitch.mjs';
 import {viewMode,makeFramer,pointsOf,measureVisibility} from './frame.mjs';
 import {createUI} from './ui.mjs';
-const q=new URLSearchParams(location.search);const STORY=q.get('story')||'',AUTO=q.get('auto')==='1',DEBUG=q.get('debug')==='1',CHECK=q.get('check')==='1',PREVIEW=q.get('preview')==='1'||AUTO||q.get('drive')==='1',CLOSEUP=q.get('closeup');
+const q=new URLSearchParams(location.search);const STORY=q.get('story')||'',AUTO=q.get('auto')==='1',DEBUG=q.get('debug')==='1',CHECK=q.get('check')==='1',PREVIEW=q.get('preview')==='1'||AUTO||q.get('drive')==='1',CLOSEUP=q.get('closeup'),FROM=q.get('from');
 const $=s=>document.querySelector(s);const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const state=globalThis.__living={story:STORY,beat:'loading',stats:null,log:[],done:false,telemetry:[],voice:[],expect:null,checkpoint:null,ack:null};
 const mark=b=>{state.beat=b;state.log.push([Math.round(performance.now()),b]);};
@@ -110,7 +110,13 @@ async function main(){
   world.people.forEach(o=>{if(o!==p)o.root.visible=false;});mark('closeup');await checkpoint('closeup');state.done=true;}
  // ---------------- The Night Train ----------------
  async function nightTrain(){
-  sound?.ambience('dusk');sound?.music(true,{key:220,mood:'night'});
+  sound?.music(true,{key:220,mood:'night'});start();
+  // Grown-ups (and checks) can start at a later scene: &from=ride or &from=maze.
+  if(!FROM)await stationPart();if(!FROM||FROM==='ride')await ridePart();await mazePart();
+  sound?.music(false);await irisClose();mark('end');state.done=true;
+ }
+ async function stationPart(){
+  sound?.ambience('dusk');
   setWorld(await station(ctx));mark('station');letterbox=.06;applyMode();post.uIris=0;post.uAperture=0;post.uBloom=.65;post.uWarm=1;post.uSat=1.08;post.uExposure=1.05;post.uGain.setRGB(1.04,1,.96);post.uLift.setRGB(.02,.01,.04);
   start();const s=world.shots;
   await shot('sky',s.sky,s.sky,{dur:.1});await irisOpen();
@@ -138,6 +144,8 @@ async function main(){
   sound?.play('sparkle');for(const p of [world.hero,world.guide,world.small])p?.hop(.35);await say('mgDone');
   for(const p of [world.hero,world.guide,world.small,world.dad,world.mom])if(p)p.root.visible=false;
   sound?.play('whistle');shot('depart',s.wide,s.depart,{dur:6});await world.trainLeaves();await irisClose();
+ }
+ async function ridePart(){
   // ---- the night ride ----
   sound?.ambience('night');setWorld(await ride(ctx));mark('ride');letterbox=.05;applyMode();const r=world;post.uAperture=.3;post.uFocus=12;post.uWarm=0;post.uGain.setRGB(.96,1,1.08);post.uLift.setRGB(.01,.01,.05);post.uBloom=.8;post.uExposure=1.1;
   await shot('valley',r.shots.valley,r.shots.valley,{dur:.1});await irisOpen();
@@ -146,9 +154,12 @@ async function main(){
   await shot('junction',{pos:camera.position.toArray(),look:r.engine.localToWorld(new THREE.Vector3(8,1,0)).toArray(),fov:camera.fov,raw:true},r.shots.junction,{dur:3,focusFrom:10,focusTo:14,aperture:.2});
   await say('rd3');await say('rd4');mark('signs');await checkpoint('signs');
   const G=story.signs||{word:'big',options:['bag','big','bug']};
-  await readBeat({id:'signs',options:G.options,answer:G.word,layout:'anchored',anchors:r.signTops,wrongLine:'rdWrong'});
+  // Three words never fit side by side on an upright phone: there they stack on a board (the signs stay in the picture).
+  await readBeat({id:'signs',options:G.options,answer:G.word,layout:mode.tall?'board':'anchored',title:mode.tall?'SIGNS':'',anchors:r.signTops,wrongLine:'rdWrong'});
   mark('signs-right');await say('rdRight');r.go(G.options.indexOf(G.word));sound?.play('whistle');
   await shot('away',r.shots.junction,r.shots.away,{dur:5});await irisClose();
+ }
+ async function mazePart(){
   // ---- the maze ----
   world=null;setWorld(await maze(ctx));mark('maze');const m=world;letterbox=0;applyMode();post.uAperture=.45;post.uFocus=14;post.uWarm=0;post.uGain.setRGB(.96,1,1.08);post.uLift.setRGB(.01,.01,.05);post.uBloom=.8;post.uExposure=1.1;
   await shot('over',m.shots.over,m.shots.over,{dur:.1});await irisOpen();
@@ -158,7 +169,7 @@ async function main(){
   // He steers; his friends follow. At the fork a friend's bad idea meets a sign he can read.
   let forkDone=false,noShown=false,atGoal=false,noSaid=false;
   const signWord=String(story.maze?.sign||'not').toUpperCase();const signTag=document.createElement('div');signTag.className='lv-sign';signTag.innerHTML=ui.token(signWord,'word');$('#ui').append(signTag);
-  ui.anchor(signTag,()=>m.signG.position.distanceTo(m.hero.root.position)<7?m.signG.localToWorld(new THREE.Vector3(0,.45,0)):null);
+  ui.anchor(signTag,()=>m.signG.position.distanceTo(m.hero.root.position)<7?m.signG.localToWorld(new THREE.Vector3(0,.45,0)):null,{hideOff:true});
   const v2=new THREE.Vector3();
   const heroScreen=()=>{v2.copy(m.hero.root.position).setY(.6).project(camera);const rc=canvas.getBoundingClientRect();return {x:(v2.x+1)/2*rc.width+rc.left,y:(1-v2.y)/2*rc.height+rc.top};};
   const toWorld=d=>{if(!d)return null;const rgt=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0).setY(0).normalize(),fwd=new THREE.Vector3();camera.getWorldDirection(fwd);fwd.setY(0).normalize();return rgt.multiplyScalar(d.x).addScaledVector(fwd,-d.y);};
@@ -179,7 +190,6 @@ async function main(){
   await shot('goal',{pos:camera.position.toArray(),look:m.hero.root.position.toArray(),fov:camera.fov,raw:true},m.shots.goal,{dur:3.5,focusFrom:8,focusTo:3.4,aperture:.45});
   await checkpoint('found');await say('found');m.guide?.setPose('happy');await say('big2');
   const rise=shot('rise',m.shots.goal,m.shots.rise,{dur:9,focusFrom:3.6,focusTo:12,aperture:.3});await say('end');await rise;
-  sound?.music(false);await irisClose();mark('end');state.done=true;
  }
  // ---------------- The Big Kick ----------------
  async function bigKick(){

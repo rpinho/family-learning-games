@@ -11,7 +11,7 @@
 // tap), that letting go of the steering stops him at once, and that the companions stay close in the maze.
 // Also reports frame times. The browser always runs with --mute-audio.
 // Usage: node hub/scripts/check-living.mjs --base http://127.0.0.1:5325 --story <id>
-//        [--sizes 412x915m,915x412m,1366x768] [--dpr 2.6] [--shots <dir>] [--timeout 900] [--gpu] [--auto]
+//        [--sizes 412x915m,915x412m,1366x768] [--dpr 2.6] [--shots <dir>] [--timeout 900] [--gpu] [--auto] [--from maze]
 import {spawn} from 'node:child_process';
 import {mkdtemp,readFile,writeFile,mkdir,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
@@ -49,7 +49,7 @@ async function run(size){
   await send('Page.addScriptToEvaluateOnNewDocument',{source:INSTRUMENT});
   await send('Emulation.setDeviceMetricsOverride',{width:W,height:H,deviceScaleFactor:mobile?dpr:1,mobile,screenOrientation:mobile?{type:H>W?'portraitPrimary':'landscapePrimary',angle:H>W?0:90}:undefined});
   await send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:5});
-  await send('Page.navigate',{url:`${base}/living/index.html?story=${encodeURIComponent(hero)}&debug=1&${flag('--auto')?'auto=1':'drive=1&check=1'}`});
+  await send('Page.navigate',{url:`${base}/living/index.html?story=${encodeURIComponent(hero)}&debug=1&${flag('--auto')?'auto=1':'drive=1&check=1'}${arg('--from')?'&from='+arg('--from'):''}`});
   const t0=Date.now();
   for(let i=0;i<120;i++){const ok=await js(`typeof __living==='object'&&__living.beat!=='loading'`).catch(()=>false);if(ok)break;await sleep(250);}
   await sleep(600);await shot('title');
@@ -111,7 +111,7 @@ async function run(size){
  for(const c of R.checkpoints){for(const ch of c.chars||[])if(ch.share<RULES.charShare)R.failures.push(`${c.id}: ${ch.id} only ${(ch.share*100).toFixed(0)}% visible (on screen ${(ch.onScreen*100).toFixed(0)}%, under buttons ${(ch.hiddenByUI*100).toFixed(0)}%)`);
   for(const r of c.readables||[]){if(r.ratio<RULES.readRatio)R.failures.push(`${c.id}: "${r.text}" is ${(r.ratio*100).toFixed(1)}% of the short side (needs ${RULES.readRatio*100}%)`);if(r.contrast<RULES.contrast)R.failures.push(`${c.id}: "${r.text}" contrast ${r.contrast}:1`);if(!r.onScreen)R.failures.push(`${c.id}: "${r.text}" is off screen`);}
   for(const t of c.targets||[])if(Math.min(t.w,t.h)<RULES.target)R.failures.push(`${c.id}: button ${t.cls} is ${t.w}x${t.h} px`);}
- if(!flag('--auto')){if(!R.mic)R.failures.push('no talk button was tapped');else if(!R.mic.askedOnFirstTap)R.failures.push('the microphone was not asked for on the first talk-button tap');
+ if(!flag('--auto')){if(!R.mic&&!arg('--from'))R.failures.push('no talk button was tapped');else if(R.mic&&!R.mic.askedOnFirstTap)R.failures.push('the microphone was not asked for on the first talk-button tap');
   if(R.steer.holds&&R.steer.stoppedOnRelease<R.steer.holds*.9)R.failures.push(`he kept walking after letting go (${R.steer.stoppedOnRelease}/${R.steer.holds} stopped)`);
   if(R.steer.maxLag>2.6)R.failures.push(`a friend fell ${R.steer.maxLag} m behind in the maze`);}
  if(R.deviceVoice?.length)R.failures.push('the device voice was used: '+R.deviceVoice.join(' | '));

@@ -21,15 +21,17 @@ export function createUI({layer,say,sound=null,player='',preview=false,story='',
  const tele=globalThis.__living?.telemetry||[];
  function el(tag,cls,html=''){const e=document.createElement(tag);if(cls)e.className=cls;if(html)e.innerHTML=html;return e;}
  // A readable token: the word or letter itself on a solid badge (the checks measure every .lv-read).
- const token=(text,kind='word')=>`<span class="lv-read lv-${kind}">${esc(text)}</span>`;
+ // One case everywhere he reads (capitals, as on the signs and boards in the picture).
+ const token=(text,kind='word')=>`<span class="lv-read lv-${kind}">${esc(String(text).toUpperCase())}</span>`;
  // ---- anchoring flat things to places in the 3D world ----
  const v=new THREE.Vector3();
  // below: hang it under the point (on a tall screen the empty ground below the balls is the best place).
- function anchor(e,where,{dy=0,below=false}={}){e._where=where;e._dy=dy;e._below=below;e.classList.add('lv-anchored');e.classList.toggle('below',below);anchored.add(e);return e;}
+ // hideOff: a label for something in the picture hides when that thing is off screen (options stay on screen).
+ function anchor(e,where,{dy=0,below=false,hideOff=false}={}){e._where=where;e._dy=dy;e._below=below;e._hideOff=hideOff;e.classList.add('lv-anchored');e.classList.toggle('below',below);anchored.add(e);return e;}
  function update(camera,rect){
   const items=[];
   for(const e of anchored){if(!e.isConnected){anchored.delete(e);continue;}const p=e._where();if(!p){e.style.visibility='hidden';continue;}
-   v.copy(p).project(camera);if(v.z>1){e.style.visibility='hidden';continue;}e.style.visibility='';
+   v.copy(p).project(camera);if(v.z>1||(e._hideOff&&(Math.abs(v.x)>.92||Math.abs(v.y)>.92))){e.style.visibility='hidden';continue;}e.style.visibility='';
    items.push({e,x:(v.x+1)/2*rect.width,y:(1-v.y)/2*rect.height+(e._below?-e._dy+22:e._dy),w:e.offsetWidth,h:e.offsetHeight,below:e._below});}
   // Options never overlap (spread apart around their middle) and never leave the screen.
   const opts=items.filter(i=>i.e.classList.contains('lv-opt')).sort((a,b)=>a.x-b.x);

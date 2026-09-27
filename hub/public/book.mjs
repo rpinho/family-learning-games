@@ -314,12 +314,17 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   return new Promise(resolve=>{
    const btn=document.createElement('button');btn.type='button';btn.className='bk-magic';btn.innerHTML=`<small>${esc(p.magic.object||'magic word')}</small>${esc(p.magic.word)}`;el.append(btn);
    const started=Date.now();let repeats=0,done=false;teleStart('magic',{target:p.magic.word});
-   const nudge=()=>later(()=>{if(done||my!==turn||repeats>=IDLE_REPEATS)return;repeats++;teleHint(1);void speak(ch.ui.readIt);nudge();},IDLE_REPEAT_MS);
+   // The reminder only comes after real silence: every tap (an attempt) restarts the wait.
+   let lastTry=0;btn.addEventListener('click',()=>{lastTry=Date.now();},true);
+   const nudge=()=>later(()=>{if(done||my!==turn||repeats>=IDLE_REPEATS)return;if(Date.now()-lastTry<IDLE_REPEAT_MS||btn.classList.contains('listening')||btn.classList.contains('thinking'))return nudge();repeats++;teleHint(1);void speak(ch.ui.readIt);nudge();},IDLE_REPEAT_MS);
+   // The page has usually just asked "can you read it?": then it is not asked again.
+   const asked=/read it\??/i.test((p.say||[]).map(l=>l.text).join(' ').slice(-80));
    // With a microphone, the word itself is the button he taps to read it aloud.
-   void speak(ch.ui.readIt).then(async()=>{if(micUsable()&&!done&&my===turn)await speak(ch.ui.listenTap);nudge();});
+   (asked?Promise.resolve():speak(ch.ui.readIt)).then(async()=>{if(micUsable()&&!done&&my===turn)await speak(ch.ui.listenTap);nudge();});
    const respond=async({via,misses})=>{if(done)return;done=true;btn.classList.add('read');burst('sparkles');cheer();
     if(!preview){void post(player,{type:'result',date,page,result:{kind:'magic',misses,ms:Date.now()-started,via,...(via!=='echo'?{earned:{word:p.magic.word}}:{}),detail:teleOut()}});event('book_magic',`${p.magic.word}:${via}`);}
-    await speak(p.magic.read);if(my!==turn)return resolve();await speakAll(p.magic.after,my);resolve();};
+    // After the echo the narrator has just said the word: straight on to what happens.
+    if(via!=='echo')await speak(p.magic.read);if(my!==turn)return resolve();await speakAll(p.magic.after,my);resolve();};
    sayIt(btn,{target:{kind:'word',word:p.magic.word},kind:'magic',my,help:[p.magic.read],onDone:respond});
   });
  }
@@ -351,7 +356,8 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
     // The letter can be tapped at any moment; the friend finishes showing it first.
     const g=document.createElement('button');g.type='button';g.className='bk-glyph';g.textContent=b.letter;g.insertAdjacentHTML('beforeend',`<small class="lc">${esc(b.letter.toLowerCase())}</small>`);g.setAttribute('aria-label',`The letter ${b.letter}`);el.append(g);
     let tapped=false,shown=false;
-    const finish=async(r={misses:0})=>{g.classList.add('tapped');burst('sparkles');await speak(b.tap);if(my===turn)done({misses:r.misses||0,...(r.via?{via:r.via}:{})});};
+    // After the echo the narrator has just said the letter: it is not said again straight away.
+    const finish=async(r={misses:0})=>{g.classList.add('tapped');burst('sparkles');if(r.via!=='echo')await speak(b.tap);if(my===turn)done({misses:r.misses||0,...(r.via?{via:r.via}:{})});};
     g.onclick=()=>{if(tapped||my!==turn)return;tapped=true;if(shown)void finish();else g.classList.add('tapped');};
     if(!await speakAll(b.lines,my))return;shown=true;
     // Its shape too: he traces the big letter with his finger before he says it.
@@ -360,7 +366,9 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
     if(micUsable()){g.classList.remove('tapped');let said=false;
      sayIt(g,{target:{kind:'letter',letter:b.letter,names:[b.ownerName||art.actors[b.owner]?.name].filter(Boolean)},kind:'letter',my,help:[b.tap],onDone:r=>{said=true;void finish(r);}});
      await speak(ch.ui.sayLetter);
-     let n=0;const again=()=>later(()=>{if(said||my!==turn||n>=IDLE_REPEATS)return;n++;void speak(ch.ui.sayLetter);again();},IDLE_REPEAT_MS);again();return;}
+     // The reminder only comes after real silence: every tap on the letter restarts the wait.
+     let n=0,lastTry=Date.now();g.addEventListener('click',()=>{lastTry=Date.now();},true);
+     const again=()=>later(()=>{if(said||my!==turn||n>=IDLE_REPEATS)return;if(Date.now()-lastTry<IDLE_REPEAT_MS||g.classList.contains('listening')||g.classList.contains('thinking'))return again();n++;void speak(ch.ui.sayLetter);again();},IDLE_REPEAT_MS);again();return;}
     if(tapped)return void finish();
     let repeats=0;const nudge=()=>later(()=>{if(tapped||my!==turn||repeats>=IDLE_REPEATS)return;repeats++;void speak(b.tap);nudge();},IDLE_REPEAT_MS);nudge();
     return;}

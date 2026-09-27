@@ -146,7 +146,7 @@ export async function ride(ctx){
  function pose(){train.group.position.set(x,0,z);train.group.rotation.y=heading;
   for(const [p,car,off] of riders){if(!p)continue;const w=train.cars[car].localToWorld(new THREE.Vector3(off,.7,0));p.root.position.copy(w);}}
  function update(time,dt){t=time;S.userData.u.uTime.value=t;L.uTime.value=t;flies.userData.u.uTime.value=t;
-  const LAMPS=L.uLamps.value;signs.forEach((s,i)=>LAMPS[i].set(...s.lamp.lampPos().toArray(),1.8));LAMPS[5].set(...train.engine.localToWorld(new THREE.Vector3(2.2,1.6,0)).toArray(),2.4);
+  const LAMPS=L.uLamps.value;signs.forEach((s,i)=>LAMPS[i].set(...s.lamp.lampPos().toArray(),1.8));LAMPS[3].w=0;LAMPS[4].w=0;LAMPS[5].set(...train.engine.localToWorld(new THREE.Vector3(2.2,1.6,0)).toArray(),2.4);
   // Along the main line to the junction, then (once he has chosen) along the chosen branch.
   if(branch==null){const d=target-x;v=Math.min(v+dt*2.2,Math.max(0,Math.min(8,d*.55)));x+=v*dt;train.roll(v*dt);}
   else{const b=branches[branch],dx=b.end.x-JX,dz=b.end.z,len=Math.hypot(dx,dz);v=Math.min(9,v+dt*1.8);
@@ -210,6 +210,7 @@ export async function maze(ctx){
  const lanterns=[[start,-.9],[route[Math.floor(route.length*.3)],.9],[fork,.9],[route[Math.floor(route.length*.75)],-.9],[goal,.9]].map(([c,off],i)=>{const lp=lampPost(L,{h:2.2});const p=W(...c);lp.group.position.set(p.x+off*.75,0,p.z+.75);lp.set(1);scene.add(lp.group);return lp;});
  // The sign at the dead end: a plain plate here; its word (a decodable word he reads, e.g. NOT) is the overlay's.
  const sign=board(L,{lines:[String(ctx.story.maze?.sign||'not').toUpperCase()],w:.9,h:.55,bg:'#5a3a22',fg:'#f6e8c8',font:'700 150px Georgia, serif',px:360});
+ const fp=W(...fork),dp=W(...dead),dir=new THREE.Vector3().subVectors(dp,fp).normalize();
  const signG=new THREE.Group();signG.add(sign);const sp=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,1.1,6),paint(L,{color:'#4a3322'}));sp.position.y=-.6;signG.add(sp);
  signG.position.copy(fp).addScaledVector(dir,C*.45).add(new THREE.Vector3(dir.z*.7,1.25,-dir.x*.7));scene.add(signG);
  // The goal: the torn map piece glowing on a stone.
@@ -284,9 +285,9 @@ export async function maze(ctx){
  // rises higher (more of the maze ahead is visible; the friends behind him stay in frame).
  let tall=false;
  function groupCentre(){const c=hero.root.position.clone().multiplyScalar(.6);let w=.6;for(const f of [small,guide])if(f){c.addScaledVector(f.root.position,.2);w+=.2;}return c.multiplyScalar(1/w);}
- function followCam(k=1){const p=groupCentre();const off=tall?[.3,8.4,5.6]:[.4,5.6,5.2];
-  camTarget.lerp(new THREE.Vector3(p.x,.5,p.z-(tall?.4:.8)),.06*k);camPos.lerp(new THREE.Vector3(p.x+off[0],off[1],p.z+off[2]),.05*k);camera.position.copy(camPos);camera.lookAt(camTarget);}
- function snapCam(){const p=groupCentre();const off=tall?[.3,8.4,5.6]:[.4,5.6,5.2];camTarget.set(p.x,.5,p.z-(tall?.4:.8));camPos.set(p.x+off[0],off[1],p.z+off[2]);followCam(0);}
+ function followCam(k=1){const p=groupCentre();const off=tall?[.2,10.5,3.9]:[.4,6.6,4.6];
+  camTarget.lerp(new THREE.Vector3(p.x,.5,p.z-(tall?.2:.6)),.06*k);camPos.lerp(new THREE.Vector3(p.x+off[0],off[1],p.z+off[2]),.05*k);camera.position.copy(camPos);camera.lookAt(camTarget);}
+ function snapCam(){const p=groupCentre();const off=tall?[.2,10.5,3.9]:[.4,6.6,4.6];camTarget.set(p.x,.5,p.z-(tall?.2:.6));camPos.set(p.x+off[0],off[1],p.z+off[2]);followCam(0);}
  const mazeBox=[W(0,0).add(new THREE.Vector3(-C/2,0,-C/2)),W(N-1,N-1).add(new THREE.Vector3(C/2,H,C/2)),W(0,N-1).add(new THREE.Vector3(-C/2,0,C/2)),W(N-1,0).add(new THREE.Vector3(C/2,H,-C/2))];
  return {scene,update,people,hero,guide,small,maze:m,N,C,W,start,goal,fork,dead,route,cellOf,signG,piece,followCam,snapCam,mazeBox,setFound(v){found=v;},
   setTall(v){tall=v;},steer(v){want=v&&(Math.abs(v.x)+Math.abs(v.z)>0)?v:null;},get moving(){return moving;},

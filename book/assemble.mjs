@@ -51,8 +51,8 @@ function beatLines(b,{N,line,plan}){
  const who=b.who&&plan.cast.some(c=>c.id===b.who)?b.who:'narrator';
  switch(b.kind){
   case 'teach-letter':return {...b,lines:b.lines.map(([w,t])=>line(w,t)),tap:N(b.tap)};
-  case 'kick-letter':return {...b,spoken:N(b.spoken),notIt:N(b.notIt),done:N(b.done),tap:N(`${b.letter}! ${b.sound}!`)};
-  case 'stones':return {...b,spoken:N(b.spoken),notIt:N(b.notIt),done:N(b.done),tap:N(`${b.letter}! ${b.sound}!`)};
+  case 'kick-letter':return {...b,spoken:N(b.spoken),notIt:N(b.notIt),done:N(b.done),tap:N(`${b.letter} says ${b.sound}!`)};
+  case 'stones':return {...b,spoken:N(b.spoken),notIt:N(b.notIt),done:N(b.done),tap:N(`${b.letter} says ${b.sound}!`)};
   case 'order':return {...b,spoken:N(b.spoken),done:N(b.done)};
   case 'count':return {...b,spoken:N(b.spoken),ask:N(b.ask),done:N(`Yes! ${b.answer} ${b.things}!`)};
   case 'signs':return {...b,spoken:N(b.spoken),notIt:N(b.notIt),done:N(`Yes! It says ${b.target}!`),...(b.sounds?{sounds:soundLines(b.sounds,N)}:{})};
