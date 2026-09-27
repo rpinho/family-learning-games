@@ -21,13 +21,13 @@ async function companionMap(){try{const m=JSON.parse(await readFile(join(assets3
 const okId=x=>typeof x==='string'&&/^[a-z0-9-]{1,40}$/.test(x),okStandee=x=>typeof x==='string'&&/^standees\/[a-z0-9-]{1,40}\.png$/.test(x);
 const exists=async f=>{try{await stat(f);return true;}catch{return false;}};
 async function resolveEntry(x){
- if(okId(x))return await exists(join(assets3d,x+'.glb'))?{id:x,kind:'model',file:join(assets3d,x+'.glb'),url:`/companion/${x}.glb`}:null;
- if(x&&typeof x==='object'&&okId(x.id)){if(okStandee(x.standee)&&await exists(join(assets3d,x.standee)))return {id:x.id,kind:'standee',file:join(assets3d,x.standee),url:`/companion/${x.id}.png`};
+ if(okId(x))return await exists(join(assets3d,x+'.glb'))?{id:x,kind:'model',file:join(assets3d,x+'.glb'),url:`companion/${x}.glb`}:null;
+ if(x&&typeof x==='object'&&okId(x.id)){if(okStandee(x.standee)&&await exists(join(assets3d,x.standee)))return {id:x.id,kind:'standee',file:join(assets3d,x.standee),url:`companion/${x.id}.png`};
   if(okId(x.fallback))return resolveEntry(x.fallback);}
  return null;
 }
 async function companions(id){const list=(await companionMap())[id];if(!Array.isArray(list))return [];const out=[];for(const x of list){const r=await resolveEntry(x);if(r&&!out.some(o=>o.id===r.id))out.push(r);}return out;}
-async function companionFile(name,ext){for(const list of Object.values(await companionMap()))if(Array.isArray(list))for(const x of list){const r=await resolveEntry(x);if(r&&r.url===`/companion/${name}.${ext}`)return r.file;}return null;}
+async function companionFile(name,ext){for(const list of Object.values(await companionMap()))if(Array.isArray(list))for(const x of list){const r=await resolveEntry(x);if(r&&r.url===`companion/${name}.${ext}`)return r.file;}return null;}
 const staticRoot=fileURLToPath(new URL('./dist/client/',import.meta.url));
 await mkdir(join(data,'logs'),{recursive:true,mode:0o700});await mkdir(join(data,'voice'),{recursive:true,mode:0o700});
 let queue=Promise.resolve(),logError=null;

@@ -83,7 +83,7 @@ export default function Slalom({p,session,voice,soundRef,audio,paused,onPause,on
      onGate:(i,answer,lane,hinted)=>passGate(i,answer,hinted),onFinish:()=>void finish(),onStats:s=>log('slalom_quality',s),onContextLost:()=>{log('slalom_error','context lost');setFallback('lost');}});
     window.__slalom=scene.current;setLive(true);
     // friends for the finish line: queued now, loaded one per gate during the run (never a pop-in at the finish)
-    void fetch(`/api/${p.id}/companions`,{cache:'no-store'}).then(r=>r.ok?r.json():{friends:[]}).then(({friends=[]})=>scene.current?.queueFriends(friends)).catch(()=>{});
+    void fetch(`/api/${p.id}/companions`,{cache:'no-store'}).then(r=>r.ok?r.json():{friends:[]}).then(({friends=[]})=>scene.current?.queueFriends(friends.map(f=>({...f,url:new URL(f.url,location.href).href})))) // page-relative: works inside the hub's /g/<game>/<player>/ too.catch(()=>{});
     setPhase('run');log('slalom_start',{gate:session.round,track,size:`${innerWidth}x${innerHeight}`});
     queue(async()=>{
      await sleep(400);

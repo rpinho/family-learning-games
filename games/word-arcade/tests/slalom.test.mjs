@@ -81,7 +81,7 @@ test('Finish-line friends: listed models and standees that exist are offered and
  for(const n of ['toy-a','toy-b','toy-c','secret'])await writeFile(join(assets,n+'.glb'),'glTF');await mkdir(join(assets,'standees'));await writeFile(join(assets,'standees','paper.png'),'PNG');
  const child=spawn(process.execPath,['server.mjs'],{cwd:new URL('..',import.meta.url),env:{...process.env,PORT:'14332',HOST:'127.0.0.1',WORD_ARCADE_DATA:dir,LETTER_QUEST_DATA:dir,FAMILY_ASSETS3D:assets},stdio:['ignore','pipe','pipe']});
  try{await new Promise((resolve,reject)=>{child.stdout.once('data',resolve);child.once('error',reject);});const base='http://127.0.0.1:14332';
-  assert.deepEqual((await(await fetch(base+'/api/beginner/companions')).json()).friends,[{id:'toy-a',kind:'model',url:'/companion/toy-a.glb'},{id:'paper',kind:'standee',url:'/companion/paper.png'},{id:'toy-b',kind:'model',url:'/companion/toy-b.glb'}]);
+  assert.deepEqual((await(await fetch(base+'/api/beginner/companions')).json()).friends,[{id:'toy-a',kind:'model',url:'companion/toy-a.glb'},{id:'paper',kind:'standee',url:'companion/paper.png'},{id:'toy-b',kind:'model',url:'companion/toy-b.glb'}]);
   assert.deepEqual((await(await fetch(base+'/api/admin/companions')).json()).friends,[]);
   const r=await fetch(base+'/companion/toy-a.glb');assert.equal(r.status,200);assert.equal(r.headers.get('content-type'),'model/gltf-binary');
   const g=await fetch(base+'/companion/paper.png');assert.equal(g.status,200);assert.equal(g.headers.get('content-type'),'image/png');
