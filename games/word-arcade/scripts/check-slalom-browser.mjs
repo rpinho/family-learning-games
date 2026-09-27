@@ -49,7 +49,7 @@ try{
  if(!await until(`!!document.querySelector('section.lobby')`,30000))throw Error('lobby did not load');
  const manifest=await js(`fetch('/voice/manifest.json').then(r=>r.json())`),textOf=Object.fromEntries(Object.entries(manifest.clips).map(([t,c])=>[c,t]));
  // Control: sound is refused before the first tap.
- result.audio.beforeTap=await js(`(async()=>{try{await new Audio('/voice/manifest.json').play();return 'played'}catch(e){return e.name}})()`);
+ const probe=Object.values(manifest.clips)[0];result.audio.beforeTap=await js(`(async()=>{try{await new Audio(${JSON.stringify(probe)}).play();return 'played'}catch(e){return e.name}finally{window.__audio.length=0;}})()`);
  await tap('section.lobby h1');
  const card=`.live-game-card.game-slalom`;if(!await until(`!!document.querySelector('${card}')`,5000))throw Error('no Letter Slalom card');
  await shot('0-lobby');await tap(card);
@@ -96,7 +96,7 @@ try{
  prof=await profileNow();result.complete=prof.session.phase==='complete';result.results=prof.session.results.map(r=>({answer:r.q.answer,chose:r.answer,ok:r.independent}));
  // audio: which lines played (and when), refused plays
  const audio=await js('window.__audio');const said=audio.filter(a=>a.ok).map(a=>({text:textOf[new URL(a.src).pathname]||a.src,at:Math.round(a.at)})).filter((a,k,all)=>!(k&&all[k-1].text===a.text&&a.at-all[k-1].at<1500));
- result.audio.plays=said.length;result.audio.refused=audio.filter(a=>a.err&&a.err!=='AbortError'&&!a.src.endsWith('/voice/manifest.json')).length;
+ result.audio.plays=said.length;result.audio.refused=audio.filter(a=>a.err&&a.err!=='AbortError').length;
  const saidText=said.map(a=>a.text);
  for(const g of result.gates){if(!g)continue;g.promptHeard=saidText.includes(g.prompt);const full=gates[g.gate];if(g.miss)g.correctionHeard=saidText.includes(full.correction);}
  result.audio.recap=saidText.filter(t=>/lovely run/.test(t)).length;result.audio.lines=saidText;

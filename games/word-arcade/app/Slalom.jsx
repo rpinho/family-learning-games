@@ -44,6 +44,9 @@ export default function Slalom({p,session,voice,soundRef,audio,paused,onPause,on
   await Promise.allSettled(pending.current);if(!alive.current)return;
   const d=scene.current?.stats();if(d)log('slalom_perf',{...d,runMs:Math.round(performance.now()-startedAt.current)});
   setPhase('recap');
+  // the child's own toys (if this home has them) wait at the bottom and cheer
+  void (async()=>{try{const r=await fetch(`/api/${p.id}/companions`,{cache:'no-store'});if(!r.ok)return;const {files=[]}=await r.json();const pick=[...files].sort(()=>Math.random()-0.5).slice(0,2);
+   const n=await scene.current?.addCompanions(pick.map(f=>`/companion/${f}.glb`));if(n)log('slalom_companions',pick.join(','));}catch{}})();
   await queue(async()=>{
    await sleep(1200);
    await say(track==='letters'?SLALOM_LINES.recapLetters:SLALOM_LINES.recapWords);
@@ -99,7 +102,7 @@ export default function Slalom({p,session,voice,soundRef,audio,paused,onPause,on
   <h2>{rest?'All done for today!':`What a run, ${name}!`}</h2>
   <div className="slalom-recap-row">{shown.map((x,k)=><span key={k} className={'slalom-card '+x.kind}>{x.picture&&<i aria-hidden="true">{x.picture}</i>}{x.answer}</span>)}</div>
   <p>{track==='letters'?'Your letters from the mountain.':'Your words from the mountain.'}</p>
-  {rest?<button className="primary" onClick={onHome}>Back to Arcade</button>:<><button className="primary" onClick={onAgain}>Ski again ⛷️</button><button onClick={onHome}>Choose another game</button></>}
+  <div className="slalom-finish-actions">{rest?<button className="primary" onClick={onHome}>Back to Arcade</button>:<><button className="primary" onClick={onAgain}>Ski again ⛷️</button><button onClick={onHome}>Choose another game</button></>}</div>
  </section>;
  if(phase==='done'&&!live)return finishCard;
  return <div className={'slalom-root'+(paused?' is-paused':'')} ref={host} data-phase={phase}>
@@ -109,7 +112,7 @@ export default function Slalom({p,session,voice,soundRef,audio,paused,onPause,on
    <div className="slalom-top">
     <button className="slalom-btn" onClick={onHome} aria-label="Back to Arcade">←</button>
     <button className="slalom-btn" onClick={onPause} aria-label="Pause">Ⅱ</button>
-    {phase==='run'&&g?<div className="slalom-prompt" role="status">
+    {phase==='run'&&g&&passed<shown.length?<div className="slalom-prompt" role="status">
      <button className="slalom-hear" onClick={hear} aria-label="Hear it again">🔊</button>
      {g.kind==='first-letter'&&<span className="slalom-picture" aria-hidden="true">{g.picture}</span>}
      {g.kind==='next-word'&&<span className="slalom-sentence">{g.before.join(' ')} <b>___</b></span>}

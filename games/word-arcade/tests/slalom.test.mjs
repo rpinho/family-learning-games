@@ -84,3 +84,16 @@ test('The server builds a run from the Letter Quest save without changing it',as
   assert.equal(await readFile(join(letters,'beginner.json'),'utf8'),save);
  }finally{child.kill();}
 });
+test('Finish-line friends: only models listed for that player and present on disk are offered or served',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'wa-slalom-')),assets=await mkdtemp(join(tmpdir(),'wa-3d-'));
+ await writeFile(join(assets,'companions.json'),JSON.stringify({beginner:['toy-a','missing','../x'],explorer:['toy-b']}));
+ for(const n of ['toy-a','toy-b','secret'])await writeFile(join(assets,n+'.glb'),'glTF');
+ const child=spawn(process.execPath,['server.mjs'],{cwd:new URL('..',import.meta.url),env:{...process.env,PORT:'14332',HOST:'127.0.0.1',WORD_ARCADE_DATA:dir,LETTER_QUEST_DATA:dir,FAMILY_ASSETS3D:assets},stdio:['ignore','pipe','pipe']});
+ try{await new Promise((resolve,reject)=>{child.stdout.once('data',resolve);child.once('error',reject);});const base='http://127.0.0.1:14332';
+  assert.deepEqual((await(await fetch(base+'/api/beginner/companions')).json()).files,['toy-a']);
+  assert.deepEqual((await(await fetch(base+'/api/admin/companions')).json()).files,[]);
+  const r=await fetch(base+'/companion/toy-a.glb');assert.equal(r.status,200);assert.equal(r.headers.get('content-type'),'model/gltf-binary');
+  assert.equal((await fetch(base+'/companion/secret.glb')).status,404);assert.equal((await fetch(base+'/companion/..%2Fsecret.glb')).status,404);
+  assert.equal((await fetch(base+'/api/beginner/companions',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).status,405);
+ }finally{child.kill();}
+});
