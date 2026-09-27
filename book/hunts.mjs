@@ -70,8 +70,23 @@ export function dayHunts(model,{date,today=[],interests=[],who}){
 }
 // Who hunts with each child (voice and greeting), from the hunts file, with sensible defaults.
 const WHO={diogo:{greet:'Ahoy, Diogo!',cheer:'Ahoy!',voice:{voice:'bm_fable',speed:1.05},lower:false},francisco:{greet:'Pika-pi! Conductor!',cheer:'Pika!',voice:{voice:'am_adam',speed:0.88},lower:true}};
+// Bring an older hunts file up to the current shape (idempotent):
+//  - a hand-written hunt with no mode and no letter (rhymes, tricky words, "ck") is a WORD hunt and is kept;
+//  - the friend who hunts with a child must be in that child's cast (cast.json children.<player>.fixed): if not,
+//    his first fixed friend takes over, with that friend's voice for the goodbye line;
+//  - a child with both kinds of hunt gets a label per mode.
+export function migrate(cfg,player,{cast={},paths=null,who=null}={}){
+ for(const h of cfg.hunts||[])if(!h.mode&&!h.generated&&!h.letter)h.mode='word';
+ const mine=cast?.children?.[player]?.fixed||[];
+ if(mine.length&&!mine.includes(cfg.friend?.id)){const id=mine[0],c=(cast.cast||[]).find(x=>x.id===id)||{};
+  const file=paths&&['svg','webp','png'].map(e=>`${id}-idle.${e}`).find(n=>existsSync(join(paths.book,'art','lib','actors',n)));
+  cfg.friend={id,name:c.name||id,...(file?{url:`/book-art/actors/${file}`}:{})};
+  if(cfg.tomorrow&&c.voice){cfg.tomorrow={text:cfg.tomorrow.text,voice:c.voice,speed:c.speed||0.95};}}
+ if(cfg.hunts?.some(h=>h.mode==='word')&&!cfg.byMode)cfg.byMode={word:{label:'Word hunt'},letter:{label:'Letter hunt'}};
+ return cfg;}
 export async function writeHunts({paths=bookPaths(),date,players=null,dry=false,log=console.log}={}){
  const file=join(paths.book,'hunts.json');const before=await readFile(file,'utf8');const f=JSON.parse(before);
+ let cast={};try{cast=JSON.parse(await readFile(paths.cast,'utf8'));}catch{}
  const profiles=readProfiles(paths);const results={};
  for(const [player,cfg] of Object.entries(f.players||{})){if(players&&!players.includes(player))continue;
   try{const model=JSON.parse(await readFile(join(paths.learner,player+'.json'),'utf8'));
@@ -80,6 +95,7 @@ export async function writeHunts({paths=bookPaths(),date,players=null,dry=false,
    const current=(cfg.hunts||[]).filter(h=>(h.mode||'letter')==='letter');
    const today=cfg.generatedFor===date&&Array.isArray(cfg.basedOn)?cfg.basedOn:[...new Set(current.map(h=>h.letter).filter(Boolean))];
    const interests=[...new Set([...(model.interests||[]),...((profiles[player]||{}).interests||[])])];
+   migrate(cfg,player,{cast,paths,who});
    const fresh=dayHunts(model,{date,today,interests,who});
    cfg.hunts=[...fresh,...(cfg.hunts||[]).filter(h=>h.mode==='word')];cfg.generatedFor=date;cfg.basedOn=today;delete cfg.replayable;
    results[player]={letters:[...new Set(fresh.map(h=>h.letter))],ids:fresh.map(h=>h.id)};
@@ -88,9 +104,12 @@ export async function writeHunts({paths=bookPaths(),date,players=null,dry=false,
  const r=await voiceHunts(paths.book,{f,paths,check:dry});
  if(!dry){// Every clip the published file points at must exist and sound whole (not only today's letter-sound lines).
   const clips=new Set();JSON.stringify(f.players,(k,v)=>{if(k==='clip'&&typeof v==='string')clips.add(v);return v;});
-  const fresh=[...clips].map(c=>join(paths.book,'voice',c));const gone=fresh.filter(p=>!existsSync(p));
+  // Lines that splice in a letter sound are joined (the click test applies); every other line is one render.
+  const joined=new Set();JSON.stringify(f.players,(k,v)=>{if(v&&typeof v.clip==='string'&&[...String(v.text).matchAll(/\[\[([^\]]*)\]\]/g)].some(m=>{const n=m[1].replace(/[ˈˌ]/g,'').length;return n>0&&n<=2;}))joined.add(v.clip);return v;});
+  const all=[...clips].map(c=>join(paths.book,'voice',c));const gone=all.filter(p=>!existsSync(p));
   if(gone.length)throw Error(`clip check failed: ${gone.length} clip(s) missing, first ${gone[0]}`);
-  if(fresh.length){try{execFileSync(paths.python,[join(here,'..','hub','scripts','check-sounds.py'),...fresh],{encoding:'utf8'});}catch(e){throw Error('clip check failed:\n'+String(e.stdout||e.message).split('\n').filter(l=>!l.startsWith('ok ')).join('\n').slice(0,800));}}
+  const runs=[[[...clips].filter(c=>joined.has(c)),[]],[[...clips].filter(c=>!joined.has(c)),['--whole']]];
+  for(const [list,opt] of runs)if(list.length){try{execFileSync(paths.python,[join(here,'..','hub','scripts','check-sounds.py'),...opt,...list.map(c=>join(paths.book,'voice',c))],{encoding:'utf8'});}catch(e){throw Error('clip check failed:\n'+String(e.stdout||e.message).split('\n').filter(l=>!l.startsWith('ok ')).join('\n').slice(0,800));}}
   await copyFile(file,join(paths.book,`hunts.json.${date}.bak`));const tmp=file+'.tmp';await writeFile(tmp,JSON.stringify(f,null,1),{mode:0o600});await rename(tmp,file);}
  return {date,results,lines:r.lines,made:r.made};
 }

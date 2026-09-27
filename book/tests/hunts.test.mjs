@@ -24,3 +24,15 @@ test('every letter, both boys: no word said twice in a row, a/an right', async()
   for(const h of hs)for(const l of [h.intro,h.goal.line,h.done,...h.hints.map(x=>x.line)]){
    assert.deepEqual(repeatedWords(l.text),[],`${L}: ${l.text}`);assert.doesNotMatch(l.text,/\ba [aeiou]/i,`${L}: ${l.text}`);}}
 });
+
+test('an older hunts file is migrated: legacy word hunts kept, friend from the child\'s cast, labels per mode', async()=>{
+ const {migrate}=await import('../hunts.mjs');
+ const cast={children:{francisco:{fixed:['big-pikachu']}},cast:[{id:'big-pikachu',name:'Pika',voice:'am_adam',speed:0.88}]};
+ const cfg={label:'Word hunt',friend:{id:'rainbow-hedgehog',name:'Picos'},tomorrow:{text:'Bye!',voice:'af_bella',speed:1,clip:'x.wav'},
+  hunts:[{id:'cat-rhymes',kind:'sound'},{id:'M-sound',letter:'M'}]};
+ migrate(cfg,'francisco',{cast});
+ assert.equal(cfg.hunts[0].mode,'word');assert.equal(cfg.hunts[1].mode,undefined);
+ assert.equal(cfg.friend.name,'Pika');assert.equal(cfg.tomorrow.voice,'am_adam');assert.equal(cfg.tomorrow.clip,undefined);
+ assert.equal(cfg.byMode.letter.label,'Letter hunt');
+ const again=JSON.stringify(cfg);migrate(cfg,'francisco',{cast});assert.equal(JSON.stringify(cfg),again);
+});

@@ -3,13 +3,15 @@ For each WAV: the voiced part is long enough (not cut short), the clip starts an
 mid-sound), nothing is digitally clipped, and there is no click (a sudden jump in otherwise quiet audio,
 which is what a bad join sounds like). Isolated sound clips (Letter Quest's and the shared letter-sounds
 folder) must also have a gentle attack and release.
-Usage: python check-sounds.py [--isolated] <wav or folder> ... [--json]
+--whole: the clips are single voice renders with no joins; the click test (which is about joins) is skipped
+there, because a plosive after a pause ("...cat") looks like a click to it. Edges and clipping are still checked.
+Usage: python check-sounds.py [--isolated|--whole] <wav or folder> ... [--json]
 Exit 1 when any clip fails."""
 import json, sys
 from pathlib import Path
 import numpy as np, soundfile as sf
 
-def analyse(path, isolated=False):
+def analyse(path, isolated=False, whole=False):
     a, r = sf.read(str(path), dtype='float32')
     if a.ndim > 1: a = a.mean(axis=1)
     out = {'file': Path(path).name, 'seconds': round(len(a) / r, 3), 'issues': []}
@@ -28,7 +30,7 @@ def analyse(path, isolated=False):
     kernel = np.ones(2 * w + 1); kernel[w - 2:w + 3] = 0; kernel /= kernel.sum()
     floor = np.sqrt(np.convolve(sd * sd, kernel, mode='same'))
     clicks = np.flatnonzero((sd > 0.08) & (sd > 10 * np.maximum(floor, 1e-4)))
-    if len(clicks): out['issues'].append(f'{len(clicks)} click(s), first at {clicks[0] / r:.3f} s')
+    if len(clicks) and not whole: out['issues'].append(f'{len(clicks)} click(s), first at {clicks[0] / r:.3f} s')
     if isolated:
         if voiced < 0.06: out['issues'].append(f'sound too short ({voiced:.3f} s voiced)')
         if len(loud):
@@ -38,11 +40,11 @@ def analyse(path, isolated=False):
     return out
 
 def main(args):
-    iso = '--isolated' in args; as_json = '--json' in args
+    iso = '--isolated' in args; whole = '--whole' in args; as_json = '--json' in args
     files = []
     for x in [a for a in args if not a.startswith('--')]:
         p = Path(x); files += sorted(p.glob('*.wav')) if p.is_dir() else [p]
-    res = [analyse(f, iso) for f in files]
+    res = [analyse(f, iso, whole) for f in files]
     bad = [r for r in res if r['issues']]
     if as_json: print(json.dumps({'ok': not bad, 'checked': len(res), 'failures': bad, 'all': res}))
     else:
