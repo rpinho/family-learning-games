@@ -95,9 +95,11 @@ async function run(size){
     if(h.noShown){await sleep(500);await shot('maze-fork');await tap('#no');await sleep(800);continue;}
     const x=Math.max(8,Math.min(W-8,h.hero.x+h.dir.x*110)),y=Math.max(8,Math.min(H-8,h.hero.y+h.dir.y*110));
     await touch('touchStart',x,y);await sleep(420);await touch('touchEnd',x,y);R.steer.holds++;
-    await sleep(120);const after=await js('__living.steerHint()').catch(()=>null);if(after&&!after.moving)R.steer.stoppedOnRelease++;
+    // Let go: after one frame he must not move at all (compare his position over the next half second).
+    await sleep(400);const a1=await js('__living.steerHint()').catch(()=>null);await sleep(500);const a2=await js('__living.steerHint()').catch(()=>null);
+    if(a1&&a2&&Math.hypot(a2.pos[0]-a1.pos[0],a2.pos[1]-a1.pos[1])<.02)R.steer.stoppedOnRelease++;
     // The friends: never far behind him (measured once they have had a moment to catch up).
-    await sleep(500);const later=await js('__living.steerHint()').catch(()=>null);if(later)R.steer.maxLag=Math.max(R.steer.maxLag,later.lag);
+    if(a2)R.steer.maxLag=Math.max(R.steer.maxLag,a2.lag);
     if(R.steer.holds%12===0)await shot('maze-steer');
     continue;}
    await sleep(250);

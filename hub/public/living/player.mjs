@@ -167,7 +167,7 @@ async function main(){
   m.snapCam();dir.setFollow(()=>{m.followCam();camera.fov=lerp(camera.fov,mode.tall?54:40,.1);camera.updateProjectionMatrix();post.uFocus=lerp(post.uFocus,camera.position.distanceTo(m.hero.root.position),.1);});post.uAperture=.3;
   await say('mz2');mark('maze-play');
   // He steers; his friends follow. At the fork a friend's bad idea meets a sign he can read.
-  let forkDone=false,noShown=false,atGoal=false,noSaid=false;
+  let forkDone=false,noShown=false,atGoal=false,noSaid=false,noLog=null;
   const signWord=String(story.maze?.sign||'not').toUpperCase();const signTag=document.createElement('div');signTag.className='lv-sign';signTag.innerHTML=ui.token(signWord,'word');$('#ui').append(signTag);
   ui.anchor(signTag,()=>m.signG.position.distanceTo(m.hero.root.position)<7?m.signG.localToWorld(new THREE.Vector3(0,.45,0)):null,{hideOff:true});
   const v2=new THREE.Vector3();
@@ -175,18 +175,20 @@ async function main(){
   const toWorld=d=>{if(!d)return null;const rgt=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0).setY(0).normalize(),fwd=new THREE.Vector3();camera.getWorldDirection(fwd);fwd.setY(0).normalize();return rgt.multiplyScalar(d.x).addScaledVector(fwd,-d.y);};
   busyMoving=true;
   const ctl=ui.controls({canvas,origin:heroScreen,onDir:d=>m.steer(toWorld(d))});
-  state.steerHint=()=>{const d=m.nextStep(m.goal);const p=m.hero.root.position.clone(),a=p.clone().add(new THREE.Vector3(d.x,0,d.z));const pa=p.clone().project(camera),pb=a.project(camera);const dx=pb.x-pa.x,dy=-(pb.y-pa.y),n=Math.hypot(dx,dy)||1;const h=heroScreen();const lag=Math.max(0,...[m.small,m.guide].filter(f=>f&&!f._lead).map(f=>Math.hypot(f.root.position.x-m.hero.root.position.x,f.root.position.z-m.hero.root.position.z)));return {hero:h,dir:{x:dx/n,y:dy/n},moving:m.moving,cell:m.cellOf(m.hero.root.position),noShown,lag:+lag.toFixed(2)};};
+  state.steerHint=()=>{const d=m.nextStep(m.goal);const p=m.hero.root.position.clone(),a=p.clone().add(new THREE.Vector3(d.x,0,d.z));const pa=p.clone().project(camera),pb=a.project(camera);const dx=pb.x-pa.x,dy=-(pb.y-pa.y),n=Math.hypot(dx,dy)||1;const h=heroScreen();const lag=Math.max(0,...[m.small,m.guide].filter(f=>f&&!f._lead).map(f=>Math.hypot(f.root.position.x-m.hero.root.position.x,f.root.position.z-m.hero.root.position.z)));const hp=m.hero.root.position;return {hero:h,dir:{x:dx/n,y:dy/n},moving:m.moving,pos:[+hp.x.toFixed(3),+hp.z.toFixed(3)],cell:m.cellOf(hp),noShown,lag:+lag.toFixed(2)};};
   const noBtn=$('#no');
   const watch=setInterval(async()=>{const c=m.cellOf(m.hero.root.position);
-   if(!forkDone&&c[0]===m.fork[0]&&c[1]===m.fork[1]){forkDone=true;const d=m.W(...m.dead);if(m.small){m.small._lead=true;m.small.walkTo([[lerp(m.small.root.position.x,d.x,.5),0,lerp(m.small.root.position.z,d.z,.5)]],1.8);m.small.hop(.2);}
-    noShown=true;noBtn.hidden=false;mark('fork');expect({kind:'no'});await checkpoint('fork');await say('fork');}
-   if(c[0]===m.dead[0]&&c[1]===m.dead[1]&&noShown){noShown=false;noBtn.hidden=true;if(m.small)m.small._lead=false;state.expect=steerE;mark('dead-end');await say('oops');}
+   if(!forkDone&&c[0]===m.fork[0]&&c[1]===m.fork[1]){forkDone=true;const d=m.W(...m.dead);if(m.small){m.small._lead=true;m.small.walkTo([[lerp(m.small.root.position.x,d.x,.3),0,lerp(m.small.root.position.z,d.z,.3)]],1.8);m.small.hop(.2);}m.frameAlso(m.signG.position);
+    noShown=true;noBtn.hidden=false;noLog=ui.beatLog('no');mark('fork');expect({kind:'no'});await checkpoint('fork');await say('fork');}
+   if(c[0]===m.dead[0]&&c[1]===m.dead[1]&&noShown){noShown=false;noBtn.hidden=true;m.frameAlso(null);if(m.small)m.small._lead=false;state.expect=steerE;mark('dead-end');await say('oops');}
    if(!atGoal&&c[0]===m.goal[0]&&c[1]===m.goal[1]){atGoal=true;}},150);
-  noBtn.onclick=async()=>{if(!noShown)return;noShown=false;noSaid=true;noBtn.hidden=true;sound?.play('no');mark('said-no');const lg=ui.beatLog('no');lg.tap('no',true);lg.done('tap');if(m.small){m.small.hop(.25);m.small._lead=false;}state.expect=steerE;await say('no');};
+  noBtn.onclick=async()=>{if(!noShown)return;noShown=false;noSaid=true;noBtn.hidden=true;m.frameAlso(null);sound?.play('no');mark('said-no');const lg=noLog||ui.beatLog('no');lg.tap('no',true);lg.done('tap');if(m.small){m.small.hop(.25);m.small._lead=false;}state.expect=steerE;await say('no');};
   const steerE={kind:'steer',target:()=>noShown?m.fork:m.goal,pauseAt:()=>noShown&&AUTO&&(noBtn.click(),true)};expect(steerE);
   await new Promise(r=>{const f=()=>atGoal?r():setTimeout(f,120);f();});clearInterval(watch);ctl.dispose();state.expect=null;noBtn.hidden=true;signTag.remove();busyMoving=false;
   // Found it.
   mark('found');m.setFound(true);sound?.play('sparkle');dir.setFollow(null);m.steer(null);m.hero.setPose('cheer');m.hero.hop(.3);
+  // His friends come up beside him (not between him and the camera).
+  {const h=m.hero.root.position,side=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0).setY(0).normalize();for(const [f,k] of [[m.small,-.8],[m.guide,.9]])if(f){f._lead=true;f.walkTo([[h.x+side.x*k,0,h.z+side.z*k]],2.2);}}
   await shot('goal',{pos:camera.position.toArray(),look:m.hero.root.position.toArray(),fov:camera.fov,raw:true},m.shots.goal,{dur:3.5,focusFrom:8,focusTo:3.4,aperture:.45});
   await checkpoint('found');await say('found');m.guide?.setPose('happy');await say('big2');
   const rise=shot('rise',m.shots.goal,m.shots.rise,{dur:9,focusFrom:3.6,focusTo:12,aperture:.3});await say('end');await rise;
@@ -205,7 +207,7 @@ async function main(){
   await shot('kick',s.friends,s.kick,{dur:3,focusFrom:5,focusTo:5,aperture:.25});await say('d5');mark('kick');await checkpoint('kick');
   const res=await readBeat({id:'kick-letter',options:K.balls,answer:K.answer,layout:'anchored',anchors:K.balls.map((_,i)=>w.ballTop(i,mode.tall)),below:true,wrongLine:'dWrong',sayLine:'uiLetterSay',kind:'letter'});
   const ball=w.balls[K.balls.indexOf(K.answer)];w.balls.forEach(b=>{if(b!==ball)b.visible=false;});await w.kick(ball,host);
-  mark('goal');await say('dGoal');await shot('cheer',s.kick,s.cheer,{dur:3});if(w.mom&&L.dMom){w.mom.setPose('cheer');await say('dMom');}w.pet?.hop(.3);await checkpoint('cheer');
+  mark('goal');void w.regroup();await say('dGoal');await shot('cheer',s.kick,s.cheer,{dur:3});if(w.mom&&L.dMom){w.mom.setPose('cheer');await say('dMom');}w.pet?.hop(.3);await checkpoint('cheer');
   // 2. A penalty: Birdie in goal. He taps where he wants to kick (anywhere counts).
   if(L.pk1){await say('pk1');await w.toGoal(host);const pb=w.penalty();await shot('spot',s.cheer,s.spot,{dur:3,focusFrom:8,focusTo:7,aperture:.15});await say('pk2');mark('penalty');await checkpoint('penalty');
    const aim=await new Promise(res=>{const plane=new THREE.Plane(new THREE.Vector3(0,0,1),6.4),hit=new THREE.Vector3(),ray=new THREE.Raycaster(),ndc=new THREE.Vector2(),lg=ui.beatLog('penalty');
@@ -223,7 +225,7 @@ async function main(){
    await ui.choose({id:'no-fix',options:N.options,answer:N.answer,layout:'board',kind:'letter',soundOut:async l=>say('lt:'+String(l).toLowerCase()),onWrong:async()=>{}}).then(r=>r.remove());state.expect=null;
    await say('no3');w.flyer?.hop(.2);await say('no4');}
   // 4. Fetch: the puppy fetches only the ball with her letter.
-  if(L.f1){const F=story.fetch||{balls:['T','L','I'],answer:'L'};await w.regroup();w.relabel(F.balls);for(const b of w.balls)b.visible=true;
+  if(L.f1){const F=story.fetch||{balls:['T','L','I'],answer:'L'};await w.regroup('fetch');w.relabel(F.balls);for(const b of w.balls)b.visible=true;
    await shot('fetch',s.bar,s.fetch,{dur:3,focusFrom:5,focusTo:9,aperture:.2});await say('f1');await say('f2');mark('fetch');await checkpoint('fetch');
    await readBeat({id:'fetch-letter',options:F.balls,answer:F.answer,layout:'anchored',anchors:F.balls.map((_,i)=>w.ballTop(i,mode.tall)),below:true,wrongLine:'fWrong',sayLine:'uiLetterSay',kind:'letter'});
    const fb=w.balls[F.balls.indexOf(F.answer)];w.balls.forEach(b=>{if(b!==fb)b.visible=false;});await w.fetchBall(fb,host);await say('f3');}

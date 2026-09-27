@@ -284,15 +284,17 @@ export async function maze(ctx){
  // Follow camera: above and behind the group (him and his friends), a little ahead of him. On a tall screen it
  // rises higher (more of the maze ahead is visible; the friends behind him stay in frame).
  let tall=false;
- function groupCentre(){const c=hero.root.position.clone().multiplyScalar(.6);let w=.6;for(const f of [small,guide])if(f){c.addScaledVector(f.root.position,.2);w+=.2;}return c.multiplyScalar(1/w);}
- function followCam(k=1){const p=groupCentre();const off=tall?[.2,10.5,3.9]:[.4,6.6,4.6];
+ // extra: something the camera must also show (the sign at the fork, while he has to read it).
+ let extra=null;
+ function groupCentre(){const c=hero.root.position.clone().multiplyScalar(.6);let w=.6;for(const f of [small,guide])if(f){c.addScaledVector(f.root.position,.2);w+=.2;}if(extra){c.addScaledVector(extra,.7);w+=.7;}return c.multiplyScalar(1/w);}
+ function followCam(k=1){const p=groupCentre();const off=tall?[.2,10.5,3.9]:[.3,8.6,3.4];
   camTarget.lerp(new THREE.Vector3(p.x,.5,p.z-(tall?.2:.6)),.06*k);camPos.lerp(new THREE.Vector3(p.x+off[0],off[1],p.z+off[2]),.05*k);camera.position.copy(camPos);camera.lookAt(camTarget);}
- function snapCam(){const p=groupCentre();const off=tall?[.2,10.5,3.9]:[.4,6.6,4.6];camTarget.set(p.x,.5,p.z-(tall?.2:.6));camPos.set(p.x+off[0],off[1],p.z+off[2]);followCam(0);}
+ function snapCam(){const p=groupCentre();const off=tall?[.2,10.5,3.9]:[.3,8.6,3.4];camTarget.set(p.x,.5,p.z-(tall?.2:.6));camPos.set(p.x+off[0],off[1],p.z+off[2]);followCam(0);}
  const mazeBox=[W(0,0).add(new THREE.Vector3(-C/2,0,-C/2)),W(N-1,N-1).add(new THREE.Vector3(C/2,H,C/2)),W(0,N-1).add(new THREE.Vector3(-C/2,0,C/2)),W(N-1,0).add(new THREE.Vector3(C/2,H,-C/2))];
  return {scene,update,people,hero,guide,small,maze:m,N,C,W,start,goal,fork,dead,route,cellOf,signG,piece,followCam,snapCam,mazeBox,setFound(v){found=v;},
-  setTall(v){tall=v;},steer(v){want=v&&(Math.abs(v.x)+Math.abs(v.z)>0)?v:null;},get moving(){return moving;},
+  setTall(v){tall=v;},frameAlso(v){extra=v?v.clone().setY(0):null;},steer(v){want=v&&(Math.abs(v.x)+Math.abs(v.z)>0)?v:null;},get moving(){return moving;},
   // For the checks: the direction (in the world) of the next step along the way to a cell.
   nextStep(cell){const r=mazePath(m,cellOf(hero.root.position),cell);const c=toCell(hero.root.position);if(r.length<2){const g=W(...cell);return {x:Math.sign(Math.round((g.x-hero.root.position.x)*10)),z:Math.sign(Math.round((g.z-hero.root.position.z)*10))};}
    const [i,j]=r[1],[a,b]=r[0];if(i!==a)return {x:Math.sign(i-a),z:0};return {x:0,z:Math.sign(j-b)};},
-  shots:{over:{pos:[0,26,18],look:[0,0,-2],fov:42,keep:['mazeBox']},overEnd:{pos:[gp.x*.5,14,gp.z+12],look:[gp.x*.6,0,gp.z],fov:40,keep:['hero','guide','small']},goal:{pos:[gp.x+gIn.x*C*1.2+.2,2.3,gp.z+gIn.z*C*1.2+.2],look:[pp.x,.9,pp.z],fov:40,keep:['hero','piece']},rise:{pos:[gp.x+gIn.x*C*2.5,11,gp.z+gIn.z*C*2.5+6],look:[gp.x,0,gp.z],fov:44}}};
+  shots:{over:{pos:[0,26,18],look:[0,0,-2],fov:42,keep:['mazeBox']},overEnd:{pos:[gp.x*.5,14,gp.z+12],look:[gp.x*.6,0,gp.z],fov:40,keep:['hero','guide','small']},goal:{pos:[gp.x+gIn.x*C*1.3+.2,4.2,gp.z+gIn.z*C*1.3+.2],look:[pp.x,.6,pp.z],fov:40,keep:['hero','small','guide','piece'],tall:{pos:[gp.x+gIn.x*C*1.1+.2,4.6,gp.z+gIn.z*C*1.1+.2],look:[pp.x,.4,pp.z],fov:40}},rise:{pos:[gp.x+gIn.x*C*2.5,11,gp.z+gIn.z*C*2.5+6],look:[gp.x,0,gp.z],fov:44}}};
 }

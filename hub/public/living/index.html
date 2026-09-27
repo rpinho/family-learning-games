@@ -30,8 +30,10 @@ html,body{margin:0;height:100%;background:#0b0a12;overflow:hidden;touch-action:n
 /* Everything he must read: solid badge, dark ink, sized from the screen's short side (cap height >= 12%). */
 .lv-read{display:inline-block;font-family:"Nunito","Arial Rounded MT Bold","Trebuchet MS",Arial,sans-serif;font-weight:900;line-height:1;letter-spacing:.05em;color:#1f1408;background:#fff7dc;border-radius:.2em;padding:.12em .26em .1em;font-size:max(17.5vmin,46px);box-shadow:0 .06em 0 rgba(0,0,0,.25),0 8px 22px rgba(0,0,0,.35)}
 .lv-letter{min-width:.9em;text-align:center}
-.lv-choices.lv-board{position:absolute;left:50%;transform:translateX(-50%);bottom:max(12px,env(safe-area-inset-bottom));display:flex;flex-wrap:wrap;gap:max(2vmin,10px);align-items:center;justify-content:center;background:#223126;border:6px solid #8a5a2b;border-radius:20px;padding:max(1.6vmin,8px) max(3vmin,12px);max-width:calc(100vw - 24px);box-sizing:border-box;box-shadow:0 14px 40px rgba(0,0,0,.45)}
+/* width:max-content: a panel at left:50% would otherwise only shrink-wrap to half the screen (and stack). */
+.lv-choices.lv-board{position:absolute;left:50%;transform:translateX(-50%);width:max-content;flex-wrap:nowrap;bottom:max(12px,env(safe-area-inset-bottom));display:flex;gap:max(2vmin,10px);align-items:center;justify-content:center;background:#223126;border:6px solid #8a5a2b;border-radius:20px;padding:max(1.6vmin,8px) max(3vmin,12px);max-width:calc(100vw - 24px);box-sizing:border-box;box-shadow:0 14px 40px rgba(0,0,0,.45)}
 body.tall .lv-choices.lv-board{flex-direction:column;flex-wrap:nowrap;bottom:max(18px,env(safe-area-inset-bottom))}
+body:not(.tall) .lv-choices.lv-board .lv-board-title{position:absolute;left:0;right:0;top:-1.9em;text-shadow:0 2px 6px rgba(0,0,0,.7)}
 .lv-board-title{width:100%;text-align:center;color:#f6ecd2;font:800 max(2.6vmin,13px)/1.3 Georgia,serif;letter-spacing:.3em}
 .lv-opt{border:0;background:transparent;padding:6px;border-radius:24px;cursor:pointer;position:relative;min-width:72px;min-height:72px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .lv-opt.lv-anchored{position:absolute;left:0;top:0;padding:10px 10px 18px}
@@ -55,7 +57,6 @@ body.tall .lv-choices.lv-board{flex-direction:column;flex-wrap:nowrap;bottom:max
 .thinking .lv-mic-badge{animation:think .6s ease-in-out infinite alternate}
 @keyframes think{to{transform:scale(1.25)}}
 .lv-sign{position:absolute;left:0;top:0;pointer-events:none}
-.lv-sign .lv-read{font-size:max(15vmin,42px)}
 .lv-card{position:fixed;inset:0;background:rgba(20,26,40,.72);display:grid;place-items:center;padding:16px;z-index:9}
 .lv-card-in{background:#fffaf0;color:#2b2118;border-radius:24px;max-width:min(560px,92vw);padding:18px 20px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.4)}
 .lv-card-mic{font-size:clamp(48px,12vmin,90px);position:relative;display:inline-block}
