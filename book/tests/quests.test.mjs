@@ -4,7 +4,7 @@ import {letterQuest,readerQuest,HOME_THINGS} from '../quests.mjs';
 import {chooseCast} from '../plan.mjs';
 test('Letter hunts come with hint pictures of things most homes have, the friend first', () => {
  const q=letterQuest('L',{sound:'lll',friend:{name:'Lulu',emoji:'🐶'}});
- assert.match(q.text,/start with L/);assert.equal(q.hints[0].word,'Lulu');assert.ok(q.hints.length>=4);
+ assert.match(q.text,/Sound hunt: .*start with L/);assert.equal(q.hints[0].word,'Lulu');assert.ok(q.hints.length>=4);
  for(const h of q.hints.slice(1))assert.match(h.text,/starts with lll/);
  for(const [L,list] of Object.entries(HOME_THINGS))for(const [w] of list)assert.equal(w[0].toUpperCase()===L||w.includes('x'),true,`${w} for ${L}`);
 });

@@ -61,7 +61,11 @@ try{
   if(p.magic){await until(`!!document.querySelector('.bk-magic')`,30000);await sleep(400);await click('.bk-magic');}
   if(b){
    const ans=v=>`.bk-play [data-v="${String(v).replace(/"/g,'\\"')}"]`;
-   if(b.kind==='teach-letter'){await until(`!!document.querySelector('.bk-glyph')`,30000);await sleep(1500);await click('.bk-glyph');}
+   if(b.kind==='teach-letter'){await until(`!!document.querySelector('.bk-glyph')`,30000);
+    // The trace step (if any): three taps without tracing move on, like a child who taps instead.
+    if(await until(`!!document.querySelector('.bk-trace')`,25000)){for(let k=0;k<3;k++){await js(`(()=>{const c=document.querySelector('.bk-trace');if(!c)return;const r=c.getBoundingClientRect(),o={bubbles:true,clientX:r.x+5,clientY:r.y+5,pointerId:1};c.dispatchEvent(new PointerEvent('pointerdown',o));c.dispatchEvent(new PointerEvent('pointerup',o));})()`);await sleep(150);}}
+    await sleep(1500);await click('.bk-glyph');}
+   if(b.kind==='order'){await until(`document.querySelectorAll('.bk-play .bk-btn.ball').length>=5`,30000);for(let k=1;k<=5;k++){await click(`.bk-play [data-v="${k}"]`);await sleep(700);}}
    if(b.kind==='stones'){await until(`document.querySelectorAll('.bk-btn.stone').length>0`,30000);for(let k=0;k<b.need;k++){await js(`(()=>{const s=[...document.querySelectorAll('.bk-btn.stone')].find(x=>x.textContent===${JSON.stringify(b.letter)}&&!x.classList.contains('lit'));s&&s.click()})()`);await sleep(700);}}
    if(b.kind==='count'){await until(`document.querySelectorAll('.bk-thing').length===${b.n}`,30000);for(let k=0;k<b.n;k++){await js(`(()=>{const t=[...document.querySelectorAll('.bk-thing')].find(x=>!x.dataset.n);t&&t.click()})()`);await sleep(900);}await until(`!!document.querySelector('${ans(b.answer)}')`,20000);await click(ans(b.answer));}
    if(b.kind==='kick-letter'){await until(`document.querySelectorAll('.bk-ball').length>=${b.balls.length}`,30000);await sleep(300);await flickEl(`[...document.querySelectorAll('.bk-ball')].find(x=>x.dataset.v===${JSON.stringify(b.letter)})`);if(shotPages.has(i)){await sleep(500);await shot(`${player}-${label}-p${i+1}-kick-letter-goal.png`);}}
