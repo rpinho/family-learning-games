@@ -1,0 +1,111 @@
+#!/usr/bin/env node
+// Browser play-through for Letter Slalom. Opens Word Arcade in a headless Chrome (own profile, muted audio,
+// the real autoplay rule), taps once, starts the slalom and skis it with real pointer or touch drags: the finger
+// goes where the right gate is, except the gates listed in --miss. Checks that every gate's question is heard
+// before the skier reaches it, that a missed gate names the answer, that the recap and the word break follow,
+// and that the finish screen appears. Records the frame times the game measured and saves screenshots and a
+// short recording (needs ffmpeg).
+// Usage: node scripts/check-slalom-browser.mjs --base http://127.0.0.1:5319 --player beginner [--size 1280x800]
+//        [--mobile] [--miss 2] [--shots <dir>] [--label tablet] [--record] [--cpu 4] [--quality medium]
+import {spawn,spawnSync} from 'node:child_process';
+import {mkdtemp,readFile,writeFile,mkdir,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {easeGate} from '../lib/slalom.mjs';
+const args=process.argv.slice(2),arg=(k,d=null)=>{const i=args.indexOf(k);return i>=0?args[i+1]:d;},flag=k=>args.includes(k);
+const base=arg('--base','http://127.0.0.1:5319'),player=arg('--player','admin'),[W,H]=arg('--size','1280x800').split('x').map(Number),mobile=flag('--mobile');
+const shots=arg('--shots'),label=arg('--label',`${W}x${H}`),miss=new Set((arg('--miss','')||'').split(',').filter(Boolean).map(Number)),record=flag('--record'),cpu=Number(arg('--cpu','1')),quality=arg('--quality');
+const chrome=arg('--chrome',process.env.CHROME||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const profile=await mkdtemp(join(tmpdir(),'slalom-check-chrome-'));
+const proc=spawn(chrome,['--headless=new','--remote-debugging-port=0',`--user-data-dir=${profile}`,'--no-first-run','--no-default-browser-check','--autoplay-policy=document-user-activation-required','--mute-audio',`--window-size=${W},${H}`,'about:blank'],{stdio:'ignore'});
+let port=null;for(let i=0;i<150&&!port;i++){await sleep(100);try{port=Number((await readFile(join(profile,'DevToolsActivePort'),'utf8')).split('\n')[0]);}catch{}}
+if(!port){proc.kill();throw Error('Chrome did not start');}
+const target=(await(await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find(t=>t.type==='page');
+const ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((ok,no)=>{ws.onopen=ok;ws.onerror=no;});
+let seq=0;const waiting=new Map(),frames=[];
+ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id&&waiting.has(m.id)){const {ok,no}=waiting.get(m.id);waiting.delete(m.id);m.error?no(Error(m.error.message)):ok(m.result);}
+ else if(m.method==='Page.screencastFrame'){frames.push({data:m.params.data,t:m.params.metadata.timestamp});void send('Page.screencastFrameAck',{sessionId:m.params.sessionId}).catch(()=>{});}};
+const send=(method,params={})=>new Promise((ok,no)=>{const id=++seq;waiting.set(id,{ok,no});ws.send(JSON.stringify({id,method,params}));setTimeout(()=>{if(waiting.delete(id))no(Error(`${method} timed out`));},30000);});
+const js=async expr=>{const r=await send('Runtime.evaluate',{expression:expr,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.exception?.description||'eval failed');return r.result.value;};
+const until=async(expr,ms=15000)=>{const t=Date.now();while(Date.now()-t<ms){try{if(await js(expr))return true;}catch{}await sleep(120);}return false;};
+setTimeout(()=>{console.log(JSON.stringify({player,label,ok:false,errors:['overall timeout']}));proc.kill();process.exit(1);},6*60000).unref();
+const result={player,label,size:`${W}x${H}`,mobile,cpuThrottle:cpu,gates:[],errors:[],audio:{}};
+const shot=async name=>{if(!shots)return;await mkdir(shots,{recursive:true});const r=await send('Page.captureScreenshot',{format:'png'});await writeFile(join(shots,`${player}-${label}-${name}.png`),Buffer.from(r.data,'base64'));};
+// Real input: touch on --mobile, otherwise the mouse.
+async function pointer(type,x,y){
+ if(mobile)await send('Input.dispatchTouchEvent',{type:{down:'touchStart',move:'touchMove',up:'touchEnd'}[type],touchPoints:type==='up'?[]:[{x,y,id:1}]});
+ else await send('Input.dispatchMouseEvent',{type:{down:'mousePressed',move:'mouseMoved',up:'mouseReleased'}[type],x,y,button:'left',buttons:type==='up'?0:1,clickCount:1});
+}
+async function tap(sel){const r=await js(`(()=>{const b=document.querySelector(${JSON.stringify(sel)});if(!b)return null;b.scrollIntoView({block:'center'});const r=b.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()`);if(!r)throw Error('missing '+sel);await pointer('down',r.x,r.y);await pointer('up',r.x,r.y);if(mobile)await js(`document.querySelector(${JSON.stringify(sel)})?.click()`);}
+try{
+ await send('Page.enable');await send('Runtime.enable');
+ await send('Emulation.setDeviceMetricsOverride',{width:W,height:H,deviceScaleFactor:mobile?2:1,mobile});
+ if(mobile)await send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:5});
+ if(cpu>1)await send('Emulation.setCPUThrottlingRate',{rate:cpu});
+ // Record every media play() with its clip, time and outcome.
+ await send('Page.addScriptToEvaluateOnNewDocument',{source:`window.__audio=[];const _play=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=function(){const e={src:this.currentSrc||this.src,at:performance.now()};window.__audio.push(e);const p=_play.call(this);Promise.resolve(p).then(()=>{e.ok=true;},x=>{e.err=x&&x.name;});return p;};`});
+ await send('Page.navigate',{url:`${base}/?player=${player}${quality?`&slalomQuality=${quality}`:''}`});
+ if(!await until(`!!document.querySelector('section.lobby')`,30000))throw Error('lobby did not load');
+ const manifest=await js(`fetch('/voice/manifest.json').then(r=>r.json())`),textOf=Object.fromEntries(Object.entries(manifest.clips).map(([t,c])=>[c,t]));
+ // Control: sound is refused before the first tap.
+ result.audio.beforeTap=await js(`(async()=>{try{await new Audio('/voice/manifest.json').play();return 'played'}catch(e){return e.name}})()`);
+ await tap('section.lobby h1');
+ const card=`.live-game-card.game-slalom`;if(!await until(`!!document.querySelector('${card}')`,5000))throw Error('no Letter Slalom card');
+ await shot('0-lobby');await tap(card);
+ if(!await until(`!!document.querySelector('.launch-button')`,5000))throw Error('no brief');await shot('1-brief');await tap('.launch-button');
+ if(!await until(`!!window.__slalom`,30000))throw Error('3D scene did not start: '+(await js(`document.querySelector('.slalom-flat')?.textContent||''`)));
+ const t0=Date.now();
+ if(record)await send('Page.startScreencast',{format:'jpeg',quality:70,maxWidth:Math.min(W,960),maxHeight:Math.min(H,960),everyNthFrame:2});
+ const profileNow=async()=>(await(await fetch(`${base}/api/${player}`)).json()).profile;
+ let prof=await profileNow();const gates=prof.session.gates;result.track=prof.session.track;
+ let down=false,lastGate=-1;
+ while(Date.now()-t0<150000){
+  const st=await js('__slalom.state()');if(st.finished)break;
+  const i=st.next;if(i>=gates.length){if(lastGate>=0&&result.gates[lastGate]&&!result.gates[lastGate].passedAt)result.gates[lastGate].passedAt=Date.now()-t0;await sleep(200);continue;}
+  if(i!==lastGate){
+   if(lastGate>=0)result.gates[lastGate].passedAt=Date.now()-t0;
+   lastGate=i;const cur=await js(`window.__slalom&&document.querySelector('.slalom-prompt')?.textContent||''`);
+   result.gates[i]={gate:i,kind:gates[i].kind,answer:gates[i].answer,options:gates[i].options,prompt:gates[i].prompt,hud:cur,miss:miss.has(i)};
+   if([0,4].includes(i)){await sleep(1500);await shot(`2-gate${i}`);}
+  }
+  // eased gates may have changed the options: the scene's live lanes and the client's gate list
+  const g=i>0&&result.gates[i-1]?.miss?easeGate(gates[i]):gates[i];const lanes=st.lanes[i];
+  const want=miss.has(i)?g.options.findIndex(o=>o!==g.answer):g.options.indexOf(g.answer);
+  const x=await js(`__slalom.uToScreenX(${lanes[want]})`),y=Math.round(H*0.72);
+  if(!down){await pointer('down',x,y);down=true;}else await pointer('move',x,y);
+  if(st.gateD[i]-st.d<3&&i===3){await shot('3-through-gate');}
+  await sleep(250);
+ }
+ if(down)await pointer('up',0,0);
+ result.runSeconds=+((Date.now()-t0)/1000).toFixed(1);
+ result.stats=await js('__slalom?.stats()');
+ if(flag('--bench'))result.bench=await js(`(()=>{const out=[];for(const t of ['high','medium','low'])out.push(__slalom.bench(90,t));return out;})()`);
+ await sleep(1200);await shot('4-finish-line');
+ if(!await until(`!!document.querySelector('.slalom-recap')`,15000))result.errors.push('no recap');
+ await until(`!!document.querySelector('.slalom-card.now')`,8000);await shot('5-recap');
+ // the shared word break: tap choices until it is solved (always passable)
+ if(await until(`!!document.querySelector('dialog.wb[open]')`,60000)){
+  result.wordBreak=await js(`document.querySelector('dialog.wb').dataset.kind`);await sleep(800);await shot('6-word-break');
+  for(let k=0;k<30;k++){if(!await js(`!!document.querySelector('dialog.wb[open]')&&!document.querySelector('dialog.wb .wb-done')`))break;
+   await js(`(()=>{const c=[...document.querySelectorAll('dialog.wb .wb-choice:not(.used)')];const glow=c.find(b=>b.classList.contains('glow'));(glow||c[${k}%c.length])?.click();})()`);await sleep(700);}
+ }else result.errors.push('no word break');
+ if(!await until(`!!document.querySelector('section.slalom-finish')`,20000))result.errors.push('no finish screen');
+ await sleep(600);await shot('7-finish');
+ if(record){await send('Page.stopScreencast');}
+ prof=await profileNow();result.complete=prof.session.phase==='complete';result.results=prof.session.results.map(r=>({answer:r.q.answer,chose:r.answer,ok:r.independent}));
+ // audio: which lines played (and when), refused plays
+ const audio=await js('window.__audio');const said=audio.filter(a=>a.ok).map(a=>({text:textOf[new URL(a.src).pathname]||a.src,at:Math.round(a.at)})).filter((a,k,all)=>!(k&&all[k-1].text===a.text&&a.at-all[k-1].at<1500));
+ result.audio.plays=said.length;result.audio.refused=audio.filter(a=>a.err&&a.err!=='AbortError'&&!a.src.endsWith('/voice/manifest.json')).length;
+ const saidText=said.map(a=>a.text);
+ for(const g of result.gates){if(!g)continue;g.promptHeard=saidText.includes(g.prompt);const full=gates[g.gate];if(g.miss)g.correctionHeard=saidText.includes(full.correction);}
+ result.audio.recap=saidText.filter(t=>/lovely run/.test(t)).length;result.audio.lines=saidText;
+ result.ok=result.audio.beforeTap==='NotAllowedError'&&result.complete&&result.gates.length===gates.length&&result.gates.every(g=>g.promptHeard&&(!g.miss||g.correctionHeard))&&result.audio.refused===0&&result.audio.recap>=1&&!!result.wordBreak&&!result.errors.length;
+ if(record&&frames.length&&shots){const dir=await mkdtemp(join(tmpdir(),'slalom-frames-'));const t1=frames[0].t;let list='';
+  for(let k=0;k<frames.length;k++){const f=join(dir,`f${String(k).padStart(5,'0')}.jpg`);await writeFile(f,Buffer.from(frames[k].data,'base64'));const dur=k+1<frames.length?frames[k+1].t-frames[k].t:0.1;list+=`file '${f}'\nduration ${Math.max(0.01,dur).toFixed(3)}\n`;}
+  await writeFile(join(dir,'list.txt'),list);const out=join(shots,`${player}-${label}-run.mp4`);
+  const r=spawnSync('nice',['-n','19','taskpolicy','-b','ffmpeg','-v','error','-y','-f','concat','-safe','0','-i',join(dir,'list.txt'),'-vf','scale=trunc(iw/2)*2:trunc(ih/2)*2,fps=30','-pix_fmt','yuv420p','-c:v','libx264','-crf','26',out]);
+  result.recording=r.status===0?out:'ffmpeg failed: '+String(r.stderr).slice(0,200);result.recordingFrames=frames.length;void t1;await rm(dir,{recursive:true,force:true});}
+}catch(e){result.errors.push(String(e.message||e));result.ok=false;try{await shot('error');}catch{}}
+finally{try{ws.close();}catch{}proc.kill();await rm(profile,{recursive:true,force:true}).catch(()=>{});}
+console.log(JSON.stringify(result));
