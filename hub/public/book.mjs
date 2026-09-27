@@ -39,17 +39,22 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   try{const r=await fetch('/api/book/voice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({player,date,text:line.text,voice:line.voice,speed:line.speed})});const j=r.ok?await r.json():null;if(j?.clip)line.clip=j.clip;else line.noClip=true;}catch{line.noClip=true;}
   return line.clip||null;}
  function stopSound(){try{audio.pause();}catch{}current?.();current=null;}
- let lastLine=null,lastAt=0;
- function speak(line){
+ // Each line is said ONCE per page: a prompt, a "try again", a reminder is never repeated (a repeated instruction
+ // sounds anxious). A reminder that would repeat becomes a gentle pulse on the things to tap instead. Only an
+ // explicit replay (the hear-again button, a tap on the caption) or the model answer after two misses says a line again.
+ let saidTurn=-1;const said=new Set();
+ function pulse(){const t=view.querySelector('.bk-page:last-child')?.querySelectorAll('.bk-play .bk-btn,.bk-glyph,.bk-magic,.bk-ball,.bk-thing,.bk-pizza,.bk-trace');t?.forEach(x=>{x.classList.remove('bk-nudge');void x.offsetWidth;x.classList.add('bk-nudge');});}
+ function speak(line,{again=false}={}){
   return new Promise(async resolve=>{
    if(!alive||!line?.text)return resolve();
-   // The same line asked for again while it is still starting is one trigger, not two: it is said once.
-   if(line===lastLine&&Date.now()-lastAt<1500)return resolve();lastLine=line;lastAt=Date.now();
+   if(saidTurn!==turn){saidTurn=turn;said.clear();}
+   if(said.has(line.text)&&!again){audit.push({clip:line.clip||null,page,turn,skipped:'said'});pulse();return resolve();}
+   said.add(line.text);
    stopSound();let done=false;const my=turn,est=Math.max(1500,line.text.length*70);
    const fin=()=>{if(done)return;done=true;clearTimeout(t);talking(null);if(current===fin)current=null;resolve();};
    current=fin;talking(line.who);
    const t=setTimeout(fin,Math.max(4000,line.text.length*140));
-   const silent=why=>{if(done)return;audit.push({clip:line.clip||null,page,turn:my,ok:false,err:why});showWords(line.text,est);setTimeout(fin,est);};
+   const silent=why=>{if(done)return;audit.push({clip:line.clip||null,page,turn:my,ok:false,err:why});showWords(line.shown||line.text,est);setTimeout(fin,est);};
    if(!line.clip&&!await renderClip(line))return silent('no-clip');
    if(done)return;
    audio.onended=fin;audio.onerror=()=>silent('load');
@@ -60,7 +65,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   });
  }
  // A short breath between lines, like a person reading aloud.
- async function speakAll(lines,my){let first=true;for(const l of lines||[]){if(!alive||my!==turn)return false;if(!first)await new Promise(r=>later(r,LINE_GAP_MS));first=false;if(!alive||my!==turn)return false;await speak(l);}return alive&&my===turn;}
+ async function speakAll(lines,my,opts={}){let first=true;for(const l of lines||[]){if(!alive||my!==turn)return false;if(!first)await new Promise(r=>later(r,LINE_GAP_MS));first=false;if(!alive||my!==turn)return false;await speak(l,opts);}return alive&&my===turn;}
  function preload(i){const p=ch.pages[i];if(!p)return;const files=new Set();const walk=v=>{if(!v||typeof v!=='object')return;if(Array.isArray(v))return v.forEach(walk);if(v.clip)files.add(v.clip);for(const x of Object.values(v))if(x&&typeof x==='object')walk(x);};walk(p);
   for(const f of files)fetch('/book-voice/'+f).catch(()=>{});const b=art.backgrounds[p.scene?.bg];if(b){const im=new Image();im.src=b.url;}}
  function talking(who){view.querySelectorAll('.bk-actor').forEach(a=>a.classList.toggle('talking',!!who&&a.dataset.id===who));}
@@ -145,10 +150,10 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   const el=document.createElement('div');el.className='bk-page';
   el.innerHTML=`${b?`<img class="bk-bg" src="${esc(b.url)}" alt="">`:''}<div class="bk-layer">${propsHTML(p.scene,{ground,play:!!p.action||p.beat?.kind==='kick-letter'})}${actorsHTML(p.scene,st)}</div>${fxHTML(p.scene.fx)}${cap}<div class="bk-play"></div>`;
   view.append(el);
-  el.querySelector('.bk-caption')?.addEventListener('click',()=>{const l=(p.say||[]).find(x=>x.text.toLowerCase().includes(p.caption.toLowerCase()));if(l)void speak(l);});
+  el.querySelector('.bk-caption')?.addEventListener('click',()=>{const l=(p.say||[]).find(x=>(x.shown||x.text).toLowerCase().includes(p.caption.toLowerCase()));if(l)void speak(l,{again:true});});
   return el;
  }
- function replay(){const p=page_();const my=++turn;void speakAll(p.say,my);}
+ function replay(){const p=page_();const my=++turn;void speakAll(p.say,my,{again:true});}
  function cover(){
   page=-1;const p=ch.pages[0],b=art.backgrounds[ch.cover?.scene?.bg||p.scene.bg];
   const hero=p.scene.actors.find(a=>a.id===player)||p.scene.actors[0];const H=hero&&art.actors[hero.id]?.poses[hero.pose];
@@ -301,7 +306,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
     if(misses>=2)return finish('echo');
     misses++;btn.classList.remove('soft-miss');void btn.offsetWidth;btn.classList.add('soft-miss');
     if(misses===1)await speak(ch.ui.listenAgain);
-    else{btn.classList.add('glow');await speakAll(help,turn);if(my===turn)await speak(ch.ui.listenEcho);}
+    else{btn.classList.add('glow');await speakAll(help,turn,{again:true});if(my===turn)await speak(ch.ui.listenEcho);}
    },async err=>{btn.classList.remove('listening');busy=false;paint();if(my!==turn||done)return;
     const a=await micCard(micState().why||(err?.name==='NotFoundError'?'no-mic':'denied'));paint();if(a==='tap'&&my===turn)finish('tap');});
   };
@@ -364,7 +369,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
     if(ch.ui.traceIt){await traceLetter(g,b.letter,my);if(my!==turn)return;if(!micUsable())return void finish();}
     // With a microphone he says it: its sound, its name, or the friend's name ("Lll!", "L!", "Lulu!").
     if(micUsable()){g.classList.remove('tapped');let said=false;
-     sayIt(g,{target:{kind:'letter',letter:b.letter,names:[b.ownerName||art.actors[b.owner]?.name].filter(Boolean)},kind:'letter',my,help:[b.tap],onDone:r=>{said=true;void finish(r);}});
+     sayIt(g,{target:{kind:'letter',letter:b.letter,names:[b.ownerName||art.actors[b.owner]?.name].filter(Boolean)},kind:'letter',my,help:[b.lines.at(-1)],onDone:r=>{said=true;void finish(r);}});
      await speak(ch.ui.sayLetter);
      // The reminder only comes after real silence: every tap on the letter restarts the wait.
      let n=0,lastTry=Date.now();g.addEventListener('click',()=>{lastTry=Date.now();},true);

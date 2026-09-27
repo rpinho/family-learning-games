@@ -12,7 +12,8 @@ import {join,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 const here=dirname(fileURLToPath(import.meta.url)),publicArt=join(here,'public','book-art');
 // A narration clip's file name (the same key as book/narrate.py): content-addressed, only ever added.
-export const clipName=({voice,speed,text})=>{const n=Number(speed),sp=Number.isInteger(n)?n.toFixed(1):String(n);return createHash('sha256').update(`book-1\0${voice}\0${sp}\0${text}`).digest('hex').slice(0,16)+'.wav';};
+// (book-2: a line with an isolated letter sound, e.g. [[l]]; see book/narrate.py)
+export const clipName=({voice,speed,text})=>{const n=Number(speed),sp=Number.isInteger(n)?n.toFixed(1):String(n),v=[...String(text).matchAll(/\[\[([^\]]*)\]\]/g)].some(m=>{const x=m[1].replace(/[ˈˌ]/g,'');return x.length>0&&x.length<=2;})?'book-2':'book-1';return createHash('sha256').update(`${v}\0${voice}\0${sp}\0${text}`).digest('hex').slice(0,16)+'.wav';};
 const ART_TYPES={webp:'image/webp',png:'image/png',svg:'image/svg+xml',jpg:'image/jpeg'};
 const send=(res,status,obj)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(obj));};
 export const localDate=(ms=Date.now(),timeZone)=>new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(ms));
@@ -37,7 +38,7 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
  // a chapter can be rendered. narrate(lines) -> {clips} can be replaced in tests.
  let voiceQueue=Promise.resolve();
  const narrate=voiceEngine||(async lines=>{const p=bookPaths();const dir=await mkdtemp(join(tmpdir(),'book-voice-'));const req=join(dir,'req.json');
-  await writeFile(req,JSON.stringify({lines,out:join(bookDir,'voice'),models:p.voiceModels}));
+  await writeFile(req,JSON.stringify({lines,out:join(bookDir,'voice'),models:p.voiceModels,lq_voice:p.data['letter-quest']?join(p.data['letter-quest'],'voice'):null}));
   try{const out=await new Promise((ok,no)=>execFile('nice',['-n','19','taskpolicy','-b',p.python,join(here,'..','book','narrate.py'),req],{timeout:90000,maxBuffer:1<<22,env:{...process.env,BOOK_VOICE_THREADS:'2'}},(e,so)=>e?no(e):ok(so)));
    return JSON.parse(String(out).trim().split('\n').at(-1));}finally{await rm(dir,{recursive:true,force:true}).catch(()=>{});}});
  async function renderLine(line){const file=clipName(line),at=join(bookDir,'voice',file);
@@ -67,7 +68,7 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
  async function update(player,input){
   return serial(async()=>{
    const p=await progress(player),date=today();
-   if(input.type!=='living'&&input.date!==date)throw Object.assign(Error('That chapter is not today’s.'),{status:409});
+   if(!['living','huntMode'].includes(input.type)&&input.date!==date)throw Object.assign(Error('That chapter is not today’s.'),{status:409});
    const day=p.days[date]??={opens:0,page:0,finished:false,results:[],startedAt:new Date(now()).toISOString()};
    const page=Math.max(0,Math.min(60,Number(input.page)||0));
    if(input.type==='open')day.opens++;
@@ -84,6 +85,7 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
     else if(input.stage==='found'&&h&&input.confirmed===true&&Number(input.found)>=1){h.foundAt=new Date(now()).toISOString();h.found=Math.max(0,Math.min(20,Number(input.found)||0));h.ms=Date.parse(h.foundAt)-Date.parse(h.startedAt);
      const c=p.collection??={keys:[],words:[]};c.hunts=[...new Set([...(c.hunts||[]),id])].slice(-100);}
    }
+   else if(input.type==='huntMode'){if(!['letter','word'].includes(input.mode))throw Object.assign(Error('Unknown mode.'),{status:400});p.huntMode=input.mode;}
    else if(input.type==='leave'){day.leftAt=new Date(now()).toISOString();day.page=Math.max(day.page,page);}
    else throw Object.assign(Error('Unsupported action.'),{status:400});
    const keep=Object.keys(p.days).sort().slice(-30);p.days=Object.fromEntries(keep.map(k=>[k,p.days[k]]));
@@ -105,10 +107,15 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
    // Today's next hunt for a child (from the household's private hunts.json), and how many are left today.
    if(u.pathname==='/api/book/hunt'&&req.method==='GET'){
     const player=u.searchParams.get('player');if(!kids.some(k=>k.id===player))return send(res,400,{error:'Choose a child.'});
-    const cfg=(await readJSON(join(bookDir,'hunts.json'),{players:{}})).players?.[player];if(!cfg?.hunts?.length)return send(res,200,{available:false});
-    const date=today(),p=await progress(player),day=p.days[date]||{},started=(day.hunts||[]).length,done=new Set(p.collection?.hunts||[]);
+    const cfg0=(await readJSON(join(bookDir,'hunts.json'),{players:{}})).players?.[player];if(!cfg0?.hunts?.length)return send(res,200,{available:false});
+    // Two kinds of hunt: a LETTER (its sound or its shape) or a WORD. The mode is remembered per child on this
+    // computer (not in one browser); a hunt without a mode is a letter hunt. Letter is the default.
+    const modeOf=h=>h.mode==='word'?'word':'letter',modes=[...new Set(cfg0.hunts.map(modeOf))].sort();
+    const p=await progress(player),mode=modes.includes(p.huntMode)?p.huntMode:modes.includes('letter')?'letter':modes[0];
+    const cfg={...cfg0,...(cfg0.byMode?.[mode]||{}),hunts:cfg0.hunts.filter(h=>modeOf(h)===mode)};
+    const date=today(),day=p.days[date]||{},started=(day.hunts||[]).length,done=new Set(p.collection?.hunts||[]);
     const open=(day.hunts||[]).find(h=>!h.foundAt),hunt=cfg.hunts.find(h=>h.id===open?.id)||cfg.hunts.find(h=>!done.has(h.id))||cfg.hunts[started%cfg.hunts.length];
-    return send(res,200,{available:true,date,left:Math.max(0,HUNTS_PER_DAY-started)+(open?1:0),hunt,friend:cfg.friend||null,label:cfg.label||'Hunt',tomorrow:cfg.tomorrow||null,cheer:cfg.cheer||null});
+    return send(res,200,{available:true,date,left:Math.max(0,HUNTS_PER_DAY-started)+(open?1:0),hunt,friend:cfg.friend||null,label:cfg.label||'Hunt',tomorrow:cfg.tomorrow||null,cheer:cfg.cheer||null,mode,modes});
    }
    if(u.pathname==='/api/book/preview'&&req.method==='GET'){
     const player=u.searchParams.get('player');if(!kids.some(k=>k.id===player))return send(res,400,{error:'Choose a child.'});

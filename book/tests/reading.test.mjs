@@ -14,7 +14,7 @@ test('Look-alikes share the first letter and differ in the vowel or the end, nev
  assert.ok(isLookAlike('mat','map')&&isLookAlike('mat','met')===false||true);
 });
 test('Sound-out lines spell sounds as phonemes, then say the word',()=>{
- assert.equal(soundOut('cat'),'[[kə]]... [[æ]]... [[tə]]. Cat!');assert.ok(!bareSound(soundOut('mat')));
+ assert.equal(soundOut('cat'),'[[k]]... [[æ]]... [[t]]. Cat!');assert.ok(!bareSound(soundOut('mat')));
 });
 test('Today\'s word is a family word he is stuck on, else his current family',()=>{
  assert.equal(familyTarget({literacy:{wordsStuck:['duck','cat'],wordsMastered:[]}}),'cat');
@@ -43,4 +43,17 @@ test('The lint rejects a reading beat a first-letter guess could pass, and undec
  assert.ok(issues.some(i=>/caption word "Moonfern"/.test(i)));
  // A grown-up can open it up for a stronger reader.
  assert.deepEqual(readingIssues({pages:[]},{...bad,reading:'open'}),[]);
+});
+test('Every word once; only his own friends; Mom and Dad both in the picture',async()=>{
+ const {repeatedWords,otherFriends}=await import('../lint.mjs');
+ for(const t of ['Try to say it, try to say it.','[[b]], [[b]], Birdie!','Go, go, go!','Pika pika!'])assert.ok(repeatedWords(t).length,t);
+ for(const t of ['Pika-pi! Well done.','L says [[l]]. Loona starts with L.','Toot! Off we go!'])assert.deepEqual(repeatedWords(t),[],t);
+ assert.deepEqual(otherFriends('Charizard flew by.',['Charizard','Loona']),['Charizard']);
+});
+test('Names reach the voice as phonemes, never as spelling',async()=>{
+ const {phonemize,rawNames,unphonemize}=await import('../../hub/public/pronounce.mjs');
+ const t=phonemize('Pika and Picos meet Pikachu with Hat.');
+ assert.equal(t,'[[pˈikə]] and [[pˈikuʃ]] meet [[pˌikəʧˈu]] with Hat.');assert.deepEqual(rawNames(t),[]);
+ assert.deepEqual(rawNames('Hello Pikachu'),['Pikachu']);assert.equal(unphonemize(t),'Pika and Picos meet Pikachu with Hat.');
+ assert.equal(phonemize('L says [[l]].'),'L says [[l]].');
 });

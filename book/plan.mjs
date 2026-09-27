@@ -12,9 +12,10 @@ import {FAMILIES,familyOf,isFamilyWord,lookAlikes,soundOut,familyTarget,DECODABL
 export function rng(seedText){let h=2166136261;for(const c of String(seedText)){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return()=>{h+=0x6D2B79F5;let t=h;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
 const pick=(a,r)=>a[Math.floor(r()*a.length)];
 export const LOOK={B:'PDR',D:'BOP',P:'BRF',R:'PBK',F:'EPT',E:'FLB',T:'ILF',L:'ITE',I:'LTJ',M:'NWH',N:'MHZ',W:'MVN',V:'WYU',O:'QCD',C:'OGQ',G:'COQ',S:'ZGC',A:'HVR',H:'NAK',K:'XRH',U:'VJO',Y:'VXT',Z:'NSX',X:'KYZ',J:'LUI',Q:'OGC'};
-// Letter sounds as phonemes in [[...]] (narrate.py speaks them as sounds). Written as text ("Lll", "Sss") the
-// voice spells them out as letter names ("L L L"), so a sound is never plain text.
-export const SOUNDS={A:'[[æ]]',B:'[[bə]]',C:'[[kə]]',D:'[[də]]',E:'[[ɛ]]',F:'[[fff]]',G:'[[ɡə]]',H:'[[hə]]',I:'[[ɪ]]',J:'[[dʒə]]',K:'[[kə]]',L:'[[lll]]',M:'[[mmm]]',N:'[[nnn]]',O:'[[ɑ]]',P:'[[pə]]',Q:'[[kwə]]',R:'[[ɹɹɹ]]',S:'[[sss]]',T:'[[tə]]',U:'[[ʌ]]',V:'[[vvv]]',W:'[[wə]]',X:'[[ks]]',Y:'[[jə]]',Z:'[[zzz]]'};
+// Letter sounds: ONE clean phoneme each, as Letter Quest voices them (narrate.py speaks a short [[...]] on its own,
+// isolated, at a gentle speed). Never text ("Lll" is read as letter names), never a stretched or schwa'd sound
+// ("[[lll]]" came out as "lol", "[[bə]]. [[bə]], [[bə]]" as "boo-boo-ya").
+export const SOUNDS={A:'[[æ]]',B:'[[b]]',C:'[[k]]',D:'[[d]]',E:'[[ɛ]]',F:'[[f]]',G:'[[ɡ]]',H:'[[h]]',I:'[[ɪ]]',J:'[[dʒ]]',K:'[[k]]',L:'[[l]]',M:'[[m]]',N:'[[n]]',O:'[[ɑ]]',P:'[[p]]',Q:'[[kw]]',R:'[[ɹ]]',S:'[[s]]',T:'[[t]]',U:'[[ʌ]]',V:'[[v]]',W:'[[w]]',X:'[[ks]]',Y:'[[j]]',Z:'[[z]]'};
 // A sound for text shown to grown-ups (e.g. the quest card): /s/.
 export const soundText=s=>'/'+String(s).replace(/^\[\[|\]\]$/g,'')+'/';
 const WORD_NUM=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'];
@@ -55,11 +56,11 @@ function earlyBeats(m,r,{cast,collection,things,soccer=false,focus=null,grown='D
   beats:[
    {id:'b1',kind:'teach-letter',what:`${owner.name} shows its letter ${L} (the sound ${soundText(sound)}) and gives ${m.name} the ${L} key`,letter:L,sound,owner:owner.id,ownerName:owner.name,word:owner.word,shape:owner.shape,
     // Each thing said once (a line that repeats a sound or a letter sounds like a glitch to a child).
-    lines:[[owner.id||'narrator',`${cap(sound)}! Look, I ${owner.shape}.`],['narrator',`${L} says ${sound}. ${cap(owner.word)} starts with ${L}.`]],tap:`${L} says ${sound}!`},
+    lines:[[owner.id||'narrator',`Look, I ${owner.shape}.`],['narrator',`${L} says ${sound}. ${cap(owner.word)} starts with ${L}.`]],tap:`Yes! ${cap(owner.word)} starts with ${sound}.`},
    soccer?{id:'b2',kind:'kick-letter',what:`on the soccer pitch three balls have letters on them; only the ${L} ball can score, so ${m.name} kicks the ${L} ball past the keeper into the goal (he flicks it himself)`,letter:L,sound,balls:shuffle([L,...others],r),
-     spoken:`Kick the ${L} ball! ${L} says ${sound}.`,notIt:`That ball is not ${L}. Find ${sound}.`,done:`You kicked the ${L} ball in!`}
+     spoken:`Kick the ball with ${L}. ${L} says ${sound}.`,notIt:`That one is a different letter.`,done:`You kicked the ${L} ball in!`}
    :{id:'b2',kind:'stones',what:`letter stepping-stones: the friends can only cross on the ${L} stones, so ${m.name} taps the three ${L} stones`,letter:L,sound,stones,need:3,
-    spoken:`Tap the stones with ${L}. ${L} says ${sound}.`,notIt:`That one is not ${L}. Find ${sound}.`,done:`Hop, hop, hop! You found all the ${L} stones!`},
+    spoken:`Tap the stones with ${L}. ${L} says ${sound}.`,notIt:`That one is a different letter.`,done:`You found all the ${L} stones!`},
    {id:'b3',kind:'count',what:`count the ${things_} because the story needs that many (seats on the train, slices, eggs to carry)`,thing,things:things_,emoji,n:count,
     spoken:`Tap each one to count the ${things_}.`,ask:`How many ${things_}?`,answer:String(count),options:numberOptions(count,r)},
    {id:'b4',kind:'no',what:`${who.name} insists "${cap(review.word)} starts with ${wrong}" and wants to do something silly with it; ${m.name} says NO! and fixes it`,who:who.id,whoName:who.name,

@@ -28,6 +28,7 @@ const CSS=`
 .hunt-gate{position:fixed;inset:0;z-index:42;display:grid;place-items:center;background:rgba(20,26,40,.55)}.hunt-gate-in{background:#fffaf0;border-radius:20px;padding:18px 22px;max-width:min(460px,92vw);text-align:center}.hunt-gate-in input{font:inherit;font-size:22px;padding:.3em .5em;width:10em;text-align:center}.hunt-code{font-weight:900;font-size:24px;letter-spacing:.1em}.hunt-err{color:#b8322a;min-height:1em}.hunt-counts button,.hunt-gate-btns button{font:inherit;font-weight:900;font-size:20px;min-width:48px;min-height:48px;margin:4px;border-radius:12px;border:2px solid #c9a24a;background:#fff;cursor:pointer}
 .hunt-count{margin:.3em 0;font-size:15px;color:#6a5a4a}.hunt-count button{font:inherit;font-weight:900;font-size:20px;min-width:44px;min-height:44px;margin:0 3px;border-radius:12px;border:2px solid #c9a24a;background:#fffaf0;cursor:pointer}
 .hunt-count button.on{background:#ffd54a}
+.hunt-mode{display:inline-flex;align-items:center;gap:8px;font-weight:800;font-size:16px;margin-bottom:6px}.hunt-mode select{font:inherit;font-size:18px;min-height:44px;border-radius:12px;border:2px solid #c9a24a;background:#fffaf0;padding:0 10px}
 .hunt-conf i{position:fixed;top:40%;left:50%;width:12px;height:16px;border-radius:3px;animation:hunt-conf 2.2s cubic-bezier(.2,.7,.3,1) forwards;z-index:41}
 @keyframes hunt-bob{50%{transform:translateY(-8px) rotate(-2deg)}}@keyframes hunt-pop{from{transform:scale(.3);opacity:0}}
 @keyframes hunt-glow{50%{box-shadow:0 6px 0 rgba(0,0,0,.2),0 0 0 14px rgba(120,220,110,.25)}}@keyframes hunt-conf{to{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
@@ -38,7 +39,8 @@ function post(player,body){return fetch('/api/book?player='+encodeURIComponent(p
 export function mountHunt(main,{player,event=()=>{},onClose=()=>{location.hash='';}}){
  style();let alive=true;const audio=new Audio();
  const say=line=>new Promise(res=>{if(!alive||!line?.text)return res();const done=()=>res();const t=setTimeout(done,Math.max(3000,line.text.length*90));
-  if(!line.clip){try{const u=new SpeechSynthesisUtterance(line.text);u.onend=()=>{clearTimeout(t);res();};speechSynthesis.speak(u);}catch{res();}return;}
+  // Only its own clip speaks a line (never the device's voice); a line without one stays silent.
+  if(!line.clip){clearTimeout(t);return res();}
   audio.src='/book-voice/'+line.clip;audio.onended=()=>{clearTimeout(t);res();};audio.play().catch(()=>{clearTimeout(t);res();});});
  const sayAll=async lines=>{for(const l of lines){if(!alive)return;await say(l);}};
  const root=document.createElement('section');root.className='hunt';root.setAttribute('aria-label','A hunt at home');main.innerHTML='';main.append(root);
@@ -46,17 +48,21 @@ export function mountHunt(main,{player,event=()=>{},onClose=()=>{location.hash='
   const info=await huntInfo(player);if(!alive)return;
   if(!info?.available){root.innerHTML=`<div class="hunt-card"><h2>No hunts yet.</h2><button class="hunt-btn hunt-close" type="button">← Back</button></div>`;root.querySelector('.hunt-close').onclick=close;return;}
   const {hunt:h,friend,date}=info;
+  // Letter or word (a small choice for grown-ups and the child; remembered on this computer, per child).
+  const pick=(info.modes||[]).length>1?`<label class="hunt-mode">Hunt for a <select aria-label="Hunt for">${info.modes.map(m=>`<option value="${m}"${m===info.mode?' selected':''}>${m==='letter'?'Letter':'Word'}</option>`).join('')}</select></label>`:'';
+  const wireMode=()=>{const s=root.querySelector('.hunt-mode select');if(s)s.onchange=async()=>{audio.pause();await post(player,{type:'huntMode',mode:s.value});show();};};
   if(!h||info.left<=0){
    root.innerHTML=`<div class="hunt-card">${friend?.url?`<img class="hunt-friend" src="${esc(friend.url)}" alt="">`:''}<h2 style="font-size:clamp(26px,6vmin,44px)">${esc(info.tomorrow?.text||"Let's save the next one for tomorrow!")}</h2><button class="hunt-btn hunt-close" type="button">Back to the games →</button></div>`;
+   root.querySelector('.hunt-card').insertAdjacentHTML('afterbegin',pick);wireMode();
    root.querySelector('.hunt-close').onclick=close;event('hunt_tomorrow','');void say(info.tomorrow);return;}
   const big=h.letter?`<div class="hunt-letter">${esc(h.letter)}<small>${esc(h.letter.toLowerCase())}</small></div>`:`<div class="hunt-word">${esc(h.word||h.title||'')}</div>`;
   const places=h.kind==='written'&&h.places?.length?`<p class="hunt-places" aria-hidden="true">${h.places.map(esc).join(' ')}</p>`:'';
-  root.innerHTML=`<div class="hunt-card"><div class="hunt-top">${friend?.url?`<img class="hunt-friend" src="${esc(friend.url)}" alt="${esc(friend.name||'')}">`:''}${big}</div>
+  root.innerHTML=`<div class="hunt-card">${pick}<div class="hunt-top">${friend?.url?`<img class="hunt-friend" src="${esc(friend.url)}" alt="${esc(friend.name||'')}">`:''}${big}</div>
    <p class="hunt-tip">${esc(h.tip||'')}</p><h2 class="hunt-goal">${esc(h.goal?.text||'')}</h2>${places}
    <div class="hunt-hint" aria-live="polite"></div><button class="hunt-btn hunt-hintbtn" type="button" disabled>💡 Hint</button>
    <button class="hunt-btn hunt-found" type="button">We found them! 🎉</button>
    <button class="hunt-btn hunt-close" type="button">← Back</button></div>`;
-  root.querySelector('.hunt-close').onclick=close;
+  root.querySelector('.hunt-close').onclick=close;wireMode();
   void post(player,{type:'hunt',date,page:0,id:h.id,stage:'start'});event('hunt_start',h.id);
   // Hints: one at a time, and each one waits twice as long as the last (20 s, 40 s, 80 s...).
   let hi=0,wait=20,timer=null;const hb=root.querySelector('.hunt-hintbtn'),hints=h.hints||[];

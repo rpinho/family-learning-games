@@ -25,7 +25,8 @@ export function lookAlikes(word,n=2,r=Math.random){const w=String(word).toLowerC
  return out.slice(0,n);}
 export function isLookAlike(target,option){const a=String(target).toLowerCase(),b=String(option).toLowerCase();return a!==b&&a.length===3&&b.length===3&&a[0]===b[0]&&(a[1]!==b[1])!==(a[2]!==b[2]);}
 // A word sounded out slowly for the narrator's voice (letter sounds as phonemes: "[[kə]]... [[æ]]... [[tə]]. Cat!").
-const PH={a:'æ',e:'ɛ',i:'ɪ',o:'ɑ',u:'ʌ',b:'bə',c:'kə',d:'də',f:'fff',g:'ɡə',h:'hə',j:'dʒə',k:'kə',l:'lll',m:'mmm',n:'nnn',p:'pə',r:'ɹɹɹ',s:'sss',t:'tə',v:'vvv',w:'wə',x:'ks',y:'jə',z:'zzz'};
+// One clean phoneme per letter, as Letter Quest voices them (see book/narrate.py).
+const PH={a:'æ',e:'ɛ',i:'ɪ',o:'ɑ',u:'ʌ',b:'b',c:'k',d:'d',f:'f',g:'ɡ',h:'h',j:'dʒ',k:'k',l:'l',m:'m',n:'n',p:'p',r:'ɹ',s:'s',t:'t',v:'v',w:'w',x:'ks',y:'j',z:'z'};
 export function soundOut(word){const w=String(word).toLowerCase();return [...w].map(c=>`[[${PH[c]||c}]]`).join('... ')+`. ${w[0].toUpperCase()+w.slice(1)}!`;}
 // Today's word for a reader: a family word he is stuck on, else the first family (in teaching order) he has not
 // mastered yet (fewer than three of its words), else a review.

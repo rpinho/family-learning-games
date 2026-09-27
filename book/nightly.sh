@@ -16,5 +16,7 @@ fi
 limit "${BOOK_TIMEOUT:-2700}" node "$here/generate.mjs" "$@"
 rc=$?
 [ $rc -eq 142 ] && echo "book nightly: TIMED OUT"
+# Tomorrow's Letter Hunts, from each child's learner model (deterministic; on failure yesterday's stay, replayable).
+limit "${BOOK_HUNTS_TIMEOUT:-900}" node "$here/hunts.mjs" || echo "hunts step failed (yesterday's hunts kept, replayable)"
 echo "== done rc=$rc $(date '+%H:%M:%S')"
 exit $rc

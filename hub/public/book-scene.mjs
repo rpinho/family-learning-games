@@ -6,7 +6,7 @@
 // (private) library next to its chapters; this repository ships a small generic one (book-art/).
 export const FX=['sparkles','stars','confetti','hearts','bubbles','none'];
 export const CARRIERS=['ball','egg','bubble','shield','sign','star'];
-export const MAX_ACTORS=4,MAX_PROPS=3;
+export const MAX_ACTORS=5,MAX_PROPS=3;
 const clean=s=>String(s??'').trim().toLowerCase();
 // "hero:kick" -> {id:"hero",pose:"kick"}; unknown actors are dropped, unknown poses become idle.
 export function parseActor(spec,lib,allowed){
@@ -74,7 +74,7 @@ export function coverBand([x,,w],{width,height,nw=1600,nh=1067}){const k=Math.ma
 // the engine, where the cab and the boiler would hide them. Library: props.train.cars =
 //   {parts:[{x:[x0,x1]},…,{x:[x0,x1],engine:true}], rim, body?:[x0,x1] per wagon}  (fractions of the image).
 // Each rider stands in his wagon so at least RIDER_SHOWS of him is above the rim, and is never wider than it.
-export const RIDER_SHOWS=0.72,MAX_WAGONS=4;
+export const RIDER_SHOWS=0.92,MAX_WAGONS=5;
 export function layoutTrain(actors,art,{width=16,height=9,maxWidth=0.94,maxHeight=0.5,bottom=0.05}={}){
  const T=art.props?.train,C=T?.cars;if(!C?.parts?.length)return null;
  const wagons=C.parts.filter(p=>!p.engine),engine=C.parts.find(p=>p.engine);if(!wagons.length)return null;

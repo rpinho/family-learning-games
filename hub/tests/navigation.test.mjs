@@ -36,13 +36,9 @@ test('Adult gate requires reading and reversing letters rather than solving a si
   assert.notEqual(parentChallenge(()=>.1).answer,parentChallenge(()=>.8).answer);
 });
 test('Artwork preference stays per player and device, with all nine destinations retained',()=>{
-  const store=new Map([['family-games-menu-style:beginner','logos']]);
-  const storage={getItem:key=>store.get(key)};
+  // The main menu is always logos; a saved old per-device choice is ignored.
+  const storage={getItem:()=>'screenshots'};
   assert.equal(menuStyle('beginner',null,storage),'logos');
-  assert.equal(menuStyle('explorer',null,storage),'screenshots');
-  assert.equal(menuStyle('explorer','logos',storage),'logos');
-  store.set('family-games-menu-style:explorer','screenshots');
-  assert.equal(menuStyle('explorer','logos',storage),'screenshots');
-  assert.equal(menuStyle('beginner','logos',{getItem(){throw Error('blocked');}}),'logos');
+  assert.equal(menuStyle('explorer','screenshots',storage),'logos');
   for(const item of CATALOG){assert.match(gameArtwork(item,'logos').src,/\.(png|svg)$/);assert.equal(gameArtwork(item,'screenshots').src,`/previews/${item.preview||item.id}.jpg`);}
 });

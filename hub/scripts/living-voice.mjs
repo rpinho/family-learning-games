@@ -35,7 +35,7 @@ let named={};try{named=JSON.parse(await readFile(join(book,'cast.json'),'utf8'))
 for(const s0 of Object.values(f.stories||{})){const s={...s0,voices:resolveVoices(s0.voices,named)};for(const [who,text] of Object.values(s.lines||{})){if(!text)continue;const v=s.voices[who]||s.voices.narrator;const k=`${v.voice}|${v.speed}|${text}`;if(!f.clips?.[k])want.set(k,{text,voice:v.voice,speed:v.speed});}}
 if(!want.size){console.log(JSON.stringify({made:0}));process.exit(0);}
 const dir=await mkdtemp(join(tmpdir(),'living-voice-'));const req=join(dir,'req.json');
-await writeFile(req,JSON.stringify({lines:[...want.values()],out:join(book,'voice'),models:arg('--models',paths.voiceModels)}));
+await writeFile(req,JSON.stringify({lines:[...want.values()],out:join(book,'voice'),models:arg('--models',paths.voiceModels),lq_voice:paths.data['letter-quest']?join(paths.data['letter-quest'],'voice'):null}));
 const out=execFileSync('nice',['-n','19','taskpolicy','-b',arg('--python',paths.python),join(here,'..','..','book','narrate.py'),req],{encoding:'utf8',maxBuffer:1<<24,env:{...process.env,BOOK_VOICE_THREADS:process.env.BOOK_VOICE_THREADS||'2'}});
 await rm(dir,{recursive:true,force:true});
 const r=JSON.parse(out.trim().split('\n').at(-1));f.clips={...(f.clips||{}),...r.clips};

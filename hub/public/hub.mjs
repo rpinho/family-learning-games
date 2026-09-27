@@ -129,6 +129,18 @@ async function render() {
       return;
     }
   }
+  // His own book, any time: the "My Book" card opens today's chapter (a finished one can be read again).
+  if (location.hash === "#my-book" && player !== "admin") {
+    const book = await loadBook(player);
+    if (seq !== renderSeq) return;
+    if (book?.chapter) {
+      const again = book.progress?.finished ? { ...book, progress: { ...book.progress, page: 0 } } : book;
+      dispose = mountBook(main, { player, book: again, event, onDone: () => { dispose = null; location.hash = ""; } });
+      return;
+    }
+    main.innerHTML = `<section class="error"><h1>Your next chapter is being written.</h1><p>It will be ready in the morning.</p><a class="back-link" href="#">← Back</a></section>`;
+    return;
+  }
   const dest = destination(location.hash),
     game = dest.item?.id,
     item = dest.item;
@@ -176,16 +188,17 @@ async function render() {
     const rank = id => order.includes(id) ? order.indexOf(id) : order.length + CATALOG.findIndex(g => g.id === id);
     return rank(a.id) - rank(b.id);
   });
-  const style = menuStyle(player, p.menuStyle, storage);
+  // The main menu always shows the illustrated logos (the children pick by them); a game's own menu keeps its
+  // screenshots. There is no per-device choice any more, so there is nothing to reset.
+  const style = "logos";
   const kids = config.players.filter((k) => k.id !== "admin");
   const watchCards = player === "admin" ? `<div class="book-watch-home"><h2>📖 The Book</h2>${kids.map((k) => `<a class="book-watch-btn" href="#book/${esc(k.id)}">Watch ${esc(k.name)}'s book →</a>`).join("")}</div>` : "";
-  main.innerHTML = `<section class="catalog menu-${style}"><h1>What shall we play?</h1><p>Your games. Your next adventure.</p>${watchCards}<div class="cards">${orderedGames.map(item => { const art = gameArtwork(item, style); return `<a class="card" href="#${item.id}" data-game="${item.id}" style="--tint:${item.color}"><img class="${art.className}" src="${art.src}" alt="" width="${style === "logos" ? 192 : 640}" height="${style === "logos" ? 192 : 400}"><h2>${item.name}</h2><p>${item.description}</p></a>`; }).join("")}</div><footer><span>One app · Your progress stays with you.</span><button id="grown-ups">Grown-ups</button></footer></section>`;
+  main.innerHTML = `<section class="catalog menu-${style}"><h1>What shall we play?</h1><p>Your games. Your next adventure.</p>${watchCards}<div class="cards">${player !== "admin" ? `<a class="card book-card" href="#my-book" data-game="my-book" style="--tint:#f0a52c"><img class="game-logo" src="/my-book.svg" alt="" width="192" height="192"><h2>📖 My Book</h2><p>Today’s chapter, any time.</p></a>` : ""}${orderedGames.map(item => { const art = gameArtwork(item, style); return `<a class="card" href="#${item.id}" data-game="${item.id}" style="--tint:${item.color}"><img class="${art.className}" src="${art.src}" alt="" width="${style === "logos" ? 192 : 640}" height="${style === "logos" ? 192 : 400}"><h2>${item.name}</h2><p>${item.description}</p></a>`; }).join("")}</div><footer><span>One app · Your progress stays with you.</span><button id="grown-ups">Grown-ups</button></footer></section>`;
   $("#grown-ups").onclick = () => {
     gateAttempts = 0;
     newParentChallenge();
     $("#gate-form").hidden = false;
     $("#parent-options").hidden = true;
-    $("#menu-style").value = style;
     $("#parents").showModal();
     $("#gate-answer").focus();
   };
@@ -225,7 +238,7 @@ $("#gate-form").onsubmit = (e) => {
   }
   $("#gate-form").hidden = true;
   $("#parent-options").hidden = false;
-  $("#menu-style").focus();
+  $("#gate-cancel").focus();
   void loadNotes();
   $("#book-watch").innerHTML = config.players.filter((k) => k.id !== "admin").map((k) => `<button type="button" class="book-watch-btn" data-watch="${esc(k.id)}">Watch ${esc(k.name)}'s book</button><a class="book-watch-btn book-cards-link" href="/api/book/cards?player=${encodeURIComponent(k.id)}" target="_blank" rel="noopener">🖨️ ${esc(k.name)}'s word cards</a>`).join("");
   $("#book-watch").querySelectorAll("[data-watch]").forEach((b) => (b.onclick = () => { $("#parents").close(); location.hash = "book/" + b.dataset.watch; }));
@@ -254,12 +267,6 @@ $("#book-note-add").onclick = async () => {
 $("#book-note").onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); $("#book-note-add").click(); } };
 $("#gate-cancel").onclick = $("#parent-done").onclick = () => $("#parents").close();
 $("#change-player").onclick = () => { $("#parents").close(); choose(); };
-$("#menu-style").onchange = () => {
-  const style = $("#menu-style").value;
-  if (!["logos", "screenshots"].includes(style)) return;
-  try { localStorage.setItem("family-games-menu-style:" + player, style); } catch {}
-  render();
-};
 $("#home").onclick = async () => {
   if (!(await safeLeave())) return;
   if(!config?.players?.length)return location.reload();

@@ -16,7 +16,11 @@ const base=arg('--base','http://127.0.0.1:4810'),players=String(arg('--player','
 const sizes=String(arg('--sizes','390x844m,1366x768')).split(',').map(s=>{const m=s.match(/^(\d+)x(\d+)(m?)$/);return {W:+m[1],H:+m[2],mobile:!!m[3],label:m[3]?'phone':s==='1366x768'?'chromebook':s};});
 const chrome=arg('--chrome',process.env.CHROME||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-export const RULES={standing:0.9,rider:0.55,riderHead:0.95};
+// Every character a child is shown must be SEEN: >= 90% of him, standing or riding (a wagon may hide his feet,
+// never his body). And everyone a page names or lets speak must be on that page and visible.
+export const RULES={standing:0.9,rider:0.9,riderHead:0.95};
+import {nameForms,mentions} from '../../book/assemble.mjs';
+import {unphonemize} from '../public/pronounce.mjs';
 // Runs in the page: what share of each character on the current page can be seen.
 const MEASURE=`(async()=>{
  const page=[...document.querySelectorAll('.bk-page')].at(-1),W=innerWidth,H=innerHeight;if(!page)return null;
@@ -59,8 +63,12 @@ for(const size of sizes){
    const ch=(await(await fetch(`${base}/api/book/preview?player=${encodeURIComponent(player)}`)).json()).chapter;if(!ch)throw Error('no chapter for '+player);
    await send('Page.navigate',{url:`${base}/?player=admin#book/${player}`});
    if(!await until(`!!document.querySelector('.bk-open')&&typeof __bookGo==='function'`,20000))throw Error('the book did not open');
+   const cast=(await(await fetch(`${base}/api/book/preview?player=${encodeURIComponent(player)}`)).json()).chapter?.cast||[];
+   const forms=nameForms({cast:cast.map(c=>({id:c.id,name:c.name})),grownups:[{id:'dad',name:'Dad'},{id:'mom',name:'Mom',alsoCalled:['Mommy']}]});
    for(let i=0;i<ch.pages.length;i++){
     await js(`__bookGo(${i})`);await sleep(1800);
+    const pg=ch.pages[i],lines=[...(pg.say||[]),...(pg.action?.after||[]),...(pg.magic?.after||[])];
+    const wanted=[...new Set([...lines.map(l=>l.who),...lines.flatMap(l=>mentions(unphonemize(l.shown||l.text),forms))])].filter(id=>id&&id!=='narrator');
     // Freeze only what is running (resuming a finished entry animation would replay it).
     const freeze=`(()=>{window.__frozen=document.getAnimations().filter(a=>a.playState==='running');window.__frozen.forEach(a=>{try{a.pause()}catch{}});return 1})()`,thaw=`(window.__frozen||[]).forEach(a=>{try{a.play()}catch{}})`;
     const stages=[['scene',await js(freeze)&&await js(MEASURE)]];
@@ -68,6 +76,9 @@ for(const size of sizes){
     await js(thaw);
     if(uiWait&&(ch.pages[i].beat||ch.pages[i].magic||ch.pages[i].action)&&await until(`!!document.querySelector('.bk-page:last-child .bk-play button,.bk-magic,.bk-glyph,.bk-ball,.bk-btn.go')`,uiWait)){
      await sleep(600);await js(freeze);stages.push(['ui',await js(MEASURE)]);await js(thaw);}
+    // Named or speaking but not in the picture at all.
+    const shown=new Set((stages[0][1]||[]).map(a=>a.id));
+    for(const id of wanted)if(!shown.has(id)){report.ok=false;report.failures.push({player,size:size.label,page:i+1,stage:'scene',id,share:0,why:'named or speaking but not in the picture'});}
     for(const [stage,res] of stages){for(const a of res||[]){report.checked++;
      const bad=a.rider?(a.share<RULES.rider||a.head<RULES.riderHead):a.share<RULES.standing;
      const row={player,size:size.label,page:i+1,stage,...a};report.pages.push(row);if(bad){report.ok=false;report.failures.push(row);}}}

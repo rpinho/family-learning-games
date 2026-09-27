@@ -1,10 +1,11 @@
 // The Book: turn the story JSON + plan + picture library into the chapter the hub plays.
 // Every spoken line carries its voice (the narrator, Dad, each friend) and, after narration, its clip.
 import {sayOf} from './lint.mjs';
-import {normalizeScene,artFor} from '../hub/public/book-scene.mjs';
+import {normalizeScene,artFor,MAX_ACTORS} from '../hub/public/book-scene.mjs';
+import {phonemize} from '../hub/public/pronounce.mjs';
 export const CHAPTER_SCHEMA='family-book-chapter-2';
 // Fixed lines the player speaks (content prompts always speak).
-export const UI_LINES={goal:'Goal!',saved:'Ooh, saved! Try again!',go:'Toot toot! Off we go!',fetch:'Fetch!',yes:'Yes!',tryAgain:'Try again.',great:'Great job!',noPrompt:'What do you say?',readIt:'Can you read it?',nextTime:'See you in the next chapter!',tapToGo:'Tap to turn the page.',
+export const UI_LINES={goal:'Goal!',saved:'Ooh, saved! Try again!',go:'Toot! Off we go!',fetch:'Fetch!',yes:'Yes!',tryAgain:'Try again.',great:'Great job!',noPrompt:'What do you say?',readIt:'Can you read it?',nextTime:'See you in the next chapter!',tapToGo:'Tap to turn the page.',
  // Listening (push-to-talk): gentle prompts, never a scolding.
  listenTap:'Tap the word and read it out loud!',sayLetter:'Tap the letter and say its sound!',listenNothing:"I didn't hear you. Tap and say it nice and loud!",listenAgain:'So close! Try once more.',listenEcho:'Now you say it!',askGrownUp:'Ask a grown-up to turn on the microphone.',
  traceIt:'Draw the big letter with your finger!',traced:'You drew it!'};
@@ -16,8 +17,20 @@ export function voicesFor(plan,{narrator,named={}}={}){
  return v;
 }
 const clean=t=>String(t||'').trim().replace(/\s*[—–]\s*/g,', ').replace(/\s+/g,' ');
-export function assemble(story,plan,{number=1,source='template',lint=[],generatedAt=new Date().toISOString(),dadLines=[],library,actors,voices}){
- const V=voices||voicesFor(plan),line=(who,text)=>{const w=V[who]?who:'narrator';return {who:w,text:clean(text),...V[w]};};
+// Who a line names: every friend, grown-up and the sibling by the words the story uses for them ("Pika",
+// "Pikachu with Hat", "George", "Mom"/"Mommy"). A first or last name word counts only when no one else has it.
+export function nameForms(plan){
+ const people=[...(plan.cast||[]).map(c=>({id:c.id,names:[c.name,...(c.alsoCalled||[])]})),...(plan.grownups||[]).map(g=>({id:g.id,names:[g.name,...(g.alsoCalled||[])]})),
+  ...(plan.sibling?[{id:String(plan.sibling).toLowerCase(),names:[plan.sibling]}]:[])];
+ const GENERIC=new Set(['the','big','little','with','hat','captain','mr','mrs']),words=new Map();
+ for(const p of people)for(const n of p.names)for(const w of String(n).replace(/^the\s+/i,'').split(/\s+/))if(!GENERIC.has(w.toLowerCase())){const k=w.toLowerCase();words.set(k,(words.get(k)||new Set()).add(p.id));}
+ return people.map(p=>({id:p.id,forms:[...new Set(p.names.flatMap(n=>{const core=String(n).replace(/^the\s+/i,'');const ws=core.split(/\s+/).filter(w=>!GENERIC.has(w.toLowerCase())&&words.get(w.toLowerCase())?.size===1);return [core,...ws];}))]}));
+}
+export function mentions(text,forms){const t=String(text).replace(/\[\[[^\]]*\]\]/g,' ');return forms.filter(f=>f.forms.some(n=>new RegExp(`\\b${n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}s?\\b`,'i').test(t))).map(f=>f.id);}
+export function assemble(story,plan,{number=1,source='template',lint=[],generatedAt=new Date().toISOString(),dadLines=[],library,actors,voices,pronounce={}}){
+ // Every spoken line goes to the voice through the one pronunciation map (names as phonemes, never guessed).
+ const V=voices||voicesFor(plan),line=(who,text)=>{const w=V[who]?who:'narrator',t=clean(text),s=phonemize(t,pronounce);return {who:w,text:s,...(s!==t?{shown:t}:{}),...V[w]};};
+ const forms=nameForms(plan),inPicture=id=>library.actors?.[id]&&(!actors||actors.includes(id));
  const N=t=>line('narrator',t);
  const beats=Object.fromEntries(plan.beats.map(b=>[b.id,b]));
  const notes=[];let lastBg=null;
@@ -29,6 +42,11 @@ export function assemble(story,plan,{number=1,source='template',lint=[],generate
   if(p.action&&plan.actions?.[p.action]&&!p.beat){const fetcher=String(p.fetcher||'').toLowerCase();
    base.action={kind:p.action,after:sayOf({say:p.after||[]}).map(l=>line(l.who,l.text)).filter(l=>l.text),...(p.action==='throw'&&(plan.cast||[]).some(c=>c.id===fetcher)?{fetcher}:{})};
    if(p.action==='kick'||p.action==='throw')base.carrierProp='ball';if(p.action==='drive'&&!scene.props.some(x=>x.id==='train')&&library.props.train)scene.props.push({id:'train',n:1});}
+  // Anyone the page names or lets speak is in its picture (the hero is always welcome; nobody is announced and
+  // then missing). Friends nobody mentions make room first when the picture is full.
+  {const txt=[...sayOf(p),...sayOf({say:p.after||[]}),...sayOf({say:p.magic?.after||[]})],need=[...new Set([...txt.map(l=>l.who),...txt.flatMap(l=>mentions(l.text,forms))])].filter(id=>id!=='narrator'&&inPicture(id));
+   for(const id of need)if(!scene.actors.some(a=>a.id===id))scene.actors.push({id,pose:library.actors[id].poses.idle?'idle':Object.keys(library.actors[id].poses)[0]});
+   while(scene.actors.length>MAX_ACTORS){const i=scene.actors.findLastIndex(a=>!need.includes(a.id)&&a.id!==(plan.actorIds?.hero||plan.player));if(i<0)break;scene.actors.splice(i,1);}}
   if(p.beat&&beats[p.beat]){const b=beatLines(beats[p.beat],{N,line,plan});return {...base,kind:'beat',beat:b,...(b.kind==='kick-letter'?{carrierProp:'ball'}:b.kind==='count'?{carrierProp:b.thing}:b.kind==='share'?{carrierProp:'pizza'}:{})};}
   return base;
  });
@@ -51,8 +69,8 @@ function beatLines(b,{N,line,plan}){
  const who=b.who&&plan.cast.some(c=>c.id===b.who)?b.who:'narrator';
  switch(b.kind){
   case 'teach-letter':return {...b,lines:b.lines.map(([w,t])=>line(w,t)),tap:N(b.tap)};
-  case 'kick-letter':return {...b,spoken:N(b.spoken),notIt:N(b.notIt),done:N(b.done),tap:N(`${b.letter} says ${b.sound}!`)};
-  case 'stones':return {...b,spoken:N(b.spoken),notIt:N(b.notIt),done:N(b.done),tap:N(`${b.letter} says ${b.sound}!`)};
+  case 'kick-letter':return {...b,spoken:N(b.spoken),notIt:N(b.notIt),done:N(b.done),tap:N(`${b.sound}!`)};
+  case 'stones':return {...b,spoken:N(b.spoken),notIt:N(b.notIt),done:N(b.done),tap:N(`${b.sound}!`)};
   case 'order':return {...b,spoken:N(b.spoken),done:N(b.done)};
   case 'count':return {...b,spoken:N(b.spoken),ask:N(b.ask),done:N(`Yes! ${b.answer} ${b.things}!`)};
   case 'signs':return {...b,spoken:N(b.spoken),notIt:N(b.notIt),done:N(`Yes! It says ${b.target}!`),...(b.sounds?{sounds:soundLines(b.sounds,N)}:{})};
@@ -80,8 +98,8 @@ export function attachClips(ch,clips){
 export function markdown(ch){
  const out=[`# ${ch.title}`,'',`*${ch.name}'s Book, chapter ${ch.number} · ${ch.date}*`,''];
  for(const p of ch.pages){out.push(`**[${p.scene.bg}${p.scene.actors.length?' · '+p.scene.actors.map(a=>a.id+(a.pose!=='idle'?':'+a.pose:'')).join(', '):''}]**${p.caption?` _${p.caption}_`:''}`);
-  for(const l of p.say)out.push(`- ${l.who}: ${l.text}`);
-  if(p.magic)out.push(`- MAGIC WORD on ${p.magic.object}: **${p.magic.word}**`,...p.magic.after.map(l=>`  - ${l.who}: ${l.text}`));
+  for(const l of p.say)out.push(`- ${l.who}: ${l.shown||l.text}`);
+  if(p.magic)out.push(`- MAGIC WORD on ${p.magic.object}: **${p.magic.word}**`,...p.magic.after.map(l=>`  - ${l.who}: ${l.shown||l.text}`));
   if(p.beat)out.push(`- BEAT (${p.beat.kind}): ${p.beat.what}`);out.push('');}
  if(ch.quest)out.push(`**Quest:** ${ch.quest.text}`,...(ch.quest.hints?.length?[`Hints (one at a time): ${ch.quest.hints.map(h=>h.word).join(', ')}`]:[]),...(ch.quest.cards?.length?[`Word cards for Dad to hide: ${ch.quest.cards.join(', ')}`]:[]),'');
  return out.join('\n');

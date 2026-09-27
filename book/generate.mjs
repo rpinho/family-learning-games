@@ -18,6 +18,7 @@ import {lintChapter,safeDadLine} from './lint.mjs';
 import {SYSTEM,buildPrompt,repairPrompt,parseChapter} from './prompt.mjs';
 import {templateChapter} from './template.mjs';
 import {assemble,speechLines,attachClips,markdown,voicesFor,CHAPTER_SCHEMA} from './assemble.mjs';
+import {rawNames} from '../hub/public/pronounce.mjs';
 import {ensureLife} from './life.mjs';
 const here=dirname(fileURLToPath(import.meta.url));
 
@@ -56,8 +57,8 @@ export async function askModel(prompt,{env=process.env,log=()=>{},system=SYSTEM}
  return null;
 }
 // Write, lint, repair once, else template. Returns {story, source, lint}.
-export async function writeStory(plan,{extra=[],allow=[],dadLines=[],ask=askModel,log=()=>{},library,actors,speakers}={}){
- const opts={extra,allow,actors,speakers,dadId:plan.actorIds?.[plan.lead?.id||'dad']||plan.lead?.id||plan.actorIds?.dad,dadName:plan.lead?.name||'Dad'};
+export async function writeStory(plan,{extra=[],allow=[],dadLines=[],ask=askModel,log=()=>{},library,actors,speakers,others=[]}={}){
+ const opts={extra,allow,actors,speakers,others,dadId:plan.actorIds?.[plan.lead?.id||'dad']||plan.lead?.id||plan.actorIds?.dad,dadName:plan.lead?.name||'Dad'};
  const first=await ask(buildPrompt(plan,{dadLines,library,actors,speakers}),{log});
  if(first){
   let story=parseChapter(first.text),issues=story?lintChapter(story,plan,opts):['reply was not JSON'];
@@ -75,7 +76,7 @@ export async function writeStory(plan,{extra=[],allow=[],dadLines=[],ask=askMode
 // lines: [{text, voice, speed}]. Returns {made, clips: {"voice|speed|text": file}}.
 export async function narrate(lines,{paths,env=process.env}){
  const req=join(tmpdir(),`book-voice-${process.pid}-${Date.now()}.json`);
- await writeFile(req,JSON.stringify({lines,out:paths.voice,models:paths.voiceModels}));
+ await writeFile(req,JSON.stringify({lines,out:paths.voice,models:paths.voiceModels,lq_voice:paths.data['letter-quest']?join(paths.data['letter-quest'],'voice'):null}));
  try{const r=await run(paths.python,[join(here,'narrate.py'),req],{env:{...env,BOOK_VOICE_THREADS:env.BOOK_VOICE_THREADS||'2'},timeoutMs:15*60000});
   if(r.code!==0)throw Error(r.err.slice(-600)||'narration failed');
   const j=JSON.parse(r.out.trim().split('\n').at(-1));return {made:j.made,clips:j.clips};}
@@ -115,9 +116,11 @@ export async function generateOne(player,{paths,profiles,date,noLLM=false,noVoic
  const ids=actorIdsFor(plan,library);plan.actorIds=ids;
  const speakers=['narrator',...(plan.grownups||[{id:'dad'}]).map(g=>g.id),...plan.cast.map(c=>c.id)];
  plan.dadLines=plan.dadLines.map(t=>safeDadLine(t,{extra,allow})).filter(Boolean);
- const {story,source,lint}=noLLM?{story:templateChapter(plan,library),source:'template (--no-llm)',lint:[]}:await writeStory(plan,{extra,allow,dadLines:plan.dadLines,ask,log:m=>log(m),library,actors:ids.all,speakers});
+ const {story,source,lint}=noLLM?{story:templateChapter(plan,library),source:'template (--no-llm)',lint:[]}:await writeStory(plan,{extra,allow,dadLines:plan.dadLines,ask,log:m=>log(m),library,actors:ids.all,speakers,others:(cast?.cast||[]).filter(c=>!plan.cast.some(x=>x.id===c.id)).map(c=>c.name)});
  const voices=voicesFor(plan,{narrator:profile.voice,named:cast?.voices||{}});
- const ch=assemble(story,plan,{number:await chapterNumber(dir,date),source,lint,dadLines:plan.dadLines,library,actors:ids.all,voices});
+ const ch=assemble(story,plan,{number:await chapterNumber(dir,date),source,lint,dadLines:plan.dadLines,library,actors:ids.all,voices,pronounce:cast?.pronounce||{}});
+ // No name reaches the voice as raw spelling (it would guess: "Pica" for Picos, "PIKa-chu").
+ const raw=speechLines(ch).flatMap(l=>rawNames(l.text,cast?.pronounce||{}).map(n=>`${n}: ${l.text.slice(0,50)}`));if(raw.length)throw Error('names without their pronunciation: '+raw.slice(0,3).join(' | '));
  if(!noVoice){try{const n=await narrate(speechLines(ch),{paths});attachClips(ch,n.clips);log(`${player} ${date}: ${n.made} new clips`);}
   catch(e){log(`${player} ${date}: narration failed, device speech will be used (${String(e.message).slice(0,200)})`);}}
  // Publish: write into a staging folder, then rename each file into place (clips already exist).

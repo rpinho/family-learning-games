@@ -74,7 +74,16 @@ export function readingIssues(ch,plan){
 export const spelledSound=t=>(String(t).replace(/\[\[[^\]]*\]\]/g,'').match(/\b\w*([b-df-hj-np-tv-z])\1\1\w*\b/i)||[])[0]||null;
 export const sayOf=p=>(Array.isArray(p?.say)?p.say:[]).map(l=>Array.isArray(l)?{who:String(l[0]||'').toLowerCase(),text:String(l[1]||'')}:{who:String(l?.who||'').toLowerCase(),text:String(l?.text||'')});
 const pageText=p=>[...sayOf(p).map(l=>l.text),...(p?.magic?.after?sayOf({say:p.magic.after}).map(l=>l.text):[]),...(p?.after?sayOf({say:p.after}).map(l=>l.text):[])].join(' ');
-export function lintChapter(ch,plan,{extra=[],allow=[],speakers=null,actors=null,dadId='dad',dadName='Dad'}={}){
+// A word said twice in a row ("try to say it, try to say it", "[[bə]], [[bə]]", "go, go, go") sounds like a glitch or
+// like worry to a child: every word and every sound once. Letter sounds count as words.
+export function repeatedWords(text){const w=(String(text).match(/\[\[[^\]]*\]\]|[A-Za-z']+/g)||[]).map(x=>x.toLowerCase());const out=[];
+ for(let i=1;i<w.length;i++)if(w[i]===w[i-1])out.push(w[i]);
+ // A phrase of two or more words said again straight away ("try again, try again").
+ for(let n=2;n<=4;n++)for(let i=0;i+2*n<=w.length;i++)if(w.slice(i,i+n).join(' ')===w.slice(i+n,i+2*n).join(' '))out.push(w.slice(i,i+n).join(' '));
+ return [...new Set(out)];}
+// Friends from the household's cast who are NOT in this child's cast must not appear (by name) in his book.
+export function otherFriends(text,others=[]){const t=String(text);return others.filter(n=>n&&new RegExp(`\\b${String(n).replace(/^the\s+/i,'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\\b`,'i').test(t));}
+export function lintChapter(ch,plan,{extra=[],allow=[],speakers=null,actors=null,dadId='dad',dadName='Dad',others=[]}={}){
  const issues=[];const L=LEVELS[plan.level]||LEVELS.reader;
  if(!ch||typeof ch!=='object'||!Array.isArray(ch.pages))return ['not a chapter object with pages'];
  if(typeof ch.title!=='string'||!ch.title.trim()||ch.title.length>60)issues.push('title missing or longer than 60 characters');
@@ -121,6 +130,13 @@ export function lintChapter(ch,plan,{extra=[],allow=[],speakers=null,actors=null
   if(!sayOf({say:p.after||[]}).length)issues.push(`page ${i+1}: action "${p.action}" needs "after" lines reacting to what he did`);
   if(p.action==='drive'&&!(p.props||[]).some(x=>String(x).startsWith('train')))issues.push(`page ${i+1}: the drive action needs "train" in props`);});
  if(!dad)issues.push(`${dadName} must be in the adventure (actor "${dadId}" or a line spoken by ${plan.lead?.id||'dad'}) at least once`);
+ // Every grown-up with a picture (Dad and Mom) is in the book at least once, in the picture.
+ for(const g of plan.grownups||[]){if(!actors||!actors.includes(g.id)||g.id===dadId)continue;
+  if(!pages.some(p=>(Array.isArray(p?.actors)?p.actors:[]).some(a=>String(a).split(':')[0].toLowerCase()===g.id)))issues.push(`${g.name} must be in the picture (actor "${g.id}") on at least one page`);}
+ // Only this child's own friends.
+ const castWords=(plan.cast||[]).flatMap(c=>String(c.name).toLowerCase().split(/\s+/));
+ for(const n of otherFriends(all,others.filter(o=>!castWords.some(w=>w.startsWith(String(o).toLowerCase())))))issues.push(`"${n}" is not one of ${plan.name}'s friends; use only his cast`);
+ pages.forEach((p,i)=>{for(const l of [...sayOf(p),...sayOf({say:p?.after||[]}),...sayOf({say:p?.magic?.after||[]})]){const r=repeatedWords(l.text);if(r.length)issues.push(`page ${i+1}: "${r[0]}" is said twice in a row; say every word once`);}});
  // hints, never answers: a beat page must not give its answer away
  for(const b of plan.beats){const p=pages.find(x=>x?.beat===b.id);if(!p)continue;const t=tokens(sayOf(p).map(l=>l.text).join(' '));
   const ans=b.kind==='no'?b.right:['count','share','score'].includes(b.kind)?b.answer:null;if(!ans)continue;
