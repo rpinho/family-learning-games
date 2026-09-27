@@ -36,7 +36,6 @@
 .slalom-finish .medal{font-size:78px;line-height:1}
 .slalom-finish button{min-width:220px;min-height:54px;font-size:20px}
 .slalom-finish-actions{display:flex;flex-direction:column;align-items:center;gap:10px}
-.slalom-rest-hold{margin-top:24px;opacity:.75;font-size:15px!important;min-height:40px!important;min-width:0!important}
 @media(max-height:500px){.slalom-root,.slalom-finish:not(.over){inset:42px 0 0 0}.slalom-finish.over{padding-top:30px;gap:8px}.slalom-finish p{display:none}.slalom-finish h2{font-size:26px}.slalom-finish-actions{flex-direction:row}.slalom-finish button{min-width:170px;min-height:46px;font-size:17px}.slalom-prompt{min-height:52px;font-size:20px}.slalom-hear{width:46px;height:46px;font-size:22px}.slalom-picture{font-size:36px}.slalom-btn{min-width:46px;min-height:46px}.slalom-card{min-width:60px;min-height:60px;font-size:26px}.slalom-finish .medal{font-size:54px}}
 @media(max-width:600px){.slalom-top{grid-template-columns:auto auto 1fr;}.slalom-dots{grid-column:1/-1;justify-self:center;order:3}.slalom-prompt{grid-column:3;justify-self:stretch;padding-right:12px}.slalom-hint{font-size:16px}}
 @media(prefers-reduced-motion:reduce){.slalom-loading span,.slalom-hint{animation:none}}

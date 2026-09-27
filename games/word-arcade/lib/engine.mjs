@@ -7,7 +7,6 @@ import {arcadeQuestion,arcadeAttempt} from './arcade-curriculum.mjs';
 import {chooseWord,rememberWord} from './variety.mjs';
 import {SENTENCES as TRAIN_SENTENCES,SENTENCE_DISTRACT as TRAIN_DISTRACT,scramble,tilesOf,wordBreakLines,literacyFrom,DEFAULT_TRACK} from './word-break.mjs';
 import {slalomRun,slalomLines,easeGate} from './slalom.mjs';
-import {trackPlay,windDownDue,startRest,resting,clearRest,REST_LINE,REST_COACH} from './rest.mjs';
 export const VERSION='word-arcade-2026-09-27-letter-slalom-1';
 export const GAMES=[
  ['blaster','Letter Blaster','SPELLING','Blast the missing letter. Power your starship.','🚀','#48dfec'],
@@ -58,12 +57,11 @@ export function question(game,level,n){
  if(game==='search'){q.size=6;const chars='abcdefghijklmnopqrstuvwxyz';q.grid=Array.from({length:36},(_,i)=>chars[(i*7+n)%26]);q.path=Array.from({length:word.length},(_,i)=>n%2===0?(n%6)*6+i:i*6+n%6);q.path.forEach((j,i)=>q.grid[j]=word[i]);q.answer=q.path.join(',');q.prompt=`Find the word ${word}. Tap its letters in order, across or down.`;q.help=`Find ${word}. Follow the highlighted path.`;}
  return q;
 }
-// ctx: {now, literacy} from the server (literacy = read-only Letter Quest levels for Letter Slalom).
+// ctx: {literacy} from the server (read-only Letter Quest levels for Letter Slalom). Saved `play` fields from the
+// removed wind-down are ignored.
 export function act(p,input,ctx={}){
  if(!input||input.revision!==p.revision)throw Error('Your game changed in another tab. Refresh to continue.');
- const now=ctx.now??Date.now(),s=p.session;let result={kind:input.kind};
- if(input.kind==='rest'){clearRest(p,now);p.revision++;return {kind:'rest',resting:false};}
- if(input.kind==='start'&&resting(p,now))return {kind:'resting',resting:true,line:REST_LINE};
+ const s=p.session;let result={kind:input.kind};
  if(input.kind==='start'){
   if(!GAMES.some(g=>g.id===input.game))throw Error('Choose a game');if(input.focus!==undefined&&!['words','lowercase'].includes(input.focus))throw Error('Choose a practice focus');
   if(s?.game==='builder'&&!p.builder)p.builder=builderState(p);
@@ -130,8 +128,6 @@ export function act(p,input,ctx={}){
   }else throw Error('Unknown action');
  }
  p.revision++;
- // Calm wind-down: real moves count as play; a finishing mission or run becomes the last one for now.
- if(['start','answer','next','draft','help','art'].includes(input.kind)){trackPlay(p,now);if(result.complete&&windDownDue(p,now)){startRest(p,now);result.windDown=true;}}
  return result;
 }
 function setup(p){
@@ -154,4 +150,4 @@ function setup(p){
  rememberWord(p,s.q.word);
  s.q.id=`${s.run}:${s.round}`;s.phase='question';s.help=false;s.misses=0;s.draft=s.game==='wordoku'?[...s.q.grid]:s.game==='transform'?[...s.q.from]:[];
 }
-export function voiceLines(){const all=new Set([...wordBreakLines(),...slalomLines(),REST_LINE,REST_COACH,...LINES,...SHORT_FEEDBACK,...FAMILIES.flatMap(f=>f.slice(1).map(w=>`The word is ${w}.`))]);for(const g of GAMES)for(let l=1;l<=3;l++)for(let n=0;n<120;n++){const q=question(g.id,l,n);if(q.prompt){all.add(q.prompt);all.add(shortPrompt(q));}if(q.help)all.add(q.help);}for(const word of [...new Set([...FOUNDATION_WORDS,...BUILDER_STARTERS,...WORDS.flat().map(x=>x[0])])]){all.add(`Build the word ${word}. Tap the letters in order.`);all.add(`Yes! ${word}.`);all.add(`The word is ${word}.`);for(const c of word.toUpperCase())all.add(`The word is ${word}. The missing letter is ${c}.`);}for(const c of 'abcdefghijklmnopqrstuvwxyz'){all.add(`Find little ${c.toUpperCase()}.`);all.add(`Big ${c.toUpperCase()} pairs with little ${c.toUpperCase()}.`);all.add(`The letter ${c.toUpperCase()}.`);all.add(`Letter ${c.toUpperCase()}.`);}return [...all];}
+export function voiceLines(){const all=new Set([...wordBreakLines(),...slalomLines(),...LINES,...SHORT_FEEDBACK,...FAMILIES.flatMap(f=>f.slice(1).map(w=>`The word is ${w}.`))]);for(const g of GAMES)for(let l=1;l<=3;l++)for(let n=0;n<120;n++){const q=question(g.id,l,n);if(q.prompt){all.add(q.prompt);all.add(shortPrompt(q));}if(q.help)all.add(q.help);}for(const word of [...new Set([...FOUNDATION_WORDS,...BUILDER_STARTERS,...WORDS.flat().map(x=>x[0])])]){all.add(`Build the word ${word}. Tap the letters in order.`);all.add(`Yes! ${word}.`);all.add(`The word is ${word}.`);for(const c of word.toUpperCase())all.add(`The word is ${word}. The missing letter is ${c}.`);}for(const c of 'abcdefghijklmnopqrstuvwxyz'){all.add(`Find little ${c.toUpperCase()}.`);all.add(`Big ${c.toUpperCase()} pairs with little ${c.toUpperCase()}.`);all.add(`The letter ${c.toUpperCase()}.`);all.add(`Letter ${c.toUpperCase()}.`);}return [...all];}

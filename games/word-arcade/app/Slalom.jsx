@@ -6,7 +6,6 @@ import {useEffect,useRef,useState} from 'react';
 import './slalom.css';
 import {SLALOM_LINES,easeGate} from '../lib/slalom.mjs';
 import {onceThisSession} from '../lib/word-break.mjs';
-import {REST_LINE} from '../lib/rest.mjs';
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const qualityParam=()=>{try{return new URLSearchParams(location.search).get('slalomQuality');}catch{return null;}};
 export default function Slalom({p,session,voice,soundRef,audio,paused,onPause,onHome,onAgain,submitGate,checkpoint,event}){
@@ -15,7 +14,7 @@ export default function Slalom({p,session,voice,soundRef,audio,paused,onPause,on
  // gates for rendering (a missed gate eases the next one); `gates` mirrors it for callbacks
  const [shown,setShown]=useState(()=>session.gates.map(g=>({...g})));
  const [phase,setPhase]=useState(session.phase==='complete'?'done':'loading'),[current,setCurrent]=useState(session.round),[passed,setPassed]=useState(session.round);
- const [live,setLive]=useState(false),[recapAt,setRecapAt]=useState(-1),[rest,setRest]=useState(false),[tilt,setTilt]=useState(false),[hint,setHint]=useState(true),[fallback,setFallback]=useState('');
+ const [live,setLive]=useState(false),[recapAt,setRecapAt]=useState(-1),[tilt,setTilt]=useState(false),[hint,setHint]=useState(true),[fallback,setFallback]=useState('');
  const track=session.track||session.gates[0]?.track||'letters';
  const log=(name,detail)=>{try{event('gameplay',name,typeof detail==='string'?detail:JSON.stringify(detail));}catch{}};
  // Speak a line and resolve when it has finished (or after a fair estimate if the browser could not play it).
@@ -56,8 +55,7 @@ export default function Slalom({p,session,voice,soundRef,audio,paused,onPause,on
   });
   if(!alive.current)return;
   setPhase('break');await checkpoint('mission-complete');if(!alive.current)return;
-  const windDown=!!lastResult.current?.windDown;setRest(windDown);setPhase('done');
-  if(windDown)void voice.current?.speak(REST_LINE,true);
+  setPhase('done');
  }
  // mount: load the 3D scene (or a simple 2D version if this device has no WebGL)
  useEffect(()=>{
@@ -99,11 +97,11 @@ export default function Slalom({p,session,voice,soundRef,audio,paused,onPause,on
  function tapGate(answer){if(passed>current||!g)return;passGate(current,answer);if(current+1>=gates.current.length)void finish();}
  const name=p.name;
  const finishCard=<section className={'complete slalom-finish'+(live?' over':'')} aria-live="polite">
-  <span className="medal" aria-hidden="true">{rest?'🌙':'⛷️'}</span>
-  <h2>{rest?'All done for today!':`What a run, ${name}!`}</h2>
+  <span className="medal" aria-hidden="true">⛷️</span>
+  <h2>What a run, {name}!</h2>
   <div className="slalom-recap-row">{shown.map((x,k)=><span key={k} className={'slalom-card '+x.kind}>{x.picture&&<i aria-hidden="true">{x.picture}</i>}{x.answer}</span>)}</div>
   <p>{track==='letters'?'Your letters from the mountain.':'Your words from the mountain.'}</p>
-  <div className="slalom-finish-actions">{rest?<button className="primary" onClick={onHome}>Back to Arcade</button>:<><button className="primary" onClick={onAgain}>Ski again ⛷️</button><button onClick={onHome}>Choose another game</button></>}</div>
+  <div className="slalom-finish-actions"><button className="primary" onClick={onAgain}>Ski again ⛷️</button><button onClick={onHome}>Choose another game</button></div>
  </section>;
  if(phase==='done'&&!live)return finishCard;
  return <div className={'slalom-root'+(paused?' is-paused':'')} ref={host} data-phase={phase}>
