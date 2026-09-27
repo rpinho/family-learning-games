@@ -21,7 +21,7 @@ export function cleanNote(text){return String(text||'').replace(/[\u0000-\u001f\
 export function noteTarget(text,players){const hits=players.filter(p=>p.name&&new RegExp(`\\b${p.name.replace(/[^\p{L}]/gu,'')}\\b`,'iu').test(text));return hits.length===1?hits[0].id:null;}
 export function progressView(day){return {opens:day?.opens||0,page:day?.page||0,finished:!!day?.finished,results:day?.results||[]};}
 export function shouldOpen(chapter,day){return !!chapter&&!day?.finished&&(day?.opens||0)<AUTO_OPENS;}
-export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now=()=>Date.now()}){
+export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now=()=>Date.now(),assets3d=null}){
  const kids=config.players.filter(p=>p.id!=='admin');
  const progressDir=join(data,'book-progress'),notesFile=join(data,'book-notes.json');
  let queue=Promise.resolve();
@@ -87,6 +87,14 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
     const story=Object.hasOwn(f.stories||{},id)?f.stories[id]:null;if(!story)return send(res,404,{error:'No such story.'});
     const clips=Object.fromEntries(Object.values(story.lines||{}).map(([who,text])=>{const v=story.voices?.[who]||story.voices?.narrator||{};const k=`${v.voice}|${v.speed}|${text}`;return [k,f.clips?.[k]];}).filter(([,c])=>c));
     return send(res,200,{story,clips});}
+   // The household's 3D toys (GLB models made privately in Blender) and the list of which exist.
+   if(u.pathname.startsWith('/book-3d/')&&req.method==='GET'){
+    if(!assets3d)return send(res,404,{error:'No 3D toys here.'});
+    if(u.pathname==='/book-3d/index.json'){let files=[];try{files=(await readdir(assets3d)).filter(f=>/^[a-z0-9-]{1,40}\.glb$/.test(f)).map(f=>f.slice(0,-4));}catch{}return send(res,200,{toys:files});}
+    const m=u.pathname.match(/^\/book-3d\/([a-z0-9-]{1,40}\.glb)$/);if(!m)return send(res,404,{error:'Not found.'});
+    try{const bytes=await readFile(join(assets3d,m[1]));res.writeHead(200,{'Content-Type':'model/gltf-binary','Content-Length':bytes.length,'Cache-Control':'max-age=300'});res.end(bytes);}catch(e){if(e.code==='ENOENT')send(res,404,{error:'Not found.'});else throw e;}
+    return;
+   }
    // Word cards for Dad to print and hide (one page, big letters) when today's quest needs words on paper.
    if(u.pathname==='/api/book/cards'&&req.method==='GET'){
     const player=u.searchParams.get('player');if(!kids.some(k=>k.id===player))return send(res,400,{error:'Choose a child.'});

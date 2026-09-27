@@ -55,7 +55,7 @@ test('Nightly generation publishes a picture-book chapter atomically, is idempot
  await mkdir(join(root,'book','young'),{recursive:true});await writeFile(join(root,'book','young','2026-03-10.json'),JSON.stringify({schema:'family-book-chapter-1',pages:[]}));
  const young=await generateOne('young',{paths,profiles,date:'2026-03-10',noVoice:true,now:NOW,log:()=>{},ask:async()=>null});
  assert.equal(young.skipped,undefined,'an older-format chapter is replaced');
- assert.equal(young.chapter.level,'early');assert.deepEqual(young.chapter.pages.filter(p=>p.beat).map(p=>p.beat.kind),['teach-letter','stones','count','no']);
+ assert.equal(young.chapter.level,'early');assert.deepEqual(young.chapter.pages.filter(p=>p.beat).map(p=>p.beat.kind),['teach-letter','stones','count','no','order']);
  assert.ok(young.chapter.quest.text.includes(young.chapter.pages.find(p=>p.beat?.kind==='stones').beat.letter));
 });
 test('Every spoken line carries a voice and gets its clip; friends and Dad have their own voices',()=>{

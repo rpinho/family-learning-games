@@ -46,21 +46,21 @@ export function wrongEquations(text){
 }
 // Spoken narration per level (the child reads only captions and magic words).
 export const LEVELS={
- early:{pages:[7,11],words:[110,330],avgSentence:10,maxWordLength:10,pageWords:45,lineWords:16,captionWords:1,captionWordLength:10},
- reader:{pages:[8,12],words:[160,430],avgSentence:14,maxWordLength:12,pageWords:60,lineWords:22,captionWords:6,captionWordLength:8}
+ early:{pages:[9,14],words:[150,470],avgSentence:10,maxWordLength:10,pageWords:45,lineWords:16,captionWords:1,captionWordLength:10},
+ reader:{pages:[9,15],words:[180,560],avgSentence:14,maxWordLength:12,pageWords:60,lineWords:22,captionWords:6,captionWordLength:8}
 };
 // Runs like "Sss", "Lll", "Grrr", "Zzzz" are spelled out letter by letter by the narrator's voice.
 export const spelledSound=t=>(String(t).replace(/\[\[[^\]]*\]\]/g,'').match(/\b\w*([b-df-hj-np-tv-z])\1\1\w*\b/i)||[])[0]||null;
 export const sayOf=p=>(Array.isArray(p?.say)?p.say:[]).map(l=>Array.isArray(l)?{who:String(l[0]||'').toLowerCase(),text:String(l[1]||'')}:{who:String(l?.who||'').toLowerCase(),text:String(l?.text||'')});
 const pageText=p=>[...sayOf(p).map(l=>l.text),...(p?.magic?.after?sayOf({say:p.magic.after}).map(l=>l.text):[]),...(p?.after?sayOf({say:p.after}).map(l=>l.text):[])].join(' ');
-export function lintChapter(ch,plan,{extra=[],allow=[],speakers=null,actors=null,dadId='dad'}={}){
+export function lintChapter(ch,plan,{extra=[],allow=[],speakers=null,actors=null,dadId='dad',dadName='Dad'}={}){
  const issues=[];const L=LEVELS[plan.level]||LEVELS.reader;
  if(!ch||typeof ch!=='object'||!Array.isArray(ch.pages))return ['not a chapter object with pages'];
  if(typeof ch.title!=='string'||!ch.title.trim()||ch.title.length>60)issues.push('title missing or longer than 60 characters');
  const pages=ch.pages;
  if(pages.length<L.pages[0]||pages.length>L.pages[1])issues.push(`needs ${L.pages[0]}-${L.pages[1]} pages, has ${pages.length}`);
  const castNames=(plan.cast||[plan.companion]).filter(Boolean).map(c=>c.name);
- const allowedWho=new Set(speakers||['narrator','dad',...(plan.cast||[]).map(c=>c.id)]);
+ const allowedWho=new Set(speakers||['narrator',...(plan.grownups||[{id:'dad'}]).map(g=>g.id),...(plan.cast||[]).map(c=>c.id)]);
  const all=[ch.title,...pages.flatMap(p=>[pageText(p),p?.caption||'',p?.magic?.object||'']),ch.summary||'',ch.hook||''].join('\n');
  issues.push(...safetyIssues(all,{extra,allow}));
  // beats: each exactly once, in the planned order, never the first or last page
@@ -82,7 +82,7 @@ export function lintChapter(ch,plan,{extra=[],allow=[],speakers=null,actors=null
   const say=sayOf(p);
   for(const l of say)if(spelledSound(l.text))issues.push(`page ${i+1}: "${spelledSound(l.text)}" is read aloud as letter names; write a real word (hiss, roar, hum) instead of a letter sound`);if(!say.length&&!p?.beat)issues.push(`page ${i+1} has no narration`);
   for(const l of say){if(!allowedWho.has(l.who))issues.push(`page ${i+1}: "${l.who}" cannot speak (use narrator, dad or a friend's id)`);
-   if(!l.text.trim())issues.push(`page ${i+1} has an empty line`);if(WORDS(l.text).length>L.lineWords)issues.push(`page ${i+1} has a line over ${L.lineWords} words`);if(l.who==='dad')dad=true;}
+   if(!l.text.trim())issues.push(`page ${i+1} has an empty line`);if(WORDS(l.text).length>L.lineWords)issues.push(`page ${i+1} has a line over ${L.lineWords} words`);if(l.who===(plan.lead?.id||'dad'))dad=true;}
   const n=WORDS(pageText(p)).length;if(n>L.pageWords)issues.push(`page ${i+1} has ${n} spoken words (max ${L.pageWords})`);
   const cap=String(p?.caption||'').trim();
   if(cap){const w=WORDS(cap);if(w.length>L.captionWords)issues.push(`page ${i+1} caption must be at most ${L.captionWords} word${L.captionWords>1?'s':''}`);
@@ -98,7 +98,7 @@ export function lintChapter(ch,plan,{extra=[],allow=[],speakers=null,actors=null
  acts2.forEach(p=>{const i=pages.indexOf(p);if(plan.actions&&!plan.actions[p.action])issues.push(`page ${i+1}: unknown action "${p.action}"`);if(p.beat)issues.push(`page ${i+1}: an action page cannot also be a beat`);
   if(!sayOf({say:p.after||[]}).length)issues.push(`page ${i+1}: action "${p.action}" needs "after" lines reacting to what he did`);
   if(p.action==='drive'&&!(p.props||[]).some(x=>String(x).startsWith('train')))issues.push(`page ${i+1}: the drive action needs "train" in props`);});
- if(!dad)issues.push(`Dad must be in the adventure (actor "${dadId}" or a line spoken by dad) at least once`);
+ if(!dad)issues.push(`${dadName} must be in the adventure (actor "${dadId}" or a line spoken by ${plan.lead?.id||'dad'}) at least once`);
  // hints, never answers: a beat page must not give its answer away
  for(const b of plan.beats){const p=pages.find(x=>x?.beat===b.id);if(!p)continue;const t=tokens(sayOf(p).map(l=>l.text).join(' '));
   const ans=b.kind==='no'?b.right:['count','share','score'].includes(b.kind)?b.answer:null;if(!ans)continue;

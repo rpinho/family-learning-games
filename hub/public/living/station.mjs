@@ -5,6 +5,7 @@
 import {THREE,at,paint,withSway,rng,clamp,lerp,smooth,easeInOut,easeOut,director,tween} from './engine.mjs';
 import {sky,ridge,ground,grass,particles,glow,lampPost,tree,steamTrain,steam,board} from './world.mjs';
 import {makePuppet} from './puppet.mjs';
+import {makeToy,toysAvailable} from './toy.mjs';
 
 export async function station(ctx){
  const {light,art,camera,post}=ctx;
@@ -53,12 +54,16 @@ export async function station(ctx){
  // The train, waiting far away in the valley.
  const train=steamTrain(L,{wagons:2});train.lit=0;train.idle=false;train.group.position.set(-70,0,-3.2);scene.add(train.group);const puff=steam({count:60});scene.add(puff.points);
  // The friends on the platform.
- const R=ctx.cast.roles,P=async(id,h,kind,poses)=>{const a=art.actors[id];if(!a)return null;const pz={};for(const p of poses)if(a.poses[p])pz[p]=a.poses[p].url;const pu=await makePuppet(L,{poses:pz,height:h,kind,name:id});scene.add(pu.root);return pu;};
+ const R=ctx.cast.roles,toys=await toysAvailable(),P=async(id,h,kind,poses)=>{
+  // A 3D model of the toy when the household has one; otherwise its painted picture as a 2.5D puppet.
+  if(id&&toys.has(id)&&!ctx.puppetsOnly){try{const t=await makeToy(L,{id,height:h*1.12,name:id});scene.add(t.root);return t;}catch(e){console.warn('toy',id,e);}}
+  const a=art.actors[id];if(!a)return null;const pz={};for(const p of poses)if(a.poses[p])pz[p]=a.poses[p].url;const pu=await makePuppet(L,{poses:pz,height:h,kind,name:id});scene.add(pu.root);return pu;};
  const hero=await P(R.hero,1.55,'biped',['idle','cheer','kick']);hero.root.position.set(-.2,.6,1.0);
  const guide=await P(R.guide,1.45,'plush',['idle','happy']);guide&&guide.root.position.set(1.1,.6,.7);
  const small=await P(R.small,.8,'plush',['idle','ball']);small&&small.root.position.set(-1.3,.6,1.5);
  const dad=R.grownup?await P(R.grownup,1.95,'biped',['idle','cheer','kneel']):null;dad&&dad.root.position.set(2.5,.6,1.3);
- const people=[hero,guide,small,dad].filter(Boolean);
+ const mom=R.grownup2?await P(R.grownup2,1.85,'biped',['idle','cheer','kneel','read']):null;mom&&mom.root.position.set(3.7,.6,1.7);
+ const people=[hero,guide,small,dad,mom].filter(Boolean);
  let t=0,trainX=-70,trainV=0,lampsOn=0,dusk=0;
  const LAMPS=L.uLamps.value;
  function update(time,dt){
@@ -77,7 +82,7 @@ export async function station(ctx){
  async function trainArrives(host){train.lit=1;train.setLight(1);trainV=9;host.sfx('whistle');
   await new Promise(r=>{const f=()=>{const d=0-trainX;trainV=Math.max(.0,Math.min(9,d*.45));if(d<.05){trainV=0;train.idle=true;r();}else requestAnimationFrame(f);};f();});host.sfx('hiss');}
  async function trainLeaves(){trainV=.5;await new Promise(r=>{const f=()=>{trainV=Math.min(8,trainV+.08);trainX>30?r():requestAnimationFrame(f);};f();});}
- return {scene,update,people,hero,guide,small,dad,dep,depG,train,lampsWake,trainArrives,trainLeaves,
+ return {scene,update,people,hero,guide,small,dad,mom,dep,depG,train,lampsWake,trainArrives,trainLeaves,
   
   boardAnswer:1,
   shots:{
@@ -152,7 +157,10 @@ export async function maze(ctx){
  const flies=particles({count:90,box:[[-10,10],[.3,2.6],[-10,10]],color:'#e8ff9a',color2:'#fff0a0',size:.5,swirl:1.1,seed:31});scene.add(flies);
  const mist=particles({count:70,box:[[-9,9],[.1,.6],[-9,9]],color:'#6a78b8',size:5,swirl:.4,additive:false,seed:41,opacity:.12});scene.add(mist);
  // Friends.
- const R=ctx.cast.roles,P=async(id,h,kind,poses)=>{const a=art.actors[id];if(!a)return null;const pz={};for(const p of poses)if(a.poses[p])pz[p]=a.poses[p].url;const pu=await makePuppet(L,{poses:pz,height:h,kind,name:id});scene.add(pu.root);return pu;};
+ const R=ctx.cast.roles,toys=await toysAvailable(),P=async(id,h,kind,poses)=>{
+  // A 3D model of the toy when the household has one; otherwise its painted picture as a 2.5D puppet.
+  if(id&&toys.has(id)&&!ctx.puppetsOnly){try{const t=await makeToy(L,{id,height:h*1.12,name:id});scene.add(t.root);return t;}catch(e){console.warn('toy',id,e);}}
+  const a=art.actors[id];if(!a)return null;const pz={};for(const p of poses)if(a.poses[p])pz[p]=a.poses[p].url;const pu=await makePuppet(L,{poses:pz,height:h,kind,name:id});scene.add(pu.root);return pu;};
  const hero=await P(R.hero,1.35,'biped',['idle','cheer']);const guide=await P(R.guide,1.2,'plush',['idle','happy']);const small=await P(R.small,.7,'plush',['idle','ball']);
  const s0=W(...start);hero.root.position.set(s0.x,0,s0.z+C*.9);guide&&guide.root.position.set(s0.x+.7,0,s0.z+C*1.4);small&&small.root.position.set(s0.x-.6,0,s0.z+C*1.2);
  const people=[hero,guide,small].filter(Boolean);

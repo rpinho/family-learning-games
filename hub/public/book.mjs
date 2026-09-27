@@ -102,7 +102,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   if(canNext)go(page+1);
  });
  root.querySelector('.bk-exit').onclick=()=>{document.getElementById('home')?.click();};
- root.querySelector('.bk-hear').onclick=()=>{if(page>=0)replay();};
+ root.querySelector('.bk-hear').onclick=()=>{if(page>=0){if(tele)tele.replays++;replay();}};
  // Parallax: the picture and the characters shift a little, in opposite directions, with the finger or the tilt.
  const parallax=(x,y)=>{const pg=view.querySelector('.bk-page:last-child');if(!pg||matchMedia('(prefers-reduced-motion: reduce)').matches)return;pg.style.setProperty('--px',x.toFixed(3));pg.style.setProperty('--py',y.toFixed(3));};
  root.addEventListener('pointermove',e=>parallax(e.clientX/innerWidth-.5,e.clientY/innerHeight-.5),{passive:true});
@@ -152,6 +152,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  function go(n,{back=false}={}){
   if(!alive)return;clearTimers();stopSound();setNext(false);
   if(n>=ch.pages.length)return void ending();
+  if(!preview&&page>=0&&page!==n)void post(player,{type:'dwell',date,page,ms:Date.now()-pageShownAt});pageShownAt=Date.now();tele=null;
   page=Math.max(0,n);if(!preview&&!back)void post(player,{type:'page',date,page});
   renderDots();shownAt=Date.now();const my=++turn;audit.push({page,shown:shownAt});
   const p=page_();preload(page+1);
@@ -219,6 +220,33 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   if(my!==turn)return;if(!preview)event('book_action',`${a.kind}:${Date.now()-started}`);
   await speakAll(a.after,my);
  }
+ // ---- telemetry: what he did on each beat (taps with time and correctness, hints, replays, the microphone) ----
+ let tele=null,pageShownAt=Date.now();
+ function teleStart(kind,{target=null,options=null}={}){tele={kind,target:target==null?null:String(target).slice(0,24),options:options?options.map(String).slice(0,8):null,shownAt:Date.now(),firstTap:null,taps:[],hint:0,replays:0,mic:[]};}
+ function teleTap(v,ok){if(!tele)return;const t=Date.now()-tele.shownAt;if(tele.firstTap==null)tele.firstTap=t;tele.taps.push([String(v).slice(0,12),ok?1:0,t]);if(tele.taps.length>40)tele.taps.shift();}
+ function teleHint(l){if(tele)tele.hint=Math.max(tele.hint,l);}
+ function teleOut(){if(!tele)return null;const d={target:tele.target,options:tele.options,taps:tele.taps,firstTap:tele.firstTap,hint:tele.hint,replays:tele.replays,mic:tele.mic};tele=null;return d;}
+ // ---- trace the letter: he draws over the big letter with a finger; most of its ink touched = drawn ----
+ // (never stuck: three taps without tracing, or the nudges running out, also move on)
+ function traceLetter(g,letter,my){return new Promise(res=>{
+  const tn=g.firstChild,range=document.createRange();range.setStart(tn,0);range.setEnd(tn,1);const cr=range.getBoundingClientRect(),R=root.getBoundingClientRect(),gr=g.getBoundingClientRect();
+  const W=Math.max(40,Math.round(gr.width)),H=Math.max(40,Math.round(gr.height)),cv=document.createElement('canvas');cv.className='bk-trace';cv.width=W;cv.height=H;
+  cv.style.cssText=`left:${gr.left-R.left}px;top:${gr.top-R.top}px;width:${W}px;height:${H}px`;root.querySelector('.bk-page:last-child')?.append(cv);
+  const off=document.createElement('canvas');off.width=W;off.height=H;const o=off.getContext('2d'),cs=getComputedStyle(g);
+  o.font=`${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;o.textBaseline='top';o.lineWidth=10;o.fillText(letter,cr.left-gr.left,cr.top-gr.top);o.strokeText(letter,cr.left-gr.left,cr.top-gr.top);
+  const px=o.getImageData(0,0,W,H).data,step=Math.max(8,Math.round(Math.min(W,H)/18)),cells=[];
+  for(let y=step/2;y<H;y+=step)for(let x=step/2;x<W;x+=step)if(px[(Math.floor(y)*W+Math.floor(x))*4+3]>60)cells.push({x,y,hit:false});
+  const c=cv.getContext('2d');c.fillStyle='rgba(255,226,122,.9)';let down=false,taps=0,done=false,moved=0,n=0;
+  const finish=()=>{if(done)return;done=true;cv.remove();res();};
+  const at=e=>{const b=cv.getBoundingClientRect();return {x:(e.clientX-b.left)*W/b.width,y:(e.clientY-b.top)*H/b.height};};
+  cv.onpointerdown=e=>{if(my!==turn)return finish();down=true;moved=0;cv.setPointerCapture?.(e.pointerId);if(tele&&tele.firstTap==null)tele.firstTap=Date.now()-tele.shownAt;};
+  cv.onpointermove=e=>{if(!down||done)return;const p=at(e);c.beginPath();c.arc(p.x,p.y,step*.55,0,Math.PI*2);c.fill();moved++;
+   for(const k of cells)if(!k.hit&&Math.hypot(k.x-p.x,k.y-p.y)<step*1.1){k.hit=true;n++;}
+   if(cells.length&&n/cells.length>=.6){teleTap('trace',true);burst('sparkles');void speak(ch.ui.traced);finish();}};
+  cv.onpointerup=()=>{down=false;if(moved<3&&++taps>=3){teleTap('trace-tap',false);finish();}};
+  void speak(ch.ui.traceIt);let reps=0;const nudge=()=>later(()=>{if(done||my!==turn)return finish();if(reps++>=IDLE_REPEATS){teleHint(1);return finish();}void speak(ch.ui.traceIt);nudge();},IDLE_REPEAT_MS);nudge();
+  if(!cells.length)finish();
+ });}
  // ---- say it aloud (push-to-talk) ----
  // Tap the word (or the letter), say it, and the world responds. One miss: "so close, once more". Two misses: the
  // word glows and the narrator says it; then whatever he says counts (he is echoing her). Never a scolding.
@@ -251,6 +279,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
     btn.classList.remove('thinking');busy=false;if(my!==turn||done)return;
     if(preview&&r){el_heard(btn,r);}
     // If the recogniser is having a bad moment, he is never stuck: it counts.
+    if(tele)tele.mic.push([r?(r.match?1:0):-1,String(r?.how||'').slice(0,10),r?.ms||0]);
     if(!r)return finish('tap');
     if(r.match)return finish('voice');
     if(misses>=2)return finish('echo');
@@ -268,18 +297,18 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  function magic(el,p,my){
   return new Promise(resolve=>{
    const btn=document.createElement('button');btn.type='button';btn.className='bk-magic';btn.innerHTML=`<small>${esc(p.magic.object||'magic word')}</small>${esc(p.magic.word)}`;el.append(btn);
-   const started=Date.now();let repeats=0,done=false;
-   const nudge=()=>later(()=>{if(done||my!==turn||repeats>=IDLE_REPEATS)return;repeats++;void speak(ch.ui.readIt);nudge();},IDLE_REPEAT_MS);
+   const started=Date.now();let repeats=0,done=false;teleStart('magic',{target:p.magic.word});
+   const nudge=()=>later(()=>{if(done||my!==turn||repeats>=IDLE_REPEATS)return;repeats++;teleHint(1);void speak(ch.ui.readIt);nudge();},IDLE_REPEAT_MS);
    // With a microphone, the word itself is the button he taps to read it aloud.
    void speak(ch.ui.readIt).then(async()=>{if(micUsable()&&!done&&my===turn)await speak(ch.ui.listenTap);nudge();});
    const respond=async({via,misses})=>{if(done)return;done=true;btn.classList.add('read');burst('sparkles');cheer();
-    if(!preview){void post(player,{type:'result',date,page,result:{kind:'magic',misses,ms:Date.now()-started,via,...(via!=='echo'?{earned:{word:p.magic.word}}:{})}});event('book_magic',`${p.magic.word}:${via}`);}
+    if(!preview){void post(player,{type:'result',date,page,result:{kind:'magic',misses,ms:Date.now()-started,via,...(via!=='echo'?{earned:{word:p.magic.word}}:{}),detail:teleOut()}});event('book_magic',`${p.magic.word}:${via}`);}
     await speak(p.magic.read);if(my!==turn)return resolve();await speakAll(p.magic.after,my);resolve();};
    sayIt(btn,{target:{kind:'word',word:p.magic.word},kind:'magic',my,help:[p.magic.read],onDone:respond});
   });
  }
  function finishBeat(p,my,result){
-  if(!preview){void post(player,{type:'result',date,page,result:{kind:p.beat.kind,misses:result.misses||0,ms:result.ms||0,...(result.via?{via:result.via}:{}),...(result.earned?{earned:result.earned}:{})}});event('book_beat',`${p.beat.kind}:${result.misses||0}`);}
+  if(!preview){void post(player,{type:'result',date,page,result:{kind:p.beat.kind,beat:p.beat.id||null,misses:result.misses||0,ms:result.ms||0,...(result.via?{via:result.via}:{}),...(result.earned?{earned:result.earned}:{}),detail:teleOut()}});event('book_beat',`${p.beat.kind}:${result.misses||0}`);}
   setNext(true);later(()=>{if(my===turn&&canNext)go(page+1);},1600);
  }
  // Buttons with the usual rules: wrong wiggles and says try again; two misses glow the right one.
@@ -288,23 +317,27 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   const nudge=()=>later(()=>{if(done||my!==turn||repeats>=IDLE_REPEATS)return;repeats++;void speak(prompt);nudge();},IDLE_REPEAT_MS);nudge();
   for(const v of values){const b=document.createElement('button');b.type='button';b.className=`bk-btn ${cls}`;b.textContent=label(v);b.dataset.v=v;
    b.onclick=()=>{if(done||my!==turn)return;
+    teleTap(v,String(v)===String(answer));
     if(String(v)===String(answer)){done=true;b.classList.add('right');onRight(misses);return;}
     misses++;b.classList.remove('wiggle');void b.offsetWidth;b.classList.add('wiggle');onWrong?.(misses);
-    if(misses>=2){play.querySelector(`[data-v="${CSS.escape(String(answer))}"]`)?.classList.add('glow');void speak(prompt);}else void speak(spokenWrong||ch.ui.tryAgain);};
+    if(misses>=2){teleHint(2);play.querySelector(`[data-v="${CSS.escape(String(answer))}"]`)?.classList.add('glow');void speak(prompt);}else void speak(spokenWrong||ch.ui.tryAgain);};
    play.append(b);}
  }
  async function runBeat(p,my){
   const el=pageFrame(p,{beat:true}),b=p.beat,play=el.querySelector('.bk-play'),started=Date.now();
+  teleStart(b.kind,{target:b.answer??b.letter??b.target??b.right??(b.kind==='order'?'1-5':null),options:b.options||b.balls||b.stones||b.tiles||null});
   if(!await speakAll(p.say,my))return;
   const done=r=>finishBeat(p,my,{ms:Date.now()-started,...r});
   switch(b.kind){
    case 'teach-letter':{
     // The letter can be tapped at any moment; the friend finishes showing it first.
-    const g=document.createElement('button');g.type='button';g.className='bk-glyph';g.textContent=b.letter;g.setAttribute('aria-label',`The letter ${b.letter}`);el.append(g);
+    const g=document.createElement('button');g.type='button';g.className='bk-glyph';g.textContent=b.letter;g.insertAdjacentHTML('beforeend',`<small class="lc">${esc(b.letter.toLowerCase())}</small>`);g.setAttribute('aria-label',`The letter ${b.letter}`);el.append(g);
     let tapped=false,shown=false;
     const finish=async(r={misses:0})=>{g.classList.add('tapped');burst('sparkles');await speak(b.tap);if(my===turn)done({misses:r.misses||0,...(r.via?{via:r.via}:{})});};
     g.onclick=()=>{if(tapped||my!==turn)return;tapped=true;if(shown)void finish();else g.classList.add('tapped');};
     if(!await speakAll(b.lines,my))return;shown=true;
+    // Its shape too: he traces the big letter with his finger before he says it.
+    if(ch.ui.traceIt){await traceLetter(g,b.letter,my);if(my!==turn)return;if(!micUsable())return void finish();}
     // With a microphone he says it: its sound, its name, or the friend's name ("Lll!", "L!", "Lulu!").
     if(micUsable()){g.classList.remove('tapped');let said=false;
      sayIt(g,{target:{kind:'letter',letter:b.letter,names:[b.ownerName||art.actors[b.owner]?.name].filter(Boolean)},kind:'letter',my,help:[b.tap],onDone:r=>{said=true;void finish(r);}});
@@ -317,7 +350,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
     await speak(b.spoken);if(my!==turn)return;
     play.innerHTML='';let found=0,misses=0,repeats=0;const nudge=()=>later(()=>{if(found>=b.need||my!==turn||repeats>=IDLE_REPEATS)return;repeats++;void speak(b.spoken);nudge();},IDLE_REPEAT_MS);nudge();
     b.stones.forEach((l,i)=>{const s=document.createElement('button');s.type='button';s.className='bk-btn stone';s.textContent=l;s.style.transform=`translateY(${(i%2?-1:1)*1.5}vmin) rotate(${(i%3-1)*4}deg)`;
-     s.onclick=async()=>{if(s.classList.contains('lit')||found>=b.need||my!==turn)return;
+     s.onclick=async()=>{if(s.classList.contains('lit')||found>=b.need||my!==turn)return;teleTap(l,l===b.letter);
       if(l===b.letter){s.classList.add('lit');found++;view.querySelector('.bk-actor')?.classList.add('hop');void speak(b.tap);
        if(found>=b.need){await new Promise(r=>later(r,900));if(my!==turn)return;burst('stars');await speak(b.done);if(my!==turn)return;
         const earned=b.letter;keys.add(earned);renderDots();el.insertAdjacentHTML('beforeend',`<div class="bk-key-fly">🔑</div>`);done({misses,earned:{key:earned}});}}
@@ -332,7 +365,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
     const balls=b.balls.map((l,i)=>{const x=W*(0.5+(i-(b.balls.length-1)/2)*Math.min(0.26,0.8/b.balls.length)),bl=ballEl(el,{x,y:H*0.8,size,label:l});bl.dataset.v=l;return bl;});
     await new Promise(res=>{for(const bl of balls){let st=null;
      bl.onpointerdown=e=>{st={x:e.clientX,y:e.clientY};};
-     bl.onpointerup=async e=>{if(done_||my!==turn)return;const aim={dx:st?e.clientX-st.x:0,dy:st?e.clientY-st.y:0};st=null;
+     bl.onpointerup=async e=>{if(done_||my!==turn)return;teleTap(bl.dataset.v,bl.dataset.v===b.letter);const aim={dx:st?e.clientX-st.x:0,dy:st?e.clientY-st.y:0};st=null;
       if(bl.dataset.v!==b.letter){misses++;bl.classList.remove('wiggle');void bl.offsetWidth;bl.classList.add('wiggle');void speak(b.notIt);if(misses>=2)balls.find(x=>x.dataset.v===b.letter)?.classList.add('glow');return;}
       done_=true;balls.filter(x=>x!==bl).forEach(x=>x.classList.add('used'));await shoot(el,p,my,bl,aim);res();};}});
     if(my!==turn)return;await speak(b.done);if(my!==turn)return;
@@ -346,7 +379,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
      const cols=Math.ceil(Math.sqrt(b.n*1.6)),x=(k%cols+0.5)/cols*100+(Math.random()-.5)*6,y=(Math.floor(k/cols)+0.5)/Math.ceil(b.n/cols)*100+(Math.random()-.5)*8;
      t.style.cssText=`left:${x}%;top:${y}%;width:clamp(56px,13vmin,120px);height:clamp(56px,13vmin,120px);font-size:clamp(44px,10vmin,96px)`;
      t.innerHTML=P?`<img src="${esc(P.url)}" alt="">`:`<span>${esc(b.emoji)}</span>`;
-     t.onclick=async()=>{if(t.dataset.n||my!==turn)return;counted++;t.dataset.n=counted;t.insertAdjacentHTML('beforeend',`<b>${counted}</b>`);t.classList.add('counted');await speak(ch.ui.numbers[String(counted)]);
+     t.onclick=async()=>{if(t.dataset.n||my!==turn)return;counted++;teleTap('thing',true);t.dataset.n=counted;t.insertAdjacentHTML('beforeend',`<b>${counted}</b>`);t.classList.add('counted');await speak(ch.ui.numbers[String(counted)]);
       if(counted===b.n&&my===turn){await speak(b.ask);if(my!==turn)return;
        choices(play,b.options,{cls:'ball',answer:b.answer,prompt:b.ask,my,onRight:async m=>{burst('confetti');await speak(b.done);if(my===turn)done({misses:m});}});}};
      box.append(t);}
@@ -360,7 +393,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
     const slots=document.createElement('div');slots.className='bk-slots';slots.innerHTML=b.answer.map(()=>'<span>&nbsp;</span>').join('')+`<em>${esc(b.mark)}</em>`;el.append(slots);
     play.innerHTML='';let step=0,misses=0,here=0;
     for(const w of b.tiles){const t=document.createElement('button');t.type='button';t.className='bk-btn word';t.textContent=w;
-     t.onclick=async()=>{if(step>=b.answer.length||t.classList.contains('used')||my!==turn)return;
+     t.onclick=async()=>{if(step>=b.answer.length||t.classList.contains('used')||my!==turn)return;teleTap(w,w===b.answer[step]);
       if(w!==b.answer[step]){misses++;here++;t.classList.remove('wiggle');void t.offsetWidth;t.classList.add('wiggle');void speak(ch.ui.tryAgain);
        if(here>=2)[...play.children].find(x=>x.textContent===b.answer[step]&&!x.classList.contains('used'))?.classList.add('glow');return;}
       t.classList.add('used');[...play.children].forEach(x=>x.classList.remove('glow'));slots.children[step].textContent=w;step++;here=0;
@@ -381,6 +414,18 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
     await speak(b.spoken);if(my!==turn)return;
     choices(play,b.options,{cls:'ball',answer:b.answer,prompt:b.spoken,my,onRight:async m=>{board.textContent=`${b.display} = ${b.answer}`;burst('confetti');cheer();await speak(b.done);if(my===turn)done({misses:m});}});
     return;}
+   case 'order':{
+    // Numbers in order: tap 1, then 2, ... A wrong tile wiggles; two misses make the next one glow.
+    await speak(b.spoken);if(my!==turn)return;
+    const row=document.createElement('div');row.className='bk-slots';row.innerHTML=(b.numbers||[1,2,3,4,5]).map(()=>'<span>&nbsp;</span>').join('');el.append(row);
+    play.innerHTML='';let next=1,here=0,misses=0;const N=(b.numbers||[1,2,3,4,5]).length;
+    for(const v of b.tiles){const t=document.createElement('button');t.type='button';t.className='bk-btn ball';t.textContent=v;t.dataset.v=v;
+     t.onclick=async()=>{if(next>N||t.classList.contains('used')||my!==turn)return;const ok=Number(v)===next;teleTap(v,ok);
+      if(!ok){misses++;here++;t.classList.remove('wiggle');void t.offsetWidth;t.classList.add('wiggle');void speak(ch.ui.tryAgain);if(here>=2){teleHint(2);play.querySelector(`[data-v="${next}"]`)?.classList.add('glow');}return;}
+      t.classList.add('used');[...play.children].forEach(x=>x.classList.remove('glow'));row.children[next-1].textContent=v;void speak(ch.ui.numbers?.[String(next)]);next++;here=0;
+      if(next>N){burst('stars');cheer();await speak(b.done);if(my===turn)done({misses});}};
+     play.append(t);}
+    return;}
    case 'no':return void noBeat(el,p,my,done);
   }
   done({misses:0});
@@ -398,8 +443,8 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
    play.innerHTML='';const no=document.createElement('button');no.type='button';no.className='bk-btn no';no.textContent='NO!';
    const ok=document.createElement('button');ok.type='button';ok.className='bk-btn ok';ok.textContent='Okay…';play.append(no,ok);
    void speak(ch.ui.noPrompt);
-   ok.onclick=async()=>{if(my!==turn)return;play.innerHTML='';board.classList.add('buzz');await speak(b.ifYes);board.classList.remove('buzz');if(my!==turn)return;await speak(b.ask);if(my===turn)offer();};
-   no.onclick=async()=>{if(my!==turn)return;play.innerHTML='';burst('confetti');who?.classList.add('hop');await speak(b.caught);if(my!==turn)return;await speak(b.fixSpoken);if(my!==turn)return;
+   ok.onclick=async()=>{if(my!==turn)return;teleTap('okay',false);play.innerHTML='';board.classList.add('buzz');await speak(b.ifYes);board.classList.remove('buzz');if(my!==turn)return;await speak(b.ask);if(my===turn)offer();};
+   no.onclick=async()=>{if(my!==turn)return;teleTap('NO',true);play.innerHTML='';burst('confetti');who?.classList.add('hop');await speak(b.caught);if(my!==turn)return;await speak(b.fixSpoken);if(my!==turn)return;
     choices(play,b.options,{cls:early?'key':'ball',answer:b.right,prompt:b.fixSpoken,my,onWrong:m=>{if(m===2)void speak(b.hint);},onRight:async m=>{
      board.innerHTML=early?`<span class="pic">${esc(b.claim.text.split(' ')[0])}</span><span>→</span><span>${esc(b.right)}</span>`:`<span>${esc(b.display.replace(/=.*$/,'= '+b.right))}</span>`;
      burst('stars');await speak(ch.ui.yes);if(my===turn)done({misses:m});}});};
@@ -411,7 +456,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   if(!preview){void post(player,{type:'finish',date,page:ch.pages.length});event('book_finish',date);}
   const el=view.querySelector('.bk-page')||view;
   const q=ch.quest;
-  el.insertAdjacentHTML('beforeend',`<div class="bk-quest">${q?`<h2>🗺️ A quest for you and Dad</h2><p>${esc(q.text.replace(/^A quest for you and Dad:\s*/,''))}</p>${q.hints?.length?`<div class="bk-hint"></div><button class="bk-btn bk-hintbtn" type="button">🔍 A hint, please</button>`:''}${q.dad?`<p class="bk-dadnote">${esc(q.dad)}</p>`:''}`:'<h2>The end, for today</h2>'}<button class="bk-btn bk-done" type="button">${preview?'Close':'Play games →'}</button></div>`);
+  el.insertAdjacentHTML('beforeend',`<div class="bk-quest">${q?`<h2>🗺️ ${esc((q.text.match(/^A quest for you and ([^:]+):/)||[,'Dad'])[1]).replace(/^/,'A quest for you and ')}</h2><p>${esc(q.text.replace(/^A quest for you and [^:]+:\s*/,''))}</p>${q.hints?.length?`<div class="bk-hint"></div><button class="bk-btn bk-hintbtn" type="button">🔍 A hint, please</button>`:''}${q.dad?`<p class="bk-dadnote">${esc(q.dad)}</p>`:''}`:'<h2>The end, for today</h2>'}<button class="bk-btn bk-done" type="button">${preview?'Close':'Play games →'}</button></div>`);
   el.querySelector('.bk-quest .bk-done').onclick=()=>{stop();onDone({finished:true});};
   // Came back empty-handed? One hint picture at a time (things most homes have).
   let hint=0;const hb=el.querySelector('.bk-hintbtn');

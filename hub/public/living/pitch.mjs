@@ -4,6 +4,7 @@
 import {THREE,at,GLSL_NOISE,paint,withSway,rng,clamp,lerp,easeInOut,easeOut} from './engine.mjs';
 import {sky,ridge,ground,grass,particles,glow,tree,bunting,board} from './world.mjs';
 import {makePuppet} from './puppet.mjs';
+import {makeToy,toysAvailable} from './toy.mjs';
 
 // Grass with sunlight dappled through the leaves (moving slowly with the wind).
 function dappledGround(L,{size=160}={}){
@@ -78,12 +79,16 @@ export async function pitch(ctx){
  const leafM=new THREE.MeshLambertMaterial({map:leafTex,transparent:true,alphaTest:.3,side:THREE.DoubleSide});const leaves=new THREE.Group();const r=rng(6);
  for(let i=0;i<22;i++){const lf=new THREE.Mesh(new THREE.PlaneGeometry(.45,.9),leafM);const a=r()*Math.PI*2;lf.position.set(Math.cos(a)*(1.3+r()*1.6),5.2+Math.sin(a)*(1+r()*.9),11+(r()-.5)*1.2);lf.rotation.set(r()*1.2,r()*1.2,a+Math.PI/2);leaves.add(lf);}scene.add(leaves);
  // The friends.
- const R=ctx.cast.roles,P=async(id,h,kind,poses)=>{const a=art.actors[id];if(!a)return null;const pz={};for(const p of poses)if(a.poses[p])pz[p]=a.poses[p].url;const pu=await makePuppet(L,{poses:pz,height:h,kind,name:id});scene.add(pu.root);return pu;};
+ const R=ctx.cast.roles,toys=await toysAvailable(),P=async(id,h,kind,poses)=>{
+  // A 3D model of the toy when the household has one; otherwise its painted picture as a 2.5D puppet.
+  if(id&&toys.has(id)&&!ctx.puppetsOnly){try{const t=await makeToy(L,{id,height:h*1.12,name:id});scene.add(t.root);return t;}catch(e){console.warn('toy',id,e);}}
+  const a=art.actors[id];if(!a)return null;const pz={};for(const p of poses)if(a.poses[p])pz[p]=a.poses[p].url;const pu=await makePuppet(L,{poses:pz,height:h,kind,name:id});scene.add(pu.root);return pu;};
  const hero=await P(R.hero,1.3,'biped',['idle','kick','cheer','run']);hero.root.position.set(-2.5,0,2.4);
  const flyer=await P(R.flyer,.95,'bird',['idle','fly']);flyer&&flyer.root.position.set(-30,9,-20);
  const friend=await P(R.friend,.95,'plush',['idle','happy']);friend&&friend.root.position.set(-3.8,0,0.6);
  const pet=await P(R.pet,.7,'quad',['idle','happy','run']);pet&&pet.root.position.set(2.8,0,1.8);
- const people=[hero,flyer,friend,pet].filter(Boolean);
+ const mom=R.grownup?await P(R.grownup,1.75,'biped',['idle','cheer','kneel']):null;mom&&mom.root.position.set(4.6,0,0.2);
+ const people=[hero,flyer,friend,pet,mom].filter(Boolean);
  // Balls with letters (he kicks the one that starts like the flyer).
  const balls=(ctx.story.balls||['D','B','P']).map((l,i)=>{const b=new THREE.Mesh(new THREE.SphereGeometry(.22,24,16),new THREE.MeshLambertMaterial({map:soccerTexture(l)}));b.position.set(-1.1+i*1.1,.22,3.4);b.rotation.y=-Math.PI/2;b.userData.letter=l;b.visible=false;scene.add(b);return b;});
  const sun=new THREE.DirectionalLight('#fff0d0',2.2);sun.position.set(10,12,6);scene.add(sun);scene.add(new THREE.HemisphereLight('#bfe0ff','#6a8a3a',1.2));
@@ -94,7 +99,7 @@ export async function pitch(ctx){
   for(const p of people)p.update(t,dt,camera);}
  // the flyer flies in along an arc and lands on the crossbar.
  async function flyerArrives(host){if(!flyer)return;flyer.setPose('fly');flyer.uniforms.uFlap.value=1;host.sfx('flap');
-  const a=new THREE.Vector3(-26,9,-16),c=new THREE.Vector3(-6,6,-4),b=new THREE.Vector3(0,1.95,-6.4);const t0=performance.now(),ms=4200;
+  const a=new THREE.Vector3(-26,9,-16),c=new THREE.Vector3(-6,6,-4),b=new THREE.Vector3(0,1.95,-6.4);flyer.lookAt?.(b);const t0=performance.now(),ms=4200;
   await new Promise(res=>{const f=()=>{const k=easeInOut(clamp((performance.now()-t0)/ms));const p=a.clone().multiplyScalar((1-k)*(1-k)).add(c.clone().multiplyScalar(2*k*(1-k))).add(b.clone().multiplyScalar(k*k));flyer.root.position.copy(p);k<1?requestAnimationFrame(f):res();};f();});
   flyer.uniforms.uFlap.value=0;flyer.setPose('idle');flyer.hop(.12);host.sfx('squawk');}
  // The kick: the ball flies in an arc into the net (the net billows, confetti, everyone cheers).
@@ -103,7 +108,7 @@ export async function pitch(ctx){
   netU.uHitAt.value.set(b.x+GW/2,b.y);netU.uHit.value=1;host.sfx('net');host.confetti?.();
   for(const p of people){if(p.poses.includes('cheer'))p.setPose('cheer');else if(p.poses.includes('happy'))p.setPose('happy');p.hop(.25);}
   if(flyer){flyer.uniforms.uFlap.value=1;setTimeout(()=>{flyer.uniforms.uFlap.value=0;},1400);}}
- return {scene,update,people,hero,flyer,friend,pet,balls,kick,flyerArrives,goal:goalG,
+ return {scene,update,people,hero,flyer,friend,pet,mom,balls,kick,flyerArrives,goal:goalG,
   shots:{leaves:{pos:[0,5.2,13],look:[0,2.6,-2],fov:38},reveal:{pos:[0,3.4,11.5],look:[0,1.2,-3],fov:40},
    crossbar:{pos:[1.8,2.2,-2.4],look:[0,1.95,-6.4],fov:36},friends:{pos:[-.9,1.5,7.2],look:[-1.5,.85,1.4],fov:40},
    kick:{pos:[.2,2,8.2],look:[-.2,.7,-2],fov:44},crane:{pos:[-2,9,14],look:[-6,5,-8],fov:44}}};

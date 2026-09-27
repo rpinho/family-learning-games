@@ -24,7 +24,7 @@ THE CHILD
 - Loves: ${plan.interests.join(', ')||'playing'}.${plan.compass.length?`\n- His favourite kinds of stories (a style compass only; never copy their characters, names or words):\n${plan.compass.map(c=>'  - '+c).join('\n')}`:''}
 - His friends in this chapter (his own toys come to life; keep each personality exactly; name each at least once; no other animal or toy friends):
 ${plan.cast.map(c=>`  - ${c.name} (id "${c.id}"): ${c.kind}.`).join('\n')}
-- Dad (id "dad") goes on the adventure with him: warm, playful, proud of him.${plan.sibling?` His brother ${plan.sibling} may appear as a friendly helper.`:''}
+- ${(plan.lead||{name:'Dad'}).name} (id "${(plan.lead||{id:'dad'}).id}") goes on the adventure with him today: warm, playful, proud of him.${(plan.grownups||[]).filter(g=>g.id!==(plan.lead||{id:'dad'}).id).map(g=>` ${g.name} (id "${g.id}") may join for a moment (a hug, a cheer, a snack).`).join('')}${(plan.grownups||[]).filter(g=>g.alsoCalled?.length||g.note).map(g=>` The narration calls her or him "${g.name}"${g.alsoCalled?.length?`; when the narrator quotes a child calling out, he may say "${g.alsoCalled.join('" or "')}"`:''}.${g.note?' '+g.note:''}`).join('')}${plan.sibling?` His brother ${plan.sibling} may appear as a friendly helper.`:''}
 ${plan.tricks.length?`- He sometimes ${plan.tricks.join('; ')}. One friend models the better habit once, gently, inside the story, never as a lecture.\n`:''}${plan.themes.length?`
 FROM HIS LIFE (use ONE or TWO as gentle allegory, the Primer's way: never literal, never naming real people or places; always empowering, never labelling him)
 ${plan.themes.map(t=>`- ${t.seed}`).join('\n')}
@@ -65,7 +65,7 @@ EACH PAGE IS A PICTURE (compose it only from this library)
 SHAPE
 - ${L.pages[0]}-${L.pages[1]} pages. Page 1 is a story page that starts the adventure; the last page is a story page with a warm ending and a small cliffhanger for tomorrow.
 - ${L.words[0]+20}-${L.words[1]-30} spoken words in total; at most ${L.pageWords-5} per page; at most ${L.lineWords-2} words per line.
-- Change the picture often: at least 4 different backgrounds. Dad is in at least two pages.
+- Change the picture often: at least 4 different backgrounds. ${(plan.lead||{name:'Dad'}).name} is in at least two pages.
 - ${plan.name} is the hero: he solves things, his friends help. Do not use em dashes.
 
 REPLY WITH ONLY THIS JSON

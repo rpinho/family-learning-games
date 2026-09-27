@@ -152,3 +152,7 @@
 .bk-hint .pic{font-size:1.8em}
 .bk-hintbtn{font-size:clamp(20px,4vmin,28px)!important;min-height:auto!important;padding:.25em .8em!important;background:#e8f4ff!important}
 .bk-dadnote{font-size:14px!important;color:#6a5a4a;font-style:italic}
+
+/* Letter shape (v2.2): the big letter with its lowercase, and the finger trace over it */
+.bk-glyph small.lc{font-size:.5em;margin-left:.12em;-webkit-text-stroke-width:4px}
+.bk-trace{position:absolute;z-index:6;touch-action:none;cursor:crosshair}

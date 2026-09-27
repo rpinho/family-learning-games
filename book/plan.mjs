@@ -32,11 +32,12 @@ export function letterOwners(cast){
  return (cast||[]).map(c=>{const name=c.name.replace(/^the\s+/i,'');const letter=(c.letter||name[0]).toUpperCase();
   return {id:c.id,name:c.name,letter,sound:SOUNDS[letter]||letter,word:(c.word||name.split(/\s+/)[0]).toLowerCase(),shape:c.shape||`make the shape of the letter ${letter}`};}).filter(o=>/^[A-Z]$/.test(o.letter));
 }
-function earlyBeats(m,r,{cast,collection,things,soccer=false}){
+function earlyBeats(m,r,{cast,collection,things,soccer=false,focus=null}){
  const keys=new Set((collection?.keys)||[]),known=new Set(m.literacy.letters),learning=m.literacy.learning.filter(c=>/^[A-Z]$/.test(c));
  const owners=letterOwners(cast);
  // Today's letter: a friend's letter he is still learning, else a friend's letter not yet collected, else any.
- const owner=owners.find(o=>learning.includes(o.letter)&&!keys.has(o.letter))||owners.find(o=>!keys.has(o.letter))||pick(owners,r)||{id:null,name:'Bo',letter:'B',sound:'buh',word:'bear',shape:'make the shape of the letter B'};
+ // A grown-up can ask for a letter to be revisited (e.g. the home hunt found nothing): focusLetter in the profile.
+ const owner=(focus&&owners.find(o=>o.letter===String(focus).toUpperCase()))||owners.find(o=>learning.includes(o.letter)&&!keys.has(o.letter))||owners.find(o=>!keys.has(o.letter))||pick(owners,r)||{id:null,name:'Bo',letter:'B',sound:'buh',word:'bear',shape:'make the shape of the letter B'};
  const L=owner.letter,sound=owner.sound;
  const others=shuffle(near(L),r).slice(0,2);while(others.length<2)others.push(pick('MTKZX'.split('').filter(c=>c!==L),r));
  const stones=shuffle([L,L,L,...others,others[0]],r);
@@ -61,7 +62,10 @@ function earlyBeats(m,r,{cast,collection,things,soccer=false}){
     spoken:`Tap each one to count the ${things_}.`,ask:`How many ${things_}?`,answer:String(count),options:numberOptions(count,r)},
    {id:'b4',kind:'no',what:`${who.name} insists "${cap(review.word)} starts with ${wrong}" and wants to do something silly with it; ${m.name} says NO! and fixes it`,who:who.id,whoName:who.name,
     claim:`${cap(review.word)} starts with ${wrong}!`,ask:`Can I put the ${wrong} key in the ${review.word} lock? Can I? Please?`,wrong,right:review.letter,options:shuffle([review.letter,wrong,near(review.letter).find(c=>c!==wrong)||'O'],r),
-    ifYes:`Oops! The ${wrong} key does not fit. Hmm.`,caught:`You said NO! ${cap(review.word)} starts with ${review.letter}, not ${wrong}.`,fixSpoken:`Which letter does ${review.word} start with?`,hint:`Listen: ${review.word}. ${review.sound||SOUNDS[review.letter]}. What sound is first?`}
+    ifYes:`Oops! The ${wrong} key does not fit. Hmm.`,caught:`You said NO! ${cap(review.word)} starts with ${review.letter}, not ${wrong}.`,fixSpoken:`Which letter does ${review.word} start with?`,hint:`Listen: ${review.word}. ${review.sound||SOUNDS[review.letter]}. What sound is first?`},
+   // Numbers in order (1 to 5): an outside tutor flagged ordering; a quick, satisfying play beat for everyone.
+   {id:'b5',kind:'order',what:`the friends line up (for the train, a photo or a race) and ${m.name} puts the numbers 1 to 5 in order`,numbers:[1,2,3,4,5],tiles:shuffle(['1','2','3','4','5'],r),
+    spoken:'Tap the numbers in order. One, two, three, four, five!',done:'One, two, three, four, five! All in order!'}
   ],
   quest:letterQuest(L,{sound,friend:owner.id?{name:owner.name,emoji:owner.emoji}:null}),
   reward:{key:L}
@@ -152,7 +156,7 @@ export function planChapter(model,{date,profile={},cast=null,collection={},life=
  let base;
  if(early){
   // Today's letter owner must be in today's chapter.
-  base=earlyBeats(model,r,{cast:everyone,collection,things,soccer:(model.interests||[]).includes('soccer')||(profile.interests||[]).includes('soccer')});
+  base=earlyBeats(model,r,{focus:profile.focusLetter||null,cast:everyone,collection,things,soccer:(model.interests||[]).includes('soccer')||(profile.interests||[]).includes('soccer')});
   const owner=everyone.find(c=>c.id===base.beats[0].owner);if(owner&&!members.some(c=>c.id===owner.id))members.push(owner);
   const noWho=everyone.find(c=>c.id===base.beats[3].who);if(noWho&&!members.some(c=>c.id===noWho.id)){base.beats[3].who=members.find(c=>c.id!==base.beats[0].owner)?.id||members[0].id;base.beats[3].whoName=(members.find(c=>c.id===base.beats[3].who)||members[0]).name;base.beats[3].what=base.beats[3].what.replace(noWho.name,base.beats[3].whoName);}
  }else{
@@ -162,7 +166,10 @@ export function planChapter(model,{date,profile={},cast=null,collection={},life=
   base.quest=readerQuest(base.magic.length?base.magic:[base.beats[0].target],{seed:Number(String(date).replace(/-/g,''))||0});
  }
  const interests=shuffle(model.interests||[],r).slice(0,3);
- return {player:model.player,name:model.name,date,level:early?'early':'reader',sibling:profile.sibling||null,companion,cast:members,props:chooseProps(model,cast),interests,
+ // The grown-ups take turns leading the adventure (balanced by date); the other may appear too.
+ const grownups=(cast?.grownups?.length?cast.grownups:[{id:'dad',name:'Dad'}]).map(g=>({id:g.id,name:g.name,...(g.alsoCalled?{alsoCalled:g.alsoCalled}:{}),...(g.note?{note:g.note}:{})}));
+ const lead=grownups[(Number(String(date).replace(/-/g,''))||0)%grownups.length];
+ return {grownups,lead,player:model.player,name:model.name,date,level:early?'early':'reader',sibling:profile.sibling||null,companion,cast:members,props:chooseProps(model,cast),interests,
   arc:profile.arc||null,compass:profile.compass||[],themes:chooseThemes(life,r),collection:{keys:collection?.keys||[],words:collection?.words||[]},
   ...base,magic:base.magic||[],actions:ACTIONS,minActions:early?2:1,
   dadLines:(model.recent?.dadLines||[]).map(l=>l.text),yesterday:model.recent?.yesterday||null,play:model.recent?.play||[],

@@ -57,7 +57,7 @@ export async function askModel(prompt,{env=process.env,log=()=>{},system=SYSTEM}
 }
 // Write, lint, repair once, else template. Returns {story, source, lint}.
 export async function writeStory(plan,{extra=[],allow=[],dadLines=[],ask=askModel,log=()=>{},library,actors,speakers}={}){
- const opts={extra,allow,actors,speakers,dadId:plan.actorIds?.dad};
+ const opts={extra,allow,actors,speakers,dadId:plan.actorIds?.[plan.lead?.id||'dad']||plan.lead?.id||plan.actorIds?.dad,dadName:plan.lead?.name||'Dad'};
  const first=await ask(buildPrompt(plan,{dadLines,library,actors,speakers}),{log});
  if(first){
   let story=parseChapter(first.text),issues=story?lintChapter(story,plan,opts):['reply was not JSON'];
@@ -93,7 +93,9 @@ export function actorIdsFor(plan,library){
  const hero=has(plan.player)?plan.player:'hero',dad=has('dad')?'dad':'grown-up';
  const sib=plan.sibling&&has(plan.sibling.toLowerCase())?plan.sibling.toLowerCase():null;
  const friends=(plan.cast||[]).map(c=>c.id).filter(has);
- return {hero,dad,sibling:sib,all:[hero,dad,...(sib?[sib]:[]),...friends].filter(has)};
+ // Every grown-up with a picture (Dad, Mom) can be in the scene; each is reachable by its own id.
+ const grown=Object.fromEntries((plan.grownups||[]).filter(g=>g.id!=='dad'&&has(g.id)).map(g=>[g.id,g.id]));
+ return {hero,dad,...grown,sibling:sib,all:[hero,dad,...Object.values(grown),...(sib?[sib]:[]),...friends].filter(has)};
 }
 // What he has collected in the book so far (letter keys, words he read), from the hub's progress file.
 export async function readCollection(paths,player){try{const p=JSON.parse(await readFile(join(paths.data.hub,'book-progress',player+'.json'),'utf8'));return {keys:p.collection?.keys||[],words:p.collection?.words||[]};}catch{return {keys:[],words:[]};}}
@@ -111,7 +113,7 @@ export async function generateOne(player,{paths,profiles,date,noLLM=false,noVoic
  const plan=planChapter(model,{date,profile,cast,collection,life});
  const library=readLibrary(paths);
  const ids=actorIdsFor(plan,library);plan.actorIds=ids;
- const speakers=['narrator','dad',...plan.cast.map(c=>c.id)];
+ const speakers=['narrator',...(plan.grownups||[{id:'dad'}]).map(g=>g.id),...plan.cast.map(c=>c.id)];
  plan.dadLines=plan.dadLines.map(t=>safeDadLine(t,{extra,allow})).filter(Boolean);
  const {story,source,lint}=noLLM?{story:templateChapter(plan,library),source:'template (--no-llm)',lint:[]}:await writeStory(plan,{extra,allow,dadLines:plan.dadLines,ask,log:m=>log(m),library,actors:ids.all,speakers});
  const voices=voicesFor(plan,{narrator:profile.voice});

@@ -51,7 +51,9 @@ const menu=cachedMenuOrderService({players,onError:detail=>void log({type:'menu_
 // Staging reads its own copy (staging-data/book), like its copy of the saves.
 const bookDir=process.env.FAMILY_BOOK||(deployDir?join(deployDir,'..',channel==='staging'?join('staging-data','book'):'book'):join(data,'book'));
 const timeZone=process.env.FAMILY_TZ||Intl.DateTimeFormat().resolvedOptions().timeZone;
-const book=bookService({data,bookDir,players,config,log,timeZone});
+// Private 3D toys (GLB) for the living book, next to the deployment (never in the repository).
+const assets3d=process.env.FAMILY_ASSETS3D||(deployDir?join(deployDir,'..','assets3d'):join(data,'assets3d'));
+const book=bookService({data,bookDir,players,config,log,timeZone,assets3d});
 const listen=listenService({settings:listenSettings({deployDir}),players,log});
 const chess=chessService({data,players,log,settingsFor:Object.fromEntries(config.players.map(p=>[p.id,p.chess||{}]))});
 const server=http.createServer(async(req,res)=>{
@@ -75,7 +77,7 @@ const server=http.createServer(async(req,res)=>{
   if(u.pathname.startsWith('/api/')&&!['GET','HEAD'].includes(req.method))touch('hub');
   if(u.pathname==='/api/chess')return await chess.handle(req,res,u);
   if(u.pathname.startsWith('/api/listen')){const handled=await listen.handle(req,res,u);if(handled!==false)return;}
-  if(u.pathname.startsWith('/api/book')||u.pathname.startsWith('/book-voice/')||u.pathname.startsWith('/book-art/')){const handled=await book.handle(req,res,u);if(handled!==false)return;}
+  if(u.pathname.startsWith('/api/book')||u.pathname.startsWith('/book-voice/')||u.pathname.startsWith('/book-art/')||u.pathname.startsWith('/book-3d/')){const handled=await book.handle(req,res,u);if(handled!==false)return;}
   if(u.pathname==='/health')return send(res,200,{ok:true,version:HUB_VERSION,release:HUB_RELEASE||null,channel:channel||null,physicsVersion:VERSION,diagnostics:{ok:!logError,error:logError}});
   if(/^\/(?:voice|chess-voice)\/(manifest\.json|[a-f0-9]{16}\.wav)$/.test(u.pathname)&&req.method==='GET'){try{const bytes=await readFile(join(data,u.pathname.slice(1)));res.writeHead(200,{'Content-Type':u.pathname.endsWith('.wav')?'audio/wav':'application/json'});res.end(bytes);}catch(e){if(e.code==='ENOENT')send(res,404,{error:'Use device narration.'});else throw e;}return;}
   if(u.pathname==='/api/config'&&req.method==='GET')return send(res,200,{players:config.players,version:HUB_VERSION,release:HUB_RELEASE});

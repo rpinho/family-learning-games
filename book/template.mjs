@@ -5,7 +5,7 @@ const bg=(lib,...prefs)=>prefs.find(p=>lib.backgrounds[p])||Object.keys(lib.back
 const idsOf=(plan,lib)=>plan.actorIds||{hero:lib.actors[plan.player]?plan.player:'hero',dad:lib.actors.dad?'dad':'grown-up'};
 const pose=(lib,id,p)=>lib.actors[id]?.poses[p]?`${id}:${p}`:id;
 function early(plan,lib){
- const {name}=plan,ids=idsOf(plan,lib),cast=plan.cast,[b1,b2,b3,b4]=plan.beats;
+ const {name}=plan,ids=idsOf(plan,lib),cast=plan.cast,[b1,b2,b3,b4,b5]=plan.beats;
  const owner=cast.find(c=>c.id===b1.owner)||cast[0],noWho=cast.find(c=>c.id===b4.who)||cast[0],others=cast.filter(c=>c.id!==owner.id).slice(0,2);
  const A=(...xs)=>xs.filter(Boolean).filter((x,i,a)=>lib.actors[x.split(':')[0]]&&a.indexOf(x)===i).slice(0,4);
  const H=ids.hero,D=ids.dad;
@@ -17,6 +17,7 @@ function early(plan,lib){
   {scene:bg(lib,'train-valley','meadow'),actors:A(H,D,owner.id),props:['train'],action:'drive',say:[['narrator','Across! And look, a little train is waiting.'],['dad',`All aboard! You drive, ${name}! Pull the lever!`]],after:[['narrator','Chug, chug! The train rolls away to a new place.']]},
   {beat:'b3',scene:bg(lib,'dino-land','meadow','forest'),actors:A(H,others[1]?.id||owner.id),say:[['narrator','The train stops in a sunny valley.'],['narrator',`Everyone wants to know how many there are.`]]},
   {beat:'b4',scene:bg(lib,'castle-forest','castle','meadow'),actors:A(H,noWho.id),say:[['narrator',`${noWho.name} has a very cheeky idea.`]]},
+  ...(b5?[{beat:'b5',scene:bg(lib,'train-valley','meadow'),actors:A(H,owner.id,others[0]?.id),say:[['narrator','Everyone wants a turn on the train.'],['narrator','Let us line up the tickets, one to five.']]}]:[]),
   {scene:bg(lib,'pizza-party','meadow'),actors:A(pose(lib,H,'cheer'),pose(lib,D,'cheer'),noWho.id,owner.id),fx:'confetti',say:[['narrator',`${noWho.name} laughs and laughs. What a silly idea that was!`],['dad',`${name}, you are a great helper.`],['narrator','Everyone shares a big warm pizza.']]},
   {scene:bg(lib,'night-hill','castle-moon-hill','night'),actors:A(H,D,owner.id),fx:'stars',say:[['narrator',`The moon comes up. ${name} holds the ${b1.letter} key tight.`],['narrator','Far away, another door is waiting. Who has the next key?']]}
  ],summary:`${name} got the ${b1.letter} key from ${owner.name}, crossed the river on the ${b1.letter} stones and counted with his friends.`,hook:'Another locked door is waiting for the next key.'};

@@ -6,11 +6,12 @@ export const CHAPTER_SCHEMA='family-book-chapter-2';
 // Fixed lines the player speaks (content prompts always speak).
 export const UI_LINES={goal:'Goal!',saved:'Ooh, saved! Try again!',go:'Toot toot! Off we go!',fetch:'Fetch!',yes:'Yes!',tryAgain:'Try again.',great:'Great job!',noPrompt:'What do you say?',readIt:'Can you read it?',nextTime:'See you in the next chapter!',tapToGo:'Tap to turn the page.',
  // Listening (push-to-talk): gentle prompts, never a scolding.
- listenTap:'Tap the word and read it out loud!',sayLetter:'Tap the letter and say its sound!',listenNothing:"I didn't hear you. Tap and say it nice and loud!",listenAgain:'So close! Try once more.',listenEcho:'Now you say it!',askGrownUp:'Ask a grown-up to turn on the microphone.'};
-export const DEFAULT_VOICES={narrator:{voice:'af_heart',speed:0.95},dad:{voice:'am_michael',speed:0.95}};
+ listenTap:'Tap the word and read it out loud!',sayLetter:'Tap the letter and say its sound!',listenNothing:"I didn't hear you. Tap and say it nice and loud!",listenAgain:'So close! Try once more.',listenEcho:'Now you say it!',askGrownUp:'Ask a grown-up to turn on the microphone.',
+ traceIt:'Draw the big letter with your finger!',traced:'You drew it!'};
+export const DEFAULT_VOICES={narrator:{voice:'af_heart',speed:0.95},dad:{voice:'am_michael',speed:0.95},mom:{voice:'af_sarah',speed:0.95}};
 const FRIEND_VOICES=[{voice:'am_puck',speed:1},{voice:'af_bella',speed:1},{voice:'bm_fable',speed:1},{voice:'af_nova',speed:1.05}];
 export function voicesFor(plan,{narrator}={}){
- const v={narrator:{...DEFAULT_VOICES.narrator,...(narrator||{})},dad:{...DEFAULT_VOICES.dad}};
+ const v={narrator:{...DEFAULT_VOICES.narrator,...(narrator||{})},dad:{...DEFAULT_VOICES.dad},mom:{...DEFAULT_VOICES.mom}};
  (plan.cast||[]).forEach((c,i)=>{v[c.id]=c.voice?{voice:c.voice,speed:Number(c.speed)||1}:FRIEND_VOICES[i%FRIEND_VOICES.length];});
  return v;
 }
@@ -39,7 +40,7 @@ export function assemble(story,plan,{number=1,source='template',lint=[],generate
  return {schema:CHAPTER_SCHEMA,player:plan.player,name:plan.name,date:plan.date,number,title:cover.title,level:plan.level,cover,
   cast:(plan.cast||[]).map(c=>({id:c.id,name:c.name,emoji:c.emoji||'⭐'})),art,pages,ui,
   // The quest is always doable at home: hint pictures for a hunt, or word cards Dad prints and hides.
-  quest:plan.quest?(q=>({...N(`A quest for you and Dad: ${q.text}`),...(q.hints?.length?{hints:q.hints.slice(0,7).map(h=>({word:h.word,emoji:h.emoji,line:N(h.text)}))}:{}),...(q.cards?.length?{cards:q.cards,dad:q.dad}:{})}))(typeof plan.quest==='string'?{text:plan.quest}:plan.quest):null,reward:plan.reward||null,
+  quest:plan.quest?(q=>({...N(`A quest for you and ${plan.lead?.name||'Dad'}: ${q.text}`),...(q.hints?.length?{hints:q.hints.slice(0,7).map(h=>({word:h.word,emoji:h.emoji,line:N(h.text)}))}:{}),...(q.cards?.length?{cards:q.cards,dad:q.dad}:{})}))(typeof plan.quest==='string'?{text:plan.quest}:plan.quest):null,reward:plan.reward||null,
   summary:clean(story.summary),hook:clean(story.hook),
   meta:{generatedAt,source,lint,sceneNotes:notes,practises:plan.beats.map(b=>`${b.kind}: ${b.what}`),magic:plan.magic,dadLines,themes:(plan.themes||[]).map(t=>t.id||t.seed),yesterday:plan.yesterday}};
 }
@@ -50,6 +51,7 @@ function beatLines(b,{N,line,plan}){
   case 'teach-letter':return {...b,lines:b.lines.map(([w,t])=>line(w,t)),tap:N(b.tap)};
   case 'kick-letter':return {...b,spoken:N(b.spoken),notIt:N(b.notIt),done:N(b.done),tap:N(`${b.letter}! ${b.sound}!`)};
   case 'stones':return {...b,spoken:N(b.spoken),notIt:N(b.notIt),done:N(b.done),tap:N(`${b.letter}! ${b.sound}!`)};
+  case 'order':return {...b,spoken:N(b.spoken),done:N(b.done)};
   case 'count':return {...b,spoken:N(b.spoken),ask:N(b.ask),done:N(`Yes! ${b.answer} ${b.things}!`)};
   case 'signs':return {...b,spoken:N(b.spoken),notIt:N(b.notIt),done:N(`Yes! It says ${b.target}!`)};
   case 'spell':return {...b,spoken:N(b.spoken),done:N(b.sentence)};

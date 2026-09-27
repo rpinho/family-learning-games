@@ -19,7 +19,7 @@ async function main(){
  const stage=createStage(canvas,{maxScale:q.get('scale')?Number(q.get('scale')):1});
  if(!stage||!library){$('#fallback').hidden=false;$('#title').hidden=true;mark('fallback');return;}
  const camera=new THREE.PerspectiveCamera(40,1,.1,600);const light=makeLight();const post=stage.post;
- const ctx={light,art:library,camera,post,cast:{roles:story.roles},story};
+ const ctx={light,art:library,camera,post,cast:{roles:story.roles},story,puppetsOnly:q.get('puppets')==='1'};
  const fit=()=>{const w=canvas.clientWidth,h=canvas.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();};addEventListener('resize',fit);fit();
  const dir=director(camera,post);
  let world=null,t0=performance.now(),last=t0,running=true;
@@ -29,7 +29,7 @@ async function main(){
   state.stats=stage.stats();requestAnimationFrame(frame);}
  // ---- sound and narration ----
  const sound=createSound();const audio=new Audio();audio.preload='auto';
- const who2puppet=w=>({small:world?.small,guide:world?.guide,grownup:world?.dad,flyer:world?.flyer,friend:world?.friend,pet:world?.pet}[w]);
+ const who2puppet=w=>({small:world?.small,guide:world?.guide,grownup:world?.dad||world?.mom,grownup2:world?.mom,mom:world?.mom,flyer:world?.flyer,friend:world?.friend,pet:world?.pet}[w]);
  async function say(key){const [who,text]=L[key];const v=V[who]||V.narrator;const clip=voice[`${v.voice}|${v.speed}|${text}`];const est=Math.max(1400,text.length*62);
   mark('say:'+key);who2puppet(who)?.talk(est);sound?.duck(.2);
   if(clip){audio.src='/book-voice/'+clip;try{await audio.play();await new Promise(r=>{const to=setTimeout(r,est*2+2000);audio.onended=()=>{clearTimeout(to);r();};});}catch{await wait(est);}}else await wait(est);
@@ -62,6 +62,7 @@ async function main(){
   const arrive=world.trainArrives(host);await say('st6');await lowShot;await arrive;
   dir.play({dur:5,from:s.low,to:s.wide,ease:easeInOut,focusFrom:14,focusTo:9,aperture:.25},performance.now());
   if(world.dad){world.dad.setPose('cheer');await say('st7');}
+  if(world.mom&&L.st7b){world.mom.setPose('cheer');await say('st7b');}
   // Everyone climbs aboard, the train pulls away; the iris closes on the lamp.
   const seats=world.train.seatsWorld();for(const [i,p] of [world.hero,world.guide,world.small].entries()){if(!p)continue;const to=seats[i%seats.length];p.root.visible=false;}
   sound?.play('whistle');dir.play({dur:6,from:s.wide,to:s.depart,ease:easeInOut},performance.now());await world.trainLeaves();await irisClose();
@@ -107,7 +108,7 @@ async function main(){
     misses++;sound?.play('soft');const y0=b.position.y;b.position.y+=.2;setTimeout(()=>b.position.y=y0,220);await say('dWrong');if(misses>=2){const B=world.balls.find(x=>x.userData.letter===(story.answer||'B'));B.scale.setScalar(1.35);}};
    onTap=ray=>{const hit=ray.intersectObjects(world.balls)[0];if(hit)pick(hit.object);};
    if(AUTO)setTimeout(()=>pick(world.balls[0]),2500),setTimeout(()=>pick(world.balls[1]),8000);});
-  mark('goal');await say('dGoal');world.pet?.hop(.3);await say('d6');
+  mark('goal');await say('dGoal');if(world.mom&&L.dMom){world.mom.setPose('cheer');await say('dMom');}world.pet?.hop(.3);await say('d6');
   const cr=dir.play({dur:9,from:s.kick,to:s.crane,ease:easeInOut,focusFrom:6,focusTo:14,aperture:.3},performance.now());await say('d7');await cr;
   sound?.music(false);await irisClose();mark('end');state.done=true;
  }
