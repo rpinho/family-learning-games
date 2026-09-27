@@ -7,6 +7,7 @@
 // short recording (needs ffmpeg).
 // Usage: node scripts/check-slalom-browser.mjs --base http://127.0.0.1:5319 --player beginner [--size 1280x800]
 //        [--mobile] [--miss 2] [--shots <dir>] [--label tablet] [--record] [--cpu 4] [--quality medium]
+//        [--ride ski|board] [--deep (open through ?play=slalom)] [--boost 1,4 (hold Up after those rows' questions)]
 import {spawn,spawnSync} from 'node:child_process';
 import {mkdtemp,readFile,writeFile,mkdir,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
@@ -14,7 +15,7 @@ import {join} from 'node:path';
 import {easeGate} from '../lib/slalom.mjs';
 const args=process.argv.slice(2),arg=(k,d=null)=>{const i=args.indexOf(k);return i>=0?args[i+1]:d;},flag=k=>args.includes(k);
 const base=arg('--base','http://127.0.0.1:5319'),player=arg('--player','admin'),[W,H]=arg('--size','1280x800').split('x').map(Number),mobile=flag('--mobile');
-const shots=arg('--shots'),label=arg('--label',`${W}x${H}`),miss=new Set((arg('--miss','')||'').split(',').filter(Boolean).map(Number)),record=flag('--record'),cpu=Number(arg('--cpu','1')),quality=arg('--quality');
+const shots=arg('--shots'),label=arg('--label',`${W}x${H}`),miss=new Set((arg('--miss','')||'').split(',').filter(Boolean).map(Number)),record=flag('--record'),cpu=Number(arg('--cpu','1')),quality=arg('--quality'),ride=arg('--ride','ski'),deep=flag('--deep'),boostRows=new Set((arg('--boost','')||'').split(',').filter(Boolean).map(Number));
 const chrome=arg('--chrome',process.env.CHROME||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const profile=await mkdtemp(join(tmpdir(),'slalom-check-chrome-'));
@@ -48,15 +49,17 @@ try{
  // script runs (this edition speaks through it; the calls are counted, not played).
  await send('Page.addScriptToEvaluateOnNewDocument',{source:`window.__deviceVoice=[];(()=>{const s={speak(u){window.__deviceVoice.push(String(u&&u.text||''));},cancel(){},pause(){},resume(){},getVoices(){return [];},speaking:false,pending:false,paused:false,addEventListener(){},removeEventListener(){},onvoiceschanged:null};try{Object.defineProperty(window,'speechSynthesis',{value:s,configurable:false});}catch{}})();`});
  await send('Page.addScriptToEvaluateOnNewDocument',{source:`window.__audio=[];const _play=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=function(){const e={src:this.currentSrc||this.src,at:performance.now()};window.__audio.push(e);const p=_play.call(this);Promise.resolve(p).then(()=>{e.ok=true;},x=>{e.err=x&&x.name;});return p;};`});
- await send('Page.navigate',{url:`${base}/?player=${player}${quality?`&slalomQuality=${quality}`:''}`});
- if(!await until(`!!document.querySelector('section.lobby')`,30000))throw Error('lobby did not load');
+ await send('Page.navigate',{url:`${base}/?player=${player}${deep?'&play=slalom':''}${quality?`&slalomQuality=${quality}`:''}`});
+ if(!await until(deep?`!!document.querySelector('.slalom-ride')`:`!!document.querySelector('section.lobby')`,30000))throw Error(deep?'deep link did not open the slalom start screen':'lobby did not load');
+ result.deep=deep;if(deep)result.deepNoLobby=await js(`!document.querySelector('section.lobby')`);
  const manifest=await js(`fetch('/voice/manifest.json').then(r=>r.json())`),textOf=Object.fromEntries(Object.entries(manifest.clips).map(([t,c])=>[c,t]));
  // Control: sound is refused before the first tap.
  const probe=Object.values(manifest.clips)[0];result.audio.beforeTap=await js(`(async()=>{try{await new Audio(${JSON.stringify(probe)}).play();return 'played'}catch(e){return e.name}finally{window.__audio.length=0;}})()`);
- await tap('section.lobby h1');
- const card=`.live-game-card.game-slalom`;if(!await until(`!!document.querySelector('${card}')`,5000))throw Error('no Letter Slalom card');
- await shot('0-lobby');await tap(card);
- if(!await until(`!!document.querySelector('.launch-button')`,5000))throw Error('no brief');await shot('1-brief');await tap('.launch-button');
+ if(!deep){await tap('section.lobby h1');
+  const card=`.live-game-card.game-slalom`;if(!await until(`!!document.querySelector('${card}')`,5000))throw Error('no Letter Slalom card');
+  await shot('0-lobby');await tap(card);}
+ if(!await until(`!!document.querySelector('.slalom-ride')`,5000))throw Error('no ski/snowboard start screen');await shot('1-start');
+ const rideIndex=ride==='board'?2:1;await tap(`.slalom-rides .slalom-ride:nth-child(${rideIndex})`);
  if(!await until(`!!window.__slalom`,30000))throw Error('3D scene did not start: '+(await js(`document.querySelector('.slalom-flat')?.textContent||''`)));
  const t0=Date.now();
  if(record)await send('Page.startScreencast',{format:'jpeg',quality:70,maxWidth:Math.min(W,960),maxHeight:Math.min(H,960),everyNthFrame:2});
@@ -67,7 +70,7 @@ try{
   const st=await js('__slalom.state()');if(st.finished)break;
   const i=st.next;if(i>=gates.length){if(lastGate>=0&&result.gates[lastGate]&&!result.gates[lastGate].passedAt)result.gates[lastGate].passedAt=Date.now()-t0;await sleep(200);continue;}
   if(i!==lastGate){
-   if(lastGate>=0)result.gates[lastGate].passedAt=Date.now()-t0;
+   if(lastGate>=0){result.gates[lastGate].passedAt=Date.now()-t0;if(result.gates[lastGate].boostDown)await send('Input.dispatchKeyEvent',{type:'keyUp',key:'ArrowUp',code:'ArrowUp',windowsVirtualKeyCode:38});}
    lastGate=i;const cur=await js(`window.__slalom&&document.querySelector('.slalom-prompt')?.textContent||''`);
    result.gates[i]={gate:i,kind:gates[i].kind,answer:gates[i].answer,options:gates[i].options,prompt:gates[i].prompt,hud:cur,miss:miss.has(i)};
    if([0,4].includes(i)){await sleep(1500);await shot(`2-gate${i}`);}
@@ -77,6 +80,11 @@ try{
   const want=miss.has(i)?g.options.findIndex(o=>o!==g.answer):g.options.indexOf(g.answer);
   const x=await js(`__slalom.uToScreenX(${lanes[want]})`),y=Math.round(H*0.72);
   if(!down){await pointer('down',x,y);down=true;}else await pointer('move',x,y);
+  // go faster: hold Up once the row's question has been heard (the scene refuses before that)
+  const gi=result.gates[i];
+  if(boostRows.has(i)&&!gi.boostDown){await send('Input.dispatchKeyEvent',{type:'rawKeyDown',key:'ArrowUp',code:'ArrowUp',windowsVirtualKeyCode:38});gi.boostDown=true;gi.boostAt=st.canBoost?'after-question':'during-question';}
+  if(gi.boostDown){gi.vMax=Math.max(gi.vMax||0,st.v);if(!st.canBoost)gi.vWhilePrompt=Math.max(gi.vWhilePrompt||0,st.v);}
+  if(st.hint&&!gi.hintSeen){gi.hintSeen=true;await shot(`hint-gate${i}`);}
   if(st.gateD[i]-st.d<3&&i===3){await shot('3-through-gate');}
   await sleep(250);
  }
@@ -96,14 +104,14 @@ try{
  if(!await until(`!!document.querySelector('section.slalom-finish')`,20000))result.errors.push('no finish screen');
  await sleep(600);await shot('7-finish');
  if(record){await send('Page.stopScreencast');}
- prof=await profileNow();result.complete=prof.session.phase==='complete';result.results=prof.session.results.map(r=>({answer:r.q.answer,chose:r.answer,ok:r.independent}));
+ prof=await profileNow();result.complete=prof.session.phase==='complete';result.ride=prof.session.ride;result.savedRide=prof.slalom?.ride;result.results=prof.session.results.map(r=>({answer:r.q.answer,chose:r.answer,correct:r.answer===r.q.answer,hinted:!!r.hinted,unaided:r.independent}));
  // audio: which lines played (and when), refused plays
  const audio=await js('window.__audio');const said=audio.filter(a=>a.ok).map(a=>({text:textOf[new URL(a.src).pathname]||a.src,at:Math.round(a.at)})).filter((a,k,all)=>!(k&&all[k-1].text===a.text&&a.at-all[k-1].at<1500));
  result.audio.plays=said.length;result.audio.refused=audio.filter(a=>a.err&&a.err!=='AbortError').length;
  const saidText=said.map(a=>a.text);
  for(const g of result.gates){if(!g)continue;g.promptHeard=saidText.includes(g.prompt);const full=gates[g.gate];if(g.miss)g.correctionHeard=saidText.includes(full.correction);}
  result.audio.recap=saidText.filter(t=>/lovely run/.test(t)).length;result.audio.deviceVoice=await js('window.__deviceVoice');result.audio.lines=saidText;
- result.ok=result.audio.beforeTap==='NotAllowedError'&&result.complete&&result.gates.length===gates.length&&result.gates.every(g=>g.promptHeard&&(!g.miss||g.correctionHeard))&&result.audio.refused===0&&result.audio.recap>=1&&!!result.wordBreak&&!result.errors.length;
+ result.ok=result.ride===ride&&(!deep||result.deepNoLobby)&&result.gates.filter(g=>g.boostDown).every(g=>g.vMax>9.5&&(g.vWhilePrompt===undefined||g.vWhilePrompt<9))&&result.audio.beforeTap==='NotAllowedError'&&result.complete&&result.gates.length===gates.length&&result.gates.every(g=>g.promptHeard&&(!g.miss||g.correctionHeard))&&result.audio.refused===0&&result.audio.recap>=1&&!!result.wordBreak&&!result.errors.length;
  if(record&&frames.length&&shots){const dir=await mkdtemp(join(tmpdir(),'slalom-frames-'));const t1=frames[0].t;let list='';
   for(let k=0;k<frames.length;k++){const f=join(dir,`f${String(k).padStart(5,'0')}.jpg`);await writeFile(f,Buffer.from(frames[k].data,'base64'));const dur=k+1<frames.length?frames[k+1].t-frames[k].t:0.1;list+=`file '${f}'\nduration ${Math.max(0.01,dur).toFixed(3)}\n`;}
   await writeFile(join(dir,'list.txt'),list);const out=join(shots,`${player}-${label}-run.mp4`);

@@ -1,5 +1,14 @@
 # Word Arcade
 
+## September 27 (evening): bigger gates, a hint glow, snowboard, go faster, deep link
+
+- **Gates 1.75x bigger** (on taller frames), fading as the camera passes under them.
+- **Hint glow** near a row, only after the question has been heard and only while the skier heads for a wrong gate: words track in the last 14 m (it corrects rather than gives the answer away), letters track from 26 m. Hinted passes are recorded apart from unaided ones.
+- **Skis or snowboard** on the start screen (two picture buttons, remembered in the player's save); the snowboarder rides sideways with a stance angle, leans the board into carves and leaves one wide track.
+- **Go faster:** hold the button (or Up/Space) once a row's question has been heard.
+- **Deep link:** `/?player=<id>&play=slalom` (or `#slalom`) opens the slalom start screen directly; leaving it returns to the hub.
+- **Sound-outs** (private edition with a pre-rendered voice): recorded letter sounds with natural attack and release, then the word. `scripts/letter_sound_check.py` checks letter-sound and sound-out clips (duration per sound, rise/fall times, silent gaps, clicks, loudness).
+
 ## September 27: word breaks for an early reader use CVC words
 
 Shared `word-break.mjs` v5 (identical in every game): the words track uses only CVC words (at/an/ig/op/ug/in families), with two look-alikes that start with the same letter and differ in the vowel or the last letter (mat / map / man). No sentences until Letter Quest shows sentences built independently; a device's own history no longer unlocks them. The letters track is unchanged.
