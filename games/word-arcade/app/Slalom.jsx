@@ -20,11 +20,11 @@ export function SlalomStart({p,busy,onStart,onBack}){
 }
 export default function Slalom({p,session,voice,soundRef,audio,paused,onPause,onHome,onAgain,submitGate,checkpoint,event}){
  const host=useRef(null),scene=useRef(null),gates=useRef(session.gates.map(g=>({...g}))),alive=useRef(true),chain=useRef(Promise.resolve()),pending=useRef([]);
- const startedAt=useRef(0),gateStart=useRef(0),lastResult=useRef(null),pausedRef=useRef(paused);
+ const outcomes=useRef([]),startedAt=useRef(0),gateStart=useRef(0),lastResult=useRef(null),pausedRef=useRef(paused);
  // gates for rendering (a missed gate eases the next one); `gates` mirrors it for callbacks
  const [shown,setShown]=useState(()=>session.gates.map(g=>({...g})));
  const [phase,setPhase]=useState(session.phase==='complete'?'done':'loading'),[current,setCurrent]=useState(session.round),[passed,setPassed]=useState(session.round);
- const [live,setLive]=useState(false),[canBoost,setCanBoost]=useState(false),[boosting,setBoosting]=useState(false),[recapAt,setRecapAt]=useState(-1),[tilt,setTilt]=useState(false),[hint,setHint]=useState(true),[fallback,setFallback]=useState('');
+ const [live,setLive]=useState(false),[recapAt,setRecapAt]=useState(-1),[tilt,setTilt]=useState(false),[hint,setHint]=useState(true),[fallback,setFallback]=useState('');
  const track=session.track||session.gates[0]?.track||'letters';
  const log=(name,detail)=>{try{event('gameplay',name,typeof detail==='string'?detail:JSON.stringify(detail));}catch{}};
  // Speak a line and resolve when it has finished (or after a fair estimate if the browser could not play it).
@@ -34,10 +34,12 @@ export default function Slalom({p,session,voice,soundRef,audio,paused,onPause,on
   if(!played){await sleep(700+text.length*70);return;}
   const player=v.player;
   await new Promise(res=>{let t=0;const done=()=>{clearTimeout(t);player.removeEventListener('ended',done);player.removeEventListener('error',done);player.removeEventListener('emptied',done);res();};
-   t=setTimeout(done,Math.min(9000,1200+text.length*110));player.addEventListener('ended',done);player.addEventListener('error',done);player.addEventListener('emptied',done);if(player.ended)done();});
+   // bounded by the clip's real length, so a missed 'ended' event never delays the next question
+   const left=Number.isFinite(player.duration)&&player.duration>0?(player.duration-player.currentTime)*1000+150:Math.min(9000,1200+text.length*110);
+   t=setTimeout(done,Math.max(200,left));player.addEventListener('ended',done);player.addEventListener('error',done);player.addEventListener('emptied',done);if(player.ended)done();});
  }
- function ask(i){const g=gates.current[i];if(!g)return Promise.resolve();setCurrent(i);setCanBoost(false);gateStart.current=performance.now();scene.current?.promptStarted(i);
-  return say(g.prompt).then(()=>{scene.current?.promptEnded(i);setCanBoost(true);});}
+ function ask(i){const g=gates.current[i];if(!g)return Promise.resolve();setCurrent(i);gateStart.current=performance.now();scene.current?.promptStarted(i);
+  return say(g.prompt).then(()=>{scene.current?.promptEnded(i);});}
  const queue=fn=>{chain.current=chain.current.then(()=>alive.current?fn():null).catch(()=>{});return chain.current;};
  function passGate(i,answer,hinted=false){
   const g=gates.current[i];if(!g)return;const ok=answer===g.answer;
@@ -46,22 +48,23 @@ export default function Slalom({p,session,voice,soundRef,audio,paused,onPause,on
   pending.current.push(submitGate(g.id,answer,Math.min(86400000,Math.round(performance.now()-gateStart.current)),hinted).then(d=>{if(d?.result)lastResult.current=d.result;return d;}));
   const next=gates.current[i+1];
   if(!ok&&next){const eased=easeGate(next);gates.current[i+1]=eased;setShown([...gates.current]);scene.current?.replaceGate(i+1,eased);}
-  // Words: every gate is sounded out afterwards ("m, a, t: mat"), right or wrong. Letters: a miss names the right
-  // letter. Both are content, always spoken (Kokoro clips only). Then the next gate's question.
-  queue(async()=>{if(g.after)await say(g.after);else if(!ok)await say(g.correction);else await sleep(450);if(next)await ask(i+1);});
+  // After a gate only a short line, then the next question (timing budget: lib/slalom-timing.mjs): the word or letter
+  // ("mat!", "F!") or, on a miss, "It's mat." Content, always spoken (Kokoro clips only). Sound-outs wait for the recap.
+  outcomes.current[i]={ok,hinted};
+  queue(async()=>{await say(ok?g.praise:g.correction);if(next)await ask(i+1);});
  }
  async function finish(){
   await Promise.allSettled(pending.current);if(!alive.current)return;
-  scene.current?.boost(false);setBoosting(false);setCanBoost(false);
+  scene.current?.boost(false);
   const d=scene.current?.stats();if(d){log('slalom_perf',{...d,runMs:Math.round(performance.now()-startedAt.current)});log('slalom_boost',d.boost);}
   setPhase('recap');
-  // the child's own toys (if this home has them) wait at the bottom and cheer
-  void (async()=>{try{const r=await fetch(`/api/${p.id}/companions`,{cache:'no-store'});if(!r.ok)return;const {files=[]}=await r.json();const pick=[...files].sort(()=>Math.random()-0.5).slice(0,2);
-   const n=await scene.current?.addCompanions(pick.map(f=>`/companion/${f}.glb`));if(n)log('slalom_companions',pick.join(','));}catch{}})();
+  // the child's own toys were preloaded during the run; they all appear now
+  {const n=scene.current?.showFriends();if(n)log('slalom_companions',String(n));}
   await queue(async()=>{
    await sleep(1200);
    await say(track==='letters'?SLALOM_LINES.recapLetters:SLALOM_LINES.recapWords);
-   for(let k=0;k<gates.current.length&&alive.current;k++){setRecapAt(k);await say(gates.current[k].recap);await sleep(150);}
+   // the recap sounds out the words that were missed or needed the hint ("m... a... t... mat"); the rest are said once
+   for(let k=0;k<gates.current.length&&alive.current;k++){const g=gates.current[k],o=outcomes.current[k];setRecapAt(k);await say(o&&(!o.ok||o.hinted)&&g.recapSoundOut?g.recapSoundOut:g.recap);await sleep(150);}
    setRecapAt(gates.current.length);
   });
   if(!alive.current)return;
@@ -76,9 +79,11 @@ export default function Slalom({p,session,voice,soundRef,audio,paused,onPause,on
    try{
     const mod=await import('./slalom-scene.mjs');if(cancelled)return;
     const sound={get ctx(){return audio.current?.ctx;},get destination(){return audio.current?.fx;},enabled:()=>!!audio.current?.prefs?.effects&&!pausedRef.current};
-    scene.current=mod.createSlalomScene(host.current,{gates:gates.current,startGate:session.round,forceQuality:qualityParam(),sound,ride:session.ride||'ski',hintLetters:26,hintWords:14,
+    scene.current=mod.createSlalomScene(host.current,{gates:gates.current,startGate:session.round,forceQuality:qualityParam(),sound,ride:session.ride||'ski',
      onGate:(i,answer,lane,hinted)=>passGate(i,answer,hinted),onFinish:()=>void finish(),onStats:s=>log('slalom_quality',s),onContextLost:()=>{log('slalom_error','context lost');setFallback('lost');}});
     window.__slalom=scene.current;setLive(true);
+    // friends for the finish line: queued now, loaded one per gate during the run (never a pop-in at the finish)
+    void fetch(`/api/${p.id}/companions`,{cache:'no-store'}).then(r=>r.ok?r.json():{friends:[]}).then(({friends=[]})=>scene.current?.queueFriends(friends)).catch(()=>{});
     setPhase('run');log('slalom_start',{gate:session.round,track,size:`${innerWidth}x${innerHeight}`});
     queue(async()=>{
      await sleep(400);
@@ -95,13 +100,11 @@ export default function Slalom({p,session,voice,soundRef,audio,paused,onPause,on
  useEffect(()=>{pausedRef.current=paused;scene.current?.setPaused(paused);if(!paused&&phase==='run'&&scene.current){const st=scene.current.state();if(!st.finished&&st.next<gates.current.length)queue(()=>ask(st.next));}
  // eslint-disable-next-line react-hooks/exhaustive-deps
  },[paused]);
- // keyboard for grown-ups: arrows move one lane
+ // keyboard for grown-ups: arrows move one lane; Up/Space held = go faster (children hold the rider or drag up)
  useEffect(()=>{const key=e=>{if(e.target.closest?.('input,select,textarea,summary'))return;if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();scene.current?.steer(e.key==='ArrowLeft'?-1:1);setHint(false);}
-   if(e.key==='ArrowUp'||e.code==='Space'){e.preventDefault();if(!e.repeat)boost(true);}};
-  const up=e=>{if(e.key==='ArrowUp'||e.code==='Space')boost(false);};
+   if(e.key==='ArrowUp'||e.code==='Space'){e.preventDefault();if(!e.repeat)scene.current?.boost(true);}};
+  const up=e=>{if(e.key==='ArrowUp'||e.code==='Space')scene.current?.boost(false);};
   window.addEventListener('keydown',key);window.addEventListener('keyup',up);return()=>{window.removeEventListener('keydown',key);window.removeEventListener('keyup',up);};},[]);
- // Go faster (held): the scene only speeds up once the row's question has been heard.
- function boost(on){scene.current?.boost(on);setBoosting(on);}
  // tilt to steer (optional)
  useEffect(()=>{if(!tilt)return;const on=e=>{const angle=(screen.orientation?.angle??window.orientation??0)%360;let v=Math.abs(angle)===90?(angle===90?e.beta:-e.beta):angle===180?-e.gamma:e.gamma;if(!Number.isFinite(v))return;scene.current?.setTilt(Math.max(-1,Math.min(1,v/20)));};
   window.addEventListener('deviceorientation',on);return()=>{window.removeEventListener('deviceorientation',on);scene.current?.setTilt(null);};},[tilt]);
@@ -135,8 +138,7 @@ export default function Slalom({p,session,voice,soundRef,audio,paused,onPause,on
     </div>:<span/>}
     <div className="slalom-dots" aria-label={`Gate ${Math.min(passed+1,shown.length)} of ${shown.length}`}>{shown.map((_,k)=><i key={k} className={k<passed?'done':k===passed?'now':''}/>)}</div>
    </div>
-   {phase==='run'&&!fallback&&<div className="slalom-bottom">{hint&&<span className="slalom-hint">👆 Slide your finger to steer</span>}{canTilt&&<button className={'slalom-btn tilt'+(tilt?' on':'')} onClick={toggleTilt} aria-pressed={tilt}>📱 Tilt</button>}
-    <button className={'slalom-fast'+(canBoost?' ready':'')+(boosting&&canBoost?' on':'')} aria-label="Hold to go faster" onPointerDown={e=>{e.preventDefault();try{e.currentTarget.setPointerCapture(e.pointerId);}catch{}boost(true);}} onPointerUp={()=>boost(false)} onPointerCancel={()=>boost(false)} onLostPointerCapture={()=>boost(false)} onContextMenu={e=>e.preventDefault()}><span aria-hidden="true">⏩</span><small>Faster</small></button></div>}
+   {phase==='run'&&!fallback&&<div className="slalom-bottom">{hint&&<span className="slalom-hint">👆 Slide your finger to steer</span>}{canTilt&&<button className={'slalom-btn tilt'+(tilt?' on':'')} onClick={toggleTilt} aria-pressed={tilt}>📱 Tilt</button>}</div>}
   </div>
   {phase==='done'&&finishCard}
   {(phase==='recap'||phase==='break')&&<div className="slalom-recap" aria-live="polite"><h2>{track==='letters'?'Your letters':'Your words'}</h2><div className="slalom-recap-row">{shown.map((x,k)=><span key={k} className={'slalom-card '+x.kind+(k===recapAt?' now':k<recapAt?' seen':'')}>{x.picture&&<i aria-hidden="true">{x.picture}</i>}{x.answer}</span>)}</div></div>}

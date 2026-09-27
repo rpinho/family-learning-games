@@ -25,10 +25,14 @@ export const GAMES=[
  ['pixel','Pixel Studio','CREATIVE PLAY','Paint with light. Make letters, pictures, anything.','🎨','#ffa776'],
  ['slalom','Letter Slalom','LETTERS & WORDS','Ski down the mountain. Glide through the gate you hear.','⛷️','#8fd3ff']
 ].map(([id,name,category,description,icon,color])=>({id,name,category,description,icon,color}));
+// Word-picture pairs for Word Asteroids and friends (reviewed 2026-09-27 against PICTURE_NAMES in word-break.mjs: the
+// picture's common name must be the word). Replaced: hen (chicken) -> box, net (goal) -> six, pot (soup) -> ten,
+// ram (sheep) -> cow, web (spider web) -> bee, bug (ladybug) -> car, cup (coffee) -> pie, hat (top hat) -> bat,
+// the old bat slot -> key; king (prince) -> kite, wing (new emoji) -> star; brush (paintbrush) -> plant, storm -> snake.
 export const WORDS=[
- [['cat','🐈'],['dog','🐕'],['sun','☀️'],['hat','🎩'],['pig','🐖'],['cup','☕'],['bed','🛏️'],['fox','🦊'],['map','🗺️'],['hen','🐔'],['pen','🖊️'],['bug','🐞'],['bat','🦇'],['web','🕸️'],['van','🚐'],['bus','🚌'],['ant','🐜'],['egg','🥚'],['red','🟥'],['leg','🦵'],['net','🥅'],['pot','🍲'],['bag','👜'],['ram','🐏']],
- [['ship','🚢'],['fish','🐟'],['frog','🐸'],['crab','🦀'],['duck','🦆'],['drum','🥁'],['ring','💍'],['flag','🚩'],['sock','🧦'],['shop','🏪'],['king','🤴'],['wing','🪽']],
- [['train','🚂'],['snail','🐌'],['sheep','🐑'],['shark','🦈'],['chair','🪑'],['whale','🐋'],['beach','🏖️'],['brush','🖌️'],['green','🟢'],['storm','⛈️'],['bread','🍞'],['clock','🕰️']]
+ [['cat','🐈'],['dog','🐕'],['sun','☀️'],['bat','🦇'],['pig','🐖'],['pie','🥧'],['bed','🛏️'],['fox','🦊'],['map','🗺️'],['box','📦'],['pen','🖊️'],['car','🚗'],['six','6️⃣'],['bee','🐝'],['van','🚐'],['bus','🚌'],['ant','🐜'],['egg','🥚'],['red','🟥'],['leg','🦵'],['ten','🔟'],['cow','🐄'],['bag','🛍️'],['key','🔑']],
+ [['ship','🚢'],['fish','🐟'],['frog','🐸'],['crab','🦀'],['duck','🦆'],['drum','🥁'],['ring','💍'],['flag','🚩'],['sock','🧦'],['shop','🏪'],['kite','🪁'],['star','⭐']],
+ [['train','🚂'],['snail','🐌'],['sheep','🐑'],['shark','🦈'],['chair','🪑'],['whale','🐋'],['beach','🏖️'],['plant','🪴'],['green','🟢'],['snake','🐍'],['bread','🍞'],['clock','🕰️']]
 ];
 const FAMILIES=[['at','cat','hat','bat','mat'],['og','dog','log','fog','jog'],['an','pan','fan','can','man'],['ig','pig','big','wig','dig'],['op','hop','mop','top','pop'],['ug','bug','rug','mug','hug'],['et','pet','net','jet','wet'],['in','pin','fin','win','bin'],['ag','bag','tag','rag','wag'],['ip','lip','zip','dip','tip'],['ot','pot','hot','dot','cot'],['am','jam','ham','ram','dam']];
 const CHANGES=[['cat','hat'],['dog','log'],['pin','pan'],['map','cap'],['sun','fun'],['bed','red'],['ship','shop'],['fish','dish'],['ring','king'],['frog','from'],['snail','snarl'],['train','brain']];

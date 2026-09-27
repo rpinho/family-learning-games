@@ -22,9 +22,14 @@ const cap=w=>w[0].toUpperCase()+w.slice(1);
 const upper=c=>c.toUpperCase();
 // Spoken lines per gate kind. `correction` is said when the child skis through another gate (content, always
 // spoken); `recap` is the short line said for this gate at the bottom of the hill.
-function letterLines(target,lower){return lower?{prompt:`Find the little letter ${upper(target)}.`,correction:`The little letter ${upper(target)}.`,recap:`Little letter ${upper(target)}.`}:{prompt:`Find the letter ${target}.`,correction:`The letter ${target}.`,recap:`Letter ${target}.`};}
+// After a gate only a short line (the next question must be heard before the next row): the letter or word,
+// or "It's F." on a miss. Measured budget and test: lib/slalom-timing.mjs, tests/slalom-timing.test.mjs.
+export const praiseLetter=(c,lower)=>lower?`Little ${c.toLowerCase()}!`:`${c.toUpperCase()}!`;
+export const missLetter=(c,lower)=>lower?`Little ${c.toLowerCase()}!`:`It's ${c.toUpperCase()}.`;
+export const praiseWord=w=>`${w}!`,missWord=w=>`It's ${w}.`;
+function letterLines(target,lower){return lower?{prompt:`Find the little letter ${upper(target)}.`,praise:praiseLetter(target,true),correction:missLetter(target,true),recap:`Little letter ${upper(target)}.`}:{prompt:`Find the letter ${target}.`,praise:praiseLetter(target,false),correction:missLetter(target,false),recap:`Letter ${target}.`};}
 const firstLine=(word,letter)=>`${cap(word)} starts with ${letter}.`;
-const wordLines=w=>({prompt:`Find the word ${w}.`,correction:`The word is ${w}.`,recap:`${w}.`});
+const wordLines=w=>({prompt:`Find the word ${w}.`,praise:praiseWord(w),correction:missWord(w),recap:`${w}.`});
 // Letter options: the answer, its look-alikes first, then letters the child already knows.
 function letterOptions(answer,n,known,r){
  const lower=/^[a-z]$/.test(answer),near=[...(LOOKALIKE[answer]||'')].filter(c=>c!==answer);
@@ -39,7 +44,7 @@ function letterGate(level,r,n,avoid){
   const have=new Set(upperKnown.map(c=>c.toLowerCase()));
   const seen=new Set([...avoid].map(c=>String(c).toLowerCase())),words=FIRST_WORDS.filter(([w])=>have.has(w[0])&&!seen.has(w[0]));
   if(words.length){const [word,picture]=pick(words,r),answer=upper(word[0]),line=firstLine(word,answer);
-   return {kind:'first-letter',track:'letters',word,picture,answer,prompt:`Which letter does ${word} start with?`,correction:line,recap:line,options:letterOptions(answer,n,upperKnown,r)};}
+   return {kind:'first-letter',track:'letters',word,picture,answer,prompt:`Which letter does ${word} start with?`,praise:praiseLetter(answer,false),correction:missLetter(answer,false),recap:line,options:letterOptions(answer,n,upperKnown,r)};}
  }
  const focus=r()<.65&&level.learning.length?level.learning:known;
  const seen=new Set([...avoid].map(c=>String(c).toLowerCase())),fresh=focus.filter(c=>!seen.has(c.toLowerCase())),target=pick(fresh.length?fresh:focus,r),lower=/^[a-z]$/.test(target);
@@ -56,7 +61,7 @@ export function lookalikes(word){
 // Words track = CVC words only (see CVC_WORDS in the shared word-break module): look-alikes share the first letter
 // and differ only in the vowel or the last letter (mat / map / man).
 export const soundOutLine=w=>`Sound out ${w}.`;
-// Letters with a recorded sound in the private edition. Only words made of these are ever sounded out.
+// Letters with a recorded sound (scripts/import-letter-sounds.py). Only words made of these are ever sounded out.
 export const SOUND_LETTERS='abcdefghimnoprstu';
 export const canSoundOut=w=>[...w].every(c=>SOUND_LETTERS.includes(c));
 function readWordGate(level,r,n,avoid){
@@ -64,7 +69,7 @@ function readWordGate(level,r,n,avoid){
  // one last-letter look-alike and one vowel look-alike when there is room for both
  const last=near.filter(w=>w[1]===answer[1]),vowel=near.filter(w=>w[1]!==answer[1]);
  const picks=n>=3&&last.length&&vowel.length?[pick(last,r),pick(vowel,r)]:shuffled(near,r).slice(0,n-1);
- return {kind:'read-word',track:'words',answer,...wordLines(answer),correction:soundOutLine(answer),after:soundOutLine(answer),options:[answer,...picks]};
+ return {kind:'read-word',track:'words',answer,...wordLines(answer),...(canSoundOut(answer)?{recapSoundOut:soundOutLine(answer)}:{}),options:[answer,...picks]};
 }
 // The next word of a spoken sentence: the start of the sentence is shown, the child picks the word that comes next.
 // Only lowercase words with a real look-alike (never a name, never the first word).
@@ -74,7 +79,7 @@ export function nextWordGate(level,r,n,avoid){
  for(const sentence of bank){if(avoid.has(sentence))continue;const words=tilesOf(sentence);words.forEach((w,k)=>{if(k>0&&CVC_WORDS.includes(w)&&canSoundOut(w)&&cvcDistractors(w).length&&!avoid.has(w))candidates.push({sentence,words,k});});}
  if(!candidates.length)return null;
  const {sentence,words,k}=pick(candidates,r),answer=words[k],near=cvcDistractors(answer);
- return {kind:'next-word',track:'words',sentence,before:words.slice(0,k),answer,prompt:sentence,correction:soundOutLine(answer),after:soundOutLine(answer),recap:`${answer}.`,options:[answer,...shuffled(near,r).slice(0,n-1)]};
+ return {kind:'next-word',track:'words',sentence,before:words.slice(0,k),answer,prompt:sentence,praise:praiseWord(answer),correction:missWord(answer),recap:`${answer}.`,...(canSoundOut(answer)?{recapSoundOut:soundOutLine(answer)}:{}),options:[answer,...shuffled(near,r).slice(0,n-1)]};
 }
 // Gate rows for one run. Beginner (letters): pairs first, then triplets. Explorer (words): CVC words, two pairs then triplets;
 // next-word-of-a-sentence gates (rows 3, 6, 8) only once Letter Quest shows he builds sentences on his own. The answer never sits in the same lane three times running.
@@ -99,13 +104,12 @@ export function easeGate(g){
 }
 export const slalomTrack=(id,level)=>level?.track||DEFAULT_TRACK[id]||'mixed';
 // Every line a run can say (for the voice build and its tests).
+export const sentenceTargets=()=>{const out=new Set();for(const sentence of [...STARTER_SENTENCES,...SENTENCES[0]])tilesOf(sentence).forEach((w,k)=>{if(k>0&&CVC_WORDS.includes(w)&&canSoundOut(w)&&cvcDistractors(w).length)out.add(w);});return [...out];};
 export function slalomLines(){
  const lines=new Set(Object.values(SLALOM_LINES));
  for(const c of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'){for(const l of [false,true])for(const v of Object.values(letterLines(l?c.toLowerCase():c,l)))lines.add(v);}
  for(const [w] of FIRST_WORDS){lines.add(`Which letter does ${w} start with?`);lines.add(firstLine(w,upper(w[0])));}
- const words=new Set([...WORD_GROUPS.flat().flat(),...CVC_WORDS]);
- for(const s of [...SENTENCES.flat(),...STARTER_SENTENCES]){lines.add(s);tilesOf(s).forEach((w,k)=>{if(k>0&&/^[a-z]+$/.test(w)&&lookalikes(w).length)words.add(w);});}
- for(const w of words)for(const v of Object.values(wordLines(w)))lines.add(v);
- for(const w of CVC_WORDS)if(canSoundOut(w))lines.add(soundOutLine(w));
+ for(const s of [...STARTER_SENTENCES,...SENTENCES[0]])lines.add(s);
+ for(const w of new Set([...CVC_TARGETS,...sentenceTargets()])){for(const v of Object.values(wordLines(w)))lines.add(v);if(canSoundOut(w))lines.add(soundOutLine(w));}
  return [...lines];
 }

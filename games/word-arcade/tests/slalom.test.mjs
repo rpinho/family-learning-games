@@ -8,15 +8,15 @@ import {fresh,act,voiceLines,GAMES} from '../lib/engine.mjs';
 import {slalomRun,easeGate,SLALOM_LINES,SLALOM_GATES,CVC_WORDS,CVC_FAMILIES,canSoundOut} from '../lib/slalom.mjs';
 import {literacyFrom,tilesOf} from '../lib/word-break.mjs';
 const send=(p,input,ctx)=>act(p,{...input,revision:p.revision,questionId:p.session?.q?.id},ctx);
-const beginner={...literacyFrom(null,'letters'),source:'letter-quest',letters:[...'SATPINMDGOE'],lower:['s','a','t'],learning:[...'SATPINMDGOE','s','a','t']};
+const beginner={...literacyFrom(null,'letters'),source:'letter-quest',letters:[...'FRANCISOETL'],lower:['f','r','a'],learning:[...'FRANCISOETL','f','r','a']};
 const explorer={...literacyFrom(null,'words'),source:'letter-quest',wordLevel:2};
 const lines=new Set(voiceLines());
 function checkGate(g){
  assert.equal(new Set(g.options).size,g.options.length,g.options.join());assert.ok(g.options.includes(g.answer));assert.equal(g.options[g.lane],g.answer);
- for(const line of [g.prompt,g.correction,g.recap,g.after].filter(Boolean))assert.ok(lines.has(line),line);
+ for(const line of [g.prompt,g.praise,g.correction,g.recap,g.recapSoundOut].filter(Boolean))assert.ok(lines.has(line),line);
 }
 test('Letter Slalom is one arcade mission with its own identity',()=>{assert.ok(GAMES.some(g=>g.id==='slalom'&&g.name==='Letter Slalom'));});
-test('Beginner: letters the child knows from Letter Quest, pairs first then triplets, with look-alike distractors',()=>{
+test('Beginner: letters he knows from Letter Quest, pairs first then triplets, with look-alike distractors',()=>{
  for(let seed=1;seed<60;seed++){const run=slalomRun(beginner,{seed});assert.equal(run.length,SLALOM_GATES);
   run.forEach((g,i)=>{checkGate(g);assert.equal(g.track,'letters');assert.equal(g.options.length,i<4?2:3);
    if(g.kind==='find-letter')assert.ok(beginner.letters.includes(g.answer)||beginner.lower.includes(g.answer),g.answer);
@@ -27,7 +27,7 @@ test('Beginner: letters the child knows from Letter Quest, pairs first then trip
 });
 test('Explorer: CVC words only; look-alikes share the first letter and differ in the vowel or last letter; sounded out after',()=>{
  for(let seed=1;seed<80;seed++)slalomRun(explorer,{seed}).forEach((g,i)=>{checkGate(g);assert.equal(g.track,'words');assert.equal(g.kind,'read-word','no sentences before Letter Quest shows sentence building');assert.ok(g.options.length<=(i<2?2:3));
-  assert.ok(CVC_FAMILIES.includes(g.answer.slice(1)),g.answer);assert.equal(g.after,`Sound out ${g.answer}.`);assert.ok(lines.has(g.after));
+  assert.ok(CVC_FAMILIES.includes(g.answer.slice(1)),g.answer);assert.equal(g.praise,`${g.answer}!`);assert.equal(g.correction,`It's ${g.answer}.`);assert.equal(g.recapSoundOut,`Sound out ${g.answer}.`);
   for(const o of g.options.filter(o=>o!==g.answer)){assert.ok(CVC_WORDS.includes(o),o);assert.equal(o[0],g.answer[0],`${o} vs ${g.answer}`);assert.equal([...o].filter((c,k)=>c!==g.answer[k]).length,1);assert.notEqual(o[0],'');}
  });
  // no digraphs or blends anywhere in his run
@@ -70,21 +70,23 @@ test('The server builds a run from the Letter Quest save without changing it',as
  const child=spawn(process.execPath,['server.mjs'],{cwd:new URL('..',import.meta.url),env:{...process.env,PORT:'14331',HOST:'127.0.0.1',WORD_ARCADE_DATA:dir,LETTER_QUEST_DATA:letters},stdio:['ignore','pipe','pipe']});
  try{await new Promise((resolve,reject)=>{child.stdout.once('data',resolve);child.once('error',reject);});const base='http://127.0.0.1:14331';
   const r=await fetch(base+'/api/beginner/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'start',game:'slalom',revision:0})}),d=await r.json();
-  assert.equal(r.status,200);const known=literacyFrom({completed:3},'letters').letters;
+  assert.equal(r.status,200);const known=[...'FRANC'];
   for(const g of d.profile.session.gates){assert.equal(g.track,'letters');if(g.kind==='find-letter')assert.ok(known.includes(g.answer.toUpperCase()),g.answer);else assert.ok(known.includes(g.answer),g.answer);}
   assert.equal(await readFile(join(letters,'beginner.json'),'utf8'),save);
  }finally{child.kill();}
 });
-test('Finish-line friends: only models listed for that player and present on disk are offered or served',async()=>{
- const dir=await mkdtemp(join(tmpdir(),'wa-slalom-')),assets=await mkdtemp(join(tmpdir(),'wa-3d-'));
- await writeFile(join(assets,'companions.json'),JSON.stringify({beginner:['toy-a','missing','../x'],explorer:['toy-b']}));
- for(const n of ['toy-a','toy-b','secret'])await writeFile(join(assets,n+'.glb'),'glTF');
+test('Finish-line friends: listed models and standees that exist are offered and served; nothing else',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'wa-slalom-')),assets=await mkdtemp(join(tmpdir(),'wa-3d-'));const {mkdir}=await import('node:fs/promises');
+ await writeFile(join(assets,'companions.json'),JSON.stringify({beginner:['toy-a','missing','../x',{id:'paper',standee:'standees/paper.png',fallback:'toy-c'},{id:'bird',standee:'standees/bird.png',fallback:'toy-b'}],explorer:['toy-b']}));
+ for(const n of ['toy-a','toy-b','toy-c','secret'])await writeFile(join(assets,n+'.glb'),'glTF');await mkdir(join(assets,'standees'));await writeFile(join(assets,'standees','paper.png'),'PNG');
  const child=spawn(process.execPath,['server.mjs'],{cwd:new URL('..',import.meta.url),env:{...process.env,PORT:'14332',HOST:'127.0.0.1',WORD_ARCADE_DATA:dir,LETTER_QUEST_DATA:dir,FAMILY_ASSETS3D:assets},stdio:['ignore','pipe','pipe']});
  try{await new Promise((resolve,reject)=>{child.stdout.once('data',resolve);child.once('error',reject);});const base='http://127.0.0.1:14332';
-  assert.deepEqual((await(await fetch(base+'/api/beginner/companions')).json()).files,['toy-a']);
-  assert.deepEqual((await(await fetch(base+'/api/admin/companions')).json()).files,[]);
+  assert.deepEqual((await(await fetch(base+'/api/beginner/companions')).json()).friends,[{id:'toy-a',kind:'model',url:'/companion/toy-a.glb'},{id:'paper',kind:'standee',url:'/companion/paper.png'},{id:'toy-b',kind:'model',url:'/companion/toy-b.glb'}]);
+  assert.deepEqual((await(await fetch(base+'/api/admin/companions')).json()).friends,[]);
   const r=await fetch(base+'/companion/toy-a.glb');assert.equal(r.status,200);assert.equal(r.headers.get('content-type'),'model/gltf-binary');
-  assert.equal((await fetch(base+'/companion/secret.glb')).status,404);assert.equal((await fetch(base+'/companion/..%2Fsecret.glb')).status,404);
+  const g=await fetch(base+'/companion/paper.png');assert.equal(g.status,200);assert.equal(g.headers.get('content-type'),'image/png');
+  assert.equal((await fetch(base+'/companion/toy-c.glb')).status,404,'a fallback is served only when used');
+  assert.equal((await fetch(base+'/companion/secret.glb')).status,404);assert.equal((await fetch(base+'/companion/..%2Fsecret.glb')).status,404);assert.equal((await fetch(base+'/companion/bird.png')).status,404);
   assert.equal((await fetch(base+'/api/beginner/companions',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).status,405);
  }finally{child.kill();}
 });
@@ -99,5 +101,5 @@ test('Hinted passes are recorded apart from unaided ones; the ride choice is rem
  assert.throws(()=>send(p,{kind:'start',game:'slalom',ride:'sled'},{literacy:explorer}),/skis or a snowboard/);
 });
 test('Only words made of recorded letter sounds are ever sounded out',()=>{
- for(let seed=0;seed<80;seed++)for(const level of [explorer,{...explorer,sentenceReady:true}])for(const g of slalomRun(level,{seed}))if(g.after)assert.ok(canSoundOut(g.answer),g.answer);
+ for(let seed=0;seed<80;seed++)for(const level of [explorer,{...explorer,sentenceReady:true}])for(const g of slalomRun(level,{seed}))if(g.recapSoundOut)assert.ok(canSoundOut(g.answer),g.answer);
 });
