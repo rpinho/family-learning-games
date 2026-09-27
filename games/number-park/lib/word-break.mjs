@@ -1,7 +1,7 @@
 // Word break: a short, always-passable letter/word checkpoint shared by the family games.
 // Identical copy in every game repo (tests compare siblings). No dependencies; browser + Node.
 // Content follows each child's Letter Quest progress (read on the server, never written).
-export const WORD_BREAK_VERSION='word-break-2026-09-26-4';
+export const WORD_BREAK_VERSION='word-break-2026-09-27-5';
 // Speech contract for every game: speak(line, essential).
 // essential=true -> CONTENT the child needs to answer (the letter/word/sentence to find). Games play it even when
 // their sound toggle is off. essential=false -> praise/feedback, which obeys the toggle.
@@ -16,7 +16,18 @@ const LOOKALIKE={b:'dpq',d:'bpq',p:'qbd',q:'pgd',m:'nw',n:'mhu',u:'nv',w:'mv',v:
  E:'FLB',F:'EPT',L:'ITJ',M:'NWH',N:'MZH',O:'QCD',P:'RBF',R:'PBK',B:'PRD',C:'OGQ',G:'COQ',W:'MVN',V:'WYU',U:'VJO',I:'LTJ',T:'ILF',K:'XRH',X:'KYZ',Y:'VXT',Z:'NSX',S:'ZGC',D:'OBP',H:'NAK',A:'HVR',J:'LUI',Q:'OGC'};
 // Pictures a pre-reader can name; the first sound is the plain letter sound.
 export const FIRST_WORDS=[['ant','🐜'],['bus','🚌'],['bed','🛏️'],['cat','🐱'],['cup','☕'],['dog','🐶'],['duck','🦆'],['egg','🥚'],['fox','🦊'],['fish','🐟'],['goat','🐐'],['gift','🎁'],['hat','🎩'],['hen','🐔'],['jam','🍯'],['kite','🪁'],['key','🔑'],['leg','🦵'],['lion','🦁'],['moon','🌙'],['milk','🥛'],['nut','🥜'],['nest','🪺'],['octopus','🐙'],['pig','🐷'],['pen','🖊️'],['queen','👸'],['rat','🐀'],['ring','💍'],['robot','🤖'],['sun','☀️'],['sock','🧦'],['tree','🌳'],['tiger','🐯'],['umbrella','☂️'],['van','🚐'],['web','🕸️'],['whale','🐋'],['yo-yo','🪀'],['zebra','🦓']];
-// Look-alike word groups: the child must read the letters, not guess from shape or length.
+// CVC words (2026-09-27, an early reader works with CVC word families before digraphs). Until Letter Quest shows
+// sentences built on his own, the words track uses only these: the target from the at/an/ig/op/ug/in families, and
+// look-alikes that start with the SAME letter and differ only in the vowel or the last letter (mat / map / man),
+// because a guessing child picks by the first letter.
+export const CVC_WORDS='bad bag bat bed bet big bin bit box bug bun bus but cab can cap cat cot cub cup cut dad dig dip dog dot dug fan fat fig fin fit fog fun get gum had ham hat hen hid him hip hit hog hop hot hug hut jam jet jog jug kid kit leg let lid lip log lot man map mat men met mop mud mug nap net not nut pan pat pen pet pig pin pit pop pot pup ram ran rat red rib rip rod rot rub rug run sad sat set sip sit sun tag tan tap ten tin tip top tub tug van web wet wig win zip'.split(' ');
+export const CVC_FAMILIES=['at','an','ig','op','ug','in'];
+export function cvcDistractors(word){
+ const out=CVC_WORDS.filter(w=>w!==word&&w[0]===word[0]&&((w[1]===word[1])!==(w[2]===word[2])));
+ return [...out.filter(w=>w[1]===word[1]),...out.filter(w=>w[1]!==word[1])];
+}
+export const CVC_TARGETS=CVC_WORDS.filter(w=>CVC_FAMILIES.includes(w.slice(1))&&cvcDistractors(w).length>=2);
+// Look-alike word groups (readers who build sentences on their own): the child must read the letters, not guess.
 export const WORD_GROUPS=[
  [['cat','hat','mat','bat'],['dog','log','fog','hog'],['sun','run','fun','bun'],['pig','big','wig','dig'],['hen','pen','ten','men'],['bug','mug','rug','hug'],['cap','map','tap','nap'],['pot','hot','dot','got'],['bed','red','fed','led'],['pin','fin','tin','win'],['jet','net','pet','wet'],['sit','sat','set','sip'],['cup','cap','cop','pup']],
  [['ship','shop','chip','chop'],['fish','dish','wish','with'],['frog','from','fog','flop'],['duck','dock','deck','luck'],['drum','drop','drip','trim'],['flag','flat','flap','slap'],['sock','sack','rock','lock'],['king','ring','wing','sing'],['bath','math','path','both'],['crab','grab','crib','cram'],['milk','mill','silk','mint'],['swim','slim','skim','swam']],
@@ -83,6 +94,12 @@ function letterItem(level,r){
  const options=shuffle([target,...[...shuffle(near,r),...filler].slice(0,lower?3:2)],r);
  return {kind:'find-letter',spoken:lower?`Find the little letter ${target.toUpperCase()}.`:`Find the letter ${target}.`,answer:target,options};
 }
+function cvcItem(r,recent=[]){
+ const fresh=CVC_TARGETS.filter(w=>!recent.includes(w)),answer=pick(fresh.length?fresh:CVC_TARGETS,r),near=cvcDistractors(answer);
+ const last=near.filter(w=>w[1]===answer[1]),vowel=near.filter(w=>w[1]!==answer[1]);
+ const others=last.length&&vowel.length?[pick(last,r),pick(vowel,r)]:shuffle(near,r).slice(0,2);
+ return {kind:'read-word',cvc:true,spoken:`Find the word ${answer}.`,answer,options:shuffle([answer,...others],r)};
+}
 function wordItem(level,r){
  const group=pick(WORD_GROUPS[level.wordLevel-1],r),answer=pick(group,r);
  return {kind:'read-word',spoken:`Find the word ${answer}.`,answer,options:shuffle(group.slice(0,level.wordLevel===1?3:4).includes(answer)?group.slice(0,level.wordLevel===1?3:4):[answer,...group.filter(w=>w!==answer).slice(0,2)],r)};
@@ -93,24 +110,27 @@ function sentenceItem(level,r,recent=[]){
  const tiles=scramble(extra?[...answer,extra]:answer,r);
  return {kind:'sentence',spoken:sentence,sentence,answer,tiles,mark:endMark(sentence)};
 }
-// Full sentences or starters? history = this device's recent sentence results [{misses,tiles,starter}].
-// Ready readers drop back to starters after two guessed full sentences (a miss for every tile or more);
-// others move up after three starters in a row with at most one miss each.
+// Sentences at all only once Letter Quest shows sentences built independently (level.sentenceReady). Then: full
+// sentences, dropping back to short starters after two guessed full sentences on this device (a miss for every tile or
+// more) until three clean starters in a row. history = this device's recent sentence results [{misses,tiles,starter}].
 export function sentencesReady(level,history=[]){
+ if(!level?.sentenceReady)return false;
  const recent=(Array.isArray(history)?history:[]).slice(-3),guessed=h=>h.misses>=h.tiles;
  const full=recent.filter(h=>!h.starter),starters=recent.filter(h=>h.starter);
- if(level?.sentenceReady)return !(full.length>=2&&full.slice(-2).every(guessed));
- return starters.length===3&&starters.every(h=>h.misses<=1);
+ if(starters.length===3&&starters.every(h=>h.misses<=1))return true;
+ return !(full.length>=2&&full.slice(-2).every(guessed));
 }
 function starterItem(r,recent=[]){
  const fresh=STARTER_SENTENCES.filter(s=>!recent.includes(s)),sentence=pick(fresh.length?fresh:STARTER_SENTENCES,r),answer=tilesOf(sentence);
  return {kind:'sentence',starter:true,spoken:sentence,sentence,answer,tiles:scramble(answer,r),mark:endMark(sentence)};
 }
-// One short item. Beginner-style track: letters; Explorer-style: words (sentences most often).
+// One short item. Beginner-style track: letters (unchanged). Explorer-style: CVC words only, until Letter Quest shows
+// sentences built on his own; then sentences most often.
 export function wordBreakItem(level,{r=Math.random,recent=[],sentences=[]}={}){
  const l={...literacyFrom(null),...level};
  const track=l.track==='mixed'?(r()<.5?'letters':'words'):l.track;
  if(track==='letters')return {...letterItem(l,r),track};
+ if(!l.sentenceReady)return {...cvcItem(r,recent),track};
  if(sentencesReady(l,sentences))return {...(r()<.6?sentenceItem(l,r,recent):wordItem(l,r)),track};
  return {...(r()<.25?starterItem(r,recent):wordItem(l,r)),track};
 }
@@ -120,6 +140,7 @@ export function wordBreakLines(){
  for(const c of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'){lines.add(`Find the letter ${c}.`);lines.add(`Find the little letter ${c}.`);}
  for(const [w] of FIRST_WORDS)lines.add(`Which letter does ${w} start with?`);
  for(const g of WORD_GROUPS.flat())for(const w of g)lines.add(`Find the word ${w}.`);
+ for(const w of CVC_TARGETS)lines.add(`Find the word ${w}.`);
  for(const s of [...SENTENCES.flat(),...STARTER_SENTENCES])lines.add(s);
  return [...lines];
 }

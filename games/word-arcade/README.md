@@ -1,5 +1,9 @@
 # Word Arcade
 
+## September 27: word breaks for an early reader use CVC words
+
+Shared `word-break.mjs` v5 (identical in every game): the words track uses only CVC words (at/an/ig/op/ug/in families), with two look-alikes that start with the same letter and differ in the vowel or the last letter (mat / map / man). No sentences until Letter Quest shows sentences built independently; a device's own history no longer unlocks them. The letters track is unchanged.
+
 ## September 27: Letter Slalom (3D)
 
 A calm downhill ski run in the Arcade tab. The child steers a skier (finger or mouse: the skier goes where the finger is; optional tilt; arrow keys) through eight gate rows of two or three gates, each carrying a letter or a word. The question is spoken as each row approaches, and the skier glides slowly until it has been said.

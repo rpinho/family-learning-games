@@ -2,7 +2,8 @@
 // (Explorer); the child skis through the one they hear. No score, no fail state: a missed gate names the
 // right answer and the run continues. Content follows Letter Quest (read-only `literacyFrom`), like word breaks.
 // Pure module: used by the server engine (gate generation, checking) and the browser (lines, recap).
-import {FIRST_WORDS,WORD_GROUPS,SENTENCES,STARTER_SENTENCES,SENTENCE_DISTRACT,tilesOf,literacyFrom,DEFAULT_TRACK} from './word-break.mjs';
+import {FIRST_WORDS,WORD_GROUPS,SENTENCES,STARTER_SENTENCES,SENTENCE_DISTRACT,tilesOf,literacyFrom,DEFAULT_TRACK,CVC_WORDS,CVC_FAMILIES,CVC_TARGETS,cvcDistractors} from './word-break.mjs';
+export {CVC_WORDS,CVC_FAMILIES,CVC_TARGETS,cvcDistractors};
 export const SLALOM_GATES=8;
 export const SLALOM_LINES={
  howLetters:'Slide your finger to steer. Ski through the gate with the right letter.',
@@ -52,16 +53,8 @@ export function lookalikes(word){
  for(const [k,v] of Object.entries(SENTENCE_DISTRACT))if(v===w)out.push(k);
  return [...new Set(out)].filter(x=>x!==w);
 }
-// Words track = CVC words only (an early reader works with CVC word families before digraphs). Every
-// distractor starts with the same letter and differs only in the vowel or the last letter (mat / map / man), because
-// a child who is guessing picks by the first letter.
-export const CVC_WORDS='bad bag bat bed bet big bin bit box bug bun bus but cab can cap cat cot cub cup cut dad dig dip dog dot dug fan fat fig fin fit fog fun get gum had ham hat hen hid him hip hit hog hop hot hug hut jam jet jog jug kid kit leg let lid lip log lot man map mat men met mop mud mug nap net not nut pan pat pen pet pig pin pit pop pot pup ram ran rat red rib rip rod rot rub rug run sad sat set sip sit sun tag tan tap ten tin tip top tub tug van web wet wig win zip'.split(' ');
-export const CVC_FAMILIES=['at','an','ig','op','ug','in'];
-export function cvcDistractors(word){
- const out=CVC_WORDS.filter(w=>w!==word&&w[0]===word[0]&&((w[1]===word[1])!==(w[2]===word[2])));
- return [...out.filter(w=>w[1]===word[1]),...out.filter(w=>w[1]!==word[1])]; // last-letter changes first (mat/map/man)
-}
-export const CVC_TARGETS=CVC_WORDS.filter(w=>CVC_FAMILIES.includes(w.slice(1))&&cvcDistractors(w).length>=2);
+// Words track = CVC words only (see CVC_WORDS in the shared word-break module): look-alikes share the first letter
+// and differ only in the vowel or the last letter (mat / map / man).
 export const soundOutLine=w=>`Sound out ${w}.`;
 function readWordGate(level,r,n,avoid){
  const fresh=CVC_TARGETS.filter(w=>!avoid.has(w)&&![...avoid].some(a=>typeof a==='string'&&a.length===3&&a.slice(1)===w.slice(1))),answer=pick(fresh.length?fresh:CVC_TARGETS,r),near=cvcDistractors(answer);
