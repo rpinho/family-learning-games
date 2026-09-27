@@ -58,7 +58,7 @@ export async function learnerFor(player,{paths=bookPaths(),profiles=readProfiles
  const today=localDate(now,paths.timeZone),date=chapterDate||today;
  const recap=await latestRecap(paths.recap,player,addDays(date,-1));
  const playDate=addDays(date,-1);
- return buildLearner({player,name,profile,now,saves,wordBreaks,recap,notes:await readNotes(paths.notes),chapters:await recentChapters(paths.book,player,date),opens:await hubOpens(paths.data.hub,player,playDate,paths.timeZone),playDate,timeZone:paths.timeZone});
+ return buildLearner({player,name,profile,now,saves,wordBreaks,recap,notes:await readNotes(paths.notes),chapters:await recentChapters(paths.book,player,date),opens:await hubOpens(paths.data.hub,player,playDate,paths.timeZone),playDate,timeZone:paths.timeZone,sage:await readJSON(join(paths.learner,player+'-sage.json'))});
 }
 export async function writeLearner(model,dir){
  await mkdir(dir,{recursive:true,mode:0o700});const file=join(dir,model.player+'.json');
