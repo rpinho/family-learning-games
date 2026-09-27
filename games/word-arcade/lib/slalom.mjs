@@ -56,6 +56,9 @@ export function lookalikes(word){
 // Words track = CVC words only (see CVC_WORDS in the shared word-break module): look-alikes share the first letter
 // and differ only in the vowel or the last letter (mat / map / man).
 export const soundOutLine=w=>`Sound out ${w}.`;
+// Letters with a recorded sound in the private edition. Only words made of these are ever sounded out.
+export const SOUND_LETTERS='abcdefghimnoprstu';
+export const canSoundOut=w=>[...w].every(c=>SOUND_LETTERS.includes(c));
 function readWordGate(level,r,n,avoid){
  const fresh=CVC_TARGETS.filter(w=>!avoid.has(w)&&![...avoid].some(a=>typeof a==='string'&&a.length===3&&a.slice(1)===w.slice(1))),answer=pick(fresh.length?fresh:CVC_TARGETS,r),near=cvcDistractors(answer);
  // one last-letter look-alike and one vowel look-alike when there is room for both
@@ -68,7 +71,7 @@ function readWordGate(level,r,n,avoid){
 export function nextWordGate(level,r,n,avoid){
  const bank=[...STARTER_SENTENCES,...SENTENCES[0]];
  const candidates=[];
- for(const sentence of bank){if(avoid.has(sentence))continue;const words=tilesOf(sentence);words.forEach((w,k)=>{if(k>0&&CVC_WORDS.includes(w)&&cvcDistractors(w).length&&!avoid.has(w))candidates.push({sentence,words,k});});}
+ for(const sentence of bank){if(avoid.has(sentence))continue;const words=tilesOf(sentence);words.forEach((w,k)=>{if(k>0&&CVC_WORDS.includes(w)&&canSoundOut(w)&&cvcDistractors(w).length&&!avoid.has(w))candidates.push({sentence,words,k});});}
  if(!candidates.length)return null;
  const {sentence,words,k}=pick(candidates,r),answer=words[k],near=cvcDistractors(answer);
  return {kind:'next-word',track:'words',sentence,before:words.slice(0,k),answer,prompt:sentence,correction:soundOutLine(answer),after:soundOutLine(answer),recap:`${answer}.`,options:[answer,...shuffled(near,r).slice(0,n-1)]};
@@ -103,6 +106,6 @@ export function slalomLines(){
  const words=new Set([...WORD_GROUPS.flat().flat(),...CVC_WORDS]);
  for(const s of [...SENTENCES.flat(),...STARTER_SENTENCES]){lines.add(s);tilesOf(s).forEach((w,k)=>{if(k>0&&/^[a-z]+$/.test(w)&&lookalikes(w).length)words.add(w);});}
  for(const w of words)for(const v of Object.values(wordLines(w)))lines.add(v);
- for(const w of CVC_WORDS)lines.add(soundOutLine(w));
+ for(const w of CVC_WORDS)if(canSoundOut(w))lines.add(soundOutLine(w));
  return [...lines];
 }

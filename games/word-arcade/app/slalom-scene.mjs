@@ -5,7 +5,7 @@
 import {AnimationMixer,Box3,BackSide,BoxGeometry,BufferAttribute,BufferGeometry,CanvasTexture,CapsuleGeometry,CircleGeometry,Color,ConeGeometry,CylinderGeometry,DirectionalLight,DoubleSide,DynamicDrawUsage,Euler,Float32BufferAttribute,FogExp2,Group,HemisphereLight,IcosahedronGeometry,InstancedMesh,Matrix4,Mesh,MeshBasicMaterial,MeshLambertMaterial,NeutralToneMapping,PCFShadowMap,PerspectiveCamera,PlaneGeometry,Points,Quaternion,Raycaster,RepeatWrapping,SRGBColorSpace,Scene,ShaderMaterial,SphereGeometry,TorusGeometry,Vector2,Vector3,WebGLRenderer} from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 
-export const COURSE={first:58,spacing:62,finishAfter:46,stopAfter:30,piste:11.5,baseSpeed:8.6,minSpeed:2.4};
+export const COURSE={first:58,spacing:62,finishAfter:46,stopAfter:30,piste:11.5,baseSpeed:8.6,minSpeed:2.4,boostSpeed:15};
 export const laneOffsets=n=>n===3?[-6.6,0,6.6]:n===2?[-4.3,4.3]:[0];
 const SLOPE=0.2;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -121,14 +121,17 @@ function snowGrain(){const r=seeded(4);return canvasTexture(256,256,(g,w,h)=>{g.
 // ---------- the skier ----------
 // Rigid parts are merged per moving group (vertex colours), so the whole skier is nine draw calls.
 function part(geo,color,x=0,y=0,z=0,rx=0){const g=geo.index?geo.toNonIndexed():geo;g.deleteAttribute('uv');if(rx)g.rotateX(rx);g.translate(x,y,z);return colored(g,color);}
-function makeSkier(){
- const mat=new MeshLambertMaterial({vertexColors:true});
- const root=new Group(),body=new Group();root.add(body);
+function makeSkier(ride='ski'){
+ const board=ride==='board',mat=new MeshLambertMaterial({vertexColors:true});
+ // tilt: the whole rider (and a board's edge) leans into a carve around the direction of travel
+ const root=new Group(),tilt=new Group(),body=new Group();root.add(tilt);tilt.add(body);
  const merged=(parent,parts,x=0,y=0,z=0)=>{const m=new Mesh(mergeGeometries(parts),mat);m.position.set(x,y,z);m.castShadow=true;parent.add(m);return m;};
- const jacket='#ff7a33',pants='#27365c',dark='#1c2233',skin='#f2c7a4',hat='#e2474b',white='#fbfbff',ski='#f4b53a',pole='#c9d2de';
- const skis=merged(root,[-1,1].flatMap(s=>[part(new BoxGeometry(0.11,0.035,1.75),ski,s*0.13,0.02,0),part(new BoxGeometry(0.11,0.035,0.24).rotateX(0.45),ski,s*0.13,0.07,-0.95)]));
+ const jacket=board?'#7b5cff':'#ff7a33',pants='#27365c',dark='#1c2233',skin='#f2c7a4',hat=board?'#ffb020':'#e2474b',white='#fbfbff',ski='#f4b53a',pole='#c9d2de';
+ const skis=board
+  ? merged(tilt,[part(new BoxGeometry(0.34,0.045,1.42),'#20c3b3',0,0.03,0),part(new BoxGeometry(0.34,0.045,0.2).rotateX(0.35),'#20c3b3',0,0.07,-0.77),part(new BoxGeometry(0.34,0.045,0.2).rotateX(-0.35),'#20c3b3',0,0.07,0.77),part(new BoxGeometry(0.08,0.05,1.2),'#fff3c4',0,0.056,0),...[-1,1].map(s=>part(new BoxGeometry(0.26,0.07,0.14),dark,0,0.08,s*0.3))])
+  : merged(tilt,[-1,1].flatMap(s=>[part(new BoxGeometry(0.11,0.035,1.75),ski,s*0.13,0.02,0),part(new BoxGeometry(0.11,0.035,0.24).rotateX(0.45),ski,s*0.13,0.07,-0.95)]));
  const legs=[];
- for(const s of [-1,1]){const hip=new Group();hip.position.set(s*0.12,0.78,0.02);body.add(hip);
+ for(const s of [-1,1]){const hip=new Group();hip.position.set(s*(board?0.2:0.12),0.78,0.02);body.add(hip);
   merged(hip,[part(new CapsuleGeometry(0.085,0.32,3,8),pants,0,-0.2,0)]);
   const knee=new Group();knee.position.set(0,-0.4,0);hip.add(knee);
   merged(knee,[part(new CapsuleGeometry(0.075,0.28,3,8),pants,0,-0.18,0),part(new BoxGeometry(0.15,0.15,0.3),dark,0,-0.38,-0.03)]);legs.push({hip,knee});}
@@ -137,9 +140,10 @@ function makeSkier(){
  merged(head,[part(new SphereGeometry(0.15,14,10),skin),part(new SphereGeometry(0.162,14,8,0,Math.PI*2,0,Math.PI/1.9),hat,0,0.02,0),part(new TorusGeometry(0.15,0.035,6,16),white,0,0,0,Math.PI/2),part(new SphereGeometry(0.075,10,8),white,0,0.2,0),part(new BoxGeometry(0.24,0.07,0.06),'#ffb347',0,0.02,-0.13)]);
  const arms=[];
  for(const s of [-1,1]){const sh=new Group();sh.position.set(s*0.24,1.26,0);body.add(sh);
-  merged(sh,[part(new CapsuleGeometry(0.07,0.36,3,8),jacket,0,-0.22,0),part(new SphereGeometry(0.07,8,6),dark,0,-0.45,0),part(new CylinderGeometry(0.014,0.014,1.15,5),pole,0,-0.9,0.02),part(new CylinderGeometry(0.06,0.06,0.012,8),dark,0,-1.42,0.02)]);
+  merged(sh,[part(new CapsuleGeometry(0.07,0.36,3,8),jacket,0,-0.22,0),part(new SphereGeometry(0.07,8,6),dark,0,-0.45,0),...(board?[]:[part(new CylinderGeometry(0.014,0.014,1.15,5),pole,0,-0.9,0.02),part(new CylinderGeometry(0.06,0.06,0.012,8),dark,0,-1.42,0.02)])]);
   sh.rotation.z=s*0.2;arms.push(sh);}
- return {root,body,skis,legs,arms,head,mat};
+ if(board)body.rotation.y=Math.PI/2; // sideways stance, facing the slope's right-hand side
+ return {root,tilt,body,skis,legs,arms,head,mat,board};
 }
 // ---------- trails and spray ----------
 class Trail{
@@ -225,25 +229,30 @@ export function createSlalomScene(container,opts){
   for(let d=8;d<finishD+10&&k<n;d+=16)for(const side of [-1,1]){const u=side*(COURSE.piste+0.6);m.makeTranslation(cx(d)+u,groundY(u,d),-d);mk.setMatrixAt(k++,m);}mk.count=k;mk.castShadow=true;mk.computeBoundingSphere();scene.add(mk);}
  // gates
  // Gates: per row, one small atlas texture, one merged banner mesh and one merged frame mesh (2 draw calls a row).
- const res=tier===2?0.75:0.5;
- const frameGeo=keep((()=>{const pole=x=>{const g=new CylinderGeometry(0.06,0.07,3.5,6,1,true).translate(x,1.75,0);g.deleteAttribute('uv');return g.toNonIndexed();};
-  const flag=sx=>{const g=new BufferGeometry().setFromPoints([new Vector3(0,3.5,0),new Vector3(0.55*sx,3.33,0),new Vector3(0,3.16,0)]);g.computeVertexNormals();return g.translate(1.6*sx,0,0);};
-  return mergeGeometries([pole(-1.6),pole(1.6),flag(-1),flag(1)]);})());
+ // Banners 1.75x the first version (readable from further away), on taller frames; high contrast.
+ const res=tier===0?0.6:0.8,BW=5.3,BH=2.34,BY=3.45,PX=2.75,PH=4.75;
+ const frameGeo=keep((()=>{const pole=x=>{const g=new CylinderGeometry(0.08,0.09,PH,6,1,true).translate(x,PH/2,0);g.deleteAttribute('uv');return g.toNonIndexed();};
+  const flag=sx=>{const g=new BufferGeometry().setFromPoints([new Vector3(0,PH,0),new Vector3(0.75*sx,PH-0.24,0),new Vector3(0,PH-0.48,0)]);g.computeVertexNormals();return g.translate(PX*sx,0,0);};
+  return mergeGeometries([pole(-PX),pole(PX),flag(-1),flag(1)]);})());
  const colors=['#e5484d','#2f7fe0'],frameMats=colors.map(color=>keep(new MeshLambertMaterial({color,side:DoubleSide})));
  let bannerScale=1;
  function makeRow(g,i){const d=COURSE.first+i*COURSE.spacing,lanes=laneOffsets(g.options.length),color=colors[i%2],n=g.options.length,yaw=Math.atan2(-dcx(d),1);
   const bw=512*res,bh=224*res,tex=canvasTexture(bw,bh*n,(c)=>{g.options.forEach((text,k)=>drawBanner(c,text,color,res,k*bh));});tex.anisotropy=1;
   const banners=[],frames=[];
-  lanes.forEach((u,k)=>{const at=world(u,d);const p=new PlaneGeometry(3.05*bannerScale,1.34*bannerScale).toNonIndexed(),uv=p.attributes.uv;
-   for(let v=0;v<uv.count;v++)uv.setY(v,1-(k+1-uv.getY(v))/n);p.rotateY(yaw).translate(at.x,at.y+2.62+(bannerScale-1)*0.7,at.z);
+  lanes.forEach((u,k)=>{const at=world(u,d);const p=new PlaneGeometry(BW*bannerScale,BH*bannerScale).toNonIndexed(),uv=p.attributes.uv;
+   for(let v=0;v<uv.count;v++)uv.setY(v,1-(k+1-uv.getY(v))/n);p.rotateY(yaw).translate(at.x,at.y+BY+(bannerScale-1)*1.1,at.z);
    p.setAttribute('color',new BufferAttribute(new Float32Array(p.attributes.position.count*3).fill(1),3));banners.push(p);
    frames.push(frameGeo.clone().rotateY(yaw).translate(at.x,at.y,at.z));});
   const bannerMesh=new Mesh(mergeGeometries(banners),new MeshBasicMaterial({map:tex,vertexColors:true,transparent:true,fog:false}));banners.forEach(b=>b.dispose());
   const frameMesh=new Mesh(mergeGeometries(frames),frameMats[i%2]);frames.forEach(f=>f.dispose());frameMesh.castShadow=true;
   bannerMesh.userData={gate:i};scene.add(bannerMesh,frameMesh);
-  return {d,lanes,bannerMesh,frameMesh,gate:g,state:null,texts:g.options,perBanner:6};}
+  return {d,lanes,bannerMesh,frameMesh,gate:g,state:null,texts:g.options,perBanner:6,yaw,hinted:false,glow:null};}
  function tintRow(row,k,hex){const c=new Color(hex),a=row.bannerMesh.geometry.attributes.color;for(let v=k*row.perBanner;v<(k+1)*row.perBanner;v++)a.setXYZ(v,c.r,c.g,c.b);a.needsUpdate=true;}
- function dropRow(row){scene.remove(row.bannerMesh,row.frameMesh);row.bannerMesh.geometry.dispose();row.frameMesh.geometry.dispose();row.bannerMesh.material.map?.dispose();row.bannerMesh.material.dispose();}
+ function dropRow(row){if(row.glow){scene.remove(row.glow);row.glow.geometry.dispose();row.glow.material.dispose();}scene.remove(row.bannerMesh,row.frameMesh);row.bannerMesh.geometry.dispose();row.frameMesh.geometry.dispose();row.bannerMesh.material.map?.dispose();row.bannerMesh.material.dispose();}
+ // A soft warm halo behind the right banner (shared texture; one small mesh, made only when a hint shows).
+ const glowTex=keep(canvasTexture(128,64,(g,w,h)=>{const r=g.createRadialGradient(w/2,h/2,4,w/2,h/2,w/2);r.addColorStop(0,'rgba(255,214,90,1)');r.addColorStop(0.55,'rgba(255,200,60,.55)');r.addColorStop(1,'rgba(255,190,40,0)');g.fillStyle=r;g.fillRect(0,0,w,h);}));
+ const glowMat=keep(new MeshBasicMaterial({map:glowTex,transparent:true,depthWrite:false,fog:false,opacity:0}));
+ function hintDistance(row){return row.gate.track==='letters'?(opts.hintLetters??26):(opts.hintWords??14);}
  const rows=gates.map((g,i)=>makeRow(g,i));
  const rowVisible=(row)=>row.d-st.d<210&&row.d-st.d>-25;
  // finish arch + lodge
@@ -258,17 +267,18 @@ export function createSlalomScene(container,opts){
   const lodgeMesh=new Mesh(keep(mergeGeometries([colored(new BoxGeometry(9,4.2,6.5).translate(0,2.1,0),'#7a4b32'),roof(-1),roof(1),gable,...[-2.6,0,2.6].map(x=>colored(new BoxGeometry(1.3,1.2,0.05).translate(x,2.3,3.27),'#ffd27a')),colored(new BoxGeometry(0.8,2,0.8).translate(2.8,6.3,-1),'#8d8f99')])),keep(new MeshLambertMaterial({vertexColors:true,emissive:'#221400'})));
   lodgeMesh.castShadow=lodgeMesh.receiveShadow=true;lodge.add(lodgeMesh);scene.add(lodge);}
  // skier, blob shadow, tracks, spray
- const skier=makeSkier();scene.add(skier.root);
+ const skier=makeSkier(opts.ride==='board'?'board':'ski');scene.add(skier.root);
  const blob=new Mesh(keep(new CircleGeometry(0.75,20).rotateX(-Math.PI/2)),keep(new MeshBasicMaterial({color:'#6d87a6',transparent:true,opacity:0.22,depthWrite:false})));blob.renderOrder=1;scene.add(blob);
  const trailMat=keep(new MeshBasicMaterial({side:DoubleSide,color:'#9fb2cb',transparent:true,opacity:0.38,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
- const trails=[new Trail(260,0.085,trailMat),new Trail(260,0.085,trailMat)];for(const t of trails){scene.add(t.mesh);keep(t.geo);}
+ // skis leave two thin grooves; a board leaves one wide carved track
+ const trails=skier.board?[new Trail(260,0.3,trailMat)]:[new Trail(260,0.085,trailMat),new Trail(260,0.085,trailMat)];for(const t of trails){scene.add(t.mesh);keep(t.geo);}
  const spray=new Spray(TIERS[2].spray,keep(softSprite()));spray.budget=T.spray;scene.add(spray.points);keep(spray.geo);keep(spray.points.material);
  // ---------- state ----------
  const firstD=startGate>0?COURSE.first+startGate*COURSE.spacing-44:0;
  const st={d:firstD,u:0,vu:0,v:0,tU:0,go:false,paused:false,next:startGate,finished:false,time:0,pointer:null,tilt:null,prompt:{},camInit:false,intro:startGate>0?0:2.4,end:0,lean:0,bob:0,pole:0};
  const tmp=new Vector3(),tmp2=new Vector3(),fwd=new Vector3(),side=new Vector3(),camPos=new Vector3(),camLook=new Vector3(),skPos=new Vector3();
  let scale=T.scale,width=1,height=1,portrait=false;
- function resize(){const r=container.getBoundingClientRect();width=Math.max(1,r.width);height=Math.max(1,r.height);portrait=height>width*1.05;const want=portrait?1.25:1;if(want!==bannerScale){bannerScale=want;rows.forEach((row,k)=>{if(!row.state){dropRow(row);rows[k]=makeRow(row.gate,k);}});}
+ function resize(){const r=container.getBoundingClientRect();width=Math.max(1,r.width);height=Math.max(1,r.height);portrait=height>width*1.05;const want=portrait?1.15:1;if(want!==bannerScale){bannerScale=want;rows.forEach((row,k)=>{if(!row.state){dropRow(row);rows[k]=makeRow(row.gate,k);}});}
   renderer.setPixelRatio(Math.min(globalThis.devicePixelRatio||1,T.maxDpr)*scale);renderer.setSize(width,height,false);camera.aspect=width/height;
   // keep every lane in view: widen the vertical field of view on tall screens
   const hfov=portrait?56:62,v=2*Math.atan(Math.tan(hfov*Math.PI/360)/camera.aspect)*180/Math.PI;camera.fov=clamp(v,50,92);camera.updateProjectionMatrix();spray.points.material.uniforms.scale.value=height*renderer.getPixelRatio()*0.45;}
@@ -303,16 +313,18 @@ export function createSlalomScene(container,opts){
   if(avg<11&&!perf.down&&!perf.up&&tier<2&&scale>=T.scale-0.01){perf.fast+=1.5;if(perf.fast>=6){perf.up=true;perf.fast=0;scale=TIERS[tier+1].scale;setTier(tier+1,`avg ${avg.toFixed(1)} ms`);perf.window.length=0;return;}}else perf.fast=0;
   if(avg<11.5&&scale<T.scale-0.01){perf.since+=1.5;if(perf.since>=6){scale=Math.min(T.scale,scale+0.1);perf.changes.push({at:+now.toFixed(1),scale:+scale.toFixed(2),avg:+avg.toFixed(1)});perf.since=0;resize();}}else perf.since=0;}
  function stats(){const a=[...perf.all].sort((x,y)=>x-y),q=p=>a.length?+a[Math.min(a.length-1,Math.floor(a.length*p))].toFixed(1):null;const info=renderer.info.render;
-  return {tier:T.name,scale:+scale.toFixed(2),pixelRatio:+renderer.getPixelRatio().toFixed(2),size:`${Math.round(width)}x${Math.round(height)}`,frames:perf.all.length,avgMs:a.length?+(a.reduce((x,y)=>x+y,0)/a.length).toFixed(1):null,p50Ms:q(0.5),p95Ms:q(0.95),fps:a.length?Math.round(1000/(a.reduce((x,y)=>x+y,0)/a.length)):null,calls:info.calls,triangles:info.triangles,changes:perf.changes};}
+  return {tier:T.name,scale:+scale.toFixed(2),pixelRatio:+renderer.getPixelRatio().toFixed(2),size:`${Math.round(width)}x${Math.round(height)}`,frames:perf.all.length,avgMs:a.length?+(a.reduce((x,y)=>x+y,0)/a.length).toFixed(1):null,p50Ms:q(0.5),p95Ms:q(0.95),fps:a.length?Math.round(1000/(a.reduce((x,y)=>x+y,0)/a.length)):null,calls:info.calls,triangles:info.triangles,changes:perf.changes,boost:{presses:boostPresses,seconds:+boostTime.toFixed(1)},hints:hintsShown};}
  // ---------- simulation ----------
  function lanesAhead(){const row=rows[st.next];return row?row.lanes:null;}
  function targetSpeed(){
   if(!st.go)return 0;
   if(st.finished)return Math.max(0,(stopD-st.d)*0.55);
-  const row=rows[st.next];if(!row)return COURSE.baseSpeed;
+  const row=rows[st.next];if(!row)return st.boost?COURSE.boostSpeed:COURSE.baseSpeed;
   const dist=row.d-st.d,p=st.prompt[st.next],base=COURSE.baseSpeed;
   // The question is always heard before the gate: slow to a gentle glide until it has been said, then leave ~2 s to look.
   if(p?.ended===undefined)return clamp((dist-7)*0.42,COURSE.minSpeed,base);
+  // Go faster (held): only once the question has been heard; it never cuts or skips a prompt.
+  if(st.boost)return COURSE.boostSpeed;
   const need=2.2-(st.time-p.ended);return need>0?clamp(dist/need,COURSE.minSpeed,base):base;
  }
  function step(dt){
@@ -323,15 +335,22 @@ export function createSlalomScene(container,opts){
   if(st.pointer===null&&st.tilt!==null)st.tU=clamp(st.tilt*(COURSE.piste-1),-(COURSE.piste-1),COURSE.piste-1);
   if(st.pointer===null&&lanes&&row&&row.d-st.d<30&&row.d-st.d>1){const near=lanes.reduce((a,b)=>Math.abs(b-st.tU)<Math.abs(a-st.tU)?b:a);st.tU+=(near-st.tU)*smooth(st.tilt!==null?1.2:2.6,dt);}
   const au=16*(st.tU-st.u)-8*st.vu;st.vu=clamp(st.vu+au*dt,-9,9);st.u=clamp(st.u+st.vu*dt,-COURSE.piste+0.6,COURSE.piste-0.6);
-  const vt=targetSpeed();st.v+=clamp(vt-st.v,-3.2*dt,(st.v<3?1.6:2.2)*dt);if(st.v<0.01&&vt===0)st.v=0;
+  const vt=targetSpeed();st.v+=clamp(vt-st.v,-3.2*dt,(st.v<3?1.6:st.v>COURSE.baseSpeed-0.1?3.2:2.2)*dt);if(st.v<0.01&&vt===0)st.v=0;
+  if(st.boost&&vt===COURSE.boostSpeed)boostTime+=dt;
   const before=st.d;st.d+=st.v*dt;
   // gate crossing: the lane nearest the skier is the choice (every pass is a choice; no crashes)
-  if(row&&before<row.d&&st.d>=row.d){const lane=row.lanes.reduce((best,x,k)=>Math.abs(x-st.u)<Math.abs(row.lanes[best]-st.u)?k:best,0);row.state={chosen:lane,at:st.time};st.next++;onGate(rows.indexOf(row),row.gate.options[lane],lane);}
+  // Hint: near the row, after the question has been heard, if the skier is heading for a wrong gate the right
+  // one glows. Words: only in the last stretch (he guesses from the first letter; the glow corrects, never gives away).
+  // Letters: a little earlier. A pass after a hint is recorded as hinted, not unaided.
+  if(row&&row.state===null){const dist=row.d-st.d,heading=row.lanes.reduce((best,x,k)=>Math.abs(x-st.tU)<Math.abs(row.lanes[best]-st.tU)?k:best,0),right=row.gate.options.indexOf(row.gate.answer);
+   const on=st.prompt[st.next]?.ended!==undefined&&dist>0&&dist<hintDistance(row)&&heading!==right;
+   if(on&&!row.hinted){row.hinted=true;hintsShown++;}row.hintOn=on;}
+  if(row&&before<row.d&&st.d>=row.d){const lane=row.lanes.reduce((best,x,k)=>Math.abs(x-st.u)<Math.abs(row.lanes[best]-st.u)?k:best,0);row.state={chosen:lane,at:st.time};row.hintOn=false;st.next++;onGate(rows.indexOf(row),row.gate.options[lane],lane,row.hinted);}
   if(!st.finished&&st.d>=finishD){st.finished=true;st.end=0;onFinish();}
   if(st.finished)st.end+=dt;
   return au;
  }
- const clock={last:performance.now()};let raf=0,disposed=false,lastDraw=0,pendingDt=0;const mixers=[],friends=[];
+ const clock={last:performance.now()};let raf=0,disposed=false,lastDraw=0,pendingDt=0,hintsShown=0,boostTime=0,boostPresses=0;const mixers=[],friends=[];
  function frame(now){
   raf=requestAnimationFrame(frame);
   const rawMs=now-clock.last;clock.last=now;
@@ -349,22 +368,38 @@ export function createSlalomScene(container,opts){
   // skier pose
   const yaw=Math.atan2(-fwd.x,-fwd.z)+(-heading)*0.9;
   skier.root.position.copy(skPos);skier.root.rotation.set(0,yaw,0);
-  st.lean+=(clamp(-au*0.018,-0.45,0.45)-st.lean)*smooth(8,dt);skier.body.rotation.set(-0.28,0,st.lean);
+  st.lean+=(clamp(-au*0.018,-0.45,0.45)-st.lean)*smooth(8,dt);
   st.bob+=dt*(1.5+st.v*0.4);const crouch=0.06+0.04*Math.sin(st.bob)+carve*0.08;skier.body.position.y=-crouch;
-  for(const [k,l] of skier.legs.entries()){l.hip.rotation.x=-0.55-crouch*2.2+(k?1:-1)*st.lean*0.2;l.knee.rotation.x=0.95+crouch*3.2;}
-  skier.skis.rotation.set(-Math.atan(SLOPE)*0.2,0,st.lean*0.5);
+  if(skier.board){
+   // snowboard: the rider and the board's edge tilt together into the carve (toe side / heel side); knees soak up the turn
+   skier.tilt.rotation.set(0,0.42+st.lean*0.5,st.lean*1.15); // a real stance angle, so the board reads as a boardskier.body.rotation.set(0,Math.PI/2+st.lean*0.25,-0.12-crouch*0.6);
+   for(const [k,l] of skier.legs.entries()){l.hip.rotation.x=-0.45-crouch*2.4;l.hip.rotation.z=(k?1:-1)*0.18;l.knee.rotation.x=0.85+crouch*3.4;}
+   skier.skis.rotation.set(-Math.atan(SLOPE)*0.2,0,0);
+  }else{
+   skier.body.rotation.set(-0.28,0,st.lean);
+   for(const [k,l] of skier.legs.entries()){l.hip.rotation.x=-0.55-crouch*2.2+(k?1:-1)*st.lean*0.2;l.knee.rotation.x=0.95+crouch*3.2;}
+   skier.skis.rotation.set(-Math.atan(SLOPE)*0.2,0,st.lean*0.5);
+  }
   st.pole+=dt*(st.v<4?3.2:1.4);st.cheer=clamp((st.cheer||0)+(st.finished&&st.v<0.6?dt:-dt)*1.5,0,1);
-  for(const [k,a] of skier.arms.entries()){const s=k?1:-1,c=st.cheer;a.rotation.x=(0.55+0.25*Math.sin(st.pole+k*Math.PI)*(st.v<5?1:0.35))*(1-c)+c*(-2.5+0.15*Math.sin(st.time*5+k));a.rotation.z=s*(0.28+carve*0.1+c*0.35);}
-  skier.head.rotation.y=-heading*0.4;
+  for(const [k,a] of skier.arms.entries()){const s=k?1:-1,c=st.cheer;
+   if(skier.board){a.rotation.x=(0.2+0.1*Math.sin(st.time*2+k))*(1-c)+c*-2.5;a.rotation.z=s*(0.95+carve*0.3-st.lean*s*0.4)*(1-c)+c*s*0.35;} // arms out for balance
+   else{a.rotation.x=(0.55+0.25*Math.sin(st.pole+k*Math.PI)*(st.v<5?1:0.35))*(1-c)+c*(-2.5+0.15*Math.sin(st.time*5+k));a.rotation.z=s*(0.28+carve*0.1+c*0.35);}}
+  skier.head.rotation.y=skier.board?-Math.PI/2*0.85-heading*0.3:-heading*0.4; // a boarder looks down the hill over the lead shoulder
   blob.position.set(skPos.x,skPos.y+0.03,skPos.z);
   // tracks behind each ski
-  for(const s of [-1,1]){tmp.copy(side).multiplyScalar(s*0.13+Math.sin(yaw)*0).add(skPos);tmp.y=groundY(st.u+s*0.13,d)+0.035;const t=trails[s<0?0:1];if(st.go&&st.v>0.3)t.push(tmp,side);}
+  if(skier.board){tmp.copy(skPos);tmp.y=groundY(st.u,d)+0.035;if(st.go&&st.v>0.3)trails[0].push(tmp,side);}
+  else for(const s of [-1,1]){tmp.copy(side).multiplyScalar(s*0.13).add(skPos);tmp.y=groundY(st.u+s*0.13,d)+0.035;const t=trails[s<0?0:1];if(st.go&&st.v>0.3)t.push(tmp,side);}
   // spray: steady light dust, bursts when carving
   if(st.go&&st.v>1){const rate=(14+st.v*3+carve*230)*(T.spray/340);let n=rate*dt;while(n>0){if(Math.random()<n){const s=Math.sign(st.vu)||1;tmp.copy(skPos).addScaledVector(fwd,0.5+Math.random()*0.3).addScaledVector(side,(Math.random()-0.5)*0.4);tmp.y+=0.05;
    tmp2.copy(side).multiplyScalar(-s*(1.2+carve*3.2)*(0.5+Math.random())).addScaledVector(fwd,st.v*0.35*Math.random());tmp2.y=0.8+Math.random()*2.2*(0.4+carve);spray.emit(tmp,tmp2,0.6+Math.random()*0.7,0.25+Math.random()*0.4+carve*0.45);}n-=1;}}
   spray.update(dt);for(const m of mixers)m.update(dt);for(const c of friends)c.rotation.y+=(Math.atan2(camera.position.x-c.position.x,camera.position.z-c.position.z)-c.rotation.y)*smooth(3,dt);
   // gates: only nearby rows are drawn; feedback glow on passed rows
   for(const row of rows){const vis=rowVisible(row);row.bannerMesh.visible=row.frameMesh.visible=vis;
+   // big banners fade as the camera passes under them (full until 14 m from the camera, faint by 6 m)
+   if(vis){const cd=row.d-(st.d-8);row.bannerMesh.material.opacity=clamp((cd-5)/9,0.12,1);}
+   if(row.hinted&&!row.glow){const k=row.gate.options.indexOf(row.gate.answer),at=world(row.lanes[k],row.d);const g=new PlaneGeometry(BW*bannerScale*1.45,BH*bannerScale*1.8).rotateY(row.yaw).translate(at.x,at.y+BY+(bannerScale-1)*1.1,at.z).translate(-Math.sin(row.yaw)*0.08,0,-Math.cos(row.yaw)*0.08);row.glow=new Mesh(g,glowMat.clone());row.glow.renderOrder=0;scene.add(row.glow);}
+   if(row.glow){const target=row.hintOn?0.55+0.35*Math.sin(st.time*6):0;row.glow.material.opacity+=(target-row.glow.material.opacity)*smooth(10,dt);row.glow.visible=vis&&row.glow.material.opacity>0.01;
+    if(!row.state)tintRow(row,row.gate.options.indexOf(row.gate.answer),row.hintOn&&Math.sin(st.time*6)>0?'#fff1b0':'#ffffff');}
    if(row.state&&!row.state.tinted){row.state.tinted=true;row.texts.forEach((text,k)=>{const right=text===row.gate.answer,chosen=k===row.state.chosen;tintRow(row,k,right?(chosen?'#9ff0b8':'#ffdf80'):chosen?'#c9d0da':'#ffffff');});}}
   // camera: smooth chase, a short opening sweep, and a turn to the front at the bottom
   const back=portrait?12:8,upH=portrait?7.4:3.7;
@@ -385,6 +420,8 @@ export function createSlalomScene(container,opts){
  raf=requestAnimationFrame(frame);
  const api={
   go(){st.go=true;},
+  boost(on){if(on&&!st.boost)boostPresses++;st.boost=!!on;},
+  canBoost(){const row=rows[st.next];return st.go&&!st.finished&&(!row||st.prompt[st.next]?.ended!==undefined);},
   setPaused(v){st.paused=!!v;clock.last=performance.now();if(swish)updateSwish(0);},
   promptStarted(i){st.prompt[i]={...st.prompt[i],started:st.time};},
   promptEnded(i){st.prompt[i]={...st.prompt[i],ended:st.time};},
@@ -403,7 +440,7 @@ export function createSlalomScene(container,opts){
   // For the browser check: the screen x of a lane of the next gate (drag the finger there).
   laneScreenX(i,lane){const row=rows[i];if(!row)return null;world(row.lanes[lane],row.d,tmp);tmp.y+=2.6;tmp.project(camera);const r=canvas.getBoundingClientRect();return r.left+(tmp.x+1)/2*r.width;},
   uToScreenX(u){const r=canvas.getBoundingClientRect();return r.left+(u/((COURSE.piste-0.5)*1.12)/2+0.5)*r.width;},
-  state(){return {spray:spray.alive,d:+st.d.toFixed(2),u:+st.u.toFixed(2),v:+st.v.toFixed(2),next:st.next,finished:st.finished,finishD,gateD:rows.map(r=>r.d),lanes:rows.map(r=>r.lanes)};},
+  state(){return {hint:!!rows[st.next]?.hintOn,boosting:!!st.boost,canBoost:api.canBoost(),spray:spray.alive,d:+st.d.toFixed(2),u:+st.u.toFixed(2),v:+st.v.toFixed(2),next:st.next,finished:st.finished,finishD,gateD:rows.map(r=>r.d),lanes:rows.map(r=>r.lanes)};},
   stats,
   // Cost of one frame at the current quality (simulation + render, waiting for the GPU): an upper bound on the
   // device's frame time without vsync or browser throttling. Used by the browser check; not during play.

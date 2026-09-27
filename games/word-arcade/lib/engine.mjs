@@ -63,7 +63,7 @@ export function act(p,input,ctx={}){
  if(!input||input.revision!==p.revision)throw Error('Your game changed in another tab. Refresh to continue.');
  const s=p.session;let result={kind:input.kind};
  if(input.kind==='start'){
-  if(!GAMES.some(g=>g.id===input.game))throw Error('Choose a game');if(input.focus!==undefined&&!['words','lowercase'].includes(input.focus))throw Error('Choose a practice focus');
+  if(!GAMES.some(g=>g.id===input.game))throw Error('Choose a game');if(input.ride!==undefined&&!['ski','board'].includes(input.ride))throw Error('Choose skis or a snowboard');if(input.focus!==undefined&&!['words','lowercase'].includes(input.focus))throw Error('Choose a practice focus');
   if(s?.game==='builder'&&!p.builder)p.builder=builderState(p);
   if(!p.variety&&s?.q?.word)rememberWord(p,s.q.word);
   p.serial++;const level=input.level===undefined?(p.games[input.game]?.level||1):input.level;if(![1,2,3].includes(level))throw Error('Invalid level');
@@ -71,7 +71,9 @@ export function act(p,input,ctx={}){
   if(input.deck!==undefined&&!['words','letters','spelling'].includes(input.deck))throw Error('Choose a deck');
   p.session={game:input.game,focus:input.focus||'words',mode:input.mode||'practice',deck:input.deck||'words',run:p.serial,round:0,level,score:0,correct:0,assisted:0,phase:'question',help:false,misses:0,draft:[],results:[],started:Date.now()};
   if(input.game==='pixel'){p.session.phase='art';}
-  else if(input.game==='slalom'){const level=ctx.literacy||literacyFrom(null,DEFAULT_TRACK[p.id]||'mixed');const s2=p.session;s2.gates=slalomRun(level,{seed:p.serial*31+(p.id==='beginner'?7:p.id==='explorer'?3:1)}).map((g,i)=>({...g,id:`${s2.run}:${i}`}));s2.level=level.track==='letters'?1:level.wordLevel;s2.track=level.track;s2.q=s2.gates[0];s2.draft=[];}
+  else if(input.game==='slalom'){const level=ctx.literacy||literacyFrom(null,DEFAULT_TRACK[p.id]||'mixed');const s2=p.session;s2.gates=slalomRun(level,{seed:p.serial*31+(p.id==='beginner'?7:p.id==='explorer'?3:1)}).map((g,i)=>({...g,id:`${s2.run}:${i}`}));s2.level=level.track==='letters'?1:level.wordLevel;s2.track=level.track;s2.q=s2.gates[0];s2.draft=[];
+   // skis or snowboard: remembered per player in the save (the start screen's two picture buttons)
+   if(input.ride!==undefined)p.slalom={...p.slalom,ride:input.ride};s2.ride=p.slalom?.ride||'ski';}
   else setup(p);result.line=input.game==='slalom'?'':p.session.q?.prompt||INSTRUCTIONS.pixel;
  }else if(input.kind==='art'){
   if(s?.game!=='pixel'||!Array.isArray(input.pixels)||input.pixels.length!==64||input.pixels.some(x=>!Number.isInteger(x)||x<0||x>7))throw Error('Invalid painting');p.art=[...input.pixels];
@@ -92,9 +94,10 @@ export function act(p,input,ctx={}){
    // One pass per gate: never retried, never failed. A miss names the right answer and the run continues.
    if(!Number.isFinite(input.durationMs)||input.durationMs<0||input.durationMs>86400000)throw Error('Invalid duration');
    if(!q.options.includes(input.answer))throw Error('Choose a gate');
-   const ok=input.answer===q.answer;s.activeMs=(s.activeMs||0)+input.durationMs;
-   s.results.push({q:{id:q.id,kind:q.kind,answer:q.answer,options:q.options,prompt:q.prompt},answer:input.answer,independent:ok,points:0,misses:ok?0:1,help:false,durationMs:input.durationMs});
-   if(ok){s.correct++;p.xp+=12;}else s.misses++;
+   // hinted: the right gate glowed before this pass (it is recorded as a hinted pass, not an unaided one)
+   const ok=input.answer===q.answer,hinted=input.hinted===true;s.activeMs=(s.activeMs||0)+input.durationMs;
+   s.results.push({q:{id:q.id,kind:q.kind,answer:q.answer,options:q.options,prompt:q.prompt},answer:input.answer,independent:ok&&!hinted,hinted,points:0,misses:ok?0:1,help:hinted,durationMs:input.durationMs});
+   if(ok){s.correct++;if(hinted){s.assisted++;p.xp+=6;}else p.xp+=12;}else s.misses++;
    s.round++;
    if(s.round>=s.gates.length){s.phase='complete';const g=p.games.slalom||{};p.games.slalom={...g,level:s.level,played:(g.played||0)+1};result.complete=true;}
    else{if(!ok)s.gates[s.round]=easeGate(s.gates[s.round]);s.q=s.gates[s.round];}

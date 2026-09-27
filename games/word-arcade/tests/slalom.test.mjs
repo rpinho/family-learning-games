@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawn} from 'node:child_process';
 import {fresh,act,voiceLines,GAMES} from '../lib/engine.mjs';
-import {slalomRun,easeGate,SLALOM_LINES,SLALOM_GATES,CVC_WORDS,CVC_FAMILIES} from '../lib/slalom.mjs';
+import {slalomRun,easeGate,SLALOM_LINES,SLALOM_GATES,CVC_WORDS,CVC_FAMILIES,canSoundOut} from '../lib/slalom.mjs';
 import {literacyFrom,tilesOf} from '../lib/word-break.mjs';
 const send=(p,input,ctx)=>act(p,{...input,revision:p.revision,questionId:p.session?.q?.id},ctx);
 const beginner={...literacyFrom(null,'letters'),source:'letter-quest',letters:[...'SATPINMDGOE'],lower:['s','a','t'],learning:[...'SATPINMDGOE','s','a','t']};
@@ -89,3 +89,15 @@ test('Finish-line friends: only models listed for that player and present on dis
  }finally{child.kill();}
 });
 test('Every spoken slalom line is in the voice line list',()=>{for(const l of Object.values(SLALOM_LINES))assert.ok(lines.has(l),l);});
+test('Hinted passes are recorded apart from unaided ones; the ride choice is remembered in the save',()=>{
+ const p=fresh('explorer');send(p,{kind:'start',game:'slalom',ride:'board'},{literacy:explorer});assert.equal(p.slalom.ride,'board');assert.equal(p.session.ride,'board');
+ const a=send(p,{kind:'answer',answer:p.session.q.answer,durationMs:10,hinted:true});assert.equal(a.ok,true);
+ send(p,{kind:'answer',answer:p.session.q.answer,durationMs:10});
+ assert.deepEqual(p.session.results.map(r=>[r.independent,r.hinted]),[[false,true],[true,false]]);assert.equal(p.session.assisted,1);assert.equal(p.xp,18);
+ send(p,{kind:'start',game:'slalom'},{literacy:explorer});assert.equal(p.session.ride,'board','remembered');
+ send(p,{kind:'start',game:'slalom',ride:'ski'},{literacy:explorer});assert.equal(p.slalom.ride,'ski');
+ assert.throws(()=>send(p,{kind:'start',game:'slalom',ride:'sled'},{literacy:explorer}),/skis or a snowboard/);
+});
+test('Only words made of recorded letter sounds are ever sounded out',()=>{
+ for(let seed=0;seed<80;seed++)for(const level of [explorer,{...explorer,sentenceReady:true}])for(const g of slalomRun(level,{seed}))if(g.after)assert.ok(canSoundOut(g.answer),g.answer);
+});
