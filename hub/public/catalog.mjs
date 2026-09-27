@@ -51,6 +51,18 @@ export const CATALOG = [
     icon: "/hunt-icon.svg",
   },
   {
+    // Word Arcade's ski run, straight in (skis or snowboard on its start screen). `group` marks it for a future
+    // "Sports / Snow" group card (not built yet: today every item is its own top-level card).
+    id: "letter-slalom",
+    name: "Letter Slalom",
+    description: "Ski down the mountain through the letter you hear.",
+    color: "#d6ecff",
+    icon: "/slalom-logo.svg",
+    game: "word-arcade",
+    query: "play=slalom",
+    group: "snow",
+  },
+  {
     id: "three-in-a-row",
     name: "Three in a Row",
     description: "Choose X or O. Think one move ahead.",
