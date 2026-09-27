@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { Chess } from "../public/chess/rules.mjs";
 import { freshChess, actChess, publicChess } from "../chess-state.mjs";
-import { chooseCoachMove, nextRating, coachStyle, resultOf, hintIdea, matchBoard, pickMoment, coachChoice, mateInOne, RATING_MIN, RATING_MAX } from "../chess-match.mjs";
+import { chooseCoachMove, nextRating, coachStyle, resultOf, hintIdea, matchBoard, pickMoment, coachChoice, mateInOne, reactionFor, RATING_MIN, RATING_MAX } from "../chess-match.mjs";
 import { MATCH_VOICE, matchVoiceLines } from "../public/chess/match-voice.mjs";
 import { wordBreakLines } from "../public/word-break.mjs";
 import { LocalEngine } from "../stockfish.mjs";
@@ -36,6 +36,22 @@ const strong = { matchRating: 1800 };
 test("Every new spoken line has a clip in the coach voice set, including the word break", () => {
   for (const line of [...matchVoiceLines(), ...wordBreakLines()]) assert.ok(spoken.has(line), line);
   assert.ok(!matchVoiceLines().some((l) => /\bRook\b/.test(l)), "lines never say the coach's name");
+});
+
+test("Captures drive dramatic, sparse speech and still move the coach when silent", () => {
+  const game = {side:'w',records:[{}, {}, {}],spokeAt:0,moves:['e2e4'],voiceTurn:{}};
+  const child = {uci:'c4d5',piece:'b',captured:'n',loss:20};
+  const reply = {captured:'b'};
+  assert.equal(reactionFor(game, child, reply, null).kind, 'trade');
+  assert.ok(game.spokeAt === 3);
+  assert.equal(reactionFor(game, {...child,captured:'q'}, null, null).kind, 'youQueen');
+  game.spokeAt = 3;
+  const silent = reactionFor(game, child, null, null);
+  assert.deepEqual([silent.kind,silent.line], ['youCapture',null]);
+  assert.equal(game.spokeAt,3,'a silent expression does not reset the speech timer');
+  assert.equal(reactionFor(game, {...child,captured:null}, null, null),null);
+  game.spokeAt = 0;
+  assert.equal(reactionFor(game, {...child,captured:null,loss:400}, {captured:'r'}, null).kind,'pounce');
 });
 
 test("Legal moves only: an illegal move is refused and changes nothing", async () => {
@@ -172,9 +188,11 @@ test("Reactions stay rare and every spoken reaction is a real clip", async () =>
     await move(p, uci(m), { engine: fakeEngine(), settings: { matchRating: 300 }, rng: random });
     learnerMoves++;
     const r = p.match.game.react;
-    if (r && !p.match.game.result) {
+    if (r?.line && !p.match.game.result) {
       reactions++;
       assert.ok(spoken.has(r.line), r.line);
+    } else if (r && !p.match.game.result) {
+      assert.ok(['meCapture', 'youCapture'].includes(r.kind), 'a silent reaction must be a capture');
     }
   }
   assert.ok(reactions <= Math.ceil(learnerMoves / 2), `${reactions} reactions in ${learnerMoves} moves`);

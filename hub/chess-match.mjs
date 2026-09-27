@@ -154,16 +154,23 @@ export function reactionFor(g, rec, reply, result) {
     rec.uci.slice(2, 4) === (g.side === "w" ? "f7" : "f2") && g.moves.length <= 24;
   if (scholar) kind = "scholar";
   else if (result) kind = result.kind === "win" ? "youWin" : result.kind === "loss" ? "meWin" : result.reason === "stalemate" ? "stalemate" : "draw";
+  else if (rec.captured === 'q') kind = 'youQueen';
   else if (reply?.captured && VALUE[reply.captured] >= 3 && rec.loss >= 250) kind = "pounce";
   else if (rec.promotion) kind = "youPromote";
   else if (reply?.promotion) kind = "mePromote";
-  else if (since >= 3) {
-    if (rec.captured && VALUE[rec.captured] >= 3 && rec.loss < 150) kind = "youCapture";
-    else if (rec.uci === rec.expect && rec.loss < 40 && (rec.fork || rec.check)) kind = "good";
+  else if (since >= 2) {
+    if (rec.captured && reply?.captured) kind = 'trade';
+    else if (reply?.captured && (VALUE[reply.captured] >= 3 || since >= 4)) kind = 'meCapture';
+    else if (rec.captured && (VALUE[rec.captured] >= 3 || since >= 4)) kind = 'youCapture';
+    else if (rec.uci === rec.expect && rec.loss < 40 && rec.fork) kind = "good";
     else if (rec.check && since >= 4) kind = "youCheck";
     else if (reply?.check && since >= 4) kind = "meCheck";
   }
-  if (!kind) return null;
+  if (!kind) {
+    // A capture still gets a visible reaction when the speech cooldown is on.
+    const motion = reply?.captured ? 'meCapture' : rec.captured ? 'youCapture' : null;
+    return motion ? {kind:motion,line:null,ply:g.moves.length} : null;
+  }
   g.spokeAt = n;
   return { kind, line: line(g, kind), ply: g.moves.length };
 }

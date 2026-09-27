@@ -203,13 +203,17 @@ export function mountChess(root, { player, name, event = () => {} }) {
           view = "path";
         }
         busy = false;
+        const matchKind = body.type === 'match-move' ? profile.match?.game?.react?.kind : null;
         reaction =
           data.result?.correct === false
             ? "retry"
+            : body.type === 'match-move' && matchKind
+              ? ['youCapture', 'youQueen', 'youCheck', 'youWin', 'scholar', 'youPromote'].includes(matchKind)
+                ? 'shock' : ['meCapture', 'pounce', 'trade', 'meCheck', 'meWin', 'mePromote'].includes(matchKind)
+                  ? 'smug' : 'nod'
             : ["move", "game-move", "match-move"].includes(body.type)
               ? (profile.session?.phase === "solved" && body.type === "move") ||
-                (body.type === "game-move" && profile.game?.result) ||
-                (body.type === "match-move" && profile.match?.game?.result?.kind === "win")
+                (body.type === "game-move" && profile.game?.result)
                 ? "celebrate"
                 : "nod"
               : "idle";
@@ -349,6 +353,8 @@ export function mountChess(root, { player, name, event = () => {} }) {
       "react-think",
       "react-capture",
       "react-select",
+      "react-shock",
+      "react-smug",
     );
     if (!kind || kind === "idle" || kind === "land") return;
     void puppet.getBoundingClientRect();
@@ -570,7 +576,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
   function gameView() {
     const g = profile.game;
     if (!g) return playView();
-    return `<section class="chess-lesson practice-game"><header class="lesson-header">${iconButton("close", "play", "Back to practice games")}<span class="game-title">${g.mode === "position" ? `${g.turns} / ${g.target}` : "Rook"}</span>${btn(glyph(profile.settings.sound ? "hear" : "muted"), "sound", "sound", `aria-label="${profile.settings.sound ? "Mute coaching" : "Enable coaching"}"`)}</header><div class="play-table">${arenaHead(g.result || (g.hint?.stage === 3 ? "Follow the arrow" : g.hint?.stage === 2 ? "Tap this piece" : "Your move"), g.result ? "happy" : "idle")}<div id="chess-board"></div><div id="board-selection" class="sr-only" aria-live="polite"></div><footer class="board-controls">${iconButton("undo", "game-undo", "Take back a turn", g.turns < 1 ? "disabled" : "")}${g.result ? btn("➜", "play", "primary next-puzzle", 'aria-label="Choose another game"') : hintControls(true)}<details class="board-more"><summary aria-label="More options">•••</summary><div>${btn("Choose another game", "play", "text")}<p>${gameNotation(g)}</p><p>${esc(g.assessment || "")}</p></div></details></footer></div></section>`;
+    return `<section class="chess-lesson practice-game"><header class="lesson-header">${iconButton("close", "play", "Back to practice games")}<span class="game-title">${g.mode === "position" ? `${g.turns} / ${g.target}` : "Rook"}</span>${btn(glyph(profile.settings.sound ? "hear" : "muted"), "sound", "sound", `aria-label="${profile.settings.sound ? "Mute coaching" : "Enable coaching"}"`)}</header><div class="play-table">${arenaHead(g.result || (g.hint?.stage === 3 ? "Follow the arrow" : g.hint?.stage === 2 ? "Tap this piece" : "Your move"), g.result?.includes("you win") ? "thinking" : g.result ? "happy" : "idle")}<div id="chess-board"></div><div id="board-selection" class="sr-only" aria-live="polite"></div><footer class="board-controls">${iconButton("undo", "game-undo", "Take back a turn", g.turns < 1 ? "disabled" : "")}${g.result ? btn("➜", "play", "primary next-puzzle", 'aria-label="Choose another game"') : hintControls(true)}<details class="board-more"><summary aria-label="More options">•••</summary><div>${btn("Choose another game", "play", "text")}<p>${gameNotation(g)}</p><p>${esc(g.assessment || "")}</p></div></details></footer></div></section>`;
   }
   // ---- Full games against the coach ----
   const sideName = (c) => (c === "w" ? "White" : "Black");
@@ -595,7 +601,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
     const name = M.opponent, b = new Chess(g.fen), myTurn = !g.result && b.turn() === g.side;
     const status = matchReplay ? matchReplay.title : g.result ? matchTitle(g, name) : !myTurn ? `${name} is thinking…`
       : g.hint?.to ? "Follow the arrow" : g.hint?.from ? "Look at this piece" : g.hint ? "Here is an idea" : b.isCheck() ? "Check! Save your king" : "Your move";
-    const mood = g.result ? (g.result.kind === "loss" ? "idle" : "happy") : g.react?.kind === "pounce" ? "thinking" : "idle";
+    const mood = g.result ? (g.result.kind === "win" ? "thinking" : g.result.kind === "loss" ? "happy" : "idle") : g.react?.kind === "pounce" ? "thinking" : "idle";
     const stage = g.hint?.stage || 0;
     const controls = g.result
       ? `${g.recap ? btn('▶ <span>Look at this moment</span>', "match-moment", "hint-button", 'aria-label="Watch one important moment again"') : ""}${btn("Continue ➜", "match-continue", "primary")}`

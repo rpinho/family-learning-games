@@ -864,6 +864,39 @@
 .rook-puppet.react-think .rook-eyes {
   transform: translate(3px, 2px);
 }
+.rook-puppet.react-shock .rook-head {
+  animation: rook-dramatic-shock 850ms cubic-bezier(.2,.85,.2,1);
+}
+.rook-puppet.react-shock .rook-mouth {
+  animation: rook-gasp 850ms ease-out;
+}
+.rook-puppet.react-shock .rook-arm,
+.rook-puppet.react-shock .rook-hand {
+  animation: rook-hands-up 850ms cubic-bezier(.2,.85,.2,1);
+}
+.rook-puppet.react-smug .rook-head {
+  animation: rook-smug-bob 850ms cubic-bezier(.2,.85,.2,1);
+}
+.rook-puppet.react-smug .rook-hand {
+  animation: rook-wave 460ms ease-in-out 2;
+}
+@keyframes rook-dramatic-shock {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  22% { transform: translateY(-6px) rotate(-7deg); }
+  48% { transform: translateY(4px) rotate(5deg); }
+  75% { transform: translateY(1px) rotate(-2deg); }
+}
+@keyframes rook-gasp {
+  25%, 65% { transform: scale(.8, 1.8); }
+}
+@keyframes rook-hands-up {
+  30%, 65% { transform: translateY(-12px) rotate(-13deg); }
+}
+@keyframes rook-smug-bob {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  30% { transform: translateY(-5px) rotate(6deg); }
+  65% { transform: translateY(2px) rotate(-3deg); }
+}
 @keyframes rook-blink {
   0%,
   43%,
