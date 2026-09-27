@@ -1763,3 +1763,51 @@ body:has(.chess-lesson) > .top .home {
 .match-more {
   margin: 18px 0 0;
 }
+
+/* The optional local character uses the empty space around the board. The
+   public classic edition keeps its established sizing. */
+.play-table:has(.rook-local) .arena-coach { height: 116px; }
+.play-table:has(.rook-local) .rook-replay { width: 138px; min-width: 138px; height: 116px; }
+.chess-lesson .rook-replay .rook-local { width: 143px; height: 155px; left: -8px; bottom: -13px; }
+.match-hero > .rook-local { width: 210px; }
+.practice-heading > .rook-local { width: 180px; }
+
+@media (min-width: 980px) and (min-height: 561px) {
+  .play-table:has(.rook-local) { position: relative; }
+  .play-table:has(.rook-local) .arena-coach { height: 92px; }
+  .play-table:has(.rook-local) .rook-replay {
+    position: absolute;
+    left: -208px;
+    top: 116px;
+    width: 190px;
+    min-width: 190px;
+    height: 205px;
+  }
+  .chess-lesson .play-table .rook-replay .rook-local {
+    width: 190px;
+    height: 205px;
+    left: 0;
+    bottom: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .play-table:has(.rook-local) .arena-coach { height: 101px; }
+  .play-table:has(.rook-local) .rook-replay { width: 110px; min-width: 110px; height: 100px; }
+  .chess-lesson .rook-replay .rook-local { width: 116px; height: 126px; left: -4px; bottom: -14px; }
+  .match-hero > .rook-local { width: 136px; }
+  .practice-heading > .rook-local { width: 126px; }
+}
+
+@media (max-height: 560px) and (min-width: 650px) {
+  .play-table:has(.rook-local) .arena-coach { height: auto; }
+  .play-table:has(.rook-local) .rook-replay {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: 112px;
+    min-width: 112px;
+    height: 122px;
+  }
+  .chess-lesson .play-table .rook-replay .rook-local { width: 112px; height: 122px; left: 0; bottom: 0; }
+}
