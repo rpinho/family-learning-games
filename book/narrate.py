@@ -1,9 +1,10 @@
 """The Book: narration clips with the local Kokoro model (no network, no API key).
 Usage: python book/narrate.py request.json   (request: {"lines": [{"text", "voice", "speed"}], "out": "<clip dir>",
 "models": "<dir with kokoro-v1.0.onnx + voices-v1.0.bin>"}). Each line has its own voice (narrator, Dad, each
-friend). Clips are content-addressed and only ever added: an existing clip is never rewritten.
+friend). Letter sounds are written as phonemes in [[...]] (plain "Sss" would be spelled
+"S S S"). Clips are content-addressed and only ever added: an existing clip is never rewritten.
 Prints {"made": n, "clips": {"voice|speed|text": file}} as JSON."""
-import hashlib, json, os, sys
+import hashlib, json, os, re, sys
 from pathlib import Path
 req = json.loads(Path(sys.argv[1]).read_text())
 out = Path(req['out']); out.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -20,7 +21,16 @@ if todo:
     kokoro = Kokoro.from_session(ort.InferenceSession(str(models / 'kokoro-v1.0.onnx'), sess_options=opts, providers=['CPUExecutionProvider']), str(models / 'voices-v1.0.bin'))
     for k, l in todo.items():
         lang = 'en-gb' if l['voice'].startswith('b') else 'en-us'
-        samples, rate = kokoro.create(l['text'], voice=l['voice'], speed=l['speed'], lang=lang)
+        if '[[' in l['text']:
+            # Letter sounds come as phonemes in [[...]]: the rest of the line is phonemized normally.
+            parts = re.split(r'\[\[([^\]]*)\]\]', l['text'])
+            def phon(p):  # the phonemizer trims spaces; keep them so words stay apart
+                core = p.strip()
+                return (' ' if p[:1].isspace() else '') + (kokoro.tokenizer.phonemize(core, lang) if core else '') + (' ' if p[-1:].isspace() else '')
+            ph = ''.join(p if i % 2 else phon(p) for i, p in enumerate(parts))
+            samples, rate = kokoro.create(ph, voice=l['voice'], speed=l['speed'], lang=lang, is_phonemes=True)
+        else:
+            samples, rate = kokoro.create(l['text'], voice=l['voice'], speed=l['speed'], lang=lang)
         if not len(samples) or not np.isfinite(samples).all(): raise ValueError('invalid audio for: ' + l['text'][:60])
         final = out / (k + '.wav'); temp = out / (k + f'.{os.getpid()}.tmp.wav')
         sf.write(str(temp), samples, rate, subtype='PCM_16'); temp.replace(final)

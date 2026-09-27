@@ -49,8 +49,10 @@ export const LEVELS={
  early:{pages:[7,11],words:[110,330],avgSentence:10,maxWordLength:10,pageWords:45,lineWords:16,captionWords:1,captionWordLength:10},
  reader:{pages:[8,12],words:[160,430],avgSentence:14,maxWordLength:12,pageWords:60,lineWords:22,captionWords:6,captionWordLength:8}
 };
+// Runs like "Sss", "Lll", "Grrr", "Zzzz" are spelled out letter by letter by the narrator's voice.
+export const spelledSound=t=>(String(t).replace(/\[\[[^\]]*\]\]/g,'').match(/\b\w*([b-df-hj-np-tv-z])\1\1\w*\b/i)||[])[0]||null;
 export const sayOf=p=>(Array.isArray(p?.say)?p.say:[]).map(l=>Array.isArray(l)?{who:String(l[0]||'').toLowerCase(),text:String(l[1]||'')}:{who:String(l?.who||'').toLowerCase(),text:String(l?.text||'')});
-const pageText=p=>[...sayOf(p).map(l=>l.text),...(p?.magic?.after?sayOf({say:p.magic.after}).map(l=>l.text):[])].join(' ');
+const pageText=p=>[...sayOf(p).map(l=>l.text),...(p?.magic?.after?sayOf({say:p.magic.after}).map(l=>l.text):[]),...(p?.after?sayOf({say:p.after}).map(l=>l.text):[])].join(' ');
 export function lintChapter(ch,plan,{extra=[],allow=[],speakers=null,actors=null,dadId='dad'}={}){
  const issues=[];const L=LEVELS[plan.level]||LEVELS.reader;
  if(!ch||typeof ch!=='object'||!Array.isArray(ch.pages))return ['not a chapter object with pages'];
@@ -77,7 +79,8 @@ export function lintChapter(ch,plan,{extra=[],allow=[],speakers=null,actors=null
  for(const p of pages)if(p?.magic&&!(plan.magic||[]).includes(String(p.magic.word||'').toLowerCase()))issues.push(`"${p.magic.word}" is not one of today's magic words`);
  let heroPages=0,dad=false;
  pages.forEach((p,i)=>{
-  const say=sayOf(p);if(!say.length&&!p?.beat)issues.push(`page ${i+1} has no narration`);
+  const say=sayOf(p);
+  for(const l of say)if(spelledSound(l.text))issues.push(`page ${i+1}: "${spelledSound(l.text)}" is read aloud as letter names; write a real word (hiss, roar, hum) instead of a letter sound`);if(!say.length&&!p?.beat)issues.push(`page ${i+1} has no narration`);
   for(const l of say){if(!allowedWho.has(l.who))issues.push(`page ${i+1}: "${l.who}" cannot speak (use narrator, dad or a friend's id)`);
    if(!l.text.trim())issues.push(`page ${i+1} has an empty line`);if(WORDS(l.text).length>L.lineWords)issues.push(`page ${i+1} has a line over ${L.lineWords} words`);if(l.who==='dad')dad=true;}
   const n=WORDS(pageText(p)).length;if(n>L.pageWords)issues.push(`page ${i+1} has ${n} spoken words (max ${L.pageWords})`);
@@ -89,6 +92,12 @@ export function lintChapter(ch,plan,{extra=[],allow=[],speakers=null,actors=null
   if(actors)for(const a of acts)if(!actors.includes(a))issues.push(`page ${i+1}: unknown actor "${a}"`);
  });
  if(actors?.includes(plan.actorIds?.hero||plan.player)&&heroPages<Math.ceil(pages.length/2))issues.push(`${plan.name} must be in the picture on at least half the pages (actor "${plan.actorIds?.hero||plan.player}")`);
+ // he plays: action pages, each with what happens after he acts
+ const acts2=pages.filter(p=>p?.action);
+ if(plan.actions&&acts2.length<(plan.minActions||0))issues.push(`needs at least ${plan.minActions} action pages ("action": ${Object.keys(plan.actions).map(a=>`"${a}"`).join(', ')}) where ${plan.name} plays`);
+ acts2.forEach(p=>{const i=pages.indexOf(p);if(plan.actions&&!plan.actions[p.action])issues.push(`page ${i+1}: unknown action "${p.action}"`);if(p.beat)issues.push(`page ${i+1}: an action page cannot also be a beat`);
+  if(!sayOf({say:p.after||[]}).length)issues.push(`page ${i+1}: action "${p.action}" needs "after" lines reacting to what he did`);
+  if(p.action==='drive'&&!(p.props||[]).some(x=>String(x).startsWith('train')))issues.push(`page ${i+1}: the drive action needs "train" in props`);});
  if(!dad)issues.push(`Dad must be in the adventure (actor "${dadId}" or a line spoken by dad) at least once`);
  // hints, never answers: a beat page must not give its answer away
  for(const b of plan.beats){const p=pages.find(x=>x?.beat===b.id);if(!p)continue;const t=tokens(sayOf(p).map(l=>l.text).join(' '));

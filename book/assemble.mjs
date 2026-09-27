@@ -4,7 +4,7 @@ import {sayOf} from './lint.mjs';
 import {normalizeScene,artFor} from '../hub/public/book-scene.mjs';
 export const CHAPTER_SCHEMA='family-book-chapter-2';
 // Fixed lines the player speaks (content prompts always speak).
-export const UI_LINES={yes:'Yes!',tryAgain:'Try again.',great:'Great job!',noPrompt:'What do you say?',readIt:'Can you read it?',nextTime:'See you in the next chapter!',tapToGo:'Tap to turn the page.'};
+export const UI_LINES={goal:'Goal!',saved:'Ooh, saved! Try again!',go:'Toot toot! Off we go!',fetch:'Fetch!',yes:'Yes!',tryAgain:'Try again.',great:'Great job!',noPrompt:'What do you say?',readIt:'Can you read it?',nextTime:'See you in the next chapter!',tapToGo:'Tap to turn the page.'};
 export const DEFAULT_VOICES={narrator:{voice:'af_heart',speed:0.95},dad:{voice:'am_michael',speed:0.95}};
 const FRIEND_VOICES=[{voice:'am_puck',speed:1},{voice:'af_bella',speed:1},{voice:'bm_fable',speed:1},{voice:'af_nova',speed:1.05}];
 export function voicesFor(plan,{narrator}={}){
@@ -23,7 +23,10 @@ export function assemble(story,plan,{number=1,source='template',lint=[],generate
   const base={id:`p${i+1}`,kind:'story',scene,caption:clean(p.caption).slice(0,60),say:sayOf(p).map(l=>line(l.who,l.text)).filter(l=>l.text)};
   if(p.magic&&plan.magic.includes(String(p.magic.word).toLowerCase())){const w=String(p.magic.word).toLowerCase();
    base.magic={word:w,object:clean(p.magic.object).slice(0,60),read:N(`${w[0].toUpperCase()+w.slice(1)}!`),after:sayOf({say:p.magic.after||[]}).map(l=>line(l.who,l.text))};}
-  if(p.beat&&beats[p.beat])return {...base,kind:'beat',beat:beatLines(beats[p.beat],{N,line,plan})};
+  if(p.action&&plan.actions?.[p.action]&&!p.beat){const fetcher=String(p.fetcher||'').toLowerCase();
+   base.action={kind:p.action,after:sayOf({say:p.after||[]}).map(l=>line(l.who,l.text)).filter(l=>l.text),...(p.action==='throw'&&(plan.cast||[]).some(c=>c.id===fetcher)?{fetcher}:{})};
+   if(p.action==='kick'||p.action==='throw')base.carrierProp='ball';if(p.action==='drive'&&!scene.props.some(x=>x.id==='train')&&library.props.train)scene.props.push({id:'train',n:1});}
+  if(p.beat&&beats[p.beat]){const b=beatLines(beats[p.beat],{N,line,plan});return {...base,kind:'beat',beat:b,...(b.kind==='kick-letter'?{carrierProp:'ball'}:b.kind==='count'?{carrierProp:b.thing}:b.kind==='share'?{carrierProp:'pizza'}:{})};}
   return base;
  });
  const art=artFor(pages,library);
@@ -42,7 +45,8 @@ function beatLines(b,{N,line,plan}){
  const who=b.who&&plan.cast.some(c=>c.id===b.who)?b.who:'narrator';
  switch(b.kind){
   case 'teach-letter':return {...b,lines:b.lines.map(([w,t])=>line(w,t)),tap:N(b.tap)};
-  case 'stones':return {...b,spoken:N(b.spoken),notIt:N(b.notIt),done:N(b.done),tap:N(`${b.letter}! ${b.sound[0].toUpperCase()+b.sound.slice(1)}!`)};
+  case 'kick-letter':return {...b,spoken:N(b.spoken),notIt:N(b.notIt),done:N(b.done),tap:N(`${b.letter}! ${b.sound}!`)};
+  case 'stones':return {...b,spoken:N(b.spoken),notIt:N(b.notIt),done:N(b.done),tap:N(`${b.letter}! ${b.sound}!`)};
   case 'count':return {...b,spoken:N(b.spoken),ask:N(b.ask),done:N(`Yes! ${b.answer} ${b.things}!`)};
   case 'signs':return {...b,spoken:N(b.spoken),notIt:N(b.notIt),done:N(`Yes! It says ${b.target}!`)};
   case 'spell':return {...b,spoken:N(b.spoken),done:N(b.sentence)};

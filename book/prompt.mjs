@@ -48,6 +48,12 @@ MAGIC WORDS (he reads these himself; the narrator goes quiet on them)
 - On that page add "magic": {"word": "<word>", "object": "<what it is written on, e.g. the station sign>", "after": [["narrator","what happens when he reads it: the world responds"]]}.
 - The narration BEFORE he reads it must never say the word. Build up to it ("The sign says... can you read it?"); the "after" lines may use it.
 `:''}
+HE PLAYS, NOT WATCHES (this is his own adventure)
+- At least ${plan.minActions} ACTION page${plan.minActions>1?'s':''}: a story page with "action" set to one of: ${Object.entries(plan.actions).map(([k,v])=>`"${k}" (${v})`).join('; ')}.
+- An action page's "say" sets it up and hands it to him ("Your turn, ${plan.name}! Kick it!"); it NEVER tells what happens. Its "after" lines ([["narrator","..."]]) react to what he did ("Goal! You scored!"). Use "kick" on a soccer-pitch page when he loves soccer. For "throw", say which friend fetches ("fetcher": "<friend id>"). For "drive", put "train" in the props.
+- Nothing he does is ever narrated before he does it: no "Great shot!" until he has shot.
+- First chapter or new friends: page 1 says who is who (one short line each, e.g. "This is Pip, your robot friend!").
+
 EACH PAGE IS A PICTURE (compose it only from this library)
 - "scene": one background id: ${bgs}.
 - "actors": up to 4 of: ${acts}. Write "id" or "id:pose". ${plan.name} (id "${plan.player}") is in the picture on most pages. Pick poses that match the action (kick for soccer, cheer for joy, fly for flying).
@@ -63,7 +69,7 @@ SHAPE
 - ${plan.name} is the hero: he solves things, his friends help. Do not use em dashes.
 
 REPLY WITH ONLY THIS JSON
-{"title":"short chapter title","pages":[{"scene":"...","actors":["${plan.player}","dad:cheer"],"props":[],"fx":"sparkles","caption":"","say":[["narrator","..."],["dad","..."]]},{"beat":"b1","scene":"...","actors":["..."],"say":[["narrator","..."]]}${plan.magic.length?`,{"scene":"...","actors":["..."],"say":[["narrator","..."]],"magic":{"word":"${plan.magic[0]}","object":"...","after":[["narrator","..."]]}}`:''}],"summary":"one sentence: what happened (for continuity)","hook":"one short sentence: what might happen next time"}`;
+{"title":"short chapter title","pages":[{"scene":"...","actors":["${plan.player}","dad:cheer"],"props":[],"fx":"sparkles","caption":"","say":[["narrator","..."],["dad","..."]]},{"action":"kick","scene":"soccer-pitch","actors":["${plan.player}","..."],"say":[["dad","Your turn! Kick it!"]],"after":[["narrator","Goal! ..."]]},{"beat":"b1","scene":"...","actors":["..."],"say":[["narrator","..."]]}${plan.magic.length?`,{"scene":"...","actors":["..."],"say":[["narrator","..."]],"magic":{"word":"${plan.magic[0]}","object":"...","after":[["narrator","..."]]}}`:''}],"summary":"one sentence: what happened (for continuity)","hook":"one short sentence: what might happen next time"}`;
 }
 export function repairPrompt(previous,issues){
  return `Your chapter JSON has these problems:\n${issues.map(i=>'- '+i).join('\n')}\n\nFix ONLY these problems and keep everything else. Reply with ONLY the corrected JSON object.\n\n${JSON.stringify(previous)}`;

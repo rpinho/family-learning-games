@@ -1,7 +1,7 @@
 """The Book: build a household's picture library from source images.
 Usage: python3 book/build-art.py <art dir>   (reads <art>/spec.json and <art>/src/<id>.png, writes <art>/lib/)
 spec.json: {"actors": {"<actor>": {"name", "h"}}, "fly": ["<actor>-<pose>"], "items": [{"id", "type": "sprite"|"background",
-"about"?, "h"?, "seats"?}]}. Sprites are "<actor>-<pose>" when <actor> is listed in "actors", otherwise props.
+"about"?, "h"?, "seats"?, "goal"?: [x, y, w, h] of a soccer goal in the picture}]}. Sprites are "<actor>-<pose>" when <actor> is listed in "actors", otherwise props.
 Sprites are trimmed to their visible pixels; everything becomes WebP. Needs Pillow."""
 import json, sys
 from pathlib import Path
@@ -38,7 +38,7 @@ for it in spec['items']:
         if im.getextrema()[3][0] < 250: im = sky(im)
         im = im.convert('RGB'); im.thumbnail((1600, 1600))
         name = f"bg/{it['id']}.webp"; im.save(lib / name, 'WEBP', quality=82, method=5)
-        out['backgrounds'][it['id']] = {'file': name, 'about': it.get('about', it['id'].replace('-', ' '))}
+        out['backgrounds'][it['id']] = {'file': name, 'about': it.get('about', it['id'].replace('-', ' ')), **({'goal': it['goal']} if it.get('goal') else {})}
         continue
     box = im.getchannel('A').point(lambda a: 255 if a > 24 else 0).getbbox() or (0, 0, im.width, im.height)
     pad = 6; box = (max(0, box[0] - pad), max(0, box[1] - pad), min(im.width, box[2] + pad), min(im.height, box[3] + pad))

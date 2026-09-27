@@ -8,7 +8,7 @@ import {layoutActors} from './book-scene.mjs';
 import {IDLE_REPEAT_MS,IDLE_REPEATS,shuffle} from './word-break.mjs';
 import {fetchJSON} from './save-request.mjs';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-export const AUTO_ADVANCE_MS=2200,TAP_GUARD_MS=700;
+export const AUTO_ADVANCE_MS=2200,TAP_GUARD_MS=700,LINE_GAP_MS=320;
 export async function loadBook(player,{preview=false,date=''}={}){try{return await fetchJSON(`/api/book${preview?'/preview':''}?player=${encodeURIComponent(player)}${date?'&date='+date:''}`,{},6000);}catch{return null;}}
 export function lastPlace(player,storage=globalThis.localStorage){try{const v=JSON.parse(storage.getItem('family-games-last:'+player)||'null');return v&&Date.now()-v.at<36*36e5&&typeof v.hash==='string'?v.hash:'';}catch{return '';}}
 export function rememberPlace(player,hash,storage=globalThis.localStorage){try{if(hash&&hash!=='#')storage.setItem('family-games-last:'+player,JSON.stringify({hash,at:Date.now()}));}catch{}}
@@ -40,10 +40,12 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
    audio.onended=fin;audio.onerror=()=>{if(!done){audit.push({clip:line.clip,page,ok:false,err:'load'});deviceSpeak(line.text).then(fin);}};
    audio.src='/book-voice/'+line.clip;
    let p;try{p=audio.play();}catch(e){p=Promise.reject(e);}
-   Promise.resolve(p).then(()=>audit.push({clip:line.clip,page,turn:my,ok:true,at:Date.now()}),e=>{audit.push({clip:line.clip,page,turn:my,ok:false,err:String(e?.name||e)});if(!done)deviceSpeak(line.text).then(fin);});
+   // Interrupted by the next line (AbortError) just ends this one; only a refusal falls back to the device voice.
+   Promise.resolve(p).then(()=>audit.push({clip:line.clip,page,turn:my,ok:true,at:Date.now()}),e=>{const err=String(e?.name||e);audit.push({clip:line.clip,page,turn:my,ok:false,err});if(done)return;if(err==='AbortError')fin();else deviceSpeak(line.text).then(fin);});
   });
  }
- async function speakAll(lines,my){for(const l of lines||[]){if(!alive||my!==turn)return false;await speak(l);}return alive&&my===turn;}
+ // A short breath between lines, like a person reading aloud.
+ async function speakAll(lines,my){let first=true;for(const l of lines||[]){if(!alive||my!==turn)return false;if(!first)await new Promise(r=>later(r,LINE_GAP_MS));first=false;if(!alive||my!==turn)return false;await speak(l);}return alive&&my===turn;}
  function preload(i){const p=ch.pages[i];if(!p)return;const files=new Set();const walk=v=>{if(!v||typeof v!=='object')return;if(Array.isArray(v))return v.forEach(walk);if(v.clip)files.add(v.clip);for(const x of Object.values(v))if(x&&typeof x==='object')walk(x);};walk(p);
   for(const f of files)fetch('/book-voice/'+f).catch(()=>{});const b=art.backgrounds[p.scene?.bg];if(b){const im=new Image();im.src=b.url;}}
  function talking(who){view.querySelectorAll('.bk-actor').forEach(a=>a.classList.toggle('talking',!!who&&a.dataset.id===who));}
@@ -53,18 +55,19 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   // A train in the picture always carries the friends (all aboard!).
   if((scene.ride||scene.props.some(p=>p.id==='train'))&&art.props.train?.seats){return trainHTML(scene,W,H);}
   return layoutActors(scene.actors,art,{width:W,height:H,ground,scale}).map((a,i)=>{const P=art.actors[a.id].poses[a.pose];
-   return `<div class="bk-actor${P.fly||a.pose==='fly'?' fly':''}" data-id="${esc(a.id)}" style="left:${(a.left*100).toFixed(2)}%;width:${(a.width*100).toFixed(2)}%;height:${(a.height*100).toFixed(2)}%;bottom:${(a.bottom*100).toFixed(2)}%;animation-delay:${i*0.12}s"><div style="animation-delay:${-i*0.7}s"><img src="${esc(P.url)}" alt="${esc(art.actors[a.id].name)}"></div></div>`;}).join('');
+   return `<div class="bk-actor${P.fly||a.pose==='fly'?' fly':''}" data-id="${esc(a.id)}" data-pose="${esc(a.pose)}" style="left:${(a.left*100).toFixed(2)}%;width:${(a.width*100).toFixed(2)}%;height:${(a.height*100).toFixed(2)}%;bottom:${(a.bottom*100).toFixed(2)}%;--from:${a.left+a.width/2<0.5?-40:40}vw;animation-delay:${i*0.15}s"><div style="animation-delay:${-i*0.7}s;animation-duration:${(2.2+i*0.37).toFixed(2)}s"><img src="${esc(P.url)}" alt="${esc(art.actors[a.id].name)}"></div></div>`;}).join('');
  }
  function trainHTML(scene,W,H){
   const T=art.props.train,h=Math.min(T.h*1.2,0.4),w=h*T.ar*H/W,left=(1-w)/2,bottom=0.06;
   const seats=T.seats||[[.5,.4]];
-  const riders=scene.actors.slice(0,seats.length).map((a,i)=>{const P=art.actors[a.id].poses[a.pose]||Object.values(art.actors[a.id].poses)[0];const rh=h*0.62,rw=rh*P.ar*H/W,[sx,sy]=seats[i];
+  const riders=scene.actors.slice(0,seats.length).map((a,i)=>{const P=art.actors[a.id].poses[a.pose]||Object.values(art.actors[a.id].poses)[0];const rh=h*0.8*Math.min(1,(art.actors[a.id].h||0.4)/0.6),rw=rh*P.ar*H/W,[sx,sy]=seats[i];
    return `<div class="bk-actor" data-id="${esc(a.id)}" style="left:${((left+sx*w-rw/2)*100).toFixed(2)}%;width:${(rw*100).toFixed(2)}%;height:${(rh*100).toFixed(2)}%;bottom:${((bottom+h*(1-sy))*100).toFixed(2)}%"><div><img src="${esc(P.url)}" alt=""></div></div>`;}).join('');
   return riders+`<div class="bk-prop train" style="left:${(left*100).toFixed(2)}%;width:${(w*100).toFixed(2)}%;height:${(h*100).toFixed(2)}%;bottom:${(bottom*100).toFixed(2)}%"><img src="${esc(T.url)}" alt="the train"></div>`;
  }
- function propsHTML(scene,{ground=0.93}={}){
+ function propsHTML(scene,{ground=0.93,play=false}={}){
   const W=root.clientWidth||innerWidth,H=root.clientHeight||innerHeight;
-  return scene.props.filter(p=>p.id!=='train'||!art.props.train?.seats).map((p,i)=>{const P=art.props[p.id];if(!P)return '';const h=P.h,w=h*P.ar*H/W;const x=[0.8,0.12,0.62][i%3]-w/2;
+  // On a page where he plays with a ball, the only ball is the one he kicks or throws.
+  return scene.props.filter(p=>(p.id!=='train'||!art.props.train?.seats)&&!(play&&p.id==='ball')).map((p,i)=>{const P=art.props[p.id];if(!P)return '';const h=P.h,w=h*P.ar*H/W;const x=[0.8,0.12,0.62][i%3]-w/2;
    return `<div class="bk-prop" style="left:${(x*100).toFixed(2)}%;width:${(w*100).toFixed(2)}%;height:${(h*100).toFixed(2)}%;bottom:${((1-ground)*100).toFixed(2)}%"><img src="${esc(P.url)}" alt=""></div>`;}).join('');
  }
  function fxHTML(fx,burst=false){
@@ -87,6 +90,10 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  });
  root.querySelector('.bk-exit').onclick=()=>{document.getElementById('home')?.click();};
  root.querySelector('.bk-hear').onclick=()=>{if(page>=0)replay();};
+ // Parallax: the picture and the characters shift a little, in opposite directions, with the finger or the tilt.
+ const parallax=(x,y)=>{const pg=view.querySelector('.bk-page:last-child');if(!pg||matchMedia('(prefers-reduced-motion: reduce)').matches)return;pg.style.setProperty('--px',x.toFixed(3));pg.style.setProperty('--py',y.toFixed(3));};
+ root.addEventListener('pointermove',e=>parallax(e.clientX/innerWidth-.5,e.clientY/innerHeight-.5),{passive:true});
+ const tilt=e=>{if(e.gamma!=null)parallax(Math.max(-1,Math.min(1,e.gamma/30))/2,Math.max(-1,Math.min(1,(e.beta-45)/30))/2);};addEventListener('deviceorientation',tilt);
  function page_(){return ch.pages[page];}
  function pageFrame(p,{beat=false}={}){
   const b=art.backgrounds[p.scene.bg];
@@ -95,7 +102,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   view.querySelector('.bk-page')?.classList.add('out');
   const old=view.querySelector('.bk-page');if(old)setTimeout(()=>old.remove(),350);
   const el=document.createElement('div');el.className='bk-page';
-  el.innerHTML=`${b?`<img class="bk-bg" src="${esc(b.url)}" alt="">`:''}${propsHTML(p.scene,{ground})}${actorsHTML(p.scene,{ground,scale})}${fxHTML(p.scene.fx)}${cap}<div class="bk-play"></div>`;
+  el.innerHTML=`${b?`<img class="bk-bg" src="${esc(b.url)}" alt="">`:''}<div class="bk-layer">${propsHTML(p.scene,{ground,play:!!p.action||p.beat?.kind==='kick-letter'})}${actorsHTML(p.scene,{ground,scale})}</div>${fxHTML(p.scene.fx)}${cap}<div class="bk-play"></div>`;
   view.append(el);
   el.querySelector('.bk-caption')?.addEventListener('click',()=>{const l=(p.say||[]).find(x=>x.text.toLowerCase().includes(p.caption.toLowerCase()));if(l)void speak(l);});
   return el;
@@ -124,9 +131,65 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   const el=pageFrame(p);
   (async()=>{
    if(!await speakAll(p.say,my))return;
+   if(p.action){await act(el,p,my);if(my!==turn)return;}
    if(p.magic){await magic(el,p,my);if(my!==turn)return;}
    setNext(true);later(()=>{if(my===turn&&canNext)go(page+1);},AUTO_ADVANCE_MS);
   })();
+ }
+ // ---- he plays: actions that move the story; the narration reacts only after he acts ----
+ function setPose(el,id,pose){const a=el.querySelector(`.bk-actor[data-id="${CSS.escape(id)}"]`),P=art.actors[id]?.poses[pose];if(a&&P){a.querySelector('img').src=P.url;a.dataset.pose=pose;}return a;}
+ function rectOf(node){const r=node.getBoundingClientRect(),R=root.getBoundingClientRect();return {x:r.left-R.left,y:r.top-R.top,w:r.width,h:r.height};}
+ // Where the goal is on screen: the picture's own goal (fractions of the image, which is drawn "cover").
+ function goalRect(p){const g=art.backgrounds[p.scene.bg]?.goal||[0.38,0.3,0.24,0.17];const img=view.querySelector('.bk-page:last-child .bk-bg');
+  const W=root.clientWidth,H=root.clientHeight,nw=img?.naturalWidth||1600,nh=img?.naturalHeight||1067,k=Math.max(W/nw,H/nh),dw=nw*k,dh=nh*k,ox=(W-dw)/2,oy=(H-dh)/2;
+  return {x:ox+g[0]*dw,y:oy+g[1]*dh,w:g[2]*dw,h:g[3]*dh,drawn:!!art.backgrounds[p.scene.bg]?.goal};}
+ function ballEl(el,{x,y,size,label}){const B=art.props.ball;const b=document.createElement('button');b.type='button';b.className='bk-ball';b.style.cssText=`left:${x-size/2}px;top:${y-size/2}px;width:${size}px;height:${size}px`;
+  b.innerHTML=`${B?`<img src="${esc(B.url)}" alt="">`:'<span>⚽</span>'}${label?`<b>${esc(label)}</b>`:''}`;el.append(b);return b;}
+ function flyTo(node,to,{ms=700,spin=720,scale=0.4,arc=0}={}){const f=rectOf(node),dx=to.x-(f.x+f.w/2),dy=to.y-(f.y+f.h/2);
+  const anim=node.animate([{transform:'translate(0,0) rotate(0) scale(1)'},{transform:`translate(${dx/2}px,${dy/2-arc}px) rotate(${spin/2}deg) scale(${(1+scale)/2})`,offset:.5},{transform:`translate(${dx}px,${dy}px) rotate(${spin}deg) scale(${scale})`}],{duration:matchMedia('(prefers-reduced-motion: reduce)').matches?1:ms,easing:'cubic-bezier(.2,.7,.3,1)',fill:'forwards'});return anim.finished.catch(()=>{});}
+ // Swipe or tap: resolves with the point he aimed at (a tap on the ball aims at the middle of the goal).
+ function flick(node,my){return new Promise(res=>{let s=null;node.onpointerdown=e=>{s={x:e.clientX,y:e.clientY};node.setPointerCapture?.(e.pointerId);};
+  node.onpointerup=e=>{if(my!==turn)return;const R=root.getBoundingClientRect();const d=s?{x:e.clientX-s.x,y:e.clientY-s.y}:{x:0,y:0};node.onpointerdown=node.onpointerup=null;res({dx:d.x,dy:d.y,x:e.clientX-R.left,y:e.clientY-R.top});};});}
+ function keeperFor(el,p){const ids=p.scene.actors.map(a=>a.id).filter(id=>id!==player);const pick=ids.find(id=>art.actors[id]?.poses.dive)||ids.find(id=>id!=='dad')||ids[0];return pick;}
+ // The keeper stands in the goal, ready and swaying (a friend who can dive, else any friend but Dad).
+ function placeKeeper(el,p,g){const kp=keeperFor(el,p),k=kp&&el.querySelector(`.bk-actor[data-id="${CSS.escape(kp)}"]`);if(!k)return;
+  setPose(el,kp,art.actors[kp].poses.idle?'idle':k.dataset.pose);const P=art.actors[kp].poses[k.dataset.pose];const h=g.h*1.3,w=h*P.ar,H=root.clientHeight;
+  k.style.cssText+=`;left:${g.x+g.w/2-w/2}px;width:${w}px;height:${h}px;bottom:${H-(g.y+g.h)}px;animation:none`;k.classList.add('keeper-ready');}
+ function goalFrame(el,g){if(g.drawn)return;el.insertAdjacentHTML('beforeend',`<div class="bk-goal" style="left:${g.x}px;top:${g.y}px;width:${g.w}px;height:${g.h}px"></div>`);}
+ async function shoot(el,p,my,ball,aim){
+  const g=goalRect(p),keeperId=keeperFor(el,p),kp=keeperId&&el.querySelector(`.bk-actor[data-id="${CSS.escape(keeperId)}"]`);
+  setPose(el,player,'kick');
+  const side=aim&&Math.abs(aim.dx)>30?Math.sign(aim.dx):(Math.random()<.5?-1:1),tx=g.x+g.w/2+side*g.w*0.28,ty=g.y+g.h*0.55;
+  if(kp){kp.classList.add('keeper');setPose(el,keeperId,'dive');kp.animate([{transform:'translateX(0) rotate(0)'},{transform:`translateX(${-side*g.w*0.35}px) rotate(${-side*25}deg)`}],{duration:550,fill:'forwards',easing:'ease-out'});}
+  await flyTo(ball,{x:tx,y:ty},{ms:650,scale:0.35,arc:40});if(my!==turn)return;
+  el.insertAdjacentHTML('beforeend',`<div class="bk-net" style="left:${g.x}px;top:${g.y}px;width:${g.w}px;height:${g.h}px"></div><div class="bk-goaltext">GOAL!</div>`);
+  burst('confetti');setPose(el,player,'cheer');for(const a of p.scene.actors)if(a.id!==keeperId)setPose(el,a.id,art.actors[a.id]?.poses.cheer?'cheer':art.actors[a.id]?.poses.happy?'happy':a.pose);
+  await speak(ch.ui.goal);
+ }
+ async function act(el,p,my){
+  const a=p.action,W=root.clientWidth,H=root.clientHeight,size=Math.max(56,Math.min(W,H)*0.16),started=Date.now();
+  if(a.kind==='kick'){
+   const g=goalRect(p);goalFrame(el,g);placeKeeper(el,p,g);
+   const ball=ballEl(el,{x:W/2,y:H*0.82,size});ball.classList.add('pulse');
+   const aim=await flick(ball,my);if(my!==turn)return;ball.classList.remove('pulse');
+   await shoot(el,p,my,ball,aim);
+  }else if(a.kind==='throw'){
+   const fetcher=a.fetcher||p.scene.actors.map(x=>x.id).find(id=>id!==player&&id!=='dad');const f=fetcher&&el.querySelector(`.bk-actor[data-id="${CSS.escape(fetcher)}"]`);
+   const ball=ballEl(el,{x:W*0.3,y:H*0.72,size:size*0.7});ball.classList.add('pulse');
+   const aim=await flick(ball,my);if(my!==turn)return;ball.classList.remove('pulse');setPose(el,player,'throw');void speak(ch.ui.fetch);
+   const to={x:Math.min(W*0.9,Math.max(W*0.55,W*0.75+aim.dx*0.3)),y:H*0.8};await flyTo(ball,to,{ms:900,scale:0.6,arc:H*0.35,spin:540});if(my!==turn)return;
+   if(f){setPose(el,fetcher,'run');const fr=rectOf(f);await f.animate([{transform:'translateX(0)'},{transform:`translateX(${to.x-(fr.x+fr.w/2)}px)`}],{duration:900,easing:'ease-in-out',fill:'forwards'}).finished.catch(()=>{});
+    if(my!==turn)return;ball.remove();setPose(el,fetcher,art.actors[fetcher].poses.happy?'happy':'idle');f.classList.add('hop');}
+   burst('hearts');setPose(el,player,'cheer');
+  }else if(a.kind==='drive'){
+   const lever=document.createElement('button');lever.type='button';lever.className='bk-btn go';lever.textContent='🚂 GO!';el.querySelector('.bk-play').append(lever);
+   await new Promise(res=>{lever.onclick=()=>{lever.remove();res();};});if(my!==turn)return;void speak(ch.ui.go);
+   const train=el.querySelectorAll('.bk-prop.train, .bk-actor');const dx=W*0.9;
+   el.insertAdjacentHTML('beforeend','<div class="bk-puffs"><i></i><i></i><i></i></div>');
+   await Promise.all([...train].map(n=>n.animate([{translate:'0 0'},{translate:`${dx}px 0`}],{duration:2600,easing:'ease-in',fill:'forwards'}).finished.catch(()=>{})));
+  }
+  if(my!==turn)return;if(!preview)event('book_action',`${a.kind}:${Date.now()-started}`);
+  await speakAll(a.after,my);
  }
  // A magic word: the narrator goes quiet, the word glows on something in the picture, he reads it.
  function magic(el,p,my){
@@ -180,6 +243,20 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
         const earned=b.letter;keys.add(earned);renderDots();el.insertAdjacentHTML('beforeend',`<div class="bk-key-fly">🔑</div>`);done({misses,earned:{key:earned}});}}
       else{misses++;s.classList.remove('wiggle');void s.offsetWidth;s.classList.add('wiggle');void speak(b.notIt);if(misses>=2)[...play.children].find(x=>x.textContent===b.letter&&!x.classList.contains('lit'))?.classList.add('glow');}};
      play.append(s);});
+    return;}
+   case 'kick-letter':{
+    const g=goalRect(p);goalFrame(el,g);placeKeeper(el,p,g);
+    await speak(b.spoken);if(my!==turn)return;
+    const W=root.clientWidth,H=root.clientHeight,size=Math.max(64,Math.min(W,H)*0.17);let misses=0,done_=false,repeats=0;
+    const nudge=()=>later(()=>{if(done_||my!==turn||repeats>=IDLE_REPEATS)return;repeats++;void speak(b.spoken);nudge();},IDLE_REPEAT_MS);nudge();
+    const balls=b.balls.map((l,i)=>{const x=W*(0.5+(i-(b.balls.length-1)/2)*Math.min(0.26,0.8/b.balls.length)),bl=ballEl(el,{x,y:H*0.8,size,label:l});bl.dataset.v=l;return bl;});
+    await new Promise(res=>{for(const bl of balls){let st=null;
+     bl.onpointerdown=e=>{st={x:e.clientX,y:e.clientY};};
+     bl.onpointerup=async e=>{if(done_||my!==turn)return;const aim={dx:st?e.clientX-st.x:0,dy:st?e.clientY-st.y:0};st=null;
+      if(bl.dataset.v!==b.letter){misses++;bl.classList.remove('wiggle');void bl.offsetWidth;bl.classList.add('wiggle');void speak(b.notIt);if(misses>=2)balls.find(x=>x.dataset.v===b.letter)?.classList.add('glow');return;}
+      done_=true;balls.filter(x=>x!==bl).forEach(x=>x.classList.add('used'));await shoot(el,p,my,bl,aim);res();};}});
+    if(my!==turn)return;await speak(b.done);if(my!==turn)return;
+    keys.add(b.letter);renderDots();el.insertAdjacentHTML('beforeend',`<div class="bk-key-fly">🔑</div>`);done({misses,earned:{key:b.letter}});
     return;}
    case 'count':{
     await speak(b.spoken);if(my!==turn)return;
@@ -257,7 +334,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   el.querySelector('.bk-quest .bk-btn').onclick=()=>{stop();onDone({finished:true});};
   if(ch.quest)await speak(ch.quest);if(my===turn)await speak(ch.ui.nextTime);
  }
- function stop(){alive=false;clearTimers();stopSound();try{audio.removeAttribute('src');audio.load();}catch{}}
+ function stop(){alive=false;clearTimers();stopSound();removeEventListener('deviceorientation',tilt);try{audio.removeAttribute('src');audio.load();}catch{}}
  if(!preview)void post(player,{type:'open',date,page});
  cover();
  const dispose=()=>{if(!alive)return;if(!finished&&!preview){void post(player,{type:'leave',date,page:Math.max(0,page)},true);event('book_leave',`${date}:${page}`);}stop();root.remove();};

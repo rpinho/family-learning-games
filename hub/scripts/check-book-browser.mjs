@@ -16,7 +16,7 @@ const shots=arg('--shots'),shotPages=new Set((arg('--shot-pages','')||'').split(
 const chrome=arg('--chrome',process.env.CHROME||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const profile=await mkdtemp(join(tmpdir(),'book-check-chrome-'));
-const proc=spawn(chrome,['--headless=new','--remote-debugging-port=0',`--user-data-dir=${profile}`,'--no-first-run','--no-default-browser-check','--autoplay-policy=document-user-activation-required',`--window-size=${W},${H}`,'about:blank'],{stdio:'ignore'});
+const proc=spawn(chrome,['--headless=new','--remote-debugging-port=0',`--user-data-dir=${profile}`,'--no-first-run','--no-default-browser-check','--autoplay-policy=document-user-activation-required','--mute-audio',`--window-size=${W},${H}`,'about:blank'],{stdio:'ignore'});
 let port=null;for(let i=0;i<100&&!port;i++){await sleep(100);try{port=Number((await readFile(join(profile,'DevToolsActivePort'),'utf8')).split('\n')[0]);}catch{}}
 if(!port){proc.kill();throw Error('Chrome did not start');}
 const target=(await(await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find(t=>t.type==='page');
@@ -42,6 +42,8 @@ try{
  const rect=await js(`(()=>{const r=document.querySelector('.bk-open').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()`);
  for(const type of ['mouseMoved','mousePressed','mouseReleased'])await send('Input.dispatchMouseEvent',{type,x:rect.x,y:rect.y,button:'left',clickCount:1});
  const click=sel=>js(`(()=>{const b=document.querySelector(${JSON.stringify(sel)});if(b){b.click();return true}return false})()`);
+ // Balls are flicked: pointer down then up (script events, no new permission).
+ const flickEl=expr=>js(`(()=>{const b=${expr};if(!b)return false;const r=b.getBoundingClientRect(),o={bubbles:true,clientX:r.x+r.width/2,clientY:r.y+r.height/2,pointerId:1};b.dispatchEvent(new PointerEvent('pointerdown',o));b.dispatchEvent(new PointerEvent('pointerup',{...o,clientY:o.clientY-120,clientX:o.clientX+40}));return true})()`);
  const nowPage=()=>js(`[...document.querySelectorAll('.bk-dots i')].findIndex(i=>i.classList.contains('now'))`);
  for(let i=0;i<ch.pages.length;i++){
   const p=ch.pages[i],t0=Date.now();
@@ -49,15 +51,20 @@ try{
   const played=await until(`__bookAudio.some(a=>a.page===${i}&&a.ok)`,12000);
   // Time from the page turn to the first narration that the browser allowed to play.
   const lat=await js(`(()=>{const s=__bookAudio.filter(a=>a.page===${i}&&a.shown).at(-1),f=__bookAudio.find(a=>a.page===${i}&&a.ok&&a.at>=(s?s.shown:0));return s&&f?f.at-s.shown:null})()`);
-  result.pages.push({page:i+1,kind:p.beat?.kind||(p.magic?'magic':'story'),bg:p.scene.bg,played,msToFirstSound:lat});
+  result.pages.push({page:i+1,kind:p.beat?.kind||(p.action?'action:'+p.action.kind:p.magic?'magic':'story'),bg:p.scene.bg,played,msToFirstSound:lat});
   if(shotPages.has(i)){await sleep(1200);await shot(`${player}-${label}-p${i+1}-${p.beat?.kind||p.scene.bg}.png`);}
   const b=p.beat;
+  if(p.action){const k=p.action.kind;
+   if(k==='drive'){await until(`!!document.querySelector('.bk-btn.go')`,40000);await click('.bk-btn.go');}
+   else{await until(`!!document.querySelector('.bk-ball')`,40000);await sleep(300);await flickEl(`document.querySelector('.bk-ball')`);}
+   if(shotPages.has(i)){await sleep(700);await shot(`${player}-${label}-p${i+1}-${k}-action.png`);}}
   if(p.magic){await until(`!!document.querySelector('.bk-magic')`,30000);await sleep(400);await click('.bk-magic');}
   if(b){
    const ans=v=>`.bk-play [data-v="${String(v).replace(/"/g,'\\"')}"]`;
    if(b.kind==='teach-letter'){await until(`!!document.querySelector('.bk-glyph')`,30000);await sleep(1500);await click('.bk-glyph');}
    if(b.kind==='stones'){await until(`document.querySelectorAll('.bk-btn.stone').length>0`,30000);for(let k=0;k<b.need;k++){await js(`(()=>{const s=[...document.querySelectorAll('.bk-btn.stone')].find(x=>x.textContent===${JSON.stringify(b.letter)}&&!x.classList.contains('lit'));s&&s.click()})()`);await sleep(700);}}
    if(b.kind==='count'){await until(`document.querySelectorAll('.bk-thing').length===${b.n}`,30000);for(let k=0;k<b.n;k++){await js(`(()=>{const t=[...document.querySelectorAll('.bk-thing')].find(x=>!x.dataset.n);t&&t.click()})()`);await sleep(900);}await until(`!!document.querySelector('${ans(b.answer)}')`,20000);await click(ans(b.answer));}
+   if(b.kind==='kick-letter'){await until(`document.querySelectorAll('.bk-ball').length>=${b.balls.length}`,30000);await sleep(300);await flickEl(`[...document.querySelectorAll('.bk-ball')].find(x=>x.dataset.v===${JSON.stringify(b.letter)})`);if(shotPages.has(i)){await sleep(500);await shot(`${player}-${label}-p${i+1}-kick-letter-goal.png`);}}
    if(b.kind==='signs'){await until(`!!document.querySelector('${ans(b.target)}')`,30000);await click(ans(b.target));}
    if(b.kind==='spell'){await until(`document.querySelectorAll('.bk-play .bk-btn.word').length>0`,30000);for(const w of b.answer){await js(`(()=>{const t=[...document.querySelectorAll('.bk-play .bk-btn.word')].find(x=>x.textContent===${JSON.stringify(w)}&&!x.classList.contains('used'));t&&t.click()})()`);await sleep(250);}}
    if(b.kind==='share'){await until(`!!document.querySelector('.bk-pizza')`,30000);for(let k=0;k<Math.ceil(b.total/b.groups);k++){await click('.bk-pizza');await sleep(120);}await until(`!!document.querySelector('${ans(b.answer)}')`,20000);await click(ans(b.answer));}
@@ -66,7 +73,7 @@ try{
   }
  }
  if(await until(`!!document.querySelector('.bk-quest')`,40000)){await sleep(800);await shot(`${player}-${label}-end.png`);result.ended=true;}
- const audit=await js('__bookAudio');result.refused=audit.filter(a=>a.clip&&!a.ok).length;result.plays=audit.filter(a=>a.clip&&a.ok).length;
+ const audit=await js('__bookAudio');result.refused=audit.filter(a=>a.clip&&!a.ok&&a.err!=='AbortError').length;result.interrupted=audit.filter(a=>a.err==='AbortError').length;result.failures=audit.filter(a=>a.clip&&!a.ok&&a.err!=='AbortError');result.plays=audit.filter(a=>a.clip&&a.ok).length;
  result.ok=result.beforeTap==='NotAllowedError'&&result.pages.length===ch.pages.length&&result.pages.every(p=>p.played)&&result.refused===0&&result.ended===true&&!result.errors.length;
 }catch(e){result.errors.push(String(e.message||e));result.ok=false;}
 finally{try{ws.close();}catch{}proc.kill();}
