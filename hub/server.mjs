@@ -57,7 +57,7 @@ const server=http.createServer(async(req,res)=>{
   // scheme only from a loopback peer, so origin comparisons use the address the browser actually sees.
   const tls=req.headers['x-forwarded-proto']==='https'&&/^(?:127\.|::1$|::ffff:127\.)/.test(req.socket.remoteAddress||'');
   const u=new URL(req.url,(tls?'https://':'http://')+req.headers.host);
-  if(!allowedHosts().has(u.hostname.toLowerCase())||req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host||req.headers['sec-fetch-site']==='cross-site')return send(res,403,{error:'Use the local games address.'});
+  if(!allowedHosts().has(u.hostname.toLowerCase())||req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host||req.headers['sec-fetch-site']==='cross-site'&&!(['GET','HEAD'].includes(req.method)&&req.headers['sec-fetch-mode']==='navigate'&&['document','empty',undefined].includes(req.headers['sec-fetch-dest'])))return send(res,403,{error:'Use the local games address.'});
   const match=u.pathname.match(/^\/g\/([a-z-]+)\/(\w+)\/(.*)$/);
   if(match){const [,game,player,path]=match;if(!ids.includes(game)||!players.includes(player))return send(res,404,{error:'Unknown game or player.'});if(!['GET','HEAD','OPTIONS'].includes(req.method))touch(game);return proxy(req,res,{game,player,players,port:config.games[game],prefix:`/g/${game}/${player}/`,path:'/'+path+u.search,releases:{hub:HUB_RELEASE,game:releaseOf(game)}},log);}
   // Some SSR runtimes construct import paths at runtime from "/" + asset name.
