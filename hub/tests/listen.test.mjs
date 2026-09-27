@@ -40,3 +40,9 @@ test('The hub listens, matches and logs only the result (never audio or what he 
  const off=listenService({settings:null,players:['kid']});res=fakeRes();await off.handle(fakeReq(pcm),res,new URL('http://x/api/listen?player=kid&target='+encodeURIComponent('{"kind":"word","word":"bed"}')));assert.equal(res.status,503);
  res=fakeRes();await off.handle(fakeReq(Buffer.alloc(0),'GET'),res,new URL('http://x/api/listen/status'));assert.equal(res.body.available,false);
 });
+test('Every module the pages import is served by the hub (a missing one blanks the page)', async () => {
+ const {readFile,readdir}=await import('node:fs/promises');const dir=new URL('../public/',import.meta.url);
+ const server=await readFile(new URL('../server.mjs',import.meta.url),'utf8');
+ for(const f of (await readdir(dir)).filter(f=>f.endsWith('.mjs'))){const src=await readFile(new URL(f,dir),'utf8');
+  for(const m of src.matchAll(/from ['"]\.\/([a-z0-9/_-]+\.mjs)['"]/g))assert.ok(server.includes(`'${m[1]}'`),`${f} imports ${m[1]}, which the hub must serve`);}
+});
