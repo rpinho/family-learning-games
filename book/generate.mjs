@@ -14,7 +14,7 @@ import {fileURLToPath} from 'node:url';
 import {bookPaths,readProfiles,readCast,localDate,addDays,soundSource} from './paths.mjs';
 import {learnerFor,writeLearner,bookPlayers} from './build-learner.mjs';
 import {planChapter} from './plan.mjs';
-import {lintChapter,safeDadLine} from './lint.mjs';
+import {lintChapter,safeDadLine,repeatedWords} from './lint.mjs';
 import {SYSTEM,buildPrompt,repairPrompt,parseChapter} from './prompt.mjs';
 import {templateChapter} from './template.mjs';
 import {assemble,speechLines,attachClips,markdown,voicesFor,CHAPTER_SCHEMA} from './assemble.mjs';
@@ -121,6 +121,8 @@ export async function generateOne(player,{paths,profiles,date,noLLM=false,noVoic
  const ch=assemble(story,plan,{number:await chapterNumber(dir,date),source,lint,dadLines:plan.dadLines,library,actors:ids.all,voices,pronounce:cast?.pronounce||{}});
  // No name reaches the voice as raw spelling (it would guess: "Pica" for Picos, "PIKa-chu").
  const raw=speechLines(ch).flatMap(l=>rawNames(l.text,cast?.pronounce||{}).map(n=>`${n}: ${l.text.slice(0,50)}`));if(raw.length)throw Error('names without their pronunciation: '+raw.slice(0,3).join(' | '));
+ // Every voiced line says each word once (template lines are covered by tests; this catches anything else).
+ const twice=speechLines(ch).filter(l=>repeatedWords(l.text).length);if(twice.length)log(`${player} ${date}: WARNING word said twice in a row: `+twice.slice(0,3).map(l=>l.text.slice(0,60)).join(' | '));
  if(!noVoice){try{const n=await narrate(speechLines(ch),{paths});attachClips(ch,n.clips);log(`${player} ${date}: ${n.made} new clips`);}
   catch(e){log(`${player} ${date}: narration failed, device speech will be used (${String(e.message).slice(0,200)})`);}}
  // Publish: write into a staging folder, then rename each file into place (clips already exist).

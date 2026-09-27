@@ -28,7 +28,7 @@ export const HOME_THINGS={
  V:[['vase','🏺'],['van toy','🚐'],['violin','🎻']],
  W:[['window','🪟'],['water','💧'],['watch','⌚'],['wall','🧱'],['wagon toy','🛒']],
  X:[['box (it ends with x)','📦']],
- Y:[['yogurt','🥛'],['yarn','🧶'],['yo-yo','🪀']],
+ Y:[['yogurt','🥛'],['yarn','🧶'],['yellow crayon','🖍️']],
  Z:[['zipper','🤐'],['zebra toy','🦓']]};
 // Word families with things most homes have: "rhyme word|what to look for" (a family is used only when at least
 // two of its things are not the word itself).
@@ -48,7 +48,7 @@ export function letterQuest(L,{sound=L,friend=null,grown='Dad',kind='sound'}={})
   hints:WRITTEN_PLACES.map(([w,e])=>({word:w,emoji:e,text:`Look on ${w}. Can you spot a big ${L}?`}))};
  const things=(HOME_THINGS[L]||[]).slice(0,6);
  const hints=[...(friend?[{word:friend.name,emoji:friend.emoji||'⭐',text:`${friend.name} starts with ${sound} too! Can you find ${friend.name}?`}]:[]),
-  ...things.map(([w,e])=>({word:w,emoji:e,text:`Maybe a ${w}? ${cap(w)} starts with ${sound}.`}))];
+  ...things.map(([w,e])=>({word:w,emoji:e,text:`Maybe ${/^[aeiou]/i.test(w)?'an':'a'} ${w}? It starts with ${sound}.`}))];
  return {kind:'sound',text:`Sound hunt: find three things that start with ${L} and show ${grown}!`,hints};
 }
 // Reader: a rhyme hunt when the house can answer it, otherwise word cards Dad hides (printed from Grown-ups).

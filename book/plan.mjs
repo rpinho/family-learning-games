@@ -59,9 +59,9 @@ function earlyBeats(m,r,{cast,collection,things,soccer=false,focus=null,grown='D
     // Each thing said once (a line that repeats a sound or a letter sounds like a glitch to a child).
     lines:[[owner.id||'narrator',`Look, I ${owner.shape}.`],['narrator',`${L} says ${sound}. ${cap(owner.word)} starts with ${L}.`]],tap:`Yes! ${cap(owner.word)} starts with ${sound}.`},
    soccer?{id:'b2',kind:'kick-letter',what:`on the soccer pitch three balls have letters on them; only the ${L} ball can score, so ${m.name} kicks the ${L} ball past the keeper into the goal (he flicks it himself)`,letter:L,sound,balls:shuffle([L,...others],r),
-     spoken:`Kick the ball with ${L}. ${L} says ${sound}.`,notIt:`That one is a different letter.`,done:`You kicked the ${L} ball in!`}
+     spoken:`Kick the ball with ${L}. It says ${sound}.`,notIt:`That one is a different letter.`,done:`You kicked the ${L} ball in!`}
    :{id:'b2',kind:'stones',what:`letter stepping-stones: the friends can only cross on the ${L} stones, so ${m.name} taps the three ${L} stones`,letter:L,sound,stones,need:3,
-    spoken:`Tap the stones with ${L}. ${L} says ${sound}.`,notIt:`That one is a different letter.`,done:`You found all the ${L} stones!`},
+    spoken:`Tap the stones with ${L}. It says ${sound}.`,notIt:`That one is a different letter.`,done:`You found all the ${L} stones!`},
    {id:'b3',kind:'count',what:`count the ${things_} because the story needs that many (seats on the train, slices, eggs to carry)`,thing,things:things_,emoji,n:count,
     spoken:`Tap each one to count the ${things_}.`,ask:`How many ${things_}?`,answer:String(count),options:numberOptions(count,r)},
    {id:'b4',kind:'no',what:`${who.name} insists "${cap(review.word)} starts with ${wrong}" and wants to do something silly with it; ${m.name} says NO! and fixes it`,who:who.id,whoName:who.name,

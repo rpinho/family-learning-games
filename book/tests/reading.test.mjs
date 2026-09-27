@@ -64,3 +64,12 @@ test('letter sounds only for letters with a shared recording', async()=>{
  assert.ok(hasSound('K')&&hasSound('b')&&!hasSound('L')&&!hasSound('z'));
  for(let i=0;i<30;i++){const r=()=>((i*37)%100)/100;const w=familyTarget({literacy:{wordsMastered:[]}},r);assert.ok(soundOut(w),w);for(const x of lookAlikes(w,2,r))assert.ok(soundOut(x),x);}
 });
+
+test('template lines (letter beats, quest hints) never say a word twice in a row, for every letter', async()=>{
+ const {letterQuest}=await import('../quests.mjs');const {SOUNDS}=await import('../plan.mjs');const {repeatedWords}=await import('../lint.mjs');
+ for(const L of Object.keys(SOUNDS)){const q=letterQuest(L,{sound:SOUNDS[L],friend:{name:'Birdie'}});
+  for(const t of [q.text,...q.hints.map(h=>h.text)])assert.deepEqual(repeatedWords(t),[],t);
+  for(const t of [`Kick the ball with ${L}. It says ${SOUNDS[L]}.`])assert.deepEqual(repeatedWords(t),[],t);}
+ const src=(await import('node:fs')).readFileSync(new URL('../plan.mjs',import.meta.url),'utf8');
+ assert.doesNotMatch(src,/\$\{L\}\. \$\{L\} says/,'a letter must not be said twice in a row ("B. B says")');
+});
