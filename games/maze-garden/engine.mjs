@@ -1,4 +1,4 @@
-export const VERSION = 'maze-garden-2026-09-26-speech-once';
+export const VERSION = 'maze-garden-2026-09-27-request-history';
 export const MAX_LEVEL = 27;
 export const baseline = player => player==='explorer'?12:player==='beginner'?6:6;
 export const gridSize = level => 9+2*(Math.max(1,Math.min(MAX_LEVEL,level))-1);
@@ -119,7 +119,22 @@ export function move(a,to){if(a.finished||pendingPuzzle(a))return false;const fr
 export function complete(p,now=Date.now()){const a=p.active;if(!a||a.finished||a.trail.at(-1)!==a.goal||a.checkpoints.some(c=>!c.solved))return false;a.finished=true;const ratio=a.moves/(a.solution.length-1),clean=a.hints===0&&ratio<=1.6;const difficult=ratio>3.5;
  p.completed++;p.stars+=3;p.streak=clean?p.streak+1:0;p.struggles=difficult?p.struggles+1:0;
  let change='same';if(clean&&p.level<MAX_LEVEL){p.level=Math.min(MAX_LEVEL,p.level+(ratio<=1.15?2:1));p.streak=0;p.struggles=0;change='up';}else if(p.struggles>=2&&p.level>1){p.level--;p.struggles=0;change='down';}
- p.history.push({id:a.id,level:a.level,theme:a.theme,mode:a.mode,moves:a.moves,optimal:a.solution.length-1,hints:a.hints,stars:3,independent:a.hints===0,wrong:a.wrong,seconds:Math.round((now-a.startedAt)/1000),change,at:new Date(now).toISOString()});p.history=p.history.slice(-500);return true;}
+ p.history.push({id:a.id,level:a.level,theme:a.theme,mode:a.mode,moves:a.moves,optimal:a.solution.length-1,hints:a.hints,stars:3,independent:a.hints===0,wrong:a.wrong,seconds:Math.round((now-a.startedAt)/1000),change,at:new Date(now).toISOString()});p.history=trimHistory(p.history);return true;}
+// Harder/smaller/new taps are choices, not results. A burst of taps (one profile tapped Harder about 60 times
+// in a few seconds) used to add one row per tap and push finished mazes out of the 500-row history.
+// Now the same request repeated within a minute updates one row (taps, final level), and trimming drops
+// request rows before any finished maze.
+export const HISTORY_LIMIT=500,REQUEST_MERGE_MS=60000;
+export function trimHistory(history,limit=HISTORY_LIMIT){
+ let extra=history.length-limit;if(extra<=0)return history;
+ const out=history.filter(h=>{if(extra>0&&h.type){extra--;return false;}return true;});
+ return out.slice(-limit);
+}
+function noteRequest(p,type,from,now=Date.now()){
+ const last=p.history.at(-1),at=new Date(now).toISOString();
+ if(last&&last.type===type&&now-Date.parse(last.at)<REQUEST_MERGE_MS){last.taps=(last.taps||1)+1;last.to=p.level;last.at=at;return;}
+ p.history.push({id:from?.id,type,level:from?.level,to:p.level,at});p.history=trimHistory(p.history);
+}
 export function action(p,input){const a=p.active;switch(input.type){case 'recalibrate':recalibrate(p,input.seed);break;case 'start':if(!a||a.finished)p.active=startMaze(p,input.seed);break;
  case 'maker-new':{const m=makerState(p),n=MAKER_SIZES.includes(m.size)?m.size:makerSizeForLevel(p.level);m.size=n;m.draft=[makerEndpoints(n).start];m.editing=true;break;}
  case 'maker-size':{const m=makerState(p),n=input.size,old=m.size||MAKER_SIZE;if(!MAKER_SIZES.includes(n))throw Error('Choose an available maze size.');if(m.draft.length>1){if(n<=old)throw Error('You can only make this drawing bigger.');const shift=Math.floor(n/2)-Math.floor(old/2),grown=m.draft.map(id=>(Math.floor(id/old)+shift)*n+id%old);if(!validMakerPath(grown,false,n))throw Error('Could not enlarge this trail.');m.draft=grown;}else m.draft=[makerEndpoints(n).start];m.size=n;break;}
@@ -136,8 +151,8 @@ export function action(p,input){const a=p.active;switch(input.type){case 'recali
  case 'hint':if(a&&!a.finished){requestHint(a);}break;
  case 'mode':if(!['pure','puzzles'].includes(input.mode))throw Error('Invalid mode');p.mode=input.mode;break;
  case 'level':if(![-1,1].includes(input.delta))throw Error('Invalid level');p.level=Math.max(1,Math.min(MAX_LEVEL,p.level+input.delta));p.streak=0;p.struggles=0;break;
- case 'challenge':if(![-2,-1,1,2].includes(input.delta))throw Error('Invalid challenge');p.history.push({id:a?.id,type:input.delta>0?'requested-harder':'requested-easier',level:a?.level,at:new Date().toISOString()});p.history=p.history.slice(-500);p.level=Math.max(1,Math.min(MAX_LEVEL,p.level+Math.sign(input.delta)));p.streak=0;p.struggles=0;p.active=startMaze(p,input.seed);break;
- case 'new':p.history.push({id:a?.id,type:'skipped',level:a?.level,at:new Date().toISOString()});p.history=p.history.slice(-500);p.active=startMaze(p,input.seed);break;
+ case 'challenge':{if(![-2,-1,1,2].includes(input.delta))throw Error('Invalid challenge');p.level=Math.max(1,Math.min(MAX_LEVEL,p.level+Math.sign(input.delta)));p.streak=0;p.struggles=0;p.active=startMaze(p,input.seed);noteRequest(p,input.delta>0?'requested-harder':'requested-easier',a);break;}
+ case 'new':p.history.push({id:a?.id,type:'skipped',level:a?.level,at:new Date().toISOString()});p.history=trimHistory(p.history);p.active=startMaze(p,input.seed);break;
  default:throw Error('Unknown action');}p.revision++;return p;}
 // Sample a finger segment in grid coordinates. Stop at the first wall; never wrap or teleport.
 export function traceSegment(a,from,to){const dx=to.x-from.x,dy=to.y-from.y,steps=Math.ceil(Math.max(Math.abs(dx),Math.abs(dy))*8)||1,out=[];for(let k=1;k<=Math.min(steps,512);k++){const x=Math.floor(from.x+dx*k/steps),y=Math.floor(from.y+dy*k/steps);if(x<0||y<0||x>=a.n||y>=a.n)break;const cell=y*a.n+x,current=a.trail.at(-1);if(cell===current)continue;if(!move(a,cell))break;out.push(cell);if(pendingPuzzle(a)||cell===a.goal)break;}return out;}

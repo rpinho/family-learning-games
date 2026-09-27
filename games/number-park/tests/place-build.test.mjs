@@ -29,6 +29,7 @@ test('itemised feedback: direction first, then exact amounts; spoken lines all h
 });
 test('Explorer builds a number: a wrong check is itemised and credited as helped; unhelped build earns full stars',()=>{
  const p=freshProfile('explorer');act(p,{kind:'start',game:'place'});
+ for(let i=0;i<50&&p.session.question.placeMode!=='build';i++)act(p,{kind:'start',game:'place'});
  let s=p.session;assert.equal(s.question.placeMode,'build');assert.equal(s.question.track,EXPLORER_TRACK);
  assert.throws(()=>act(p,{kind:'answer',questionId:s.question.id,answer:s.question.total}),/blocks/);
  assert.throws(()=>act(p,{kind:'place-check',questionId:s.question.id,counts:[0,99,0]}),/blocks/);
@@ -47,7 +48,7 @@ test('level 3 mixes three-digit builds with the old tens/ones decoding; history 
  const p=freshProfile('explorer');
  for(let i=0;i<6;i++)p.history.push({ok:true,helped:false,question:{track:EXPLORER_TRACK,skill:'place'}});
  assert.equal(challengeLevel(p,'place'),3);
- let builds=0,decodes=0;
- for(let i=0;i<300;i++){p.revision=i;const q=makeQuestion(p,'place',i%6);if(q.placeMode==='build'){builds++;assert.ok(q.total>=100);}else{decodes++;assert.ok(['tens','ones'].includes(q.placeMode));}}
- assert.ok(builds>150&&decodes>50,`${builds}/${decodes}`);
+ let builds=0,decodes=0,worth=0;
+ for(let i=0;i<300;i++){p.revision=i;const q=makeQuestion(p,'place',i%6);if(q.skill==='worth'){worth++;assert.equal(q.level,2);}else if(q.placeMode==='build'){builds++;assert.ok(q.total>=100);}else{decodes++;assert.ok(['tens','ones'].includes(q.placeMode));}}
+ assert.ok(builds>80&&decodes>25&&worth>90&&worth<150,`${builds}/${decodes}/${worth}`);
 });

@@ -6,7 +6,8 @@ import {PLACES,BUILD_MAX_PER_PLACE,placeName,buildValue} from '@/lib/place-build
 type Part={key:string;have:number;need:number;ok:boolean};
 type Props={q:any;disabled:boolean;result:any;message?:string;parts?:Part[];check:(counts:number[])=>void;report:(name:string,detail:string)=>void};
 
-function Block({place}:{place:string}){
+export function Block({place}:{place:string}){
+ if(place==='thousands')return <span className="pb-cube" aria-hidden="true"><b>1000</b></span>;
  if(place==='hundreds')return <span className="pb-flat" aria-hidden="true">{Array.from({length:100},(_,i)=><i key={i}/>)}</span>;
  if(place==='tens')return <span className="pb-rod" aria-hidden="true">{Array.from({length:10},(_,i)=><i key={i}/>)}</span>;
  return <span className="pb-unit" aria-hidden="true"/>;
