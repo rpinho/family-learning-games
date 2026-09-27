@@ -13,7 +13,7 @@ import {readingAction} from './reading.mjs';
 import {validBuild,buildFeedback,buildValue} from './place-build.mjs';
 import {artAction} from './art.mjs';
 import {planningAction} from './planning.mjs';
-export const VERSION='number-park-2026-09-26-word-breaks-public';
+export const VERSION='number-park-2026-09-27-digit-worth-public';
 
 export const GAMES=[
  {id:'mix',icon:'🎲',title:'Little sums',description:'A mix just like the first unit.'},
@@ -71,7 +71,7 @@ export function makeQuestion(p,game,round=0){
  if(['count','addobjects'].includes(q.kind))q.options=countingOptions(q.answer,r);
  q.id=`${p.revision}:${p.history.length}:${round}`;return q;
 }
-export function publicState(p,now=Date.now()){const state=structuredClone(p);if(state.session?.question&&(!state.session.helped||state.session.question.kind==='cookies')&&!state.session.result){delete state.session.question.answer;if(state.session.question.kind==='cookies')delete state.session.question.leftover;}state.resting=resting(p,now);return state;}
+export function publicState(p,now=Date.now()){const state=structuredClone(p);if(state.session?.question&&(!state.session.helped||state.session.question.kind==='cookies')&&!state.session.result){delete state.session.question.answer;if(state.session.question.kind==='cookies')delete state.session.question.leftover;if(state.session.question.skill==='worth'){delete state.session.question.explain;if(state.session.question.placeMode==='which'){delete state.session.question.lit;delete state.session.question.place;delete state.session.question.digit;}}}state.resting=resting(p,now);return state;}
 // A fresh cookie round: the tray/plates, and in the 'own' stage the "how many
 // each?" question comes first (a prediction; the sharing then checks it).
 function openCookieRound(s){
@@ -170,7 +170,7 @@ export function action(p,input,now=Date.now(),services={}){
   const q=s.question;if(q.kind==='cookies')fail('Share the cookies on the plates first.');if(q.placeMode==='build')fail('Build the number with the blocks first.');if(q.kind==='pattern'?!q.options.includes(input.answer):!Number.isInteger(input.answer)||input.answer<0||input.answer>q.max)fail('Choose a valid answer.');
   if(q.kind==='subtract'&&input.removedIndices!==undefined&&(!Array.isArray(input.removedIndices)||input.removedIndices.length>q.total||new Set(input.removedIndices).size!==input.removedIndices.length||!input.removedIndices.every(i=>Number.isInteger(i)&&i>=0&&i<q.total)))fail('Invalid removed objects.');
   const ok=input.answer===q.answer,independent=ok&&!s.helped,xp=ok?(independent?10:4):0;
-  s.result={ok,answer:q.answer,xp,helped:s.helped};p.xp+=xp;s.correct+=Number(ok);s.independent+=Number(independent);
+  s.result={ok,answer:q.answer,xp,helped:s.helped,...(q.placeMode==='which'?{picked:input.answer}:{})};p.xp+=xp;s.correct+=Number(ok);s.independent+=Number(independent);
   p.history.push({at:new Date(now).toISOString(),game:s.game,question:q,answer:input.answer,ok,helped:s.helped,durationMs:Math.max(0,Math.min(86400000,now-s.started))});p.history=p.history.slice(-2000);
   if(q.kind==='subtract'&&input.removedIndices!==undefined)p.history.at(-1).removedIndices=[...input.removedIndices];
   p.recent=[...p.recent,q.fingerprint].slice(-12);
