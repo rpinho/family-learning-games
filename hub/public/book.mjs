@@ -305,7 +305,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
     const finish=async(r={misses:0})=>{g.classList.add('tapped');burst('sparkles');await speak(b.tap);if(my===turn)done({misses:r.misses||0,...(r.via?{via:r.via}:{})});};
     g.onclick=()=>{if(tapped||my!==turn)return;tapped=true;if(shown)void finish();else g.classList.add('tapped');};
     if(!await speakAll(b.lines,my))return;shown=true;
-    // With a microphone he says it: its sound, its name, or the friend's name ("Lll!", "L!", "Loona!").
+    // With a microphone he says it: its sound, its name, or the friend's name ("Lll!", "L!", "Lulu!").
     if(micUsable()){g.classList.remove('tapped');let said=false;
      sayIt(g,{target:{kind:'letter',letter:b.letter,names:[b.ownerName||art.actors[b.owner]?.name].filter(Boolean)},kind:'letter',my,help:[b.tap],onDone:r=>{said=true;void finish(r);}});
      await speak(ch.ui.sayLetter);

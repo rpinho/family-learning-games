@@ -73,6 +73,20 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
     const {date,chapter:ch}=await latest(player,u.searchParams.get('date'));const p=await progress(player);
     return send(res,200,{date,chapter:ch,progress:progressView(null),collection:collectionOf(p),open:!!ch,preview:true});
    }
+   // The living book: the whole picture library (with URLs) and its narration clips (private manifest).
+   if(u.pathname==='/api/book/library'&&req.method==='GET'){
+    const lib=await readJSON(join(bookDir,'art','lib','library.json'),null)||await readJSON(join(publicArt,'library.json'),{backgrounds:{},actors:{},props:{}});
+    const url=f=>'/book-art/'+f;const out={backgrounds:{},actors:{},props:{}};
+    for(const [k,b] of Object.entries(lib.backgrounds||{}))out.backgrounds[k]={url:url(b.file),...(b.goal?{goal:b.goal}:{})};
+    for(const [k,a] of Object.entries(lib.actors||{}))out.actors[k]={name:a.name||k,h:a.h||.4,poses:Object.fromEntries(Object.entries(a.poses||{}).map(([n,P])=>[n,{url:url(P.file),ar:P.ar||.6,...(P.fly?{fly:true}:{})}]))};
+    for(const [k,P] of Object.entries(lib.props||{}))out.props[k]={url:url(P.file),h:P.h||.12,ar:P.ar||1};
+    return send(res,200,out);
+   }
+   // One story from the household's private story file (words, voices, cast roles) with its narration clips.
+   if(u.pathname==='/api/book/living'&&req.method==='GET'){const f=await readJSON(join(bookDir,'living','stories.json'),{stories:{},clips:{}});const id=String(u.searchParams.get('story')||'');
+    const story=Object.hasOwn(f.stories||{},id)?f.stories[id]:null;if(!story)return send(res,404,{error:'No such story.'});
+    const clips=Object.fromEntries(Object.values(story.lines||{}).map(([who,text])=>{const v=story.voices?.[who]||story.voices?.narrator||{};const k=`${v.voice}|${v.speed}|${text}`;return [k,f.clips?.[k]];}).filter(([,c])=>c));
+    return send(res,200,{story,clips});}
    // Word cards for Dad to print and hide (one page, big letters) when today's quest needs words on paper.
    if(u.pathname==='/api/book/cards'&&req.method==='GET'){
     const player=u.searchParams.get('player');if(!kids.some(k=>k.id===player))return send(res,400,{error:'Choose a child.'});

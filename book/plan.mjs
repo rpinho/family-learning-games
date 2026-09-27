@@ -43,7 +43,10 @@ function earlyBeats(m,r,{cast,collection,things,soccer=false}){
  // Spaced review inside the story: the NO! beat is about an earlier key when there is one.
  const review=owners.find(o=>keys.has(o.letter)&&o.letter!==L)||owner;
  const wrong=near(review.letter).find(c=>c!==L)||near(review.letter)[0]||'M';
- const [thing,things_,emoji]=things;const count=Math.min(Math.max(3,m.math?.countTo||5),3+Math.floor(r()*4));
+ const [thing,things_,emoji]=things;
+ // An outside tutor (Sage) flags counting: count 6 to 9 things (just past what he is sure of), else 3 to 6.
+ const sageCount=[...(m.sage?.practising||[]),...(m.sage?.recentMisses||[]).map(x=>typeof x==='string'?x:JSON.stringify(x))].some(s=>/counting/i.test(s));
+ const count=sageCount?6+Math.floor(r()*4):Math.min(Math.max(3,m.math?.countTo||5),3+Math.floor(r()*4));
  const who=(cast.find(c=>c.id!==owner.id&&c.id!==review.id)||cast[0]||{id:null,name:'Bo'});
  return {
   letter:L,
@@ -96,6 +99,13 @@ function readerBeats(m,r,{collection}){
   :{id:'b3',kind:'score',what:`the scoreboard: each goal is worth ${a} points and the team scored ${b} goals; he works out the points`,a,b,
    spoken:`Each goal is worth ${a} points. We scored ${b} goals. How many points?`,display:`${b} × ${a}`,answer:String(a*b),options:numberOptions(a*b,r,[a*b+a,a*b-a])};
  const ma=pick([2,5,10],r),mb=3+Math.floor(r()*5),right=ma*mb,wrongN=r()<.5?right+ma:right+1;
+ // An outside tutor (Sage) says he is practising place value (he says a digit's face value): the NO! beat is that mistake.
+ const sagePV=(m.sage?.practising||[]).some(s=>/place value/i.test(s));
+ const tens=2+Math.floor(r()*7),ones=[1,2,3,4,5,6,7,8,9].filter(d=>d!==tens)[Math.floor(r()*8)],pv=tens*10+ones;
+ const noBeat=sagePV?{id:'b4',kind:'no',what:`a friend insists the ${tens} in ${pv} is worth just ${tens} (its face value, not its place value) and wants to write that on the scoreboard; ${m.name} says NO! and fixes it`,who:null,
+    claim:`The ${tens} in ${pv} is worth ${tens}!`,display:`${tens} in ${pv} = ${tens}`,ask:`Can I write ${tens} on the scoreboard? Can I? Please?`,wrong:String(tens),right:String(tens*10),options:shuffle([String(tens*10),String(tens),String(pv)],r),
+    ifYes:`Oops! The scoreboard buzzes. That does not look right.`,caught:`You said NO! The ${tens} in ${pv} is in the tens place. It is worth ${tens*10}.`,fixSpoken:`What is the ${tens} in ${pv} worth?`,hint:`${pv} is ${WORD_NUM[tens]||tens} tens and ${WORD_NUM[ones]||ones} ones.`,source:'sage'}
+  :null;
  return {
   beats:[
    {id:'b1',kind:'signs',what:`three signs (on trains, doors or paths) look almost the same; they need the one that says "${word}", so ${m.name} reads them all`,target:word,options:shuffle(group.slice(0,4).includes(word)?group.slice(0,3).includes(word)?group.slice(0,3):[word,...group.filter(w=>w!==word).slice(0,2)]:[word,...group.filter(w=>w!==word).slice(0,2)],r),
@@ -103,7 +113,7 @@ function readerBeats(m,r,{collection}){
    {id:'b2',kind:'spell',what:`a magic spell has fallen apart; it only works when its words are put back in order, read word by word (not by where they lie)`,sentence,answer,tiles:scramble(extra?[...answer,extra]:answer,r),mark:endMark(sentence),
     spoken:`The spell says: ${sentence} Put the words back in order.`},
    numberBeat,
-   {id:'b4',kind:'no',what:`a friend insists "${ma} × ${mb} = ${wrongN}" and wants to put it on the scoreboard; ${m.name} says NO! and fixes it`,who:null,
+   noBeat||{id:'b4',kind:'no',what:`a friend insists "${ma} × ${mb} = ${wrongN}" and wants to put it on the scoreboard; ${m.name} says NO! and fixes it`,who:null,
     claim:`${ma} times ${mb} is ${wrongN}!`,display:`${ma} × ${mb} = ${wrongN}`,ask:`Can I put ${wrongN} on the scoreboard? Can I? Please?`,wrong:String(wrongN),right:String(right),options:shuffle([String(right),String(wrongN),String(right-ma)],r),
     ifYes:`Oops! The scoreboard buzzes. That does not look right.`,caught:`You said NO! ${ma} times ${mb} is ${right}, not ${wrongN}.`,fixSpoken:`What is ${ma} times ${mb}?`,hint:`Count in ${WORD_NUM[ma]||ma}s, ${WORD_NUM[mb]||mb} times.`}
   ]

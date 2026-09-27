@@ -43,7 +43,7 @@ test('Plans are deterministic, learning is in beats, and the NO! beat is a real,
    const sp=p.beats.find(b=>b.kind==='spell');assert.notDeepEqual(sp.tiles.slice(0,sp.answer.length),sp.answer,'never in order');
    const sg=p.beats.find(b=>b.kind==='signs');assert.ok(sg.options.includes(sg.target));assert.equal(new Set(sg.options).size,sg.options.length);}
   else{const [teach,stones,count]=p.beats;assert.equal(stones.letter,teach.letter);assert.equal(stones.stones.filter(l=>l===teach.letter).length,stones.need);
-   assert.ok(count.options.includes(count.answer));assert.ok(p.quest.includes(teach.letter));}
+   assert.ok(count.options.includes(count.answer));assert.ok(p.quest.text.includes(teach.letter));assert.ok(p.quest.hints.length>=3);}
  }
 });
 test('A young reader collects each friend’s letter key once, then reviews earlier keys in the NO! beat',()=>{

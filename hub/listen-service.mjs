@@ -10,7 +10,7 @@ import {spawn} from 'node:child_process';
 import {readFileSync} from 'node:fs';
 import {join,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {decide,promptFor,rankFor} from './listen/match.mjs';
+import {decide} from './listen/match.mjs';
 const here=dirname(fileURLToPath(import.meta.url));
 export const MAX_SECONDS=6,MAX_BYTES=16000*2*MAX_SECONDS,IDLE_EXIT_MS=15*60000,DECODE_TIMEOUT_MS=10000;
 const send=(res,status,obj)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(obj));};
@@ -68,7 +68,9 @@ export function listenService({settings,players,log=()=>{},recog=settings?recogn
   let pcm=await body(req);if(pcm.length<3200||pcm.length%2)return send(res,400,{error:'Too short.'});
   const t0=Date.now();
   // One utterance at a time; each waits for the one before (children take turns anyway).
-  const run=queue.catch(()=>{}).then(()=>recog.transcribe(pcm,promptFor(target),rankFor(target)));queue=run;
+  // Plain transcription: a hint prompt makes the recogniser echo the expected word (measured: every wrong answer
+  // then 'matched'), and forced ranking was no better than chance on short words. So neither is used.
+  const run=queue.catch(()=>{}).then(()=>recog.transcribe(pcm,'',null));queue=run;
   let r;try{r=await run;}catch(e){pcm=null;log({type:'listen',player,kind,target:target.kind,error:String(e.message).slice(0,120)});return send(res,503,{error:'Could not listen right now.'});}
   pcm=null;
   const m=decide(r,target);

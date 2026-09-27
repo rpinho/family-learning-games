@@ -25,7 +25,7 @@ function wordMatch(t,w){
  if(sw.length>=4&&levenshtein(st,sw)<=1)return 'close';
  return null;
 }
-// The first sound of a heard word, as a class ("Loona" -> "L", "circle" -> "S", "cat" -> "K").
+// The first sound of a heard word, as a class ("Lulu" -> "L", "circle" -> "S", "cat" -> "K").
 function firstSound(t){const s=skeleton(t);return s.replace(/^V/,'')[0]||'';}
 export function matchUtterance(text,target){
  const heard=normalize(text),tokens=heard.split(' ').filter(Boolean);
@@ -42,7 +42,7 @@ export function matchUtterance(text,target){
   for(const n of (target.names||[]).map(normalize).filter(Boolean))for(const t of tokens)if(wordMatch(t,n))return {match:true,how:'name',heard};
   for(const t of tokens){
    if((LETTER_NAMES[L]||[L]).includes(t))return {match:true,how:'letter-name',heard};
-   // The sound on its own ("lll", "luh", "la") or any word that starts with it ("Loona", "lion").
+   // The sound on its own ("lll", "luh", "la") or any word that starts with it ("Lulu", "lion").
    if(VOWEL.test(L)){if(t[0]===L||(t.length<=3&&VOWEL.test(t[0])))return {match:true,how:'sound',heard};continue;}
    if(firstSound(t)===cls||t[0]===L)return {match:true,how:'sound',heard};
   }

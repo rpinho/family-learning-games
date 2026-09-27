@@ -14,18 +14,20 @@ import {decide,promptFor,rankFor} from '../listen/match.mjs';
 const here=dirname(fileURLToPath(import.meta.url));
 const args=process.argv.slice(2),arg=(k,d=null)=>{const i=args.indexOf(k);return i>=0?args[i+1]:d;},flag=k=>args.includes(k);
 const WORDS=[['bed','bird'],['mat','man'],['bat','ball'],['cat','can'],['dog','dot'],['sun','sum'],['pig','pin'],['hat','has'],['red','rest'],['fish','fit'],['ship','sit'],['frog','from'],['tree','trip'],['jump','just'],['stop','spot'],['look','book'],['moon','moose'],['book','boot'],['train','trail'],['star','stay'],['duck','dump'],['map','mad'],['pen','pet'],['box','bus']];
-const LETTERS=[['l','[[lll]]','Loona','[[mmm]]'],['m','[[mmm]]','moon','[[sss]]'],['s','[[sss]]','Sparkle','[[lll]]'],['b','[[bə]]','ball','[[mmm]]'],['d','[[də]]','Dad','[[sss]]'],['p','[[pə]]','pizza','[[lll]]'],['n','[[nnn]]','nest','[[sss]]'],['t','[[tə]]','train','[[mmm]]']];
+const LETTERS=[['l','[[lll]]','Lulu','[[mmm]]'],['m','[[mmm]]','moon','[[sss]]'],['s','[[sss]]','sun','[[lll]]'],['b','[[bə]]','ball','[[mmm]]'],['d','[[də]]','Dad','[[sss]]'],['p','[[pə]]','pizza','[[lll]]'],['n','[[nnn]]','nest','[[sss]]'],['t','[[tə]]','train','[[mmm]]']];
 const VOICES=[['af_heart',1.3,20],['af_sky',1.3,20],['af_bella',1.3,20],['bf_emma',1.3,20],['am_puck',1.45,20],['af_nicole',1.3,10]];
 const items=[];
 for(const [v,shift,snr] of VOICES){const tag=`${v}-${snr}`;
  for(const [w,wrong] of WORDS){items.push({id:`${tag}-w-${w}`,text:w,voice:v,shift,snr,target:{kind:'word',word:w},expect:true,group:'reader: right word'});
   items.push({id:`${tag}-x-${w}`,text:wrong,voice:v,shift,snr,target:{kind:'word',word:w},expect:false,group:'reader: wrong word'});}
- for(const [l,sound,word,wrong] of LETTERS){const t={kind:'letter',letter:l.toUpperCase(),names:[l==='l'?'Loona':'']};
+ for(const [l,sound,word,wrong] of LETTERS){const t={kind:'letter',letter:l.toUpperCase(),names:[l==='l'?'Lulu':'']};
   items.push({id:`${tag}-ls-${l}`,text:sound,voice:v,shift,snr,target:t,expect:true,group:'letter: its sound'});
   items.push({id:`${tag}-ln-${l}`,text:l.toUpperCase()+'.',voice:v,shift,snr,target:t,expect:true,group:'letter: its name'});
   items.push({id:`${tag}-lw-${l}`,text:word,voice:v,shift,snr,target:t,expect:true,group:'letter: a word or name with it'});
   items.push({id:`${tag}-lx-${l}`,text:wrong,voice:v,shift,snr,target:t,expect:false,group:'letter: another sound'});}}
 const dir=arg('--dir')||await mkdtemp(join(tmpdir(),'listen-check-'));
+// --req <file>: reuse a saved item list (e.g. a control set in adult voices, --shift 1).
+if(arg('--req')){items.length=0;items.push(...JSON.parse(await readFile(arg('--req'),'utf8')).items);}
 const synth=flag('--skip-synth')?{status:0}:spawnSync(arg('--voice-python'),[join(here,'..','listen','synth.py'),await (async()=>{const f=join(dir,'req.json');await writeFile(f,JSON.stringify({models:arg('--models'),out:dir,items}));return f;})()],{encoding:'utf8'});
 if(synth.status!==0){console.error(synth.stderr);process.exit(1);}
 const usePrompt=!flag('--no-prompt');let ask;

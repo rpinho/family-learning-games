@@ -1,0 +1,30 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>The Living Book</title><meta name="theme-color" content="#0b0a12">
+<style>
+[hidden]{display:none!important}
+html,body{margin:0;height:100%;background:#0b0a12;overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none;font-family:"Nunito","Trebuchet MS",system-ui,sans-serif}
+#stage{position:fixed;inset:0;width:100%;height:100%;display:block}
+#overlay{position:fixed;inset:0;pointer-events:none}
+#title{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#2a2440,#0b0a12 70%);color:#f6ecd2;text-align:center;z-index:5}
+#title h1{font-family:Georgia,serif;font-weight:700;font-size:clamp(34px,8vmin,72px);margin:.1em 0;letter-spacing:.01em}
+#title p{margin:0 0 1.2em;opacity:.75;font-size:clamp(16px,3vmin,22px);letter-spacing:.2em;text-transform:uppercase}
+#begin{font:inherit;font-weight:900;font-size:clamp(22px,5vmin,34px);border:0;border-radius:999px;padding:.5em 1.4em;background:linear-gradient(#ffe9a8,#f0b848);color:#3a2200;cursor:pointer;box-shadow:0 0 0 0 rgba(255,210,120,.6);animation:glow 1.6s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:0 0 0 18px rgba(255,210,120,0)}}
+#no{position:fixed;right:max(20px,env(safe-area-inset-right));bottom:max(24px,env(safe-area-inset-bottom));font:inherit;font-weight:900;font-size:clamp(34px,9vmin,64px);padding:.1em .7em;border:0;border-radius:22px;background:linear-gradient(#ff8a6a,#d9442e);color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.25);box-shadow:0 8px 24px rgba(0,0,0,.4);pointer-events:auto;cursor:pointer;animation:glow 1.2s infinite}
+.ring{position:absolute;width:10px;height:10px;margin:-5px 0 0 -5px;border:3px solid rgba(255,240,190,.9);border-radius:50%;animation:ring .9s ease-out forwards}
+@keyframes ring{to{transform:scale(7);opacity:0}}
+#confetti i{position:fixed;top:45%;width:10px;height:14px;border-radius:2px;animation:conf 2.4s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes conf{to{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
+#debug{position:fixed;left:8px;bottom:6px;color:#fff;font:12px/1.2 ui-monospace,monospace;background:rgba(0,0,0,.45);padding:3px 6px;border-radius:6px}
+#fallback{position:fixed;inset:0;display:grid;place-items:center;color:#f6ecd2;text-align:center;padding:20px}
+#fallback a{color:#ffd98a}
+#exit{position:fixed;left:12px;top:12px;width:44px;height:44px;border-radius:50%;border:0;background:rgba(0,0,0,.35);color:#fff;font-size:22px;pointer-events:auto;cursor:pointer;z-index:6}
+</style></head><body>
+<canvas id="stage"></canvas><div id="overlay"></div><div id="confetti"></div>
+<button id="exit" type="button" aria-label="Back" onclick="history.length>1?history.back():location.href='/'">✕</button>
+<div id="title"><div><p></p><h1></h1><button id="begin" type="button">▶ Begin</button></div></div>
+<button id="no" type="button" hidden>NO!</button>
+<div id="fallback" hidden><div><h2>This moving book needs a newer browser.</h2><p><a href="/">Open the picture book instead</a></p></div></div>
+<div id="debug"></div>
+<script type="module" src="./player.mjs"></script>
+</body></html>
