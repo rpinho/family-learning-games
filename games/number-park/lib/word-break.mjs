@@ -1,7 +1,7 @@
 // Word break: a short, always-passable letter/word checkpoint shared by the family games.
 // Identical copy in every game repo (tests compare siblings). No dependencies; browser + Node.
 // Content follows each child's Letter Quest progress (read on the server, never written).
-export const WORD_BREAK_VERSION='word-break-2026-09-27-5';
+export const WORD_BREAK_VERSION='word-break-2026-09-27-6';
 // Speech contract for every game: speak(line, essential).
 // essential=true -> CONTENT the child needs to answer (the letter/word/sentence to find). Games play it even when
 // their sound toggle is off. essential=false -> praise/feedback, which obeys the toggle.
@@ -14,8 +14,17 @@ export const DEFAULT_TRACK={beginner:'letters',explorer:'words',admin:'mixed'};
 const LQ_ORDER='FRANCISOETLHDMBPUKGWYVZXJQ';
 const LOOKALIKE={b:'dpq',d:'bpq',p:'qbd',q:'pgd',m:'nw',n:'mhu',u:'nv',w:'mv',v:'wy',i:'lj',l:'it',t:'lf',e:'ca',c:'eo',a:'od',o:'ac',g:'qj',h:'nb',j:'ig',k:'hx',f:'tl',r:'nv',s:'zc',x:'kz',y:'vg',z:'sx',
  E:'FLB',F:'EPT',L:'ITJ',M:'NWH',N:'MZH',O:'QCD',P:'RBF',R:'PBK',B:'PRD',C:'OGQ',G:'COQ',W:'MVN',V:'WYU',U:'VJO',I:'LTJ',T:'ILF',K:'XRH',X:'KYZ',Y:'VXT',Z:'NSX',S:'ZGC',D:'OBP',H:'NAK',A:'HVR',J:'LUI',Q:'OGC'};
-// Pictures a pre-reader can name; the first sound is the plain letter sound.
-export const FIRST_WORDS=[['ant','🐜'],['bus','🚌'],['bed','🛏️'],['cat','🐱'],['cup','☕'],['dog','🐶'],['duck','🦆'],['egg','🥚'],['fox','🦊'],['fish','🐟'],['goat','🐐'],['gift','🎁'],['hat','🎩'],['hen','🐔'],['jam','🍯'],['kite','🪁'],['key','🔑'],['leg','🦵'],['lion','🦁'],['moon','🌙'],['milk','🥛'],['nut','🥜'],['nest','🪺'],['octopus','🐙'],['pig','🐷'],['pen','🖊️'],['queen','👸'],['rat','🐀'],['ring','💍'],['robot','🤖'],['sun','☀️'],['sock','🧦'],['tree','🌳'],['tiger','🐯'],['umbrella','☂️'],['van','🚐'],['web','🕸️'],['whale','🐋'],['yo-yo','🪀'],['zebra','🦓']];
+// Pictures a pre-reader can name; the first sound is the plain letter sound. Every picture is in PICTURE_NAMES (reviewed
+// 2026-09-27: a peanut picture had been used for "nut"); a 5-year-old's most common name for it is the word, or at least
+// starts with the word's letter. Removed as ambiguous: nut (peanut), cat (kitty), dog (puppy), hen (chicken), jam (honey),
+// gift (present), queen (princess), rat (mouse), van (bus), web (spider web), nest (eggs/bird), cup (coffee), hat (top hat).
+// No watermelon: its question is too long to finish before a row at go-faster speed (slalom timing check).
+export const FIRST_WORDS=[['ant','🐜'],['apple','🍎'],['bus','🚌'],['bed','🛏️'],['bee','🐝'],['car','🚗'],['duck','🦆'],['egg','🥚'],['fox','🦊'],['fish','🐟'],['goat','🐐'],['grapes','🍇'],['house','🏠'],['juice','🧃'],['kite','🪁'],['key','🔑'],['leg','🦵'],['lion','🦁'],['moon','🌙'],['milk','🥛'],['nose','👃'],['octopus','🐙'],['pig','🐷'],['pen','🖊️'],['rainbow','🌈'],['robot','🤖'],['ring','💍'],['sun','☀️'],['sock','🧦'],['tree','🌳'],['tiger','🐯'],['umbrella','☂️'],['whale','🐋'],['yo-yo','🪀'],['zebra','🦓']];
+// Reviewed allowlist: picture -> the name it is used for (the games may only pair a picture with this word). Shared by
+// the word breaks, Letter Slalom and Word Arcade's word-picture games; tests fail on any other pairing.
+export const PICTURE_NAMES={'🐜':'ant','🍎':'apple','🚌':'bus','🛏️':'bed','🐝':'bee','🚗':'car','🦆':'duck','🥚':'egg','🦊':'fox','🐟':'fish','🐐':'goat','🍇':'grapes','🏠':'house','🧃':'juice','🪁':'kite','🔑':'key','🦵':'leg','🦁':'lion','🌙':'moon','🥛':'milk','👃':'nose','🐙':'octopus','🐷':'pig','🖊️':'pen','🌈':'rainbow','🤖':'robot','💍':'ring','☀️':'sun','🧦':'sock','🌳':'tree','🐯':'tiger','☂️':'umbrella','🐋':'whale','🪀':'yo-yo','🦓':'zebra',
+ '🐈':'cat','🐕':'dog','🐖':'pig','🗺️':'map','🦇':'bat','🟥':'red','📦':'box','6️⃣':'six','🔟':'ten','🐄':'cow','🥧':'pie','🛍️':'bag','🚐':'van','🚢':'ship','🐸':'frog','🦀':'crab','🥁':'drum','🚩':'flag','🏪':'shop','⭐':'star','🚂':'train','🐌':'snail','🐑':'sheep','🦈':'shark','🪑':'chair','🏖️':'beach','🪴':'plant','🟢':'green','🐍':'snake','🍞':'bread','🕰️':'clock'};
+export const PICTURE_REJECTED={'🥜':'peanut, not nut','🐱':'kitty/cat','🐶':'puppy/dog','🐔':'chicken, not hen','🍯':'honey, not jam','🎁':'present, not gift','👸':'princess, not queen','🐀':'mouse, not rat','🕸️':'spider web','🪺':'eggs/bird nest','☕':'coffee, not cup','🎩':'top hat','🥅':'goal, not net','🍲':'soup, not pot','👜':'purse, not bag','🐏':'sheep, not ram','🐞':'ladybug, not bug','🤴':'prince, not king','🪽':'new emoji, may not show','🖌️':'paintbrush','⛈️':'rain/cloud, not storm'};
 // CVC words (2026-09-27, an early reader works with CVC word families before digraphs). Until Letter Quest shows
 // sentences built on his own, the words track uses only these: the target from the at/an/ig/op/ug/in families, and
 // look-alikes that start with the SAME letter and differ only in the vowel or the last letter (mat / map / man),

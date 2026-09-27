@@ -1,5 +1,13 @@
 # Word Arcade
 
+## September 27 (late): short feedback within a timing budget; go faster on the rider; rarer hint; reviewed pictures
+
+- After a gate only the word or letter ("mat!", "F!") or "It's mat." on a miss; sound-outs move to the end-of-run recap. `lib/slalom-timing.mjs` (the speed model the scene uses) with `scripts/check-slalom-timing.mjs` and `tests/slalom-timing.test.mjs` check from clip lengths that the feedback takes at most 25% of the time to the next row and the next question ends with >= 2.2 s to spare, at base and go-faster speed, for both tracks.
+- Go faster: press and hold on the rider, or drag up (release or drag down to ease off); Up/Space for grown-ups; only after the row's question.
+- Hint only in the final 12 m while heading for a wrong gate, never on the first row, later after a hinted row.
+- Optional finish-line friends are preloaded during the run and all shown at the finish; an entry may be a camera-facing standee picture.
+- Shared `word-break.mjs` v6: a reviewed `PICTURE_NAMES` allowlist; a picture is only paired with the name a young child would give it (ambiguous ones such as a peanut for "nut" were removed); tests fail on other pairings.
+
 ## September 27 (evening): bigger gates, a hint glow, snowboard, go faster, deep link
 
 - **Gates 1.75x bigger** (on taller frames), fading as the camera passes under them.

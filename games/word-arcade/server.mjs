@@ -12,11 +12,22 @@ const letterData=process.env.LETTER_QUEST_DATA||join(homedir(),'.local/share/fam
 async function literacy(id){let save=null;try{save=JSON.parse(await readFile(join(letterData,id+'.json'),'utf8'));}catch{}return literacyFrom(save,DEFAULT_TRACK[id]||'mixed');}
 const data=process.env.WORD_ARCADE_DATA||join(homedir(),'.local/share/family-learning-games/word-arcade'),port=Number(process.env.PORT||4319);
 // Optional Letter Slalom finish-line friends: small rigged GLB models kept outside the repository, listed per player in
-// FAMILY_ASSETS3D/companions.json ({"beginner":["model-id"]}). Nothing is served unless listed there and present.
+// FAMILY_ASSETS3D/companions.json ({"beginner":["model-id",{"id":"paper","standee":"standees/paper.png","fallback":"model-id"}]}).
+// Nothing is served unless listed there and present.
 const assets3d=process.env.FAMILY_ASSETS3D||join(homedir(),'.local/share/family-learning-games/assets3d');
 async function companionMap(){try{const m=JSON.parse(await readFile(join(assets3d,'companions.json'),'utf8'));return m&&typeof m==='object'?m:{};}catch{return {};}}
-async function companionIds(){const m=await companionMap();return new Set(Object.values(m).flat().filter(x=>typeof x==='string'&&/^[a-z0-9-]{1,40}$/.test(x)));}
-async function companions(id){const list=(await companionMap())[id];if(!Array.isArray(list))return [];const out=[];for(const x of list){if(typeof x!=='string'||!/^[a-z0-9-]{1,40}$/.test(x))continue;try{await stat(join(assets3d,x+'.glb'));out.push(x);}catch{}}return out;}
+// An entry is a model id ("toy" -> toy.glb) or {"id","standee":"standees/<name>.png","fallback":"<model id>"}:
+// a paper-cut standee shown as a camera-facing picture when the file exists, else the fallback model.
+const okId=x=>typeof x==='string'&&/^[a-z0-9-]{1,40}$/.test(x),okStandee=x=>typeof x==='string'&&/^standees\/[a-z0-9-]{1,40}\.png$/.test(x);
+const exists=async f=>{try{await stat(f);return true;}catch{return false;}};
+async function resolveEntry(x){
+ if(okId(x))return await exists(join(assets3d,x+'.glb'))?{id:x,kind:'model',file:join(assets3d,x+'.glb'),url:`/companion/${x}.glb`}:null;
+ if(x&&typeof x==='object'&&okId(x.id)){if(okStandee(x.standee)&&await exists(join(assets3d,x.standee)))return {id:x.id,kind:'standee',file:join(assets3d,x.standee),url:`/companion/${x.id}.png`};
+  if(okId(x.fallback))return resolveEntry(x.fallback);}
+ return null;
+}
+async function companions(id){const list=(await companionMap())[id];if(!Array.isArray(list))return [];const out=[];for(const x of list){const r=await resolveEntry(x);if(r&&!out.some(o=>o.id===r.id))out.push(r);}return out;}
+async function companionFile(name,ext){for(const list of Object.values(await companionMap()))if(Array.isArray(list))for(const x of list){const r=await resolveEntry(x);if(r&&r.url===`/companion/${name}.${ext}`)return r.file;}return null;}
 const staticRoot=fileURLToPath(new URL('./dist/client/',import.meta.url));
 await mkdir(join(data,'logs'),{recursive:true,mode:0o700});await mkdir(join(data,'voice'),{recursive:true,mode:0o700});
 let queue=Promise.resolve(),logError=null;
@@ -50,10 +61,10 @@ const server=http.createServer(async(req,res)=>{
    res.writeHead(200,{'Content-Type':name.endsWith('.webmanifest')?'application/manifest+json':name.endsWith('.ico')?'image/x-icon':'image/png','Content-Length':bytes.length,'Cache-Control':'no-cache'});res.end(req.method==='HEAD'?undefined:bytes);return;
   }
   const buddyMatch=url.pathname.match(/^\/api\/(explorer|beginner|admin)\/companions$/);
-  if(buddyMatch){if(req.method!=='GET')return send(res,405,{error:'Read only'});return send(res,200,{files:await companions(buddyMatch[1])});}
-  const modelMatch=url.pathname.match(/^\/companion\/([a-z0-9-]{1,40})\.glb$/);
-  if(modelMatch){if(!['GET','HEAD'].includes(req.method))return send(res,405,{error:'Read only'});if(!(await companionIds()).has(modelMatch[1]))return send(res,404,{error:'Not found'});
-   const file=join(assets3d,modelMatch[1]+'.glb'),{size}=await stat(file);res.writeHead(200,{'Content-Type':'model/gltf-binary','Content-Length':size,'Cache-Control':'public, max-age=3600'});if(req.method==='HEAD')res.end();else createReadStream(file).pipe(res);return;}
+  if(buddyMatch){if(req.method!=='GET')return send(res,405,{error:'Read only'});return send(res,200,{friends:(await companions(buddyMatch[1])).map(({id,kind,url})=>({id,kind,url}))});}
+  const modelMatch=url.pathname.match(/^\/companion\/([a-z0-9-]{1,40})\.(glb|png)$/);
+  if(modelMatch){if(!['GET','HEAD'].includes(req.method))return send(res,405,{error:'Read only'});const file=await companionFile(modelMatch[1],modelMatch[2]);if(!file)return send(res,404,{error:'Not found'});
+   const {size}=await stat(file);res.writeHead(200,{'Content-Type':modelMatch[2]==='png'?'image/png':'model/gltf-binary','Content-Length':size,'Cache-Control':'public, max-age=3600'});if(req.method==='HEAD')res.end();else createReadStream(file).pipe(res);return;}
   const breakMatch=url.pathname.match(/^\/api\/(explorer|beginner|admin)\/word-break$/);
   if(breakMatch){if(req.method!=='GET')return send(res,405,{error:'Read only'});return send(res,200,await literacy(breakMatch[1]));}
   if(url.pathname.startsWith('/voice/')){if(req.method!=='GET')return send(res,405,{error:'GET only'});const name=url.pathname.slice(7);if(name!=='manifest.json'&&!/^[a-f0-9]{16}\.wav$/.test(name))return send(res,404,{});const file=join(data,'voice',name);await stat(file);res.writeHead(200,{'Content-Type':name.endsWith('wav')?'audio/wav':'application/json','Cache-Control':name==='manifest.json'?'no-store':'public, max-age=31536000, immutable'});createReadStream(file).pipe(res);return;}

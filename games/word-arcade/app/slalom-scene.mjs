@@ -2,10 +2,11 @@
 // Everything is procedural: snowy valley, low-poly pines, layered alpine ridges, a friendly skier in a bobble hat,
 // letter gates, ski tracks and snow spray. Quality scales itself from measured frame times (cheap Chromebooks, phones).
 // The course is described in (u, d): d = metres down the hill, u = metres left/right of the winding centre line.
-import {AnimationMixer,Box3,BackSide,BoxGeometry,BufferAttribute,BufferGeometry,CanvasTexture,CapsuleGeometry,CircleGeometry,Color,ConeGeometry,CylinderGeometry,DirectionalLight,DoubleSide,DynamicDrawUsage,Euler,Float32BufferAttribute,FogExp2,Group,HemisphereLight,IcosahedronGeometry,InstancedMesh,Matrix4,Mesh,MeshBasicMaterial,MeshLambertMaterial,NeutralToneMapping,PCFShadowMap,PerspectiveCamera,PlaneGeometry,Points,Quaternion,Raycaster,RepeatWrapping,SRGBColorSpace,Scene,ShaderMaterial,SphereGeometry,TorusGeometry,Vector2,Vector3,WebGLRenderer} from 'three';
+import {Sprite,SpriteMaterial,AnimationMixer,Box3,BackSide,BoxGeometry,BufferAttribute,BufferGeometry,CanvasTexture,CapsuleGeometry,CircleGeometry,Color,ConeGeometry,CylinderGeometry,DirectionalLight,DoubleSide,DynamicDrawUsage,Euler,Float32BufferAttribute,FogExp2,Group,HemisphereLight,IcosahedronGeometry,InstancedMesh,Matrix4,Mesh,MeshBasicMaterial,MeshLambertMaterial,NeutralToneMapping,PCFShadowMap,PerspectiveCamera,PlaneGeometry,Points,Quaternion,Raycaster,RepeatWrapping,SRGBColorSpace,Scene,ShaderMaterial,SphereGeometry,TorusGeometry,Vector2,Vector3,WebGLRenderer} from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 
-export const COURSE={first:58,spacing:62,finishAfter:46,stopAfter:30,piste:11.5,baseSpeed:8.6,minSpeed:2.4,boostSpeed:15};
+import {COURSE,targetSpeed as speedFor,nextSpeed} from '../lib/slalom-timing.mjs';
+export {COURSE};
 export const laneOffsets=n=>n===3?[-6.6,0,6.6]:n===2?[-4.3,4.3]:[0];
 const SLOPE=0.2;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -252,7 +253,9 @@ export function createSlalomScene(container,opts){
  // A soft warm halo behind the right banner (shared texture; one small mesh, made only when a hint shows).
  const glowTex=keep(canvasTexture(128,64,(g,w,h)=>{const r=g.createRadialGradient(w/2,h/2,4,w/2,h/2,w/2);r.addColorStop(0,'rgba(255,214,90,1)');r.addColorStop(0.55,'rgba(255,200,60,.55)');r.addColorStop(1,'rgba(255,190,40,0)');g.fillStyle=r;g.fillRect(0,0,w,h);}));
  const glowMat=keep(new MeshBasicMaterial({map:glowTex,transparent:true,depthWrite:false,fog:false,opacity:0}));
- function hintDistance(row){return row.gate.track==='letters'?(opts.hintLetters??26):(opts.hintWords??14);}
+ // Hint: only in the final stretch (12 m, both tracks), never on the first row of a run, and later still (7 m) right after
+ // a row where the hint was taken.
+ function hintDistance(i){if(i===0)return 0;return rows[i-1]?.hinted?(opts.hintAfterHint??7):(opts.hintDistance??12);}
  const rows=gates.map((g,i)=>makeRow(g,i));
  const rowVisible=(row)=>row.d-st.d<210&&row.d-st.d>-25;
  // finish arch + lodge
@@ -287,9 +290,17 @@ export function createSlalomScene(container,opts){
  const ray=new Raycaster(),ndc=new Vector2();
  const uFromX=clientX=>{const r=canvas.getBoundingClientRect();return clamp(((clientX-r.left)/r.width-0.5)*2*(COURSE.piste-0.5)*1.12,-(COURSE.piste-0.8),COURSE.piste-0.8);};
  function pickGate(e){const row=rows[st.next];if(!row)return null;const r=canvas.getBoundingClientRect();ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(ndc,camera);const hit=ray.intersectObject(row.bannerMesh,false)[0];return hit?row.lanes[Math.floor(hit.faceIndex/2)]??null:null;}
- const down=e=>{if(st.pointer!==null&&st.pointer!==e.pointerId)return;st.pointer=e.pointerId;try{canvas.setPointerCapture(e.pointerId);}catch{}const g=pickGate(e);st.tU=g??uFromX(e.clientX);st.lastInput=performance.now();e.preventDefault();};
- const move=e=>{if(st.pointer!==e.pointerId)return;st.tU=uFromX(e.clientX);st.lastInput=performance.now();};
- const up=e=>{if(st.pointer!==e.pointerId)return;st.pointer=null;try{canvas.releasePointerCapture(e.pointerId);}catch{}};
+ // Go faster lives on the rider: press and hold ON the skier or
+ // snowboarder, or drag up; release or drag back down to ease off. Left/right still steers. The scene only speeds up once
+ // the row's question has been heard (lib/slalom-timing.mjs).
+ function riderOnScreen(){tmp.copy(skPos);tmp.y+=0.9;tmp.project(camera);const r=canvas.getBoundingClientRect();return {x:r.left+(tmp.x+1)/2*r.width,y:r.top+(1-tmp.y)/2*r.height,r:Math.max(64,Math.min(r.width,r.height)*0.13)};}
+ const down=e=>{if(st.pointer!==null&&st.pointer!==e.pointerId)return;st.pointer=e.pointerId;try{canvas.setPointerCapture(e.pointerId);}catch{}
+  const rs=riderOnScreen();st.ptrBoost=Math.hypot(e.clientX-rs.x,e.clientY-rs.y)<rs.r;st.ptrY0=st.ptrRef=e.clientY;
+  if(!st.ptrBoost){const g=pickGate(e);st.tU=g??uFromX(e.clientX);}st.lastInput=performance.now();e.preventDefault();};
+ const move=e=>{if(st.pointer!==e.pointerId)return;st.tU=uFromX(e.clientX);st.lastInput=performance.now();
+  if(!st.ptrBoost&&e.clientY<st.ptrY0-45){st.ptrBoost=true;st.ptrRef=e.clientY;}
+  if(st.ptrBoost){st.ptrRef=Math.min(st.ptrRef,e.clientY);if(e.clientY>st.ptrRef+35){st.ptrBoost=false;st.ptrY0=e.clientY;}}};
+ const up=e=>{if(st.pointer!==e.pointerId)return;st.pointer=null;st.ptrBoost=false;try{canvas.releasePointerCapture(e.pointerId);}catch{}};
  canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);canvas.addEventListener('lostpointercapture',up);
  canvas.style.touchAction='none';
  // ---------- sound: a soft swish that follows the carving ----------
@@ -319,38 +330,59 @@ export function createSlalomScene(container,opts){
  function targetSpeed(){
   if(!st.go)return 0;
   if(st.finished)return Math.max(0,(stopD-st.d)*0.55);
-  const row=rows[st.next];if(!row)return st.boost?COURSE.boostSpeed:COURSE.baseSpeed;
-  const dist=row.d-st.d,p=st.prompt[st.next],base=COURSE.baseSpeed;
-  // The question is always heard before the gate: slow to a gentle glide until it has been said, then leave ~2 s to look.
-  if(p?.ended===undefined)return clamp((dist-7)*0.42,COURSE.minSpeed,base);
-  // Go faster (held): only once the question has been heard; it never cuts or skips a prompt.
-  if(st.boost)return COURSE.boostSpeed;
-  const need=2.2-(st.time-p.ended);return need>0?clamp(dist/need,COURSE.minSpeed,base):base;
+  // shared model (lib/slalom-timing.mjs): glide until the question has been heard, ~2 s to look, go faster only after it
+  const row=rows[st.next],p=st.prompt[st.next];
+  return speedFor({dist:row?row.d-st.d:undefined,promptEnded:p?.ended===undefined?undefined:st.time-p.ended,boost:st.boost});
  }
  function step(dt){
   st.time+=dt;
+  const wantBoost=!!(st.boostKey||st.ptrBoost);if(wantBoost&&!st.boost)boostPresses++;st.boost=wantBoost;
   if(st.intro>0)st.intro=Math.max(0,st.intro-dt);
   // steering target: finger > tilt > keyboard/assist
   const lanes=lanesAhead(),row=rows[st.next];
   if(st.pointer===null&&st.tilt!==null)st.tU=clamp(st.tilt*(COURSE.piste-1),-(COURSE.piste-1),COURSE.piste-1);
   if(st.pointer===null&&lanes&&row&&row.d-st.d<30&&row.d-st.d>1){const near=lanes.reduce((a,b)=>Math.abs(b-st.tU)<Math.abs(a-st.tU)?b:a);st.tU+=(near-st.tU)*smooth(st.tilt!==null?1.2:2.6,dt);}
   const au=16*(st.tU-st.u)-8*st.vu;st.vu=clamp(st.vu+au*dt,-9,9);st.u=clamp(st.u+st.vu*dt,-COURSE.piste+0.6,COURSE.piste-0.6);
-  const vt=targetSpeed();st.v+=clamp(vt-st.v,-3.2*dt,(st.v<3?1.6:st.v>COURSE.baseSpeed-0.1?3.2:2.2)*dt);if(st.v<0.01&&vt===0)st.v=0;
+  const vt=targetSpeed();st.v=nextSpeed(st.v,vt,dt);if(st.v<0.01&&vt===0)st.v=0;
   if(st.boost&&vt===COURSE.boostSpeed)boostTime+=dt;
   const before=st.d;st.d+=st.v*dt;
   // gate crossing: the lane nearest the skier is the choice (every pass is a choice; no crashes)
-  // Hint: near the row, after the question has been heard, if the skier is heading for a wrong gate the right
-  // one glows. Words: only in the last stretch (he guesses from the first letter; the glow corrects, never gives away).
-  // Letters: a little earlier. A pass after a hint is recorded as hinted, not unaided.
+  // Hint: after the question, only in the final stretch and only while the skier heads for a wrong gate, the
+  // right one glows (it corrects, never gives away). A pass after a hint is recorded as hinted, not unaided.
   if(row&&row.state===null){const dist=row.d-st.d,heading=row.lanes.reduce((best,x,k)=>Math.abs(x-st.tU)<Math.abs(row.lanes[best]-st.tU)?k:best,0),right=row.gate.options.indexOf(row.gate.answer);
-   const on=st.prompt[st.next]?.ended!==undefined&&dist>0&&dist<hintDistance(row)&&heading!==right;
+   const on=st.prompt[st.next]?.ended!==undefined&&dist>0&&dist<hintDistance(st.next)&&heading!==right;
    if(on&&!row.hinted){row.hinted=true;hintsShown++;}row.hintOn=on;}
-  if(row&&before<row.d&&st.d>=row.d){const lane=row.lanes.reduce((best,x,k)=>Math.abs(x-st.u)<Math.abs(row.lanes[best]-st.u)?k:best,0);row.state={chosen:lane,at:st.time};row.hintOn=false;st.next++;onGate(rows.indexOf(row),row.gate.options[lane],lane,row.hinted);}
-  if(!st.finished&&st.d>=finishD){st.finished=true;st.end=0;onFinish();}
+  if(row&&before<row.d&&st.d>=row.d){const lane=row.lanes.reduce((best,x,k)=>Math.abs(x-st.u)<Math.abs(row.lanes[best]-st.u)?k:best,0);row.state={chosen:lane,at:st.time};row.hintOn=false;st.next++;passLog.push({gate:rows.indexOf(row),at:performance.now(),v:+st.v.toFixed(2)});setTimeout(()=>void loadNextFriend(),350);onGate(rows.indexOf(row),row.gate.options[lane],lane,row.hinted);}
+  if(!st.finished&&st.d>=finishD){st.finished=true;st.end=0;void loadNextFriend();onFinish();}
   if(st.finished)st.end+=dt;
   return au;
  }
- const clock={last:performance.now()};let raf=0,disposed=false,lastDraw=0,pendingDt=0,hintsShown=0,boostTime=0,boostPresses=0;const mixers=[],friends=[];
+ const clock={last:performance.now()};let raf=0,disposed=false,lastDraw=0,pendingDt=0,hintsShown=0,boostTime=0,boostPresses=0,friendLoading=false,loader=null;const mixers=[],friends=[],passLog=[],friendQueue=[];
+ async function loadNextFriend(){
+  if(friendLoading||!friendQueue.length||disposed)return;friendLoading=true;const f=friendQueue.shift();
+  try{
+   let obj,height=1.05;
+   if(f.kind==='standee'){ // paper-cut standee: a camera-facing picture with a soft shadow
+    const img=await new Promise((ok,no)=>{const im=new Image();im.onload=()=>ok(im);im.onerror=no;im.src=f.url;});if(disposed)return;
+    const tex=new CanvasTexture(img);tex.colorSpace=SRGBColorSpace;const sp=new Sprite(new SpriteMaterial({map:tex,transparent:true,alphaTest:0.05,fog:false}));
+    height=1.25;sp.scale.set(height*img.width/img.height,height,1);sp.center.set(0.5,0);obj=new Group();obj.add(sp);
+    const shadow=new Mesh(new CircleGeometry(0.42,16).rotateX(-Math.PI/2),new MeshBasicMaterial({color:'#6d87a6',transparent:true,opacity:0.25,depthWrite:false}));shadow.position.y=0.02;shadow.scale.set(1.3,1,0.7);obj.add(shadow);obj.userData.standee=true;
+   }else{
+    if(!loader){const {GLTFLoader}=await import('three/addons/loaders/GLTFLoader.js');loader=new GLTFLoader();}
+    const gltf=await loader.loadAsync(f.url);if(disposed)return;obj=gltf.scene;const box=new Box3().setFromObject(obj),h=(box.max.y-box.min.y)||1,sc=(f.tall?1.25:1.05)/h;
+    obj.scale.setScalar(sc);obj.userData.lift=-box.min.y*sc;obj.traverse(o=>{if(o.isMesh){o.castShadow=T.shadows;o.frustumCulled=false;}});
+    const clip=gltf.animations.find(a=>a.name==='cheer')||gltf.animations[0];if(clip){const mixer=new AnimationMixer(obj);mixer.clipAction(clip).play();mixer.timeScale=0;obj.userData.mixer=mixer;mixers.push(mixer);}
+   }
+   obj.visible=false;obj.userData.id=f.id;scene.add(obj);friends.push(obj);if(st.showFriends)placeFriends();
+  }catch{/* a missing toy never blocks the run or the finish */}
+  finally{friendLoading=false;if(st.finished&&friendQueue.length)void loadNextFriend();}
+ }
+ // In a line beside the stopped rider, across the finish camera's view (left, right, further left, ...), facing the camera.
+ function placeFriends(){
+  if(!st.showFriends)return;const d=stopD;forward(d,fwd);side.set(-fwd.z,0,fwd.x);const u0=clamp(st.u,-(COURSE.piste-3.5),COURSE.piste-3.5);
+  friends.forEach((obj,k)=>{const n=Math.floor(k/2)+1,sgn=k%2?1:-1,du=sgn*(0.6+1.15*n);world(clamp(u0+du,-(COURSE.piste-0.8),COURSE.piste-0.8),d-0.6-0.25*n,obj.position);
+   obj.position.y+=obj.userData.lift||0;obj.visible=true;if(obj.userData.mixer){obj.userData.mixer.timeScale=1;obj.userData.mixer.setTime(k*0.37);}});
+ }
  function frame(now){
   raf=requestAnimationFrame(frame);
   const rawMs=now-clock.last;clock.last=now;
@@ -392,7 +424,7 @@ export function createSlalomScene(container,opts){
   // spray: steady light dust, bursts when carving
   if(st.go&&st.v>1){const rate=(14+st.v*3+carve*230)*(T.spray/340);let n=rate*dt;while(n>0){if(Math.random()<n){const s=Math.sign(st.vu)||1;tmp.copy(skPos).addScaledVector(fwd,0.5+Math.random()*0.3).addScaledVector(side,(Math.random()-0.5)*0.4);tmp.y+=0.05;
    tmp2.copy(side).multiplyScalar(-s*(1.2+carve*3.2)*(0.5+Math.random())).addScaledVector(fwd,st.v*0.35*Math.random());tmp2.y=0.8+Math.random()*2.2*(0.4+carve);spray.emit(tmp,tmp2,0.6+Math.random()*0.7,0.25+Math.random()*0.4+carve*0.45);}n-=1;}}
-  spray.update(dt);for(const m of mixers)m.update(dt);for(const c of friends)c.rotation.y+=(Math.atan2(camera.position.x-c.position.x,camera.position.z-c.position.z)-c.rotation.y)*smooth(3,dt);
+  spray.update(dt);for(const m of mixers)m.update(dt);for(const c of friends)if(!c.userData.standee&&c.visible)c.rotation.y+=(Math.atan2(camera.position.x-c.position.x,camera.position.z-c.position.z)-c.rotation.y)*smooth(3,dt);
   // gates: only nearby rows are drawn; feedback glow on passed rows
   for(const row of rows){const vis=rowVisible(row);row.bannerMesh.visible=row.frameMesh.visible=vis;
    // big banners fade as the camera passes under them (full until 14 m from the camera, faint by 6 m)
@@ -420,19 +452,17 @@ export function createSlalomScene(container,opts){
  raf=requestAnimationFrame(frame);
  const api={
   go(){st.go=true;},
-  boost(on){if(on&&!st.boost)boostPresses++;st.boost=!!on;},
+  passes(){return passLog.slice();},
+  boost(on){st.boostKey=!!on;},
   canBoost(){const row=rows[st.next];return st.go&&!st.finished&&(!row||st.prompt[st.next]?.ended!==undefined);},
   setPaused(v){st.paused=!!v;clock.last=performance.now();if(swish)updateSwish(0);},
   promptStarted(i){st.prompt[i]={...st.prompt[i],started:st.time};},
   promptEnded(i){st.prompt[i]={...st.prompt[i],ended:st.time};},
-  // The child's own toys wait at the bottom and cheer (private models; loaded only after the finish line).
-  async addCompanions(urls){if(!urls?.length||disposed)return 0;let added=0;
-   try{const {GLTFLoader}=await import('three/addons/loaders/GLTFLoader.js');const loader=new GLTFLoader();
-    for(const [k,url] of urls.slice(0,2).entries()){try{const gltf=await loader.loadAsync(url);if(disposed)return added;const obj=gltf.scene,box=new Box3().setFromObject(obj),h=(box.max.y-box.min.y)||1,sc=1.05/h;
-      obj.scale.setScalar(sc);const u=clamp(st.u+(k?1.9:-1.9),-(COURSE.piste-1),COURSE.piste-1),d=stopD+0.8;forward(d,tmp2);world(u,d,obj.position);obj.position.y-=box.min.y*sc;obj.rotation.y=Math.atan2(tmp2.x,tmp2.z)+(k?-0.35:0.35);
-      obj.traverse(o=>{if(o.isMesh){o.castShadow=T.shadows;o.frustumCulled=false;}});const clip=gltf.animations.find(a=>a.name==='cheer')||gltf.animations[0];
-      if(clip){const mixer=new AnimationMixer(obj);const act=mixer.clipAction(clip);act.time=k*0.4;act.play();mixers.push(mixer);}scene.add(obj);friends.push(obj);added++;}catch{/* a missing toy never blocks the finish */}}
-   }catch{}return added;},
+  // The child's own toys wait at the bottom and cheer (private). Preloaded one per gate during the run (a small parse
+  // right after a gate, never at the finish), hidden until the rider stops; then all appear at once.
+  queueFriends(list){friendQueue.push(...(list||[]).slice(0,8));},
+  showFriends(){st.showFriends=true;placeFriends();return friends.length;},
+  friendCount(){return {loaded:friends.length,queued:friendQueue.length,loading:friendLoading};},
   // A missed gate makes the next triplet a pair (same rule as the server); rebuild that row.
   replaceGate(i,g){const old=rows[i];if(!old||old.state)return;dropRow(old);rows[i]=makeRow(g,i);},
   setTilt(v){st.tilt=v===null?null:clamp(v,-1,1);},
