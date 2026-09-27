@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile,stat} from 'node:fs/promises';
 import {join} from 'node:path';
-import {buildLearner,cookieLevel,wordTallies,wordStatus,detectTricks,playOn} from '../learner.mjs';
+import {buildLearner,cookieLevel,wordTallies,wordStatus,detectTricks,playOn,sageSummary} from '../learner.mjs';
 import {learnerFor,wordBreakRows,writeLearner} from '../build-learner.mjs';
 import {bookPaths,readProfiles} from '../paths.mjs';
 import {saves,deployment,NOW} from './fixtures.mjs';
@@ -55,4 +55,16 @@ test('Builder reads saves and logs without changing them, and writes a private m
  const out=await writeLearner(m,join(root,'learner'));
  assert.equal(((await stat(out)).mode&0o777),0o600);
  assert.equal(await readFile(file,'utf8'),before);assert.equal((await stat(file)).mtimeMs,mtime);
+});
+test('Outside tutor file (family-sage-1) is summarised read-only; absent or foreign files are ignored',()=>{
+ const sage={schema:'family-sage-1',sessions:3,lastSession:'2026-03-09T10:00:00Z',worked:['Counting I'],
+  mastered:['Counting I: Map numeral to quantity'],practising:[{area:'Place Value',skill:'State digit place value'}],
+  recentMisses:[{area:'Place Value',target:'Worth of tens digit',note:'face value',extra:'dropped'}]};
+ const m=buildLearner({player:'older',name:'Leo',profile:{age:8},now:NOW,saves:saves('older'),sage});
+ assert.deepEqual(m.sage.mastered,['Counting I: Map numeral to quantity']);
+ assert.deepEqual(m.sage.practising,['Place Value: State digit place value']);
+ assert.deepEqual(m.sage.recentMisses,[{area:'Place Value',target:'Worth of tens digit',note:'face value'}]);
+ assert.ok(m.stuck.some(s=>s.area==='sage'&&s.detail.includes('State digit place value')));
+ assert.equal(buildLearner({player:'x',name:'X',now:NOW,saves:{}}).sage,null);
+ assert.equal(sageSummary({schema:'other',mastered:['x']}),null);
 });

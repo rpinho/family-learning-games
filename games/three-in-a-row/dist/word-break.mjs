@@ -1,7 +1,7 @@
 // Word break: a short, always-passable letter/word checkpoint shared by the family games.
 // Identical copy in every game repo (tests compare siblings). No dependencies; browser + Node.
 // Content follows each child's Letter Quest progress (read on the server, never written).
-export const WORD_BREAK_VERSION='word-break-2026-09-26-3';
+export const WORD_BREAK_VERSION='word-break-2026-09-26-4';
 // Speech contract for every game: speak(line, essential).
 // essential=true -> CONTENT the child needs to answer (the letter/word/sentence to find). Games play it even when
 // their sound toggle is off. essential=false -> praise/feedback, which obeys the toggle.
@@ -31,6 +31,10 @@ export const SENTENCES=[
  ['Max kicks the ball past Dad.','Bo said the robot can jump.','Cookie Buddy eats six cookies.','Did Max win the chess match?','Mom asked Bo to catch the ball.','A frog jumps on Max at chess.','Dad and Max fix the rocket.','Can Bo spin on one leg?','Max kicks a goal and Bo claps.','The big dino stomps past Mom.','Bo gets a slice of hot pizza.','Is the robot in goal for Max?'],
  ['Bo asked Dad to build a rocket.','Cookie Buddy and Max bake green cookies.','Max and the robot score a goal.','Dad said the dinosaur is sleeping.','Can Bo beat Mom at chess today?','Why did the rocket zoom past Max?','Bo jumped over three sleeping sheep.','Did Cookie Buddy eat the chess queen?','Mom and Bo eat pizza by the stream.','The goalie dives but Max still scores.','Dad asked Max to clean the chess board.','A dinosaur stole the ball from Bo.']
 ];
+// Starter sentences: three or four decodable/sight words, no extra tile. Used until a reader has built
+// sentences on their own (Letter Quest's Sentence studio, or three clean starters on this device); before that,
+// a full sentence tends to become trial-and-error tapping rather than reading.
+export const STARTER_SENTENCES=['Max can hop.','Bo is big.','Mom got a hat.','Dad can run.','Is Max wet?','The cat sat.','Bo can dig.','Max has a map.','Can Bo hop?','Mom and Max nap.','The dog is hot.','Dad and Bo sit.'];
 // Look-alike distractor tiles for sentence levels 2-3 (never a word already in the sentence).
 export const SENTENCE_DISTRACT={cat:'cot',big:'bag',hen:'pen',pig:'peg',hop:'hip',hops:'hips',run:'ran',ran:'run',sat:'sit',got:'get',get:'got',gets:'jets',red:'rod',ship:'shop',frog:'from',duck:'dock',rock:'rack',fish:'dish',log:'leg',pond:'pod',flag:'flat',drum:'drop',hill:'hall',fox:'fix',fix:'fox',wet:'wit',cup:'cap',hat:'hot',sun:'son',bus:'bun',jump:'dump',swim:'swam',shop:'chop',stop:'step',step:'stop',snack:'snake',black:'block',whale:'while',sheep:'sheet',brush:'crush',shell:'shelf',train:'trail',fast:'last',spot:'spit',smile:'mile',beach:'bench',found:'round',
  kicks:'kids',ball:'bell',past:'pest',robot:'robin',chess:'chest',match:'patch',catch:'cash',clock:'click',rocket:'pocket',spin:'spit',leg:'log',goal:'gold',claps:'clips',stomps:'stamps',slice:'slide',hot:'hat',pizza:'pinch',six:'sit',build:'built',bake:'bike',green:'greet',score:'store',sleeping:'sweeping',beat:'boat',zoom:'room',jumped:'bumped',three:'tree',queen:'green',stream:'scream',dives:'dimes',still:'spill',clean:'clear',board:'bored',stole:'stale'};
@@ -47,7 +51,7 @@ export const tilesOf=sentence=>sentence.replace(/[.?!,]/g,'').split(' ');
 export const endMark=sentence=>/[?!]$/.test(sentence)?sentence.at(-1):'.';
 // Derive letter/word levels from a Letter Quest save (read-only). Missing save -> gentle defaults.
 export function literacyFrom(save,track='mixed'){
- const out={version:WORD_BREAK_VERSION,track,source:'default',letters:[...LQ_ORDER.slice(0,8)],lower:[],learning:[],wordLevel:1,sentenceLevel:1};
+ const out={version:WORD_BREAK_VERSION,track,source:'default',letters:[...LQ_ORDER.slice(0,8)],lower:[],learning:[],wordLevel:1,sentenceLevel:1,sentenceReady:false};
  if(!save||typeof save!=='object')return out;
  const done=Math.max(0,Number(save.completed)||0),n=Math.min(26,3+Math.floor(done/2));
  out.source='letter-quest';
@@ -58,6 +62,7 @@ export function literacyFrom(save,track='mixed'){
  const n1=v=>Number.isFinite(Number(v))&&Number(v)>0?Number(v):0;
  out.wordLevel=clamp(n1(save.maze?.practiceSkills?.reading?.level)||n1(save.reading?.skills?.decode?.level)||n1(save.foundation?.stage)||1,1,3);
  out.sentenceLevel=clamp(n1(save.reading?.skills?.sentence?.level)||1,1,3);
+ out.sentenceReady=n1(save.reading?.skills?.sentence?.independent)>=2;
  return out;
 }
 function letterItem(level,r){
@@ -88,12 +93,26 @@ function sentenceItem(level,r,recent=[]){
  const tiles=scramble(extra?[...answer,extra]:answer,r);
  return {kind:'sentence',spoken:sentence,sentence,answer,tiles,mark:endMark(sentence)};
 }
+// Full sentences or starters? history = this device's recent sentence results [{misses,tiles,starter}].
+// Ready readers drop back to starters after two guessed full sentences (a miss for every tile or more);
+// others move up after three starters in a row with at most one miss each.
+export function sentencesReady(level,history=[]){
+ const recent=(Array.isArray(history)?history:[]).slice(-3),guessed=h=>h.misses>=h.tiles;
+ const full=recent.filter(h=>!h.starter),starters=recent.filter(h=>h.starter);
+ if(level?.sentenceReady)return !(full.length>=2&&full.slice(-2).every(guessed));
+ return starters.length===3&&starters.every(h=>h.misses<=1);
+}
+function starterItem(r,recent=[]){
+ const fresh=STARTER_SENTENCES.filter(s=>!recent.includes(s)),sentence=pick(fresh.length?fresh:STARTER_SENTENCES,r),answer=tilesOf(sentence);
+ return {kind:'sentence',starter:true,spoken:sentence,sentence,answer,tiles:scramble(answer,r),mark:endMark(sentence)};
+}
 // One short item. Beginner-style track: letters; Explorer-style: words (sentences most often).
-export function wordBreakItem(level,{r=Math.random,recent=[]}={}){
+export function wordBreakItem(level,{r=Math.random,recent=[],sentences=[]}={}){
  const l={...literacyFrom(null),...level};
  const track=l.track==='mixed'?(r()<.5?'letters':'words'):l.track;
  if(track==='letters')return {...letterItem(l,r),track};
- return {...(r()<.6?sentenceItem(l,r,recent):wordItem(l,r)),track};
+ if(sentencesReady(l,sentences))return {...(r()<.6?sentenceItem(l,r,recent):wordItem(l,r)),track};
+ return {...(r()<.25?starterItem(r,recent):wordItem(l,r)),track};
 }
 export const WORD_BREAK_FEEDBACK=['Yes!','Try again.','Great reading!'];
 export function wordBreakLines(){
@@ -101,7 +120,7 @@ export function wordBreakLines(){
  for(const c of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'){lines.add(`Find the letter ${c}.`);lines.add(`Find the little letter ${c}.`);}
  for(const [w] of FIRST_WORDS)lines.add(`Which letter does ${w} start with?`);
  for(const g of WORD_GROUPS.flat())for(const w of g)lines.add(`Find the word ${w}.`);
- for(const s of SENTENCES.flat())lines.add(s);
+ for(const s of [...SENTENCES.flat(),...STARTER_SENTENCES])lines.add(s);
  return [...lines];
 }
 // ---------- Browser UI ----------
@@ -139,6 +158,9 @@ function chime(ok){try{const C=globalThis.AudioContext||globalThis.webkitAudioCo
 const recentKey=player=>'word-break-recent:'+player;
 function readRecent(player){try{return JSON.parse(localStorage.getItem(recentKey(player))||'[]').slice(-6);}catch{return [];}}
 function remember(player,item){try{const r=readRecent(player);r.push(item.sentence||item.answer);localStorage.setItem(recentKey(player),JSON.stringify(r.slice(-6)));}catch{}}
+const sentencesKey=player=>'word-break-sentences:'+player;
+function readSentences(player){try{const h=JSON.parse(localStorage.getItem(sentencesKey(player))||'[]');return Array.isArray(h)?h.slice(-6):[];}catch{return [];}}
+function rememberSentence(player,result){try{const h=readSentences(player);h.push(result);localStorage.setItem(sentencesKey(player),JSON.stringify(h.slice(-6)));}catch{}}
 export async function fetchWordLevel(url,fallbackTrack='mixed'){
  try{const r=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(4000)});if(r.ok){const j=await r.json();if(j&&j.track)return j;}}catch{}
  return literacyFrom(null,fallbackTrack);
@@ -148,7 +170,7 @@ export async function fetchWordLevel(url,fallbackTrack='mixed'){
 export function wordBreak({player='admin',level,speak=()=>{},log=()=>{},reason='',doc=globalThis.document,r=Math.random,item,effects=true}={}){
  const ding=ok=>{if(typeof effects==='function'?effects():effects)chime(ok);};
  styles(doc);
- const lvl=level||literacyFrom(null,DEFAULT_TRACK[player]||'mixed'),q=item||wordBreakItem(lvl,{r,recent:readRecent(player)}),started=Date.now();
+ const lvl=level||literacyFrom(null,DEFAULT_TRACK[player]||'mixed'),q=item||wordBreakItem(lvl,{r,recent:readRecent(player),sentences:readSentences(player)}),started=Date.now();
  const d=doc.createElement('dialog');d.className='wb';d.dataset.kind=q.kind;d.setAttribute('aria-label',q.track==='letters'?'Letter break':'Word break');
  const card=doc.createElement('div');card.className='wb-card';d.append(card);
  const top=doc.createElement('div');top.className='wb-top';const eyebrow=doc.createElement('p');eyebrow.className='wb-eyebrow';eyebrow.textContent=q.track==='letters'?'LETTER BREAK':'WORD BREAK';
@@ -163,7 +185,8 @@ export function wordBreak({player='admin',level,speak=()=>{},log=()=>{},reason='
  return new Promise(resolve=>{
   const finish=()=>{finished=true;clearTimeout(idle);ding(true);remember(player,q);
    const done=doc.createElement('p');done.className='wb-done';done.textContent=q.kind==='sentence'?'Great reading!':'Yes!';card.append(done);speak(q.kind==='sentence'?'Great reading!':'Yes!',false);
-   const result={kind:q.kind,track:q.track,answer:q.sentence||q.answer,misses,ms:Date.now()-started,reason};log(result);
+   const result={kind:q.kind,track:q.track,answer:q.sentence||q.answer,misses,ms:Date.now()-started,reason,...(q.starter?{starter:true}:{})};log(result);
+   if(q.kind==='sentence')rememberSentence(player,{misses,tiles:q.answer.length,starter:!!q.starter});
    setTimeout(()=>{try{d.close();}catch{}d.remove();resolve(result);},q.kind==='sentence'?1500:1000);};
   const wrong=b=>{misses++;missesHere++;ding(false);b.classList.remove('wiggle');void b.offsetWidth;b.classList.add('wiggle');
    if(missesHere>=2){const want=q.kind==='sentence'?q.answer[step]:q.answer;const right=[...choices.children].find(x=>x.dataset.value===want&&!x.classList.contains('used'));right?.classList.add('glow');speak(q.spoken,true);}

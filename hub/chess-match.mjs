@@ -46,6 +46,8 @@ export function coachStyle(rating) {
     slipMax: curve([[50, 2500], [300, 900], [600, 500], [900, 350], [1200, 250], [1600, 150], [1800, 100]], r),
     random: curve([[50, 0.3], [300, 0.12], [500, 0.03], [700, 0]], r),
     takeMate: curve([[50, 0.45], [600, 0.8], [1200, 0.97], [1800, 1]], r),
+    // Chance of not noticing a mate-in-one threat (the Scholar's Mate and other rookie traps).
+    trapFall: curve([[50, 0.9], [300, 0.8], [600, 0.5], [900, 0.25], [1200, 0.08], [1500, 0]], r),
     multipv: r < 1000 ? 20 : 10,
     ms: r < 600 ? 200 : r < 1200 ? 280 : 350,
   };
@@ -90,10 +92,11 @@ export function chooseCoachMove(pvs, rating, legal, rng = Math.random) {
   for (let i = 0; i < ok.length; i++) if ((roll -= weights[i]) <= 0) return { ...ok[i], kind: ok[i] === best ? "best" : "good" };
   return { ...ok[0], kind: "best" };
 }
-// Up after a win, down after a loss (faster at first and on streaks), so wins settle near half.
+// Up after a win, down faster after a loss (faster still at first and on streaks), so the child
+// wins a little more than half: 60% while calibrating, about 58% after.
 export function nextRating(rating, outcome, previous = [], games = 0) {
   if (outcome === 0.5) return rating;
-  let delta = (games < 6 ? 80 : 50) * (outcome - 0.5);
+  let delta = outcome === 1 ? (games < 6 ? 40 : 25) : -(games < 6 ? 60 : 35);
   const last = previous.slice(-2);
   if (last.length === 2 && last.every((x) => x === outcome)) delta *= 1.5;
   return clamp(Math.round(rating + delta), RATING_MIN, RATING_MAX);
@@ -147,7 +150,10 @@ function line(g, kind) {
 export function reactionFor(g, rec, reply, result) {
   const n = g.records.length, since = n - (g.spokeAt ?? -10);
   let kind = null;
-  if (result) kind = result.kind === "win" ? "youWin" : result.kind === "loss" ? "meWin" : result.reason === "stalemate" ? "stalemate" : "draw";
+  const scholar = result?.kind === "win" && result.reason === "checkmate" && rec.piece === "q" && rec.captured === "p" &&
+    rec.uci.slice(2, 4) === (g.side === "w" ? "f7" : "f2") && g.moves.length <= 24;
+  if (scholar) kind = "scholar";
+  else if (result) kind = result.kind === "win" ? "youWin" : result.kind === "loss" ? "meWin" : result.reason === "stalemate" ? "stalemate" : "draw";
   else if (reply?.captured && VALUE[reply.captured] >= 3 && rec.loss >= 250) kind = "pounce";
   else if (rec.promotion) kind = "youPromote";
   else if (reply?.promotion) kind = "mePromote";
@@ -176,17 +182,44 @@ export function pickMoment(g, result) {
 function sanOf(fen, uci) {
   try { return play(new Chess(fen), uci).san; } catch { return null; }
 }
-async function coachMove(g, b, rating, engine, rng) {
+export function mateInOne(b) {
+  return b.moves({ verbose: true }).filter((m) => { const t = new Chess(b.fen()); play(t, uciOf(m)); return t.isCheckmate(); });
+}
+// Would the other side mate in one if the side to move did nothing?
+export function mateThreat(b) {
+  if (b.isCheck()) return false;
+  const f = b.fen().split(" ");
+  f[1] = f[1] === "w" ? "b" : "w";
+  f[3] = "-";
+  try { return mateInOne(new Chess(f.join(" "))).length > 0; } catch { return false; }
+}
+// Natural-looking moves that miss the threat: developing pieces and pawn moves first.
+export function trapMoves(b) {
+  return b.moves({ verbose: true }).filter((m) => { const t = new Chess(b.fen()); play(t, uciOf(m)); return mateInOne(t).length > 0; })
+    .map((m) => ({ m, w: ["n", "b"].includes(m.piece) ? 3 : m.piece === "p" ? 2 : m.piece === "q" || m.piece === "k" ? 0.3 : 1 }));
+}
+// The coach's move at a rating, without changing any game state.
+export async function coachChoice(b, rating, engine, rng = Math.random) {
   const st = coachStyle(rating);
+  if (mateThreat(b) && rng() < st.trapFall) {
+    const traps = trapMoves(b);
+    if (traps.length) {
+      let roll = rng() * traps.reduce((a, t) => a + t.w, 0);
+      const t = traps.find((x) => (roll -= x.w) <= 0) || traps[0];
+      return { choice: { uci: uciOf(t.m), score: -2990, line: null, kind: "trap" }, best: null };
+    }
+  }
   const a = await engine.analyze(b.fen(), { ms: st.ms, multipv: st.multipv });
   const legal = b.moves({ verbose: true }).map(uciOf);
-  const choice = chooseCoachMove(a.pvs, rating, legal, rng);
-  const best = candidates(a.pvs)[0];
+  return { choice: chooseCoachMove(a.pvs, rating, legal, rng), best: candidates(a.pvs)[0] || null };
+}
+async function coachMove(g, b, rating, engine, rng) {
+  const { choice, best } = await coachChoice(b, rating, engine, rng);
   const m = play(b, choice.uci);
   g.moves.push(uciOf(m));
   g.evalLearner = choice.score == null ? null : -choice.score;
   g.expect = choice.line?.[1] || null;
-  g.slips = (g.slips || 0) + (choice.kind === "slip" || choice.kind === "random" ? 1 : 0);
+  g.slips = (g.slips || 0) + (["slip", "random", "trap"].includes(choice.kind) ? 1 : 0);
   return { move: m, bestScore: best ? best.score : null, kind: choice.kind };
 }
 function finish(m, g, result, now) {
@@ -206,6 +239,17 @@ function finish(m, g, result, now) {
     ratingBefore: before, ratingAfter: m.rating, hintedTurns: g.hintedTurns || 0, takeback: g.undoLeft < 1, slips: g.slips || 0 });
   m.history = m.history.slice(-60);
 }
+// A full game against the coach left unfinished counts as a loss for the rating (only the rating).
+export function recordAbandoned(p, settings = {}, { id, side, plies }, now = Date.now()) {
+  p.match ??= freshMatch(settings);
+  const m = p.match, before = m.rating;
+  m.rating = nextRating(before, 0, m.history.map((h) => (h.kind === "win" ? 1 : h.kind === "loss" ? 0 : 0.5)), m.games);
+  m.games++;
+  m.record.loss++;
+  m.history.push({ id, at: now, side, kind: "loss", reason: "abandoned", plies, ratingBefore: before, ratingAfter: m.rating });
+  m.history = m.history.slice(-60);
+}
+export const coachRating = (p, settings = {}) => p.match?.rating ?? matchSettings(settings).startRating;
 const publicHint = (h) => h && { stage: h.stage, idea: h.idea, text: h.voice, voice: h.voice, from: h.from, to: h.to };
 export function publicMatch(p, settings = {}) {
   const s = matchSettings(settings), m = p.match || freshMatch(settings), g = m.game;

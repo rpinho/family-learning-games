@@ -16,6 +16,7 @@ Everything below lives **outside the repository** (children's data is private), 
 | `book/art/lib/library.json` + images | `book/build-art.py` from the household's own source images | nightly job, hub `/book-art/` |
 | `learner/<player>.json` | `book/build-learner.mjs` | nightly job, grown-ups |
 | `learner/<player>-life.json` | `book/life.mjs` (weekly, or when a source changes) | nightly job |
+| `learner/<player>-sage.json` (optional) | the household's own filer of an outside tutor's emailed session reports (schema `family-sage-1`) | `build-learner.mjs`, merged read-only as `sage` |
 | `book/<player>/<date>.json` / `.md` | `book/generate.mjs` | hub (json), grown-ups (md) |
 | `book/voice/<16 hex>.wav` | `book/narrate.py` (added only, never rewritten) | hub `/book-voice/` |
 | `<hub data>/book-progress/<player>.json` | hub (progress, and what he collected: letter keys, words he read) | hub, nightly job |

@@ -3,7 +3,7 @@ import {FOUNDATION_UNITS,FOUNDATION_LESSONS} from './public/chess/foundations-cu
 import {STEPS,STEP_EXAMPLES,meetsStepGoal,checkingPieceCapture} from './chess-steps.mjs';
 import {STEP_UNITS,STEP_LESSONS,STEP_VOICE} from './public/chess/steps-curriculum.mjs';
 import { randomUUID } from "node:crypto";
-import { actMatch, publicMatch } from "./chess-match.mjs";
+import { actMatch, publicMatch, coachChoice, coachRating, recordAbandoned } from "./chess-match.mjs";
 import { readFile } from "node:fs/promises";
 import { Chess } from "./public/chess/rules.mjs";
 import {
@@ -562,13 +562,13 @@ export async function actChess(p, input, { engine, now = Date.now(), settings = 
       help: 0,
       strength: p.settings.strength,
     };
+    // Leaving a Friendly full game unfinished lowers the coach's level, like a loss.
+    const old = p.game;
+    if (old && !old.result && old.mode === "full" && old.strength === "friendly" && old.turns >= 2)
+      recordAbandoned(p, settings, { id: old.id, side: old.side, plies: old.moves.length }, now);
     if (b.turn() !== side) {
       if (!engine) fail("Chess opponent is unavailable.", 503);
-      const a = await engine.analyze(b.fen(), {
-        ms: 250,
-        elo: strength(game.strength),
-      });
-      const m = playUci(b, a.best);
+      const m = playUci(b, await practiceReply(b, game.strength, engine, p, settings, rng));
       game.moves.push(m.from + m.to + (m.promotion || ""));
       game.fen = b.fen();
     }
@@ -597,11 +597,7 @@ export async function actChess(p, input, { engine, now = Date.now(), settings = 
     g.turns++;
     let reply = null;
     if (!b.isGameOver()) {
-      const a = await engine.analyze(b.fen(), {
-        ms: 300,
-        elo: strength(g.strength),
-      });
-      const rm = playUci(b, a.best);
+      const rm = playUci(b, await practiceReply(b, g.strength, engine, p, settings, rng));
       reply = rm.from + rm.to + (rm.promotion || "");
       g.moves.push(reply);
     }
@@ -673,6 +669,12 @@ export async function actChess(p, input, { engine, now = Date.now(), settings = 
   p.requests.push(input.requestId);
   p.requests = p.requests.slice(-120);
   return result;
+}
+// Friendly practice plays like the child's own adaptive coach (slips, rookie traps);
+// Club and Challenge keep the plain limited-strength engine.
+async function practiceReply(b, level, engine, p, settings, rng) {
+  if (level === "friendly") return (await coachChoice(b, coachRating(p, settings), engine, rng)).choice.uci;
+  return (await engine.analyze(b.fen(), { ms: 300, elo: strength(level) })).best;
 }
 export function gameBoard(g) {
   const b = new Chess(g.startFen);

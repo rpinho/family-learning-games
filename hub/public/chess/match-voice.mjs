@@ -38,6 +38,7 @@ export const MATCH_VOICE = {
     "I won this time. You played well. Rematch?",
     "Checkmate. That was a fun game. Want to try again?",
   ],
+  scholar: ["Ha! You got me with the Scholar's Mate! I fell right into your trap!"],
   draw: ["It's a draw. Nobody wins this time. Good game!"],
   stalemate: ["Stalemate! The king cannot move, but it is not in check. That's a draw."],
   recapBest: "Let's look at your best move of the game.",

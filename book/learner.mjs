@@ -157,7 +157,19 @@ function harderBursts(mg,now){
 }
 
 // ---------- the model ----------
-export function buildLearner({player,name,profile={},now=Date.now(),saves={},wordBreaks=[],recap=null,notes=[],chapters=[],opens=[],playDate=null,timeZone='UTC'}){
+// An outside tutor's view of the child (optional, private): learner/<player>-sage.json, written by the household's
+// own report filer from the tutor's emailed session reports (schema family-sage-1). Kept compact and read-only here:
+// what the tutor says is mastered, still being practised and recently missed. Absent or unknown schema → null.
+export function sageSummary(sage){
+ if(!sage||sage.schema!=='family-sage-1')return null;
+ const short=r=>({area:r?.area??null,target:String(r?.target??''),note:r?.note??null});
+ return {source:'sage',sessions:num(sage.sessions),lastSession:sage.lastSession||null,
+  mastered:list(sage.mastered).map(String).slice(0,12),
+  practising:list(sage.practising).map(p=>`${p?.area}: ${p?.skill}`).slice(0,8),
+  recentMisses:list(sage.recentMisses).map(short).slice(-8),
+  worked:list(sage.worked).map(String).slice(0,12)};
+}
+export function buildLearner({player,name,profile={},now=Date.now(),saves={},wordBreaks=[],recap=null,notes=[],chapters=[],opens=[],playDate=null,timeZone='UTC',sage=null}){
  const lq=saves['letter-quest'],np=saves['number-park'],wa=saves['word-arcade'];
  const advanced=profile.mathTrack?profile.mathTrack==='facts':num(profile.age)>=7;
  const recapKid=list(recap?.kids).find(k=>k.player===player)||null;
@@ -172,7 +184,8 @@ export function buildLearner({player,name,profile={},now=Date.now(),saves={},wor
  const stuck=[
   ...lit.learning.slice(0,6).map(c=>({area:'letters',item:c,detail:`still learning ${/[a-z]/.test(c)?'little':'big'} ${c.toUpperCase()}`})),
   ...words.stuck.slice(0,6).map(w=>({area:'words',item:w,detail:`${tallies[w].errors} misses, ${tallies[w].hits} clean reads`})),
-  ...recapStuck.slice(0,6).map(line=>({area:'recap',item:null,detail:line}))
+  ...recapStuck.slice(0,6).map(line=>({area:'recap',item:null,detail:line})),
+  ...list(sageSummary(sage)?.practising).slice(0,4).map(line=>({area:'sage',item:null,detail:`Sage: still practising ${line}`}))
  ];
  const yesterday=recapKid?{date:recap.date,played:!!recapKid.played,minutes:num(recapKid.minutes),
   highlights:Object.entries(obj(recapKid.apps)).filter(([,a])=>a?.played).map(([app,a])=>({app,minutes:num(a.minutes),correct:num(a.correct??a.labyrinth?.gatesCorrect),questions:num(a.questions??a.labyrinth?.gatesAnswered),story:list(a.story)}))}:null;
@@ -196,6 +209,7 @@ export function buildLearner({player,name,profile={},now=Date.now(),saves={},wor
    chess:saves.chess?{lessons:Object.keys(obj(saves.chess.completed)).length,recent:list(saves.chess.history).slice(-3).map(h=>h.lesson)}:null
   },
   activity7d:week,
+  sage:sageSummary(sage),
   stuck,
   tricks:[...detectTricks({profile,wordBreaks}),...(harderBursts(mg,now)?[{id:'harder-tapping',text:'taps "harder" many times in a row in Maze Garden to skip ahead',source:'logs',evidence:{bursts:harderBursts(mg,now)}}]:[])],
   story:storyState({saves,chapters}),
