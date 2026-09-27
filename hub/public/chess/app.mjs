@@ -565,7 +565,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
       .join("")}</div>`;
   }
   function playView() {
-    return `<section class="practice-lobby"><div class="practice-heading"><div><h1>Practice games</h1></div>${coach()}</div><label class="opponent-select">Rook’s playing strength <select id="chess-strength"><option value="friendly" ${profile.settings.strength === "friendly" ? "selected" : ""}>Friendly</option><option value="club" ${profile.settings.strength === "club" ? "selected" : ""}>Club</option><option value="challenge" ${profile.settings.strength === "challenge" ? "selected" : ""}>Challenge</option></select></label><div class="practice-cards"><article><div class="practice-preview">${miniBoard(profile.session?.puzzle?.startFen || "4r1k1/pp3ppp/2p2n2/3p4/3P4/2PB1N2/PP3PPP/4R1K1 w - - 0 1")}</div><h2>Position game</h2>${profile.session?.puzzle ? btn("Play this position", "position:" + profile.session.puzzle.id, "primary") : btn("Explore a lesson first", "path", "primary")}</article><article><div class="practice-preview">${miniBoard()}</div><h2>Full game</h2><div>${btn("Play White", "full:w", "primary")}${btn("Play Black", "full:b")}</div></article></div>${profile.game ? `<div class="resume-strip"><span>${profile.game.result || "Your practice game is saved."}</span>${btn("Return to board →", "game", "primary")}</div>` : ""}<p class="fine-print">The opponent runs locally with Stockfish. These strength settings are practice choices, not a measurement of your rating.</p></section>`;
+    return `<section class="practice-lobby"><div class="practice-heading"><div><h1>Practice games</h1></div>${coach()}</div><label class="opponent-select">Rook’s playing strength <select id="chess-strength"><option value="friendly" ${profile.settings.strength === "friendly" ? "selected" : ""}>Friendly</option><option value="club" ${profile.settings.strength === "club" ? "selected" : ""}>Club</option><option value="challenge" ${profile.settings.strength === "challenge" ? "selected" : ""}>Challenge</option></select></label><div class="practice-cards"><article><div class="practice-preview">${miniBoard(profile.session?.puzzle?.startFen || "4r1k1/pp3ppp/2p2n2/3p4/3P4/2PB1N2/PP3PPP/4R1K1 w - - 0 1")}</div><h2>Position game</h2>${profile.session?.puzzle ? btn("Play this position", "position:" + profile.session.puzzle.id, "primary") : btn("Explore a lesson first", "path", "primary")}</article><article><div class="practice-preview">${miniBoard()}</div><h2>Full game</h2><div>${profile.settings.strength === "friendly" ? btn(`Play ${esc(profile.match?.opponent || "Rook")} ➜`, "match", "primary") : btn("Play White", "full:w", "primary") + btn("Play Black", "full:b")}</div></article></div>${profile.game ? `<div class="resume-strip"><span>${profile.game.result || "Your practice game is saved."}</span>${btn("Return to board →", "game", "primary")}</div>` : ""}<p class="fine-print">The opponent runs locally with Stockfish. These strength settings are practice choices, not a measurement of your rating.</p></section>`;
   }
   function gameView() {
     const g = profile.game;
@@ -574,7 +574,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
   }
   // ---- Full games against the coach ----
   const sideName = (c) => (c === "w" ? "White" : "Black");
-  const REASON = { checkmate: "checkmate", resign: "resigned", stalemate: "stalemate", repetition: "repetition", insufficient: "not enough pieces", fifty: "50 quiet moves", limit: "long game" };
+  const REASON = { checkmate: "checkmate", resign: "resigned", stalemate: "stalemate", repetition: "repetition", insufficient: "not enough pieces", fifty: "50 quiet moves", limit: "long game", abandoned: "left unfinished" };
   function matchTitle(g, name) {
     const r = g.result;
     if (r.kind === "win") return r.reason === "checkmate" ? "Checkmate! You won!" : "You won!";
@@ -587,7 +587,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
   }
   function matchLobby() {
     const M = profile.match, name = esc(M.opponent);
-    return `<section class="match-lobby"><div class="match-hero">${coach("happy")}<div><span class="ac-eyebrow">A REAL GAME</span><h1>Play ${name}</h1><p>A whole game, start to finish.</p></div></div><div class="match-stats"><div><small>Your rating</small><strong>${M.rating}</strong></div><div><small>Wins</small><strong>${M.record.win}</strong></div><div><small>Losses</small><strong>${M.record.loss}</strong></div><div><small>Draws</small><strong>${M.record.draw}</strong></div></div><div class="match-play">${btn("Play ➜", "match-start", "primary large")}<p>You play <strong>${sideName(M.nextSide)}</strong> this game.</p></div>${M.history.length ? `<section class="recent-lessons"><h2>Recent games</h2>${M.history.slice().reverse().map((h) => `<div><span>${h.kind === "win" ? "Won" : h.kind === "loss" ? "Lost" : "Draw"} · ${sideName(h.side)} · ${esc(REASON[h.reason] || "")}</span><strong>${h.ratingAfter}${h.ratingAfter > h.ratingBefore ? " ▲" : h.ratingAfter < h.ratingBefore ? " ▼" : ""}</strong></div>`).join("")}</section>` : ""}<p class="fine-print">${name} plays on this computer and adjusts after each game: a little harder after you win, a little easier after you lose.</p></section>`;
+    return `<section class="match-lobby"><div class="match-hero">${coach("happy")}<div><span class="ac-eyebrow">A REAL GAME</span><h1>Play ${name}</h1><p>A whole game, start to finish.</p></div></div><div class="match-stats"><div><small>Your rating</small><strong>${M.rating}</strong></div><div><small>Wins</small><strong>${M.record.win}</strong></div><div><small>Losses</small><strong>${M.record.loss}</strong></div><div><small>Draws</small><strong>${M.record.draw}</strong></div></div><div class="match-play">${btn("Play ➜", "match-start", "primary large")}<p>You play <strong>${sideName(M.nextSide)}</strong> this game.</p></div>${M.history.length ? `<section class="recent-lessons"><h2>Recent games</h2>${M.history.slice().reverse().map((h) => `<div><span>${h.kind === "win" ? "Won" : h.kind === "loss" ? "Lost" : "Draw"} · ${sideName(h.side)} · ${esc(REASON[h.reason] || "")}</span><strong>${h.ratingAfter}${h.ratingAfter > h.ratingBefore ? " ▲" : h.ratingAfter < h.ratingBefore ? " ▼" : ""}</strong></div>`).join("")}</section>` : ""}<p class="match-more">${btn("Position practice and stronger opponents", "practice", "text")}</p><p class="fine-print">${name} plays on this computer and adjusts after each game: a little harder after you win, a little easier after you lose.</p></section>`;
   }
   function matchView() {
     const M = profile.match, g = M?.game;
@@ -751,8 +751,9 @@ export function mountChess(root, { player, name, event = () => {} }) {
             return;
           }
           if (["match-hint", "match-undo"].includes(action)) { await send(action); return; }
-          if (["path", "play", "notebook", "game", "match"].includes(action)) {
-            view = action;
+          if (["path", "play", "notebook", "game", "match", "practice"].includes(action)) {
+            // At the easiest level, Practice games opens the adaptive full game first.
+            view = action === "practice" ? "play" : action === "play" && profile.settings.strength === "friendly" ? "match" : action;
             utterance();
             render();
             if (view === "path") scrollPath();

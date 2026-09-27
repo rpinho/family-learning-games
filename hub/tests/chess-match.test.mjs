@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { Chess } from "../public/chess/rules.mjs";
 import { freshChess, actChess, publicChess } from "../chess-state.mjs";
-import { chooseCoachMove, nextRating, coachStyle, resultOf, hintIdea, matchBoard, pickMoment, RATING_MIN, RATING_MAX } from "../chess-match.mjs";
+import { chooseCoachMove, nextRating, coachStyle, resultOf, hintIdea, matchBoard, pickMoment, coachChoice, mateInOne, RATING_MIN, RATING_MAX } from "../chess-match.mjs";
 import { MATCH_VOICE, matchVoiceLines } from "../public/chess/match-voice.mjs";
 import { wordBreakLines } from "../public/word-break.mjs";
 import { LocalEngine } from "../stockfish.mjs";
@@ -72,7 +72,7 @@ test("Checkmate wins and losses finish the game, move the rating and alternate c
   const lost = await move(p, "g7g5", { engine: fakeEngine(["d1h5"]), settings: strong });
   assert.equal(lost.result, "loss");
   assert.equal(p.match.game.react.kind, "meWin");
-  assert.equal(p.match.rating, 700);
+  assert.equal(p.match.rating, 680, "a loss drops faster than a win climbs");
   await act(p, "match-ack");
   await act(p, "match-start", {}, { engine: fakeEngine(), settings: strong });
   assert.equal(p.match.game.side, "w", "colours alternate every game");
@@ -208,7 +208,8 @@ test("The coach's move choice: gentle ratings slip more, strong ratings play the
 
 test("Rating goes up after a win and down after a loss, so wins settle near half", () => {
   assert.equal(nextRating(600, 1, [], 0), 640);
-  assert.equal(nextRating(600, 0, [], 0), 560);
+  assert.equal(nextRating(600, 0, [], 0), 540);
+  assert.equal(nextRating(600, 0, [], 9), 565);
   assert.equal(nextRating(600, 0.5, [], 9), 600);
   assert.equal(nextRating(600, 1, [1, 1], 9), 638, "streaks move faster");
   assert.equal(nextRating(RATING_MIN, 0, [], 9), RATING_MIN);
@@ -224,7 +225,7 @@ test("Rating goes up after a win and down after a loss, so wins settle near half
       rating = nextRating(rating, win, history, gno);
       history.push(win);
     }
-    assert.ok(Math.abs(wins / 300 - 0.5) < 0.1, `skill ${skill}: won ${wins}/300`);
+    assert.ok(wins / 300 > 0.5 && wins / 300 < 0.7, `skill ${skill}: won ${wins}/300`);
   }
 });
 
@@ -256,4 +257,46 @@ test("A full game against the real local engine ends properly", { timeout: 12000
   assert.ok(matchBoard(g).isCheckmate());
   assert.ok(g.recap?.moment?.fen);
   assert.ok(p.match.rating < 1800);
+});
+
+const SCHOLAR = "r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 3 3";
+test("Rookie trap: a gentle coach usually falls for the Scholar's Mate; a strong one defends", async () => {
+  let seed = 3;
+  const rng = () => ((seed = (seed * 48271) % 2147483647) / 2147483647);
+  let fell = 0;
+  for (let i = 0; i < 200; i++) {
+    const { choice } = await coachChoice(new Chess(SCHOLAR), 300, fakeEngine(["g7g6"]), rng);
+    const after = new Chess(SCHOLAR);
+    after.move({ from: choice.uci.slice(0, 2), to: choice.uci.slice(2, 4) });
+    if (mateInOne(after).length) fell++;
+  }
+  assert.ok(fell > 130 && fell < 190, `fell ${fell}/200 at 300`);
+  for (let i = 0; i < 50; i++) assert.equal((await coachChoice(new Chess(SCHOLAR), 1800, fakeEngine(["g7g6"]), rng)).choice.uci, "g7g6");
+});
+
+test("Pulling off the Scholar's Mate gets its own reaction", async () => {
+  const p = freshChess(), low = { matchRating: 300 }, fall = { engine: fakeEngine(), settings: low, rng: () => 0.1 };
+  await act(p, "match-start", {}, fall);
+  await move(p, "e2e4", { ...fall, engine: fakeEngine(["e7e5"]), rng: () => 0.99 });
+  await move(p, "f1c4", { ...fall, engine: fakeEngine(["b8c6"]), rng: () => 0.99 });
+  await move(p, "d1h5", fall);
+  const r = await move(p, "h5f7", fall);
+  assert.equal(r.result, "win");
+  assert.equal(p.match.game.react.kind, "scholar");
+  assert.match(p.match.game.react.line, /Scholar's Mate/);
+  assert.ok(spoken.has(p.match.game.react.line));
+});
+
+test("Friendly practice plays like the adaptive coach, and a Friendly full game left unfinished counts as a loss", async () => {
+  const p = freshChess(), settings = { matchRating: 300 };
+  p.settings.strength = "friendly";
+  await act(p, "game-start", { side: "w" }, { engine: fakeEngine(), settings });
+  await act(p, "game-move", { from: "e2", to: "e4" }, { engine: fakeEngine(["e7e5"]), settings });
+  await act(p, "game-move", { from: "f1", to: "c4" }, { engine: fakeEngine(["b8c6"]), settings });
+  await act(p, "game-move", { from: "d1", to: "h5" }, { engine: fakeEngine(["g7g6"]), settings, rng: () => 0.1 });
+  const b = new Chess(p.game.fen);
+  assert.ok(mateInOne(b).some((m) => m.to === "f7"), "the friendly coach fell for the trap");
+  await act(p, "game-start", { side: "w" }, { engine: fakeEngine(), settings });
+  assert.equal(p.match.rating, 240);
+  assert.equal(p.match.history.at(-1).reason, "abandoned");
 });
