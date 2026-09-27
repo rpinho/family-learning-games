@@ -30,21 +30,33 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  let canListen=false;void listenAvailable().then(v=>{canListen=v;});void checkMic();
  // ---- sound: one element, reused (unlocked by the first tap on the cover) ----
  const audio=new Audio();audio.preload='auto';let current=null;
- function deviceSpeak(text){return new Promise(res=>{try{const u=new SpeechSynthesisUtterance(text);u.rate=.92;u.onend=u.onerror=()=>res();speechSynthesis.speak(u);setTimeout(res,Math.max(2500,text.length*85));}catch{res();}});}
- function stopSound(){try{audio.pause();}catch{}try{speechSynthesis.cancel();}catch{}current?.();current=null;}
+ // Every line is spoken by its own clip, made by the household's voice engine. A line with no clip is rendered by
+ // the server now (and kept); if that fails, or the clip cannot play, the words show on screen and the book stays
+ // silent. The device's own (robotic) voice is never used.
+ const words=document.createElement('div');words.className='bk-words';words.hidden=true;root.append(words);
+ function showWords(text,ms){words.textContent=String(text).replace(/\[\[[^\]]*\]\]/g,'').replace(/\s+/g,' ').trim();words.hidden=false;clearTimeout(showWords.t);showWords.t=setTimeout(()=>{words.hidden=true;},ms);}
+ async function renderClip(line){if(line.clip||line.noClip)return line.clip||null;
+  try{const r=await fetch('/api/book/voice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({player,date,text:line.text,voice:line.voice,speed:line.speed})});const j=r.ok?await r.json():null;if(j?.clip)line.clip=j.clip;else line.noClip=true;}catch{line.noClip=true;}
+  return line.clip||null;}
+ function stopSound(){try{audio.pause();}catch{}current?.();current=null;}
+ let lastLine=null,lastAt=0;
  function speak(line){
-  return new Promise(resolve=>{
+  return new Promise(async resolve=>{
    if(!alive||!line?.text)return resolve();
-   stopSound();let done=false;const my=turn;
+   // The same line asked for again while it is still starting is one trigger, not two: it is said once.
+   if(line===lastLine&&Date.now()-lastAt<1500)return resolve();lastLine=line;lastAt=Date.now();
+   stopSound();let done=false;const my=turn,est=Math.max(1500,line.text.length*70);
    const fin=()=>{if(done)return;done=true;clearTimeout(t);talking(null);if(current===fin)current=null;resolve();};
    current=fin;talking(line.who);
    const t=setTimeout(fin,Math.max(4000,line.text.length*140));
-   if(!line.clip){deviceSpeak(line.text).then(fin);return;}
-   audio.onended=fin;audio.onerror=()=>{if(!done){audit.push({clip:line.clip,page,ok:false,err:'load'});deviceSpeak(line.text).then(fin);}};
+   const silent=why=>{if(done)return;audit.push({clip:line.clip||null,page,turn:my,ok:false,err:why});showWords(line.text,est);setTimeout(fin,est);};
+   if(!line.clip&&!await renderClip(line))return silent('no-clip');
+   if(done)return;
+   audio.onended=fin;audio.onerror=()=>silent('load');
    audio.src='/book-voice/'+line.clip;
    let p;try{p=audio.play();}catch(e){p=Promise.reject(e);}
-   // Interrupted by the next line (AbortError) just ends this one; only a refusal falls back to the device voice.
-   Promise.resolve(p).then(()=>audit.push({clip:line.clip,page,turn:my,ok:true,at:Date.now()}),e=>{const err=String(e?.name||e);audit.push({clip:line.clip,page,turn:my,ok:false,err});if(done)return;if(err==='AbortError')fin();else deviceSpeak(line.text).then(fin);});
+   // Interrupted by the next line (AbortError) just ends this one; a refusal shows the words, silently.
+   Promise.resolve(p).then(()=>audit.push({clip:line.clip,page,turn:my,ok:true,at:Date.now()}),e=>{const err=String(e?.name||e);if(done)return;if(err==='AbortError'){audit.push({clip:line.clip,page,turn:my,ok:false,err});fin();}else silent(err);});
   });
  }
  // A short breath between lines, like a person reading aloud.
@@ -173,7 +185,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  function goalRect(p){const g=art.backgrounds[p.scene.bg]?.goal||[0.38,0.3,0.24,0.17];const img=view.querySelector('.bk-page:last-child .bk-bg');
   const W=root.clientWidth,H=root.clientHeight,nw=img?.naturalWidth||1600,nh=img?.naturalHeight||1067,k=Math.max(W/nw,H/nh),dw=nw*k,dh=nh*k,ox=(W-dw)/2,oy=(H-dh)/2;
   return {x:ox+g[0]*dw,y:oy+g[1]*dh,w:g[2]*dw,h:g[3]*dh,drawn:!!art.backgrounds[p.scene.bg]?.goal};}
- function ballEl(el,{x,y,size,label}){const B=art.props.ball;const b=document.createElement('button');b.type='button';b.className='bk-ball';b.style.cssText=`left:${x-size/2}px;top:${y-size/2}px;width:${size}px;height:${size}px`;
+ function ballEl(el,{x,y,size,label}){const B=art.props.ball;const b=document.createElement('button');b.type='button';b.className='bk-ball';b.style.cssText=`left:${x-size/2}px;top:${y-size/2}px;width:${size}px;height:${size}px;--s:${size}px`;
   b.innerHTML=`${B?`<img src="${esc(B.url)}" alt="">`:'<span>⚽</span>'}${label?`<b>${esc(label)}</b>`:''}`;el.append(b);return b;}
  function flyTo(node,to,{ms=700,spin=720,scale=0.4,arc=0}={}){const f=rectOf(node),dx=to.x-(f.x+f.w/2),dy=to.y-(f.y+f.h/2);
   const anim=node.animate([{transform:'translate(0,0) rotate(0) scale(1)'},{transform:`translate(${dx/2}px,${dy/2-arc}px) rotate(${spin/2}deg) scale(${(1+scale)/2})`,offset:.5},{transform:`translate(${dx}px,${dy}px) rotate(${spin}deg) scale(${scale})`}],{duration:matchMedia('(prefers-reduced-motion: reduce)').matches?1:ms,easing:'cubic-bezier(.2,.7,.3,1)',fill:'forwards'});return anim.finished.catch(()=>{});}
@@ -224,9 +236,12 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  // ---- telemetry: what he did on each beat (taps with time and correctness, hints, replays, the microphone) ----
  let tele=null,pageShownAt=Date.now();
  function teleStart(kind,{target=null,options=null}={}){tele={kind,target:target==null?null:String(target).slice(0,24),options:options?options.map(String).slice(0,8):null,shownAt:Date.now(),firstTap:null,taps:[],hint:0,replays:0,mic:[]};}
- function teleTap(v,ok){if(!tele)return;const t=Date.now()-tele.shownAt;if(tele.firstTap==null)tele.firstTap=t;tele.taps.push([String(v).slice(0,12),ok?1:0,t]);if(tele.taps.length>40)tele.taps.shift();}
+ function teleTap(v,ok){if(!tele)return;const t=Date.now()-(tele.readyAt||tele.shownAt);if(tele.firstTap==null)tele.firstTap=t;tele.taps.push([String(v).slice(0,12),ok?1:0,t]);if(tele.taps.length>40)tele.taps.shift();}
  function teleHint(l){if(tele)tele.hint=Math.max(tele.hint,l);}
  function teleOut(){if(!tele)return null;const d={target:tele.target,options:tele.options,taps:tele.taps,firstTap:tele.firstTap,hint:tele.hint,replays:tele.replays,mic:tele.mic};tele=null;return d;}
+ // Per beat, for grown-ups: how many tries, whether the first was right, and how fast (under 1.5 s after the
+ // choices appear is a guess, not reading).
+ const GUESS_MS=1500;const teleSummary=d=>d&&d.taps.length?{attempts:d.taps.length,correct:d.taps[0][1]===1,firstTapMs:d.firstTap,guess:d.firstTap!=null&&d.firstTap<GUESS_MS}:{};
  // ---- trace the letter: he draws over the big letter with a finger; most of its ink touched = drawn ----
  // (never stuck: three taps without tracing, or the nudges running out, also move on)
  function traceLetter(g,letter,my){return new Promise(res=>{
@@ -309,16 +324,18 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   });
  }
  function finishBeat(p,my,result){
-  if(!preview){void post(player,{type:'result',date,page,result:{kind:p.beat.kind,beat:p.beat.id||null,misses:result.misses||0,ms:result.ms||0,...(result.via?{via:result.via}:{}),...(result.earned?{earned:result.earned}:{}),detail:teleOut()}});event('book_beat',`${p.beat.kind}:${result.misses||0}`);}
+  if(!preview){const detail=teleOut();void post(player,{type:'result',date,page,result:{kind:p.beat.kind,beat:p.beat.id||null,misses:result.misses||0,ms:result.ms||0,...(result.via?{via:result.via}:{}),...(result.earned?{earned:result.earned}:{}),...teleSummary(detail),detail}});event('book_beat',`${p.beat.kind}:${result.misses||0}`);}
   setNext(true);later(()=>{if(my===turn&&canNext)go(page+1);},1600);
  }
  // Buttons with the usual rules: wrong wiggles and says try again; two misses glow the right one.
- function choices(play,values,{cls='',answer,onRight,onWrong,label=v=>v,spokenWrong,prompt,my}){
-  play.innerHTML='';let misses=0,done=false,repeats=0;
+ // before(v): something to say first on every tap (a friend sounds out the tapped word), right or wrong.
+ function choices(play,values,{cls='',answer,onRight,onWrong,label=v=>v,spokenWrong,prompt,my,before=null}){
+  play.innerHTML='';let misses=0,done=false,repeats=0,busy=false;if(tele)tele.readyAt=Date.now();
   const nudge=()=>later(()=>{if(done||my!==turn||repeats>=IDLE_REPEATS)return;repeats++;void speak(prompt);nudge();},IDLE_REPEAT_MS);nudge();
   for(const v of values){const b=document.createElement('button');b.type='button';b.className=`bk-btn ${cls}`;b.textContent=label(v);b.dataset.v=v;
-   b.onclick=()=>{if(done||my!==turn)return;
+   b.onclick=async()=>{if(done||busy||my!==turn)return;
     teleTap(v,String(v)===String(answer));
+    if(before){busy=true;b.classList.add('pressed');await before(v);b.classList.remove('pressed');busy=false;if(done||my!==turn)return;}
     if(String(v)===String(answer)){done=true;b.classList.add('right');onRight(misses);return;}
     misses++;b.classList.remove('wiggle');void b.offsetWidth;b.classList.add('wiggle');onWrong?.(misses);
     if(misses>=2){teleHint(2);play.querySelector(`[data-v="${CSS.escape(String(answer))}"]`)?.classList.add('glow');void speak(prompt);}else void speak(spokenWrong||ch.ui.tryAgain);};
@@ -361,9 +378,10 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
    case 'kick-letter':{
     const g=goalRect(p);goalFrame(el,g);placeKeeper(el,p,g);
     await speak(b.spoken);if(my!==turn)return;
-    const W=root.clientWidth,H=root.clientHeight,size=Math.max(64,Math.min(W,H)*0.17);let misses=0,done_=false,repeats=0;
+    // Big balls on a phone: the letter on each is flat, solid and at least 12% of the short side tall.
+    const W=root.clientWidth,H=root.clientHeight,size=Math.max(84,Math.min(W,H)*0.25);let misses=0,done_=false,repeats=0;
     const nudge=()=>later(()=>{if(done_||my!==turn||repeats>=IDLE_REPEATS)return;repeats++;void speak(b.spoken);nudge();},IDLE_REPEAT_MS);nudge();
-    const balls=b.balls.map((l,i)=>{const x=W*(0.5+(i-(b.balls.length-1)/2)*Math.min(0.26,0.8/b.balls.length)),bl=ballEl(el,{x,y:H*0.8,size,label:l});bl.dataset.v=l;return bl;});
+    const balls=b.balls.map((l,i)=>{const x=W*(0.5+(i-(b.balls.length-1)/2)*Math.max(Math.min(0.26,0.8/b.balls.length),(size+14)/W)),bl=ballEl(el,{x,y:H*0.8,size,label:l});bl.dataset.v=l;return bl;});
     await new Promise(res=>{for(const bl of balls){let st=null;
      bl.onpointerdown=e=>{st={x:e.clientX,y:e.clientY};};
      bl.onpointerup=async e=>{if(done_||my!==turn)return;teleTap(bl.dataset.v,bl.dataset.v===b.letter);const aim={dx:st?e.clientX-st.x:0,dy:st?e.clientY-st.y:0};st=null;
@@ -387,14 +405,16 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
     return;}
    case 'signs':{
     await speak(b.spoken);if(my!==turn)return;
-    choices(play,b.options,{cls:'sign word',answer:b.target,prompt:b.spoken,spokenWrong:b.notIt,my,onRight:async m=>{burst('sparkles');cheer();await speak(b.done);if(my===turn)done({misses:m});}});
+    choices(play,b.options,{cls:'sign word',answer:b.target,prompt:b.spoken,spokenWrong:b.notIt,my,before:b.sounds?v=>speak(b.sounds[String(v).toLowerCase()]):null,onRight:async m=>{burst('sparkles');cheer();await speak(b.done);if(my===turn)done({misses:m});}});
     return;}
    case 'spell':{
     await speak(b.spoken);if(my!==turn)return;
     const slots=document.createElement('div');slots.className='bk-slots';slots.innerHTML=b.answer.map(()=>'<span>&nbsp;</span>').join('')+`<em>${esc(b.mark)}</em>`;el.append(slots);
-    play.innerHTML='';let step=0,misses=0,here=0;
+    play.innerHTML='';let step=0,misses=0,here=0;if(tele)tele.readyAt=Date.now();
     for(const w of b.tiles){const t=document.createElement('button');t.type='button';t.className='bk-btn word';t.textContent=w;
-     t.onclick=async()=>{if(step>=b.answer.length||t.classList.contains('used')||my!==turn)return;teleTap(w,w===b.answer[step]);
+     t.onclick=async()=>{if(step>=b.answer.length||t.classList.contains('used')||my!==turn||t.dataset.busy)return;teleTap(w,w===b.answer[step]);
+      // A decodable word is sounded out as he taps it (right or wrong), so a tap is always reading practice.
+      const so=b.sounds?.[w.toLowerCase()];if(so){t.dataset.busy='1';await speak(so);delete t.dataset.busy;if(my!==turn||step>=b.answer.length)return;}
       if(w!==b.answer[step]){misses++;here++;t.classList.remove('wiggle');void t.offsetWidth;t.classList.add('wiggle');void speak(ch.ui.tryAgain);
        if(here>=2)[...play.children].find(x=>x.textContent===b.answer[step]&&!x.classList.contains('used'))?.classList.add('glow');return;}
       t.classList.add('used');[...play.children].forEach(x=>x.classList.remove('glow'));slots.children[step].textContent=w;step++;here=0;

@@ -10,6 +10,7 @@ import {spawn} from 'node:child_process';
 import {mkdtemp,readFile,writeFile,mkdir,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+import {NO_DEVICE_VOICE} from './no-device-voice.mjs';
 const args=process.argv.slice(2),arg=(k,d=null)=>{const i=args.indexOf(k);return i>=0?args[i+1]:d;};
 const base=arg('--base','http://127.0.0.1:4810'),players=String(arg('--player','')).split(',').filter(Boolean),shots=arg('--shots'),uiWait=Number(arg('--ui-wait','0'));
 const sizes=String(arg('--sizes','390x844m,1366x768')).split(',').map(s=>{const m=s.match(/^(\d+)x(\d+)(m?)$/);return {W:+m[1],H:+m[2],mobile:!!m[3],label:m[3]?'phone':s==='1366x768'?'chromebook':s};});
@@ -52,7 +53,7 @@ for(const size of sizes){
   const send=(method,params={})=>new Promise((ok,no)=>{const id=++seq;waiting.set(id,{ok,no});ws.send(JSON.stringify({id,method,params}));setTimeout(()=>{if(waiting.delete(id))no(Error(method+' timed out'));},30000);});
   const js=async e=>{const r=await send('Runtime.evaluate',{expression:e,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.exception?.description||'eval failed');return r.result.value;};
   const until=async(e,ms)=>{const t=Date.now();while(Date.now()-t<ms){if(await js(e))return true;await sleep(150);}return false;};
-  await send('Page.enable');await send('Runtime.enable');
+  await send('Page.enable');await send('Runtime.enable');await send('Page.addScriptToEvaluateOnNewDocument',{source:NO_DEVICE_VOICE});
   await send('Emulation.setDeviceMetricsOverride',{width:size.W,height:size.H,deviceScaleFactor:size.mobile?2:1,mobile:size.mobile});
   for(const player of players){
    const ch=(await(await fetch(`${base}/api/book/preview?player=${encodeURIComponent(player)}`)).json()).chapter;if(!ch)throw Error('no chapter for '+player);

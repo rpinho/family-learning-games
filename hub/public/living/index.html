@@ -2,29 +2,82 @@
 <title>The Living Book</title><meta name="theme-color" content="#0b0a12">
 <style>
 [hidden]{display:none!important}
-html,body{margin:0;height:100%;background:#0b0a12;overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none;font-family:"Nunito","Trebuchet MS",system-ui,sans-serif}
-#stage{position:fixed;inset:0;width:100%;height:100%;display:block}
+html,body{margin:0;height:100%;background:#0b0a12;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;font-family:"Nunito","Trebuchet MS",system-ui,sans-serif;overscroll-behavior:none}
+#stage{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #overlay{position:fixed;inset:0;pointer-events:none}
-#title{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#2a2440,#0b0a12 70%);color:#f6ecd2;text-align:center;z-index:5}
+#title{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#2a2440,#0b0a12 70%);color:#f6ecd2;text-align:center;z-index:5;padding:16px}
 #title h1{font-family:Georgia,serif;font-weight:700;font-size:clamp(34px,8vmin,72px);margin:.1em 0;letter-spacing:.01em}
 #title p{margin:0 0 1.2em;opacity:.75;font-size:clamp(16px,3vmin,22px);letter-spacing:.2em;text-transform:uppercase}
-#begin{font:inherit;font-weight:900;font-size:clamp(22px,5vmin,34px);border:0;border-radius:999px;padding:.5em 1.4em;background:linear-gradient(#ffe9a8,#f0b848);color:#3a2200;cursor:pointer;box-shadow:0 0 0 0 rgba(255,210,120,.6);animation:glow 1.6s ease-in-out infinite}
+#begin{font:inherit;font-weight:900;font-size:clamp(24px,5.5vmin,36px);min-height:64px;border:0;border-radius:999px;padding:.5em 1.4em;background:linear-gradient(#ffe9a8,#f0b848);color:#3a2200;cursor:pointer;box-shadow:0 0 0 0 rgba(255,210,120,.6);animation:glow 1.6s ease-in-out infinite}
 @keyframes glow{50%{box-shadow:0 0 0 18px rgba(255,210,120,0)}}
-#no{position:fixed;right:max(20px,env(safe-area-inset-right));bottom:max(24px,env(safe-area-inset-bottom));font:inherit;font-weight:900;font-size:clamp(34px,9vmin,64px);padding:.1em .7em;border:0;border-radius:22px;background:linear-gradient(#ff8a6a,#d9442e);color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.25);box-shadow:0 8px 24px rgba(0,0,0,.4);pointer-events:auto;cursor:pointer;animation:glow 1.2s infinite}
+#turn{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:6;color:#f6ecd2;background:rgba(255,255,255,.1);border-radius:999px;padding:8px 16px;font-size:15px;white-space:nowrap}
+#turn i{display:inline-block;font-style:normal;animation:tilt 2.4s ease-in-out infinite}
+@keyframes tilt{0%,30%{transform:rotate(0)}60%,100%{transform:rotate(90deg)}}
+#no{position:fixed;right:max(18px,env(safe-area-inset-right));bottom:max(22px,env(safe-area-inset-bottom));font:inherit;font-weight:900;font-size:clamp(34px,9vmin,64px);min-width:110px;min-height:72px;padding:.1em .7em;border:0;border-radius:22px;background:linear-gradient(#ff8a6a,#d9442e);color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.25);box-shadow:0 8px 24px rgba(0,0,0,.4);pointer-events:auto;cursor:pointer;animation:glow 1.2s infinite;z-index:7}
 .ring{position:absolute;width:10px;height:10px;margin:-5px 0 0 -5px;border:3px solid rgba(255,240,190,.9);border-radius:50%;animation:ring .9s ease-out forwards}
 @keyframes ring{to{transform:scale(7);opacity:0}}
-#confetti i{position:fixed;top:45%;width:10px;height:14px;border-radius:2px;animation:conf 2.4s cubic-bezier(.2,.7,.3,1) forwards}
+#confetti i{position:fixed;top:45%;width:10px;height:14px;border-radius:2px;animation:conf 2.4s cubic-bezier(.2,.7,.3,1) forwards;z-index:8}
 @keyframes conf{to{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
-#debug{position:fixed;left:8px;bottom:6px;color:#fff;font:12px/1.2 ui-monospace,monospace;background:rgba(0,0,0,.45);padding:3px 6px;border-radius:6px}
+#debug{position:fixed;left:8px;bottom:6px;color:#fff;font:12px/1.2 ui-monospace,monospace;background:rgba(0,0,0,.45);padding:3px 6px;border-radius:6px;z-index:9}
+#debug:empty{display:none}
+#words{position:fixed;left:50%;top:max(12px,env(safe-area-inset-top));transform:translateX(-50%);max-width:min(720px,calc(100vw - 110px));background:rgba(20,16,30,.82);color:#fff7dc;font:800 clamp(18px,3.6vmin,28px)/1.3 "Nunito",Arial,sans-serif;padding:8px 16px;border-radius:14px;text-align:center;z-index:7;pointer-events:none}
 #fallback{position:fixed;inset:0;display:grid;place-items:center;color:#f6ecd2;text-align:center;padding:20px}
 #fallback a{color:#ffd98a}
-#exit{position:fixed;left:12px;top:12px;width:44px;height:44px;border-radius:50%;border:0;background:rgba(0,0,0,.35);color:#fff;font-size:22px;pointer-events:auto;cursor:pointer;z-index:6}
+#exit{position:fixed;left:max(10px,env(safe-area-inset-left));top:max(10px,env(safe-area-inset-top));width:56px;height:56px;border-radius:50%;border:0;background:rgba(0,0,0,.35);color:#fff;font-size:24px;pointer-events:auto;cursor:pointer;z-index:8}
+/* ---- the flat, readable layer over the 3D picture ---- */
+#ui{position:fixed;inset:0;pointer-events:none;z-index:4}
+#ui button,#ui .lv-card,#ui .lv-choices{pointer-events:auto}
+/* Everything he must read: solid badge, dark ink, sized from the screen's short side (cap height >= 12%). */
+.lv-read{display:inline-block;font-family:"Nunito","Arial Rounded MT Bold","Trebuchet MS",Arial,sans-serif;font-weight:900;line-height:1;letter-spacing:.05em;color:#1f1408;background:#fff7dc;border-radius:.2em;padding:.12em .26em .1em;font-size:max(17.5vmin,46px);box-shadow:0 .06em 0 rgba(0,0,0,.25),0 8px 22px rgba(0,0,0,.35)}
+.lv-letter{min-width:.9em;text-align:center}
+.lv-choices.lv-board{position:absolute;left:50%;transform:translateX(-50%);bottom:max(12px,env(safe-area-inset-bottom));display:flex;flex-wrap:wrap;gap:max(2vmin,10px);align-items:center;justify-content:center;background:#223126;border:6px solid #8a5a2b;border-radius:20px;padding:max(1.6vmin,8px) max(3vmin,12px);max-width:calc(100vw - 24px);box-sizing:border-box;box-shadow:0 14px 40px rgba(0,0,0,.45)}
+body.tall .lv-choices.lv-board{flex-direction:column;flex-wrap:nowrap;bottom:max(18px,env(safe-area-inset-bottom))}
+.lv-board-title{width:100%;text-align:center;color:#f6ecd2;font:800 max(2.6vmin,13px)/1.3 Georgia,serif;letter-spacing:.3em}
+.lv-opt{border:0;background:transparent;padding:6px;border-radius:24px;cursor:pointer;position:relative;min-width:72px;min-height:72px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.lv-opt.lv-anchored{position:absolute;left:0;top:0;padding:10px 10px 18px}
+.lv-opt.lv-anchored::after{content:"";position:absolute;left:50%;bottom:4px;width:0;height:0;margin-left:-10px;border:10px solid transparent;border-top-color:#fff7dc;border-bottom:0}
+.lv-opt.pressed .lv-read{transform:scale(.95)}
+.lv-opt.glow .lv-read,.lv-talk.glow .lv-read{animation:badgeglow 1s ease-in-out infinite}
+@keyframes badgeglow{0%,100%{box-shadow:0 0 0 0 rgba(255,220,80,.95),0 8px 22px rgba(0,0,0,.35)}50%{box-shadow:0 0 0 16px rgba(255,220,80,0),0 8px 22px rgba(0,0,0,.35)}}
+.lv-opt.right .lv-read,.lv-talk.read .lv-read{background:#c9f5b0}
+.lv-opt.wiggle,.soft-miss{animation:wiggle .45s ease}
+@keyframes wiggle{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.lv-opt.lv-anchored.wiggle{animation:none}
+.lv-talk{position:absolute;left:50%;top:max(9%,env(safe-area-inset-top));transform:translateX(-50%);border:0;background:transparent;cursor:pointer;padding:10px;display:flex;flex-direction:column;align-items:center;gap:6px;touch-action:manipulation}
+.lv-talk small{color:#fff7dc;font:900 max(2.8vmin,14px)/1 "Nunito",Arial,sans-serif;letter-spacing:.25em;text-transform:uppercase;text-shadow:0 2px 6px rgba(0,0,0,.6)}
+.lv-talk .lv-read{animation:badgeglow 1.4s ease-in-out infinite}
+.lv-mic-badge{position:absolute;right:-6px;top:-6px;font-size:max(4.6vmin,22px);background:#fff;border-radius:50%;width:1.7em;height:1.7em;display:grid;place-items:center;box-shadow:0 3px 10px rgba(0,0,0,.35);pointer-events:none}
+.lv-mic-badge:empty{display:none}
+.listening .lv-read{animation:none;box-shadow:0 0 0 calc(6px + var(--lvl,0)*26px) rgba(255,90,70,.55),0 8px 22px rgba(0,0,0,.35);transition:box-shadow .08s}
+.thinking .lv-mic-badge{animation:think .6s ease-in-out infinite alternate}
+@keyframes think{to{transform:scale(1.25)}}
+.lv-sign{position:absolute;left:0;top:0;pointer-events:none}
+.lv-sign .lv-read{font-size:max(15vmin,42px)}
+.lv-card{position:fixed;inset:0;background:rgba(20,26,40,.72);display:grid;place-items:center;padding:16px;z-index:9}
+.lv-card-in{background:#fffaf0;color:#2b2118;border-radius:24px;max-width:min(560px,92vw);padding:18px 20px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.4)}
+.lv-card-mic{font-size:clamp(48px,12vmin,90px);position:relative;display:inline-block}
+.lv-card-mic::after{content:"";position:absolute;left:-8%;right:-8%;top:48%;height:8px;background:#d9362b;border-radius:4px;transform:rotate(-35deg)}
+.lv-card h2{font-size:clamp(22px,5vmin,34px);margin:.2em 0 .4em}
+.lv-card .grown{font-size:14px;line-height:1.4;color:#5a4a3a;text-align:left}
+.lv-card-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+.lv-btn{font:900 clamp(20px,4.5vmin,30px) "Nunito",Arial,sans-serif;border:0;border-radius:999px;padding:.35em .9em;min-height:60px;background:linear-gradient(#ffe9a8,#f0b848);color:#3a2200;cursor:pointer}
+.lv-btn.ghost{background:#efe6d4}
+.lv-hint{position:fixed;left:50%;top:max(14px,env(safe-area-inset-top));transform:translateX(-50%);color:#f6ecd2;background:rgba(0,0,0,.45);border-radius:999px;padding:8px 16px;font-size:15px;transition:opacity .8s}
+.lv-hint.out{opacity:0}
+/* Steering: hold an arrow (or hold/drag anywhere on the picture); letting go stops him. */
+.lv-pad{position:absolute;left:max(14px,env(safe-area-inset-left));bottom:max(16px,env(safe-area-inset-bottom));width:204px;height:204px;display:grid;grid-template:repeat(3,68px)/repeat(3,68px);pointer-events:none}
+.lv-arrow{pointer-events:auto;border:0;border-radius:18px;background:rgba(255,247,220,.88);color:#3a2a10;font-size:28px;box-shadow:0 6px 16px rgba(0,0,0,.35);touch-action:none;cursor:pointer}
+.lv-arrow.held{background:#ffe07a;transform:scale(.94)}
+.lv-arrow.up{grid-area:1/2}.lv-arrow.left{grid-area:2/1}.lv-arrow.right{grid-area:2/3}.lv-arrow.down{grid-area:3/2}
+.lv-aim{position:fixed;inset:0;background:transparent;border:0;cursor:crosshair;touch-action:manipulation}
 </style></head><body>
-<canvas id="stage"></canvas><div id="overlay"></div><div id="confetti"></div>
+<canvas id="stage"></canvas><div id="overlay"></div><div id="ui"></div><div id="confetti"></div>
 <button id="exit" type="button" aria-label="Back" onclick="history.length>1?history.back():location.href='/'">✕</button>
 <div id="title"><div><p></p><h1></h1><button id="begin" type="button">▶ Begin</button></div></div>
+<div id="turn" hidden><i>📱</i> Turn your phone sideways for the widest view</div>
 <button id="no" type="button" hidden>NO!</button>
 <div id="fallback" hidden><div><h2>This moving book needs a newer browser.</h2><p><a href="/">Open the picture book instead</a></p></div></div>
+<div id="words" hidden aria-live="polite"></div>
 <div id="debug"></div>
 <script type="module" src="./player.mjs"></script>
 </body></html>

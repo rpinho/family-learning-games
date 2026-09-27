@@ -83,14 +83,19 @@ export async function pitch(ctx){
   // A 3D model of the toy when the household has one; otherwise its painted picture as a 2.5D puppet.
   if(id&&toys.has(id)&&!ctx.puppetsOnly){try{const t=await makeToy(L,{id,height:h*1.12,name:id});scene.add(t.root);return t;}catch(e){console.warn('toy',id,e);}}
   const a=art.actors[id];if(!a)return null;const pz={};for(const p of poses)if(a.poses[p])pz[p]=a.poses[p].url;const pu=await makePuppet(L,{poses:pz,height:h,kind,name:id});scene.add(pu.root);return pu;};
- const hero=await P(R.hero,1.3,'biped',['idle','kick','cheer','run']);hero.root.position.set(-2.5,0,2.4);
+ const hero=await P(R.hero,1.3,'biped',['idle','kick','cheer','run']);
  const flyer=await P(R.flyer,.95,'bird',['idle','fly']);flyer&&flyer.root.position.set(-30,9,-20);
- const friend=await P(R.friend,.95,'plush',['idle','happy']);friend&&friend.root.position.set(-3.8,0,0.6);
- const pet=await P(R.pet,.7,'quad',['idle','happy','run']);pet&&pet.root.position.set(2.8,0,1.8);
- const mom=R.grownup?await P(R.grownup,1.75,'biped',['idle','cheer','kneel']):null;mom&&mom.root.position.set(4.6,0,0.2);
+ const friend=await P(R.friend,.95,'plush',['idle','happy']);
+ const pet=await P(R.pet,.7,'quad',['idle','happy','run']);
+ const mom=R.grownup?await P(R.grownup,1.75,'biped',['idle','cheer','kneel']):null;
  const people=[hero,flyer,friend,pet,mom].filter(Boolean);
- // Balls with letters (he kicks the one that starts like the flyer).
- const balls=(ctx.story.balls||['D','B','P']).map((l,i)=>{const b=new THREE.Mesh(new THREE.SphereGeometry(.22,24,16),new THREE.MeshLambertMaterial({map:soccerTexture(l)}));b.position.set(-1.1+i*1.1,.22,3.4);b.rotation.y=-Math.PI/2;b.userData.letter=l;b.visible=false;scene.add(b);return b;});
+ // Where everyone stands: spread along the pitch on a wide screen; closer together on a tall one.
+ const FORM={wide:{hero:[-2.5,2.4],friend:[-3.8,.6],pet:[2.8,1.8],mom:[4.6,.2]},tall:{hero:[-1.9,4.3],friend:[-1.7,1.6],pet:[1.8,3.0],mom:[1.7,.6]}};let formation='wide';
+ function arrange(tall){formation=tall?'tall':'wide';const f=FORM[formation];for(const [k,p] of [['hero',hero],['friend',friend],['pet',pet],['mom',mom]])if(p){p.stop?.();p.root.position.set(f[k][0],0,f[k][1]);}}
+ // Balls: plain soccer balls in 3D; each one's letter is a flat, readable badge in the overlay above it.
+ const balls=[0,1,2].map(i=>{const b=new THREE.Mesh(new THREE.SphereGeometry(.24,24,16),new THREE.MeshLambertMaterial({map:soccerTexture(null)}));b.rotation.y=-Math.PI/2;b.visible=false;scene.add(b);return b;});
+ function relabel(letters){balls.forEach((b,i)=>{b.userData.letter=letters[i];b.visible=i<letters.length;b.position.set(-1.25+i*1.25,.24,3.3);});}
+ relabel(ctx.story.balls||['D','B','P']);balls.forEach(b=>b.visible=false);
  const sun=new THREE.DirectionalLight('#fff0d0',2.2);sun.position.set(10,12,6);scene.add(sun);scene.add(new THREE.HemisphereLight('#bfe0ff','#6a8a3a',1.2));
  let t=0;
  function update(time,dt){t=time;S.userData.u.uTime.value=t;L.uTime.value=t;netU.uTime.value=t;for(const p of [seeds,flies])p.userData.u.uTime.value=t;
@@ -103,13 +108,39 @@ export async function pitch(ctx){
   await new Promise(res=>{const f=()=>{const k=easeInOut(clamp((performance.now()-t0)/ms));const p=a.clone().multiplyScalar((1-k)*(1-k)).add(c.clone().multiplyScalar(2*k*(1-k))).add(b.clone().multiplyScalar(k*k));flyer.root.position.copy(p);k<1?requestAnimationFrame(f):res();};f();});
   flyer.uniforms.uFlap.value=0;flyer.setPose('idle');flyer.hop(.12);host.sfx('squawk');}
  // The kick: the ball flies in an arc into the net (the net billows, confetti, everyone cheers).
- async function kick(ball,host){hero.setPose('run');await hero.walkTo([[ball.position.x-.55,0,ball.position.z+.25]],3.2);hero.setPose('kick');host.sfx('kick');const a=ball.position.clone(),b=new THREE.Vector3((Math.random()-.5)*2.6,.9,-7.3),t0=performance.now(),ms=900;
+ // aim: where in the goal (x across the mouth, y up); a random corner if not given.
+ async function kick(ball,host,aim=null){hero.setPose('run');await hero.walkTo([[ball.position.x-.55,0,ball.position.z+.25]],3.2);hero.setPose('kick');host.sfx('kick');const a=ball.position.clone(),b=aim?new THREE.Vector3(clamp(aim.x,-1.9,1.9),clamp(aim.y,.3,1.6),-7.1):new THREE.Vector3((Math.random()-.5)*2.6,.9,-7.3),t0=performance.now(),ms=900;
   await new Promise(res=>{const f=()=>{const k=clamp((performance.now()-t0)/ms);ball.position.lerpVectors(a,b,easeOut(k));ball.position.y=lerp(a.y,b.y,k)+Math.sin(k*Math.PI)*1.6;ball.rotation.x-=.35;k<1?requestAnimationFrame(f):res();};f();});
   netU.uHitAt.value.set(b.x+GW/2,b.y);netU.uHit.value=1;host.sfx('net');host.confetti?.();
   for(const p of people){if(p.poses.includes('cheer'))p.setPose('cheer');else if(p.poses.includes('happy'))p.setPose('happy');p.hop(.25);}
   if(flyer){flyer.uniforms.uFlap.value=1;setTimeout(()=>{flyer.uniforms.uFlap.value=0;},1400);}}
- return {scene,update,people,hero,flyer,friend,pet,mom,balls,kick,flyerArrives,goal:goalG,
-  shots:{leaves:{pos:[0,5.2,13],look:[0,2.6,-2],fov:38},reveal:{pos:[0,3.4,11.5],look:[0,1.2,-3],fov:40},
-   crossbar:{pos:[1.8,2.2,-2.4],look:[0,1.95,-6.4],fov:36},friends:{pos:[-.9,1.5,7.2],look:[-1.5,.85,1.4],fov:40},
-   kick:{pos:[.2,2,8.2],look:[-.2,.7,-2],fov:44},crane:{pos:[-2,9,14],look:[-6,5,-8],fov:44}}};
+ // Birdie in goal: he flies down onto the goal line, and dives (the wrong way, of course).
+ async function toGoal(host){if(!flyer)return;flyer.setPose('fly');const a=flyer.root.position.clone(),b=new THREE.Vector3(0,0,-6.2),t0=performance.now(),ms=1600;host.sfx('flap');
+  await new Promise(res=>{const f=()=>{const k=easeInOut(clamp((performance.now()-t0)/ms));flyer.root.position.lerpVectors(a,b,k);flyer.root.position.y=lerp(a.y,b.y,k)+Math.sin(k*Math.PI)*.8;k<1?requestAnimationFrame(f):res();};f();});flyer.setPose('idle');}
+ async function dive(dir){if(!flyer)return;flyer.setPose('fly');const a=flyer.root.position.clone(),b=new THREE.Vector3(dir*1.6,.35,-6.2),t0=performance.now(),ms=520;
+  await new Promise(res=>{const f=()=>{const k=easeOut(clamp((performance.now()-t0)/ms));flyer.root.position.lerpVectors(a,b,k);flyer.root.position.y=lerp(a.y,b.y,k)+Math.sin(k*Math.PI)*.6;k<1?requestAnimationFrame(f):res();};f();});setTimeout(()=>flyer.setPose('idle'),600);}
+ async function toBar(host){if(!flyer)return;flyer.setPose('fly');const a=flyer.root.position.clone(),b=new THREE.Vector3(0,1.95,-6.4),t0=performance.now(),ms=1400;host.sfx('flap');
+  await new Promise(res=>{const f=()=>{const k=easeInOut(clamp((performance.now()-t0)/ms));flyer.root.position.lerpVectors(a,b,k);flyer.root.position.y=lerp(a.y,b.y,k)+Math.sin(k*Math.PI)*.6;k<1?requestAnimationFrame(f):res();};f();});flyer.setPose('idle');flyer.hop(.1);}
+ // A penalty: one ball on the spot, him just behind it.
+ function penalty(){balls.forEach((b,i)=>{b.visible=i===0;});balls[0].position.set(0,.24,-1.6);hero.stop?.();hero.root.position.set(-.5,0,-.9);return balls[0];}
+ // The fetch: he throws the ball; the puppy runs, catches it and brings it back to him.
+ async function fetchBall(ball,host){if(!pet)return;hero.setPose('kick');host.sfx('kick');const a=ball.position.clone(),b=new THREE.Vector3(a.x+3.2,.24,a.z-4.2),t0=performance.now(),ms=1000;
+  await new Promise(res=>{const f=()=>{const k=clamp((performance.now()-t0)/ms);ball.position.lerpVectors(a,b,easeOut(k));ball.position.y=.24+Math.sin(k*Math.PI)*1.8;ball.rotation.x-=.3;k<1?requestAnimationFrame(f):res();};f();});
+  host.sfx('step');pet.setPose('run');await pet.walkTo([[b.x-.35,0,b.z+.1]],4.2);pet.setPose('happy');pet.hop(.25);
+  const back=[hero.root.position.x+.7,0,hero.root.position.z-.2];const carry=()=>{ball.position.set(pet.root.position.x+.3,.3,pet.root.position.z+.05);};let on=true;const loop=()=>{if(!on)return;carry();requestAnimationFrame(loop);};loop();
+  pet.setPose('run');await pet.walkTo([back],3.2);on=false;ball.position.set(back[0]+.35,.24,back[2]+.2);pet.setPose('happy');pet.hop(.3);host.sfx('sparkle');hero.setPose('cheer');}
+ // Anyone who has wandered comes back to their place, walking (never popping).
+ async function regroup(){const f=FORM[formation];await Promise.all([['hero',hero],['friend',friend],['pet',pet],['mom',mom]].map(([k,p])=>p?p.walkTo([[f[k][0],0,f[k][1]]],2.4):null));}
+ const up=new THREE.Vector3(0,.36,0);
+ return {scene,update,people,hero,flyer,friend,pet,mom,balls,kick,flyerArrives,goal:goalG,arrange,relabel,toGoal,toBar,dive,penalty,fetchBall,regroup,
+  ballTop:i=>()=>balls[i].visible?balls[i].position.clone().add(up):null,
+  // keep: what must stay in frame; tall: the same shot for an upright phone (closer to the action).
+  shots:{leaves:{pos:[0,5.2,13],look:[0,2.6,-2],fov:38},reveal:{pos:[0,3.4,11.5],look:[0,1.2,-3],fov:40,keep:['people','goal'],tall:{pos:[0,4.6,12.5],look:[0,.9,-1],fov:40}},
+   crossbar:{pos:[1.8,2.2,-2.4],look:[0,1.95,-6.4],fov:36,keep:['flyer']},friends:{pos:[-.9,1.5,7.2],look:[-1.5,.85,1.4],fov:40,keep:['hero','friend'],tall:{pos:[-1.5,2.2,8.6],look:[-1.8,.8,2.2],fov:40}},
+   kick:{pos:[.2,2,8.2],look:[-.2,.7,-2],fov:44,keep:['balls','hero'],tall:{pos:[-.2,2.6,9],look:[-.3,.5,1.2],fov:44}},
+   cheer:{pos:[.4,3,11.5],look:[0,1,0],fov:42,keep:['hero','friend','pet','mom'],tall:{pos:[0,4.4,11.5],look:[0,.8,1.2],fov:42}},
+   spot:{pos:[.25,1.45,2.6],look:[0,1.05,-6.4],fov:40,keep:['goal','hero'],tall:{pos:[.2,1.8,3.4],look:[0,.9,-6.4],fov:44}},
+   bar:{pos:[.6,1.9,-1.2],look:[0,1.9,-6.4],fov:38,keep:['flyer'],tall:{pos:[.4,2.1,-.3],look:[0,1.8,-6.4],fov:40}},
+   fetch:{pos:[1.2,3.2,10.5],look:[1.4,.6,0],fov:44,keep:['hero','pet','balls'],tall:{pos:[1,4.4,11],look:[1.2,.5,1],fov:44}},
+   crane:{pos:[-2,9,14],look:[-6,5,-8],fov:44}}};
 }

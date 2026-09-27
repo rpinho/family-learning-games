@@ -348,8 +348,25 @@ function refreshStagingData(name) {
   if (name === 'hub') stagingHubConfig();
   console.log(`staging data for ${name} refreshed from live saves`);
 }
+// Narration gate (hub): every line a child can hear in that channel's book data (living stories, chapters from
+// today on) must have its voice clip. A release whose gate script finds a missing clip is refused, and the missing
+// lines are logged; the players never fall back to the device's voice.
+function narrationGate(name, version, channel) {
+  if (name !== 'hub') return;
+  const script = join(releaseDir(name, version), 'hub', 'scripts', 'check-clips.mjs');
+  if (!existsSync(script)) return;
+  const book = channel === 'staging' ? join(ROOT, 'staging-data', 'book') : join(ROOT, 'book');
+  const r = spawnSync(process.execPath, [script, '--book', book, '--json'], {encoding: 'utf8'});
+  let out = null; try {out = JSON.parse(r.stdout);} catch {}
+  if (r.status !== 0) {
+    const list = (out?.missing || []).slice(0, 20).map(m => `${m.where} ${m.key}`).join('; ');
+    log(`REFUSED ${name} ${version} for ${channel}: ${out?.missing?.length ?? '?'} line(s) without a voice clip: ${list}`);
+    throw new Error(`${channel} refused: lines without a voice clip (${out?.missing?.length ?? 'unknown'}): ${list || r.stderr}`);
+  }
+}
 async function stage(name, ref, opts) {
   const version = await build(name, ref, opts);
+  narrationGate(name, version, 'staging');
   const release = lock('staging'); if (!release) die('another staging deploy is running; retry in a minute');
   try {
     if (!existsSync(dataDir(name, 'staging'))) refreshStagingData(name);
@@ -372,6 +389,7 @@ async function stage(name, ref, opts) {
 async function promote(name, ref, opts) {
   const version = await build(name, ref, opts);
   await check(name, version);
+  narrationGate(name, version, 'live');
   applyVoice(name, version, game(name).data, {dryRun: true});
   const q = {game: name, version, queuedAt: now(), by: process.env.USER || 'agent'};
   writeJSON(join(ROOT, 'queue', name + '.json'), q);

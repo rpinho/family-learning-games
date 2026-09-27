@@ -48,7 +48,9 @@ export async function station(ctx){
  const motes=particles({count:90,box:[[-14,14],[.8,4],[-3,4]],color:'#ffd9a0',size:.35,swirl:.5,additive:true,seed:3,opacity:.7});scene.add(motes);
  const flies=particles({count:50,box:[[-30,30],[.3,2.4],[-12,-4]],color:'#fff2a0',color2:'#c8ff9a',size:.55,swirl:1.2,additive:true,seed:17,opacity:0});scene.add(flies);
  // The departures board he reads.
- const dep=board(L,{lines:['1   FERN HOLLOW','2   MOONFERN MAZE','3   OLD QUARRY'],w:2.6,h:1.5,font:'700 54px Georgia, serif',px:640});
+ // The words on it are the story's (decodable words he can read); the flat, readable copy is the overlay's.
+ const rows=(ctx.story.board?.options||['cat','can','cap']).map((w,i)=>`${i+1}   ${String(w).toUpperCase()}`);
+ const dep=board(L,{lines:rows,w:2.6,h:1.5,font:'700 64px Georgia, serif',px:640});
  const depG=new THREE.Group();depG.add(dep);const post1=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,2.2,8),paint(L,{color:'#3a3330'}));post1.position.set(-1.1,-1.1,-.02);depG.add(post1);
  const post2=post1.clone();post2.position.x=1.1;depG.add(post2);depG.position.set(9.5,2.55,2.95);depG.scale.setScalar(.9);post1.visible=post2.visible=false;scene.add(depG);
  // The train, waiting far away in the valley.
@@ -58,12 +60,17 @@ export async function station(ctx){
   // A 3D model of the toy when the household has one; otherwise its painted picture as a 2.5D puppet.
   if(id&&toys.has(id)&&!ctx.puppetsOnly){try{const t=await makeToy(L,{id,height:h*1.12,name:id});scene.add(t.root);return t;}catch(e){console.warn('toy',id,e);}}
   const a=art.actors[id];if(!a)return null;const pz={};for(const p of poses)if(a.poses[p])pz[p]=a.poses[p].url;const pu=await makePuppet(L,{poses:pz,height:h,kind,name:id});scene.add(pu.root);return pu;};
- const hero=await P(R.hero,1.55,'biped',['idle','cheer','kick']);hero.root.position.set(-.2,.6,1.0);
- const guide=await P(R.guide,1.45,'plush',['idle','happy']);guide&&guide.root.position.set(1.1,.6,.7);
- const small=await P(R.small,.8,'plush',['idle','ball']);small&&small.root.position.set(-1.3,.6,1.5);
- const dad=R.grownup?await P(R.grownup,1.95,'biped',['idle','cheer','kneel']):null;dad&&dad.root.position.set(2.5,.6,1.3);
- const mom=R.grownup2?await P(R.grownup2,1.85,'biped',['idle','cheer','kneel','read']):null;mom&&mom.root.position.set(3.7,.6,1.7);
+ const hero=await P(R.hero,1.55,'biped',['idle','cheer','kick']);
+ const guide=await P(R.guide,1.45,'plush',['idle','happy']);
+ const small=await P(R.small,.8,'plush',['idle','ball']);
+ const dad=R.grownup?await P(R.grownup,1.95,'biped',['idle','cheer','kneel']):null;
+ const mom=R.grownup2?await P(R.grownup2,1.85,'biped',['idle','cheer','kneel','read']):null;
  const people=[hero,guide,small,dad,mom].filter(Boolean);
+ // Where everyone stands: in a line along the platform on a wide screen; on a tall one, the friends in front and
+ // the grown-ups a step behind (a high camera sees both rows without anyone hiding anyone).
+ const FORM={wide:{hero:[-.2,1.0],guide:[1.1,.7],small:[-1.3,1.5],dad:[2.5,1.3],mom:[3.7,1.7]},
+  tall:{hero:[0,1.95],guide:[1.1,1.75],small:[-.95,2.1],dad:[-.55,-1.05],mom:[.6,-1.2]}};
+ function arrange(tall){const f=FORM[tall?'tall':'wide'];for(const [k,p] of [['hero',hero],['guide',guide],['small',small],['dad',dad],['mom',mom]])if(p){p.stop?.();p.root.position.set(f[k][0],.6,f[k][1]);}}
  let t=0,trainX=-70,trainV=0,lampsOn=0,dusk=0;
  const LAMPS=L.uLamps.value;
  function update(time,dt){
@@ -84,17 +91,77 @@ export async function station(ctx){
  async function trainLeaves(){trainV=.5;await new Promise(r=>{const f=()=>{trainV=Math.min(8,trainV+.08);trainX>30?r():requestAnimationFrame(f);};f();});}
  return {scene,update,people,hero,guide,small,dad,mom,dep,depG,train,lampsWake,trainArrives,trainLeaves,
   
-  boardAnswer:1,
+  arrange,
+  // keep: what must stay in frame; tall: the same shot composed for an upright phone.
   shots:{
    sky:{pos:[-2,8,16],look:[-40,26,-160],fov:44},
-   crane:{pos:[1.5,2.3,9.5],look:[-.3,1.6,0],fov:40},
-   two:{pos:[.6,1.75,5.8],look:[.2,1.4,.8],fov:38},
-   board:{pos:[8.8,2.3,6.6],look:[9.4,2.45,2.95],fov:34},
+   crane:{pos:[1.5,2.3,9.5],look:[-.3,1.6,0],fov:40,keep:['people'],tall:{pos:[.3,5.2,10.5],look:[.1,.9,.6],fov:40}},
+   two:{pos:[.6,1.75,5.8],look:[.2,1.4,.8],fov:38,keep:['hero','guide','small'],tall:{pos:[.1,2.7,7.2],look:[.05,1.05,1.9],fov:38}},
+   board:{pos:[8.8,2.3,6.6],look:[9.4,2.45,2.95],fov:34,keep:['depG'],tall:{pos:[9.4,1.7,7.4],look:[9.45,2.2,2.95],fov:34}},
    low:{pos:[-1.6,1.05,-1.25],look:[-24,1.4,-3.6],fov:38},
-   wide:{pos:[5,3.2,12],look:[1,1.4,-2],fov:42},
+   wide:{pos:[5,3.2,12],look:[1,1.4,-2],fov:42,keep:['people'],tall:{pos:[.3,5.6,10],look:[.05,.9,.4],fov:42}},
+   aboard:{pos:[-2.5,2.4,8.5],look:[.5,1.3,-2.6],fov:40,keep:['train']},
    depart:{pos:[-6,2.2,7],look:[20,1.4,-3],fov:40}}};
 }
 
+// ---------------- the night ride: across the valley to a junction of three tracks ----------------
+// The train crosses the sleeping valley under the stars; at a junction three tracks fan out, each with a sign. The
+// words on the signs are the overlay's (flat and readable); the posts carry blank plates.
+export async function ride(ctx){
+ const {light,art,camera}=ctx;const L=light;const scene=new THREE.Scene();
+ L.uSunDir.value.set(-.3,.55,-.8).normalize();L.uSunColor.value.set('#c8d4ff');L.uSunPower.value=.75;L.uSky.value.set('#3a4690');L.uGround.value.set('#161c2c');L.uAmbient.value=.6;
+ L.uFogColor.value.set('#262d5c');L.uFogNear.value=35;L.uFogFar.value=200;L.uHazeHeight.value=.3;L.uLampColor.value.set('#ffae52');
+ const S=sky({top:'#070a22',mid:'#1a2458',horizon:'#4a4f94',sunColor:'#e8eeff',sunDir:[-.3,.55,-.8],stars:1,clouds:.35,sunSize:.02,glow:.7,moon:1,cloudColor:'#9aa6d8',cloudShade:'#222a58'});scene.add(S);
+ scene.add(ridge(L,{z:-170,width:760,height:60,base:-6,seed:3,color:'#2a2f66',rough:.4,fog:.5}));
+ scene.add(ridge(L,{z:-95,width:520,height:24,base:-3,seed:8,color:'#1c2448',rough:.6,trees:.5,fog:.3}));
+ scene.add(ground(L,{size:520,color:'#1f2c22',color2:'#34402c',noiseScale:.08,hills:1.2,seed:5}));
+ // A silver lake far off, catching the moon.
+ const lake=new THREE.Mesh(new THREE.CircleGeometry(1,48),paint(L,{color:'#34448a',color2:'#8f9fe0',noise:.6,noiseScale:.2,rim:0,top:0,ao:0,gloss:1.2,emissive:'#0c1230'}));lake.rotation.x=-Math.PI/2;lake.scale.set(40,18,1);lake.position.set(-30,.03,-48);scene.add(lake);
+ for(const [x,z,h,c] of [[-60,-18,7,4],[-35,-22,6,3.4],[-12,-16,8,4.4],[18,-24,7,4],[34,14,6,3.6],[-48,16,7,4]])scene.add(at(tree(L,{h,crown:c,color:'#1f3a2a',color2:'#3a5a3a',seed:x&255}),x,0,z));
+ scene.add(grass(L,{count:2200,area:[[-90,60],[-14,-2]],h:.45,base:'#1d2a1a',tip:'#3e5a34',tip2:'#6a6a44',seed:9}));
+ const flies=particles({count:70,box:[[-60,40],[.3,2.4],[-12,12]],color:'#fff2a0',color2:'#c8ff9a',size:.5,swirl:1.2,additive:true,seed:23,opacity:.9});scene.add(flies);
+ // Rails: the main line, then three tracks fanning out from the junction.
+ const railM=paint(L,{color:'#6a6a70',color2:'#8a8a90',noise:.2,rim:.4,gloss:.5}),sleeperM=paint(L,{color:'#3a2e24',color2:'#5a4634',noise:.8,noiseScale:2});
+ const JX=6,BR=[-9,0,9],LEN=40;
+ function track(x0,z0,x1,z1){const g=new THREE.Group(),dx=x1-x0,dz=z1-z0,len=Math.hypot(dx,dz),ang=-Math.atan2(dz,dx);
+  for(const off of [-.4,.4]){const r=new THREE.Mesh(new THREE.BoxGeometry(len,.08,.08),railM);r.position.set(len/2,.12,off);g.add(r);}
+  const n=Math.floor(len/1.2),sl=new THREE.InstancedMesh(new THREE.BoxGeometry(.25,.1,1.6),sleeperM,n);for(let i=0;i<n;i++)sl.setMatrixAt(i,new THREE.Matrix4().makeTranslation(.6+i*1.2,.05,0));g.add(sl);
+  g.position.set(x0,0,z0);g.rotation.y=ang;scene.add(g);return g;}
+ track(-160,0,JX,0);const branches=BR.map(z=>({end:new THREE.Vector3(JX+LEN,0,z*3.2)}));for(const b of branches)track(JX,0,b.end.x,b.end.z);
+ // The signs: one at the head of each track, a little to its left, facing the train.
+ const postM=paint(L,{color:'#4a3322',color2:'#6a4a30',noise:.6}),plateM=paint(L,{color:'#f2e2bc',color2:'#e0cc9a',noise:.3,rim:.3,emissive:'#2a2418'});
+ const signs=branches.map(b=>{const d=b.end.clone().sub(new THREE.Vector3(JX,0,0)).normalize(),p=new THREE.Vector3(JX,0,0).addScaledVector(d,8.5);p.z-=1.25;
+  const g=new THREE.Group();const post=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,2.1,8),postM);post.position.y=1.05;g.add(post);
+  const plate=new THREE.Mesh(new THREE.BoxGeometry(.12,.62,1.25),plateM);plate.position.y=2.05;g.add(plate);g.position.copy(p);scene.add(g);
+  const lamp=lampPost(L,{h:2.4});lamp.group.position.set(p.x-.5,0,p.z-.9);lamp.set(1);scene.add(lamp.group);
+  return {group:g,top:()=>g.localToWorld(new THREE.Vector3(0,2.45,0)),lamp};});
+ // The train, with everyone aboard (friends in the wagons, the conductor at the front of the first one).
+ const train=steamTrain(L,{wagons:2});train.setLight(1);scene.add(train.group);const puff=steam({count:70});scene.add(puff.points);
+ const R=ctx.cast.roles,toys=await toysAvailable(),P=async(id,h,kind,poses)=>{
+  if(id&&toys.has(id)&&!ctx.puppetsOnly){try{const t=await makeToy(L,{id,height:h*1.12,name:id});scene.add(t.root);return t;}catch(e){console.warn('toy',id,e);}}
+  const a=art.actors[id];if(!a)return null;const pz={};for(const p of poses)if(a.poses[p])pz[p]=a.poses[p].url;const pu=await makePuppet(L,{poses:pz,height:h,kind,name:id});scene.add(pu.root);return pu;};
+ const hero=await P(R.hero,1.0,'biped',['idle','cheer']),guide=await P(R.guide,.9,'plush',['idle','happy']),small=await P(R.small,.55,'plush',['idle','ball']);
+ const riders=[[hero,0,.45],[small,0,-.3],[guide,1,0]];const people=[hero,guide,small].filter(Boolean);
+ let x=-70,z=0,heading=0,v=0,target=-4.5,branch=null,t=0;
+ function pose(){train.group.position.set(x,0,z);train.group.rotation.y=heading;
+  for(const [p,car,off] of riders){if(!p)continue;const w=train.cars[car].localToWorld(new THREE.Vector3(off,.7,0));p.root.position.copy(w);}}
+ function update(time,dt){t=time;S.userData.u.uTime.value=t;L.uTime.value=t;flies.userData.u.uTime.value=t;
+  const LAMPS=L.uLamps.value;signs.forEach((s,i)=>LAMPS[i].set(...s.lamp.lampPos().toArray(),1.8));LAMPS[5].set(...train.engine.localToWorld(new THREE.Vector3(2.2,1.6,0)).toArray(),2.4);
+  // Along the main line to the junction, then (once he has chosen) along the chosen branch.
+  if(branch==null){const d=target-x;v=Math.min(v+dt*2.2,Math.max(0,Math.min(8,d*.55)));x+=v*dt;train.roll(v*dt);}
+  else{const b=branches[branch],dx=b.end.x-JX,dz=b.end.z,len=Math.hypot(dx,dz);v=Math.min(9,v+dt*1.8);
+   if(x<JX){x+=v*dt;}else{x+=v*dt*dx/len;z+=v*dt*dz/len;const want=-Math.atan2(dz,dx);heading+=(want-heading)*Math.min(1,dt*3);}train.roll(v*dt);}
+  pose();if(v>.05)puff.emit(train.chimneyTop(),v>.5?14:4,dt);puff.update(dt,[-.6,0,0]);
+  for(const p of people)p.update(t,dt,camera);}
+ pose();
+ return {scene,update,people,hero,guide,small,train:train.group,engine:train.engine,signs:signs.map(s=>s.group),signTops:signs.map(s=>s.top),
+  arrived:()=>new Promise(r=>{const f=()=>Math.abs(target-x)<.05||v<.02&&x>target-.5?r():requestAnimationFrame(f);requestAnimationFrame(f);}),
+  go(i){branch=i;v=Math.max(v,.5);},
+  // The camera rides beside the train (a travelling shot) until the junction.
+  trackCam(){const e=new THREE.Vector3(x,0,z);return {pos:[e.x-3.5,3.1,e.z+9.5],look:[e.x+3,1.3,e.z-.5],fov:40,raw:true};},
+  shots:{valley:{pos:[-95,9,30],look:[-60,1,-10],fov:44},junction:{pos:[-7.5,3.4,5.2],look:[12,1.6,-1.2],fov:40,keep:['signs','engine'],tall:{pos:[-9,5.2,1.2],look:[12,1.4,-1.4],fov:40}},
+   away:{pos:[-4,4.5,12],look:[24,1.4,0],fov:42}}};
+}
 // ---------------- the hedge maze at night ----------------
 // A perfect maze (one path between any two cells) from a seeded depth-first carve, like Maze Garden's.
 export function carveMaze(n,seed=7){
@@ -141,9 +208,8 @@ export async function maze(ctx){
  tops.forEach(([x,z],i)=>blob.setMatrixAt(i,new THREE.Matrix4().compose(new THREE.Vector3(x,H-.04+r()*.1,z),new THREE.Quaternion().setFromEuler(new THREE.Euler(r()*3,r()*3,0)),new THREE.Vector3(1+r()*.35,.8+r()*.4,1+r()*.35))));scene.add(blob);
  // Lanterns: at the entrance, at the fork, at the goal.
  const lanterns=[[start,-.9],[route[Math.floor(route.length*.3)],.9],[fork,.9],[route[Math.floor(route.length*.75)],-.9],[goal,.9]].map(([c,off],i)=>{const lp=lampPost(L,{h:2.2});const p=W(...c);lp.group.position.set(p.x+off*.75,0,p.z+.75);lp.set(1);scene.add(lp.group);return lp;});
- // The sign at the dead end ("DEAD END" in small letters: he has to read it).
- const sign=board(L,{lines:['DEAD','END'],w:.9,h:.7,bg:'#5a3a22',fg:'#f6e8c8',font:'700 110px Georgia, serif',px:360});
- const fp=W(...fork),dp=W(...dead),dir=new THREE.Vector3().subVectors(dp,fp).normalize();
+ // The sign at the dead end: a plain plate here; its word (a decodable word he reads, e.g. NOT) is the overlay's.
+ const sign=board(L,{lines:[String(ctx.story.maze?.sign||'not').toUpperCase()],w:.9,h:.55,bg:'#5a3a22',fg:'#f6e8c8',font:'700 150px Georgia, serif',px:360});
  const signG=new THREE.Group();signG.add(sign);const sp=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,1.1,6),paint(L,{color:'#4a3322'}));sp.position.y=-.6;signG.add(sp);
  signG.position.copy(fp).addScaledVector(dir,C*.45).add(new THREE.Vector3(dir.z*.7,1.25,-dir.x*.7));scene.add(signG);
  // The goal: the torn map piece glowing on a stone.
@@ -162,22 +228,70 @@ export async function maze(ctx){
   if(id&&toys.has(id)&&!ctx.puppetsOnly){try{const t=await makeToy(L,{id,height:h*1.12,name:id});scene.add(t.root);return t;}catch(e){console.warn('toy',id,e);}}
   const a=art.actors[id];if(!a)return null;const pz={};for(const p of poses)if(a.poses[p])pz[p]=a.poses[p].url;const pu=await makePuppet(L,{poses:pz,height:h,kind,name:id});scene.add(pu.root);return pu;};
  const hero=await P(R.hero,1.35,'biped',['idle','cheer']);const guide=await P(R.guide,1.2,'plush',['idle','happy']);const small=await P(R.small,.7,'plush',['idle','ball']);
- const s0=W(...start);hero.root.position.set(s0.x,0,s0.z+C*.9);guide&&guide.root.position.set(s0.x+.7,0,s0.z+C*1.4);small&&small.root.position.set(s0.x-.6,0,s0.z+C*1.2);
+ // He starts just inside the entrance; his friends right behind him (in the entrance porch).
+ const s0=W(...start);hero.root.position.set(s0.x,0,s0.z+.2);small&&small.root.position.set(s0.x-.25,0,s0.z+1.0);guide&&guide.root.position.set(s0.x+.25,0,s0.z+1.8);
  const people=[hero,guide,small].filter(Boolean);
- // Followers walk where he walked (a little behind).
- const trail=[];function follow(dt){const p=hero.root.position;if(!trail.length||trail.at(-1).distanceTo(p)>.35)trail.push(p.clone());if(trail.length>60)trail.shift();
-  [[small,5],[guide,10]].forEach(([f,lag])=>{if(!f)return;const tgt=trail[Math.max(0,trail.length-1-lag)];if(!tgt)return;const d=f.root.position.distanceTo(tgt);if(d>.4&&!f._busy){f._busy=true;f.walkTo([tgt],1.5).then(()=>{f._busy=false;});}});}
+ // ---- he walks where he is steered, and only while he is steered (no auto-run) ----
+ // Movement keeps to the paths: in maze-cell units, he may move along a row or a column; a turn slides him onto the
+ // middle of the path first (so a slightly-off drag still turns the corner); hedges stop him.
+ const R0=.34/C,SPEED=2.1;let want=null,moving=false;
+ const cellAt=(i,j)=>{if(i>=0&&j>=0&&i<N&&j<N)return m.at(i,j);
+  // The entrance porch just outside the start cell.
+  if(j===N&&i===start[0])return {n:0,s:1,e:1,w:1};return null;};
+ const open=(i,j,dir)=>{const c=cellAt(i,j);if(!c)return false;if(dir==='s'&&j===N-1&&i===start[0])return true;return !c[dir];};
+ const toCell=v=>({u:v.x/C+(N-1)/2,v:v.z/C+(N-1)/2});
+ function stepAxis(pos,axis,sign,dist){
+  // Move along x (axis 'u') or z ('v') by up to dist cells; stop short of a hedge.
+  let {u,v}=toCell(pos);const i=Math.round(u),j=Math.round(v);
+  if(axis==='u'){const dir=sign>0?'e':'w';const lim=open(i,j,dir)?(sign>0?i+1:i-1):(sign>0?i+.5-R0:i-.5+R0);
+   // Past the cell centre toward an open side: may continue into the next cell (recomputed next frame).
+   const nu=sign>0?Math.min(u+dist,Math.max(u,lim)):Math.max(u-dist,Math.min(u,lim));const moved=Math.abs(nu-u);u=nu;pos.x=(u-(N-1)/2)*C;return moved;}
+  else{const dir=sign>0?'s':'n';const lim=open(i,j,dir)?(sign>0?j+1:j-1):(sign>0?j+.5-R0:j-.5+R0);
+   const nv=sign>0?Math.min(v+dist,Math.max(v,lim)):Math.max(v-dist,Math.min(v,lim));const moved=Math.abs(nv-v);v=nv;pos.z=(v-(N-1)/2)*C;return moved;}
+ }
+ function drive(dt){
+  const p=hero.root.position;if(!want){if(moving){moving=false;hero.stop();}return;}
+  const next=p.clone();let dist=SPEED*dt/C;
+  const axes=Math.abs(want.x)>=Math.abs(want.z)?[['u',Math.sign(want.x),Math.abs(want.x)],['v',Math.sign(want.z),Math.abs(want.z)]]:[['v',Math.sign(want.z),Math.abs(want.z)],['u',Math.sign(want.x),Math.abs(want.x)]];
+  let went=0;
+  for(const [axis,sign,mag] of axes){if(mag<.25||went>1e-4)continue;
+   const c=toCell(next),off=axis==='u'?c.v-Math.round(c.v):c.u-Math.round(c.u);
+   const i=Math.round(c.u),j=Math.round(c.v),dir=axis==='u'?(sign>0?'e':'w'):(sign>0?'s':'n');
+   const along=axis==='u'?c.u-i:c.v-j,canGo=open(i,j,dir)||(sign>0?along<.5-R0-1e-3:along>-.5+R0+1e-3);
+   if(!canGo)continue;
+   // Off the middle of the path: slide onto it first (this is what makes corners easy).
+   if(Math.abs(off)>.04){const slide=Math.min(Math.abs(off),dist);if(axis==='u'){next.z-=Math.sign(off)*slide*C;}else{next.x-=Math.sign(off)*slide*C;}went+=slide;dist-=slide;if(dist<=0)break;}
+   went+=stepAxis(next,axis,sign,dist);}
+  if(went>1e-4){moving=true;hero.walkTo([[next.x,0,next.z]],SPEED*1.05);}else if(moving){moving=false;hero.stop();}
+ }
+ // ---- follow the leader: each friend walks to a point on his trail a little behind him, faster when further ----
+ const trail=[hero.root.position.clone()];
+ function follow(){const p=hero.root.position;if(trail.at(-1).distanceTo(p)>.12)trail.push(p.clone());if(trail.length>200)trail.shift();
+  [[small,.8],[guide,1.55]].forEach(([f,gap])=>{if(!f||f._lead)return;
+   // The trail point `gap` metres behind him (walking back along what he walked).
+   let need=gap,tgt=trail[0];for(let k=trail.length-1;k>0;k--){const d=trail[k].distanceTo(trail[k-1]);if(need<=d){tgt=trail[k].clone().lerp(trail[k-1],need/d);break;}need-=d;}
+   if(trail.length===1)tgt=trail[0];
+   const d=Math.hypot(f.root.position.x-tgt.x,f.root.position.z-tgt.z);
+   if(d>.12){const v=Math.min(6.5,SPEED*(.9+Math.max(0,d-.2)*1.6));f.walkTo([[tgt.x,0,tgt.z]],v);}else f.stop?.();});}
  const cellOf=v=>[clamp(Math.round(v.x/C+(N-1)/2),0,N-1),clamp(Math.round(v.z/C+(N-1)/2),0,N-1)];
- let t=0;const camTarget=new THREE.Vector3(),camPos=new THREE.Vector3();
+ let t=0;const camTarget=new THREE.Vector3(),camPos=new THREE.Vector3();let dt0=0;
  function update(time,dt){t=time;S.userData.u.uTime.value=t;L.uTime.value=t;for(const p of [flies,sparkle,mist])p.userData.u.uTime.value=t;
   const LAMPS=L.uLamps.value;lanterns.forEach((lp,i)=>LAMPS[i].set(...lp.lampPos().toArray(),1.6));LAMPS[5].set(gp.x,1.2,gp.z,found?3:1.4);
   piece.rotation.y=Math.atan2(camera.position.x-piece.position.x,camera.position.z-piece.position.z)+Math.sin(t*.8)*.25;piece.position.y=.95+Math.sin(t*1.6)*.05;pieceGlow.material.opacity=.6+.25*Math.sin(t*2.3);
-  follow(dt);for(const p of people)p.update(t,dt,camera);}
+  drive(dt);follow();for(const p of people)p.update(t,dt,camera);}
  let found=false;
- // Follow camera: above and behind, a little ahead of where he walks.
- function followCam(k=1){const p=hero.root.position;camTarget.lerp(new THREE.Vector3(p.x,.6,p.z-.8),.06*k);camPos.lerp(new THREE.Vector3(p.x+.4,5.6,p.z+5.2),.05*k);camera.position.copy(camPos);camera.lookAt(camTarget);}
- function snapCam(){const p=hero.root.position;camTarget.set(p.x,.6,p.z-.8);camPos.set(p.x+.4,5.6,p.z+5.2);followCam(0);}
- return {scene,update,people,hero,guide,small,maze:m,N,C,W,start,goal,fork,dead,route,cellOf,signG,piece,followCam,snapCam,setFound(v){found=v;},
-  pathTo(cell){return mazePath(m,cellOf(hero.root.position),cell).map(c=>W(...c));},
-  shots:{over:{pos:[0,26,18],look:[0,0,-2],fov:42},overEnd:{pos:[gp.x*.5,14,gp.z+12],look:[gp.x*.6,0,gp.z],fov:40},goal:{pos:[gp.x+gIn.x*C*1.2+.2,2.3,gp.z+gIn.z*C*1.2+.2],look:[pp.x,.9,pp.z],fov:40},rise:{pos:[gp.x+gIn.x*C*2.5,11,gp.z+gIn.z*C*2.5+6],look:[gp.x,0,gp.z],fov:44}}};
+ // Follow camera: above and behind the group (him and his friends), a little ahead of him. On a tall screen it
+ // rises higher (more of the maze ahead is visible; the friends behind him stay in frame).
+ let tall=false;
+ function groupCentre(){const c=hero.root.position.clone().multiplyScalar(.6);let w=.6;for(const f of [small,guide])if(f){c.addScaledVector(f.root.position,.2);w+=.2;}return c.multiplyScalar(1/w);}
+ function followCam(k=1){const p=groupCentre();const off=tall?[.3,8.4,5.6]:[.4,5.6,5.2];
+  camTarget.lerp(new THREE.Vector3(p.x,.5,p.z-(tall?.4:.8)),.06*k);camPos.lerp(new THREE.Vector3(p.x+off[0],off[1],p.z+off[2]),.05*k);camera.position.copy(camPos);camera.lookAt(camTarget);}
+ function snapCam(){const p=groupCentre();const off=tall?[.3,8.4,5.6]:[.4,5.6,5.2];camTarget.set(p.x,.5,p.z-(tall?.4:.8));camPos.set(p.x+off[0],off[1],p.z+off[2]);followCam(0);}
+ const mazeBox=[W(0,0).add(new THREE.Vector3(-C/2,0,-C/2)),W(N-1,N-1).add(new THREE.Vector3(C/2,H,C/2)),W(0,N-1).add(new THREE.Vector3(-C/2,0,C/2)),W(N-1,0).add(new THREE.Vector3(C/2,H,-C/2))];
+ return {scene,update,people,hero,guide,small,maze:m,N,C,W,start,goal,fork,dead,route,cellOf,signG,piece,followCam,snapCam,mazeBox,setFound(v){found=v;},
+  setTall(v){tall=v;},steer(v){want=v&&(Math.abs(v.x)+Math.abs(v.z)>0)?v:null;},get moving(){return moving;},
+  // For the checks: the direction (in the world) of the next step along the way to a cell.
+  nextStep(cell){const r=mazePath(m,cellOf(hero.root.position),cell);const c=toCell(hero.root.position);if(r.length<2){const g=W(...cell);return {x:Math.sign(Math.round((g.x-hero.root.position.x)*10)),z:Math.sign(Math.round((g.z-hero.root.position.z)*10))};}
+   const [i,j]=r[1],[a,b]=r[0];if(i!==a)return {x:Math.sign(i-a),z:0};return {x:0,z:Math.sign(j-b)};},
+  shots:{over:{pos:[0,26,18],look:[0,0,-2],fov:42,keep:['mazeBox']},overEnd:{pos:[gp.x*.5,14,gp.z+12],look:[gp.x*.6,0,gp.z],fov:40,keep:['hero','guide','small']},goal:{pos:[gp.x+gIn.x*C*1.2+.2,2.3,gp.z+gIn.z*C*1.2+.2],look:[pp.x,.9,pp.z],fov:40,keep:['hero','piece']},rise:{pos:[gp.x+gIn.x*C*2.5,11,gp.z+gIn.z*C*2.5+6],look:[gp.x,0,gp.z],fov:44}}};
 }

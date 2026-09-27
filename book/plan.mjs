@@ -7,6 +7,7 @@
 // insists on something wrong and the child says NO! (then fixes it). Same learner model + date = same plan.
 import {letterQuest,readerQuest} from './quests.mjs';
 import {FIRST_WORDS,WORD_GROUPS,SENTENCES,SENTENCE_DISTRACT,scramble,tilesOf,endMark,shuffle} from '../hub/public/word-break.mjs';
+import {FAMILIES,familyOf,isFamilyWord,lookAlikes,soundOut,familyTarget,DECODABLE_SENTENCES} from '../hub/public/word-families.mjs';
 
 export function rng(seedText){let h=2166136261;for(const c of String(seedText)){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return()=>{h+=0x6D2B79F5;let t=h;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
 const pick=(a,r)=>a[Math.floor(r()*a.length)];
@@ -75,8 +76,10 @@ function earlyBeats(m,r,{cast,collection,things,soccer=false,focus=null,grown='D
 function wordGroupFor(word){for(const g of WORD_GROUPS.flat())if(g.includes(word))return g;return null;}
 // Magic words (the Nell mechanic): words he has mastered go quiet in the narration and glow in the scene;
 // he reads them to make things happen. More of them as he masters more words.
-export function magicWords(m,r,{collection}){
- const mastered=(m.literacy.wordsMastered||[]).filter(w=>/^[a-z]{2,7}$/.test(w));
+export function magicWords(m,r,{collection,decodable=false}){
+ let mastered=(m.literacy.wordsMastered||[]).filter(w=>/^[a-z]{2,7}$/.test(w));
+ // A beginning reader's magic words are decodable family words only (his mastered ones, else today's family).
+ if(decodable){mastered=mastered.filter(isFamilyWord);if(mastered.length<2){const t=familyTarget(m,r);mastered=[...new Set([...mastered,...FAMILIES[familyOf(t)]])];}}
  const read=new Set((collection?.words)||[]);
  const pool=mastered.length?mastered:WORD_GROUPS[0].map(g=>g[0]);
  const n=Math.min(4,2+Math.floor(mastered.length/12));
@@ -84,13 +87,25 @@ export function magicWords(m,r,{collection}){
  const fresh=shuffle(pool.filter(w=>!read.has(w)),r),old=shuffle(pool.filter(w=>read.has(w)),r);
  return [...fresh.slice(0,n-(old.length?1:0)),...old.slice(0,1)].slice(0,n);
 }
-function readerBeats(m,r,{collection}){
+// A beginning reader (decodable): every word he must read is a CVC word from a word family (cat, big, hop), and
+// look-alikes share its first letter and differ in the vowel or the end (cat / can / cot): a first-letter guess
+// cannot pass. After each tap a friend sounds the tapped word out (c-a-t, cat), right or wrong.
+function readerBeats(m,r,{collection,decodable=false}){
  const lit=m.literacy,math=m.math||{};
- const stuck=lit.wordsStuck.filter(w=>wordGroupFor(w));
- const word=stuck.length?pick(stuck.slice(0,3),r):pick(WORD_GROUPS[Math.max(0,Math.min(2,lit.wordLevel-1))],r)[0];
- const group=wordGroupFor(word)||pick(WORD_GROUPS[0],r);
- const sentence=pick(SENTENCES[Math.max(0,Math.min(2,lit.sentenceLevel-1))],r),answer=tilesOf(sentence);
- const extra=lit.sentenceLevel>=2?answer.map(w=>SENTENCE_DISTRACT[w.toLowerCase()]).find(w=>w&&!answer.some(a=>a.toLowerCase()===w)):null;
+ let word,options,sentence,answer,extra=null;
+ if(decodable){word=familyTarget(m,r);let la=lookAlikes(word,2,r);
+  // A word without two look-alikes (sun) gives way to a family word that has them.
+  if(la.length<2){word=FAMILIES[familyOf(word)].find(x=>lookAlikes(x,2).length>=2)||'cat';la=lookAlikes(word,2,r);}
+  options=shuffle([word,...la],r);
+  sentence=pick(DECODABLE_SENTENCES,r);answer=tilesOf(sentence);
+  if(lit.sentenceLevel>=2){const w=answer.find(x=>isFamilyWord(x));extra=w?lookAlikes(w,1,r)[0]||null:null;}}
+ else{const stuck=lit.wordsStuck.filter(w=>wordGroupFor(w));
+  word=stuck.length?pick(stuck.slice(0,3),r):pick(WORD_GROUPS[Math.max(0,Math.min(2,lit.wordLevel-1))],r)[0];
+  const group=wordGroupFor(word)||pick(WORD_GROUPS[0],r);
+  options=shuffle(group.slice(0,4).includes(word)?group.slice(0,3).includes(word)?group.slice(0,3):[word,...group.filter(w=>w!==word).slice(0,2)]:[word,...group.filter(w=>w!==word).slice(0,2)],r);
+  sentence=pick(SENTENCES[Math.max(0,Math.min(2,lit.sentenceLevel-1))],r);answer=tilesOf(sentence);
+  extra=lit.sentenceLevel>=2?answer.map(w=>SENTENCE_DISTRACT[w.toLowerCase()]).find(w=>w&&!answer.some(a=>a.toLowerCase()===w)):null;}
+ const sounds=decodable?Object.fromEntries([...options,...answer.filter(isFamilyWord),...(extra?[extra]:[])].map(w=>[w.toLowerCase(),soundOut(w)])):null;
  const share=(math.hardShares||[]).filter(s=>s.total&&s.groups&&s.total%s.groups===0&&s.groups<=5&&s.total<=24).at(-1)||pick([{total:12,groups:3},{total:15,groups:5},{total:16,groups:4},{total:12,groups:4}],r);
  const each=share.total/share.groups;
  const facts=(math.factsStuck||[]).map(f=>f.split('x').map(Number)).filter(([a,b])=>a>=2&&b>=2&&a<=10&&b<=10);
@@ -113,10 +128,10 @@ function readerBeats(m,r,{collection}){
   :null;
  return {
   beats:[
-   {id:'b1',kind:'signs',what:`three signs (on trains, doors or paths) look almost the same; they need the one that says "${word}", so ${m.name} reads them all`,target:word,options:shuffle(group.slice(0,4).includes(word)?group.slice(0,3).includes(word)?group.slice(0,3):[word,...group.filter(w=>w!==word).slice(0,2)]:[word,...group.filter(w=>w!==word).slice(0,2)],r),
-    spoken:`We need the one that says ${word}. Read every letter.`,notIt:`That sign says something else. Read every letter.`},
+   {id:'b1',kind:'signs',what:`three signs (on trains, doors or paths) look almost the same; they need the one that says "${word}", so ${m.name} reads them all`,target:word,options,
+    spoken:`We need the one that says ${word}. Read every letter.`,notIt:`That sign says something else. Read every letter.`,...(sounds?{sounds}:{})},
    {id:'b2',kind:'spell',what:`a magic spell has fallen apart; it only works when its words are put back in order, read word by word (not by where they lie)`,sentence,answer,tiles:scramble(extra?[...answer,extra]:answer,r),mark:endMark(sentence),
-    spoken:`The spell says: ${sentence} Put the words back in order.`},
+    spoken:`The spell says: ${sentence} Put the words back in order.`,...(sounds?{sounds}:{})},
    numberBeat,
    noBeat||{id:'b4',kind:'no',what:`a friend insists "${ma} × ${mb} = ${wrongN}" and wants to put it on the scoreboard; ${m.name} says NO! and fixes it`,who:null,
     claim:`${ma} times ${mb} is ${wrongN}!`,display:`${ma} × ${mb} = ${wrongN}`,ask:`Can I put ${wrongN} on the scoreboard? Can I? Please?`,wrong:String(wrongN),right:String(right),options:shuffle([String(right),String(wrongN),String(right-ma)],r),
@@ -162,9 +177,11 @@ export function planChapter(model,{date,profile={},cast=null,collection={},life=
   const owner=everyone.find(c=>c.id===base.beats[0].owner);if(owner&&!members.some(c=>c.id===owner.id))members.push(owner);
   const noWho=everyone.find(c=>c.id===base.beats[3].who);if(noWho&&!members.some(c=>c.id===noWho.id)){base.beats[3].who=members.find(c=>c.id!==base.beats[0].owner)?.id||members[0].id;base.beats[3].whoName=(members.find(c=>c.id===base.beats[3].who)||members[0]).name;base.beats[3].what=base.beats[3].what.replace(noWho.name,base.beats[3].whoName);}
  }else{
-  base=readerBeats(model,r,{collection});
+  // A beginning reader reads only decodable family words (a grown-up can open it up: profile reading "open").
+  const decodable=(profile.reading||'decodable')==='decodable';
+  base=readerBeats(model,r,{collection,decodable});base.reading=decodable?'decodable':'open';base.sight=(profile.sightWords||[]).map(String);
   const who=members[1]||members[0];base.beats[3].who=who?.id||null;base.beats[3].whoName=who?.name||'a friend';base.beats[3].what=`${who?.name||'A friend'} ${base.beats[3].what.replace(/^a friend /,'')}`;
-  base.magic=magicWords(model,r,{collection});
+  base.magic=magicWords(model,r,{collection,decodable});
   base.quest=readerQuest(base.magic.length?base.magic:[base.beats[0].target],{grown:leadName,seed:Number(String(date).replace(/-/g,''))||0});
  }
  const interests=shuffle(model.interests||[],r).slice(0,3);

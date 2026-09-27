@@ -60,7 +60,7 @@ export function grass(light,{count=3000,area=[[-20,20],[-20,20]],h=.5,base='#3f6
  ig.setAttribute('aOff',new THREE.InstancedBufferAttribute(new Float32Array(off),3));ig.setAttribute('aScale',new THREE.InstancedBufferAttribute(new Float32Array(sc),1));ig.setAttribute('aHue',new THREE.InstancedBufferAttribute(new Float32Array(hue),1));
  ig.instanceCount=n;
  const m=new THREE.Mesh(ig,new THREE.ShaderMaterial({vertexShader:GRASS_VERT,fragmentShader:GRASS_FRAG,side:THREE.DoubleSide,uniforms:{...light,uBase:{value:new THREE.Color(base)},uTip:{value:new THREE.Color(tip)},uTip2:{value:new THREE.Color(tip2)}}}));
- m.frustumCulled=false;return m;
+ m.frustumCulled=false;m.userData.noOcclude=true;return m;
 }
 // ---------- particles: fireflies, dust motes in the light, drifting seeds, falling leaves ----------
 const PART_VERT=`uniform float uTime,uSize,uRise,uSwirl;attribute vec3 aSeed;varying float vA;varying float vK;

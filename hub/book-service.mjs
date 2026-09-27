@@ -3,10 +3,16 @@
 // picture library and narration, and takes the grown-ups' one-line "Today..." notes (the next chapter's plot).
 // Chapters and narration are generated nightly (../book/generate.mjs) into bookDir and only read here.
 // Progress and notes are the hub's own saves: data/book-progress/<player>.json, data/book-notes.json.
-import {readFile,writeFile,rename,mkdir,readdir} from 'node:fs/promises';
+import {readFile,writeFile,rename,mkdir,readdir,access,mkdtemp,rm} from 'node:fs/promises';
+import {execFile} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {tmpdir} from 'node:os';
+import {bookPaths} from '../book/paths.mjs';
 import {join,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
-const publicArt=join(dirname(fileURLToPath(import.meta.url)),'public','book-art');
+const here=dirname(fileURLToPath(import.meta.url)),publicArt=join(here,'public','book-art');
+// A narration clip's file name (the same key as book/narrate.py): content-addressed, only ever added.
+export const clipName=({voice,speed,text})=>{const n=Number(speed),sp=Number.isInteger(n)?n.toFixed(1):String(n);return createHash('sha256').update(`book-1\0${voice}\0${sp}\0${text}`).digest('hex').slice(0,16)+'.wav';};
 const ART_TYPES={webp:'image/webp',png:'image/png',svg:'image/svg+xml',jpg:'image/jpeg'};
 const send=(res,status,obj)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(obj));};
 export const localDate=(ms=Date.now(),timeZone)=>new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(ms));
@@ -16,6 +22,8 @@ export const CHAPTER_SCHEMA='family-book-chapter-2';
 export const AUTO_OPENS=3;
 // Real-world hunts (find things that start with a sound, find a letter or word written at home): up to this many a day.
 export const HUNTS_PER_DAY=3; // a book never keeps a child out of his games: it stops opening itself after 3 unfinished opens
+// Tries on a beat: how many, whether the first was right, and how fast it came (a guess is under 1.5 s).
+const attemptsOf=r=>{const o={};if(Number.isFinite(Number(r.attempts))&&r.attempts!=null)o.attempts=Math.max(0,Math.min(99,Number(r.attempts)));if(typeof r.correct==='boolean')o.correct=r.correct;if(Number.isFinite(Number(r.firstTapMs))&&r.firstTapMs!=null){o.firstTapMs=Math.max(0,Math.min(36e5,Math.round(Number(r.firstTapMs))));o.guess=o.firstTapMs<1500;}return o;};
 const readJSON=async(file,fallback)=>{try{return JSON.parse(await readFile(file,'utf8'));}catch(e){if(e.code==='ENOENT'||e instanceof SyntaxError)return fallback;throw e;}};
 async function writeJSON(file,value){const tmp=file+'.tmp';await writeFile(tmp,JSON.stringify(value),{mode:0o600});await rename(tmp,file);}
 export function cleanNote(text){return String(text||'').replace(/[\u0000-\u001f\u007f<>]/g,' ').replace(/\s+/g,' ').trim().slice(0,160);}
@@ -23,7 +31,21 @@ export function cleanNote(text){return String(text||'').replace(/[\u0000-\u001f\
 export function noteTarget(text,players){const hits=players.filter(p=>p.name&&new RegExp(`\\b${p.name.replace(/[^\p{L}]/gu,'')}\\b`,'iu').test(text));return hits.length===1?hits[0].id:null;}
 export function progressView(day){return {opens:day?.opens||0,page:day?.page||0,finished:!!day?.finished,results:day?.results||[]};}
 export function shouldOpen(chapter,day){return !!chapter&&!day?.finished&&(day?.opens||0)<AUTO_OPENS;}
-export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now=()=>Date.now(),assets3d=null}){
+export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now=()=>Date.now(),assets3d=null,voiceEngine=null}){
+ // ---- on-demand narration: a line with no clip is rendered by the same local voice engine (never the device's
+ // voice), cached in the voice store, one at a time, at the lowest priority. Only lines that exist in a story or
+ // a chapter can be rendered. narrate(lines) -> {clips} can be replaced in tests.
+ let voiceQueue=Promise.resolve();
+ const narrate=voiceEngine||(async lines=>{const p=bookPaths();const dir=await mkdtemp(join(tmpdir(),'book-voice-'));const req=join(dir,'req.json');
+  await writeFile(req,JSON.stringify({lines,out:join(bookDir,'voice'),models:p.voiceModels}));
+  try{const out=await new Promise((ok,no)=>execFile('nice',['-n','19','taskpolicy','-b',p.python,join(here,'..','book','narrate.py'),req],{timeout:90000,maxBuffer:1<<22,env:{...process.env,BOOK_VOICE_THREADS:'2'}},(e,so)=>e?no(e):ok(so)));
+   return JSON.parse(String(out).trim().split('\n').at(-1));}finally{await rm(dir,{recursive:true,force:true}).catch(()=>{});}});
+ async function renderLine(line){const file=clipName(line),at=join(bookDir,'voice',file);
+  try{await access(at);return file;}catch{}
+  const run=voiceQueue.catch(()=>{}).then(()=>narrate([line]));voiceQueue=run;
+  const r=await run;const made=r?.clips?.[`${line.voice}|${line.speed}|${line.text}`];if(!made)throw Error('not rendered');
+  await log({type:'book_voice_rendered',file:made,chars:line.text.length});return made;}
+ const lineIn=(v,want)=>{let hit=false;const walk=x=>{if(hit||!x||typeof x!=='object')return;if(Array.isArray(x))return x.forEach(walk);if(x.text===want.text&&x.voice===want.voice&&Number(x.speed)===Number(want.speed))hit=true;else Object.values(x).forEach(walk);};walk(v);return hit;};
  const kids=config.players.filter(p=>p.id!=='admin');
  const progressDir=join(data,'book-progress'),notesFile=join(data,'book-notes.json');
  let queue=Promise.resolve();
@@ -45,12 +67,14 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
  async function update(player,input){
   return serial(async()=>{
    const p=await progress(player),date=today();
-   if(input.date!==date)throw Object.assign(Error('That chapter is not today’s.'),{status:409});
+   if(input.type!=='living'&&input.date!==date)throw Object.assign(Error('That chapter is not today’s.'),{status:409});
    const day=p.days[date]??={opens:0,page:0,finished:false,results:[],startedAt:new Date(now()).toISOString()};
    const page=Math.max(0,Math.min(60,Number(input.page)||0));
    if(input.type==='open')day.opens++;
    else if(input.type==='page')day.page=Math.max(day.page,page);
-   else if(input.type==='result'){const r=input.result||{};collect(p,r.earned);day.results=[...day.results.filter(x=>x.page!==page),{page,kind:String(r.kind||'').slice(0,20),misses:Math.max(0,Math.min(99,Number(r.misses)||0)),ms:Math.max(0,Math.min(36e5,Number(r.ms)||0)),hints:Math.max(0,Math.min(9,Number(r.hints)||0)),...(['voice','echo','tap'].includes(r.via)?{via:r.via}:{})}].slice(-20);}
+   else if(input.type==='result'){const r=input.result||{};collect(p,r.earned);day.results=[...day.results.filter(x=>x.page!==page),{page,kind:String(r.kind||'').slice(0,20),misses:Math.max(0,Math.min(99,Number(r.misses)||0)),ms:Math.max(0,Math.min(36e5,Number(r.ms)||0)),hints:Math.max(0,Math.min(9,Number(r.hints)||0)),...(['voice','echo','tap'].includes(r.via)?{via:r.via}:{}),...attemptsOf(r)}].slice(-20);}
+   // The living book: one record per beat (tries, first-try right, time to the first tap; a guess is under 1.5 s).
+   else if(input.type==='living'){const L=day.living??=[];L.push({story:String(input.story||'').slice(0,40),beat:String(input.beat||'').slice(0,24),at:new Date(now()).toISOString(),...attemptsOf(input),misses:Math.max(0,Math.min(99,Number(input.misses)||0)),ms:Math.max(0,Math.min(36e5,Number(input.ms)||0)),...(['voice','echo','tap'].includes(input.via)?{via:input.via}:{})});if(L.length>60)L.splice(0,L.length-60);}
    else if(input.type==='finish'){day.finished=true;day.finishedAt=new Date(now()).toISOString();day.page=Math.max(day.page,page);}
    else if(input.type==='hunt'){
     // A hunt away from the screen: started (counts toward today's limit) and found (with how many, if a grown-up said).
@@ -64,7 +88,7 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
    else throw Object.assign(Error('Unsupported action.'),{status:400});
    const keep=Object.keys(p.days).sort().slice(-30);p.days=Object.fromEntries(keep.map(k=>[k,p.days[k]]));
    await mkdir(progressDir,{recursive:true,mode:0o700});await writeJSON(join(progressDir,player+'.json'),p);
-   await log({type:'book',player,action:input.type,date,page,finished:day.finished,...(input.type==='hunt'?{hunt:String(input.id||'').slice(0,24),stage:input.stage,found:Number(input.found)||0}:{})});
+   await log({type:'book',player,action:input.type,date,page,finished:day.finished,...(input.type==='hunt'?{hunt:String(input.id||'').slice(0,24),stage:input.stage,found:Number(input.found)||0}:{}),...(input.type==='living'?{story:String(input.story||'').slice(0,40),beat:String(input.beat||'').slice(0,24),...attemptsOf(input)}:{}),...(input.type==='result'?attemptsOf(input.result||{}):{})});
    return progressView(day);
   });
  }
@@ -105,10 +129,22 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
     const story=Object.hasOwn(f.stories||{},id)?f.stories[id]:null;if(!story)return send(res,404,{error:'No such story.'});
     const clips=Object.fromEntries(Object.values(story.lines||{}).map(([who,text])=>{const v=story.voices?.[who]||story.voices?.narrator||{};const k=`${v.voice}|${v.speed}|${text}`;return [k,f.clips?.[k]];}).filter(([,c])=>c));
     return send(res,200,{story,clips});}
+   // A missing narration clip, rendered now: {story, key} (a living-book line) or {player, date, text, voice, speed}
+   // (a line of that child's chapter). Returns {clip}. Anything else is refused.
+   if(u.pathname==='/api/book/voice'&&req.method==='POST'){let b;try{b=await body(req);}catch(e){return send(res,e.status||400,{error:e.message});}
+    let line=null;
+    if(b.story){const f=await readJSON(join(bookDir,'living','stories.json'),{stories:{}});const st=Object.hasOwn(f.stories||{},b.story)?f.stories[b.story]:null;const l=st?.lines?.[b.key];
+     if(l){const v=st.voices?.[l[0]]||st.voices?.narrator;if(v)line={text:l[1],voice:v.voice,speed:v.speed};}}
+    else if(kids.some(k=>k.id===b.player)&&DATE.test(String(b.date||''))){const ch=await chapter(b.player,b.date);const want={text:String(b.text||''),voice:String(b.voice||''),speed:Number(b.speed)};if(ch&&want.text&&lineIn(ch,want))line=want;}
+    if(!line||!line.text||line.text.length>400)return send(res,404,{error:'No such line.'});
+    try{return send(res,200,{clip:await renderLine(line)});}catch(e){await log({type:'book_voice_error',detail:String(e.message).slice(0,160)});return send(res,503,{error:'Could not render the line.'});}}
    // The household's 3D toys (GLB models made privately in Blender) and the list of which exist.
    if(u.pathname.startsWith('/book-3d/')&&req.method==='GET'){
     if(!assets3d)return send(res,404,{error:'No 3D toys here.'});
-    if(u.pathname==='/book-3d/index.json'){let files=[];try{files=(await readdir(assets3d)).filter(f=>/^[a-z0-9-]{1,40}\.glb$/.test(f)).map(f=>f.slice(0,-4));}catch{}return send(res,200,{toys:files});}
+    if(u.pathname==='/book-3d/index.json'){let files=[];try{files=(await readdir(assets3d)).filter(f=>/^[a-z0-9-]{1,40}\.glb$/.test(f)).map(f=>f.slice(0,-4));}catch{}
+     // Optional private looks (e.g. fur for a plush): {<toy id>: {fur: {...}}}, only for toys that exist.
+     const looks=await readJSON(join(assets3d,'looks.json'),{});const L=Object.fromEntries(Object.entries(looks&&typeof looks==='object'?looks:{}).filter(([k,v])=>files.includes(k)&&v&&typeof v==='object'));
+     return send(res,200,{toys:files,looks:L});}
     const m=u.pathname.match(/^\/book-3d\/([a-z0-9-]{1,40}\.glb)$/);if(!m)return send(res,404,{error:'Not found.'});
     try{const bytes=await readFile(join(assets3d,m[1]));res.writeHead(200,{'Content-Type':'model/gltf-binary','Content-Length':bytes.length,'Cache-Control':'max-age=300'});res.end(bytes);}catch(e){if(e.code==='ENOENT')send(res,404,{error:'Not found.'});else throw e;}
     return;

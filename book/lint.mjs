@@ -49,6 +49,27 @@ export const LEVELS={
  early:{pages:[9,14],words:[150,470],avgSentence:10,maxWordLength:10,pageWords:45,lineWords:16,captionWords:1,captionWordLength:10},
  reader:{pages:[9,15],words:[180,560],avgSentence:14,maxWordLength:12,pageWords:60,lineWords:22,captionWords:6,captionWordLength:8}
 };
+import {isFamilyWord,isLookAlike,readable,DECODABLE_NAMES} from '../hub/public/word-families.mjs';
+// A line that is only a hum or a string of letters ("Mmm.", "Hmm!", "Zzz", "B B B"): the voice either says letter
+// names or a meaningless hum. Every character line must say real words (Pika says "Pika!", not "Mmm").
+const HUM=/^(?:m+|mm+h*m*|hm+|h+m+|zz+|uh+|um+|er+|ah+|oh+|ooh+|shh+|psst|[b-hj-z])$/i;
+export function bareSound(text){const w=String(text).replace(/\[\[[^\]]*\]\]/g,' ').match(/[A-Za-z']+/g)||[];return w.length>0&&w.every(x=>HUM.test(x));}
+// The words a beginning reader must read (decodable-only chapters): signs, spell tiles, magic words, captions.
+// Each must be a CVC word-family word (or a mastered sight word); look-alikes share the first letter and differ in
+// the vowel or the end, so a first-letter guess cannot pass. Names and other words are read to him, never tested.
+export function readingIssues(ch,plan){
+ if(plan?.level!=='reader'||plan.reading!=='decodable')return [];
+ const sight=plan.sight||[],ok=w=>readable(w,{sight})||DECODABLE_NAMES.includes(String(w).toLowerCase()),out=[];
+ for(const b of plan.beats||[]){
+  if(b.kind==='signs'){if(!isFamilyWord(b.target))out.push(`beat ${b.id}: "${b.target}" is not a decodable family word (cat, big, hop)`);
+   for(const o of b.options||[])if(o!==b.target&&!(isFamilyWord(o)&&isLookAlike(b.target,o)))out.push(`beat ${b.id}: look-alike "${o}" must be a family word with the same first letter as "${b.target}", one letter different in the vowel or the end`);}
+  if(b.kind==='spell')for(const t of b.tiles||[]){const w=String(t).replace(/[^A-Za-z']/g,'');if(w&&!ok(w))out.push(`beat ${b.id}: the spell word "${w}" is not decodable for him`);}
+ }
+ for(const w of plan.magic||[])if(!isFamilyWord(w))out.push(`magic word "${w}" is not a decodable family word`);
+ (ch?.pages||[]).forEach((p,i)=>{for(const w of String(p?.caption||'').match(/[A-Za-z']+/g)||[])if(!ok(w))out.push(`page ${i+1}: caption word "${w}" is not decodable for him (captions: family words only, or none)`);
+  if(p?.magic?.word&&!isFamilyWord(p.magic.word))out.push(`page ${i+1}: magic word "${p.magic.word}" is not a decodable family word`);});
+ return out;
+}
 // Runs like "Sss", "Lll", "Grrr", "Zzzz" are spelled out letter by letter by the narrator's voice.
 export const spelledSound=t=>(String(t).replace(/\[\[[^\]]*\]\]/g,'').match(/\b\w*([b-df-hj-np-tv-z])\1\1\w*\b/i)||[])[0]||null;
 export const sayOf=p=>(Array.isArray(p?.say)?p.say:[]).map(l=>Array.isArray(l)?{who:String(l[0]||'').toLowerCase(),text:String(l[1]||'')}:{who:String(l?.who||'').toLowerCase(),text:String(l?.text||'')});
@@ -80,6 +101,7 @@ export function lintChapter(ch,plan,{extra=[],allow=[],speakers=null,actors=null
  let heroPages=0,dad=false;
  pages.forEach((p,i)=>{
   const say=sayOf(p);
+  for(const l of say)if(bareSound(l.text))issues.push(`page ${i+1}: "${l.text}" is only a hum or letters; give ${l.who} real words (a friend who says its name, e.g. "Pika!")`);
   for(const l of say)if(spelledSound(l.text))issues.push(`page ${i+1}: "${spelledSound(l.text)}" is read aloud as letter names; write a real word (hiss, roar, hum) instead of a letter sound`);if(!say.length&&!p?.beat)issues.push(`page ${i+1} has no narration`);
   for(const l of say){if(!allowedWho.has(l.who))issues.push(`page ${i+1}: "${l.who}" cannot speak (use narrator, dad or a friend's id)`);
    if(!l.text.trim())issues.push(`page ${i+1} has an empty line`);if(WORDS(l.text).length>L.lineWords)issues.push(`page ${i+1} has a line over ${L.lineWords} words`);if(l.who===(plan.lead?.id||'dad'))dad=true;}
@@ -122,6 +144,7 @@ export function lintChapter(ch,plan,{extra=[],allow=[],speakers=null,actors=null
  const full=story.match(new RegExp(`\\b(${[plan.name,plan.sibling].filter(Boolean).join('|')})\\s+([A-Z][a-z]+)`,'g'))||[];
  const allowedNext=new Set(['and','Mom','Dad',plan.name,plan.sibling,...castNames.flatMap(n=>n.split(/\s+/))].filter(Boolean));
  for(const f of full){const next=f.split(/\s+/)[1];if(!allowedNext.has(next))issues.push(`looks like a full name: "${f}"`);}
+ issues.push(...readingIssues(ch,plan));
  for(const k of ['summary','hook'])if(typeof ch[k]!=='string'||!ch[k].trim())issues.push(`${k} missing`);
  return [...new Set(issues)];
 }

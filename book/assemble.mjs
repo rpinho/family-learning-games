@@ -44,6 +44,8 @@ export function assemble(story,plan,{number=1,source='template',lint=[],generate
   summary:clean(story.summary),hook:clean(story.hook),
   meta:{generatedAt,source,lint,sceneNotes:notes,practises:plan.beats.map(b=>`${b.kind}: ${b.what}`),magic:plan.magic,dadLines,themes:(plan.themes||[]).map(t=>t.id||t.seed),yesterday:plan.yesterday}};
 }
+// A decodable word sounded out slowly (c-a-t, cat), in the narrator's voice.
+const soundLines=(sounds,N)=>Object.fromEntries(Object.entries(sounds).map(([w,t])=>[w,N(t)]));
 // The spoken lines of each beat, in the right voices. The words the child must find are never spoken first.
 function beatLines(b,{N,line,plan}){
  const who=b.who&&plan.cast.some(c=>c.id===b.who)?b.who:'narrator';
@@ -53,8 +55,8 @@ function beatLines(b,{N,line,plan}){
   case 'stones':return {...b,spoken:N(b.spoken),notIt:N(b.notIt),done:N(b.done),tap:N(`${b.letter}! ${b.sound}!`)};
   case 'order':return {...b,spoken:N(b.spoken),done:N(b.done)};
   case 'count':return {...b,spoken:N(b.spoken),ask:N(b.ask),done:N(`Yes! ${b.answer} ${b.things}!`)};
-  case 'signs':return {...b,spoken:N(b.spoken),notIt:N(b.notIt),done:N(`Yes! It says ${b.target}!`)};
-  case 'spell':return {...b,spoken:N(b.spoken),done:N(b.sentence)};
+  case 'signs':return {...b,spoken:N(b.spoken),notIt:N(b.notIt),done:N(`Yes! It says ${b.target}!`),...(b.sounds?{sounds:soundLines(b.sounds,N)}:{})};
+  case 'spell':return {...b,spoken:N(b.spoken),done:N(b.sentence),...(b.sounds?{sounds:soundLines(b.sounds,N)}:{})};
   case 'share':return {...b,spoken:N(b.spoken),ask:N(b.ask),done:N(`Yes! ${b.answer} slices on each plate. Fair for everyone!`)};
   case 'score':return {...b,spoken:N(b.spoken),done:N(`Yes! ${b.answer} points!`)};
   case 'no':return {...b,claim:line(who,b.claim),ask:line(who,b.ask),ifYes:line(who,b.ifYes),caught:N(b.caught),fixSpoken:N(b.fixSpoken),hint:N(b.hint)};

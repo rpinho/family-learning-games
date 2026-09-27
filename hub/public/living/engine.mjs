@@ -193,22 +193,26 @@ export function createStage(canvas,{maxScale=1,onStats=()=>{}}={}){
 }
 
 // ---------- camera director ----------
-// A shot: {dur, from:{pos,look,fov}, to:{pos,look,fov}, ease, focusFrom, focusTo, aperture}. Hand-held drift is tiny.
-export function director(camera,post){
- let shot=null,t0=0,resolve=null;const P=new THREE.Vector3(),L=new THREE.Vector3(),drift=new THREE.Vector3();let follow=null;
- function play(s,now){shot=s;t0=now;return new Promise(r=>{resolve=r;});}
+// A shot: {dur, from:{pos,look,fov,keep?}, to:{...}, ease, focusFrom, focusTo, aperture}. Hand-held drift is tiny.
+// frame(end) -> {P,L,fov}: the responsive framer (frame.mjs) composes each end of the shot for this screen; both
+// ends are re-framed every frame, so a character who moves (a bird landing) stays in frame all the way.
+export function director(camera,post,{frame=null}={}){
+ let shot=null,t0=0,resolve=null,settled=true;const P=new THREE.Vector3(),L=new THREE.Vector3(),drift=new THREE.Vector3();let follow=null;
+ const raw=e=>({P:v3(e.pos),L:v3(e.look),fov:e.fov||40});
+ function play(s,now){shot=s;t0=now;settled=false;return new Promise(r=>{resolve=r;});}
  function update(now,dt){
   if(follow){follow(now,dt);}
   else if(shot){const k=(shot.ease||easeInOut)(clamp((now-t0)/(shot.dur*1000)));
-   P.lerpVectors(v3(shot.from.pos),v3(shot.to.pos),k);L.lerpVectors(v3(shot.from.look),v3(shot.to.look),k);
-   camera.fov=lerp(shot.from.fov||40,shot.to.fov||shot.from.fov||40,k);camera.updateProjectionMatrix();
+   const A=(frame||raw)(shot.from),B=(frame||raw)(shot.to);
+   P.lerpVectors(A.P,B.P,k);L.lerpVectors(A.L,B.L,k);
+   camera.fov=lerp(A.fov,B.fov,k);camera.updateProjectionMatrix();
    if(shot.focusFrom!=null)post.uFocus=lerp(shot.focusFrom,shot.focusTo??shot.focusFrom,shot.focusEase?shot.focusEase(k):k);
    if(shot.aperture!=null)post.uAperture=shot.aperture;
    const h=shot.handheld??.03;drift.set(Math.sin(now*.00071)*h,Math.sin(now*.00093+1)*h*.6,Math.sin(now*.00053+2)*h*.4);
    camera.position.copy(P).add(drift);camera.lookAt(L);
-   if(k>=1&&resolve){const r=resolve;resolve=null;r();}}
+   if(k>=1){settled=true;if(resolve){const r=resolve;resolve=null;r();}}}
  }
- return {play,update,setFollow:f=>{follow=f;},get shot(){return shot;}};
+ return {play,update,setFollow:f=>{follow=f;},get shot(){return shot;},get settled(){return settled&&!follow;},get following(){return !!follow;}};
 }
 const v3=a=>a.isVector3?a:new THREE.Vector3(a[0],a[1],a[2]);
 // Animate a value over time (for the post chain, light, etc.). Returns a promise.

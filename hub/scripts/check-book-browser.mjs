@@ -10,6 +10,7 @@ import {spawn} from 'node:child_process';
 import {mkdtemp,readFile,writeFile,mkdir} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+import {NO_DEVICE_VOICE} from './no-device-voice.mjs';
 const args=process.argv.slice(2),arg=(k,d=null)=>{const i=args.indexOf(k);return i>=0?args[i+1]:d;},flag=k=>args.includes(k);
 const base=arg('--base','http://127.0.0.1:4810'),player=arg('--player'),[W,H]=arg('--size','1366x768').split('x').map(Number),mobile=flag('--mobile');
 const shots=arg('--shots'),shotPages=new Set((arg('--shot-pages','')||'').split(',').filter(Boolean).map(Number)),label=arg('--label',`${W}x${H}`);
@@ -29,7 +30,7 @@ const until=async(expr,ms=15000)=>{const t=Date.now();while(Date.now()-t<ms){if(
 setTimeout(()=>{console.log(JSON.stringify({player,label,ok:false,errors:['overall timeout']}));proc.kill();process.exit(1);},8*60000).unref();
 const result={player,label,size:`${W}x${H}`,pages:[],refused:0,beforeTap:null,errors:[]};
 try{
- await send('Page.enable');await send('Runtime.enable');
+ await send('Page.enable');await send('Runtime.enable');await send('Page.addScriptToEvaluateOnNewDocument',{source:NO_DEVICE_VOICE});
  await send('Emulation.setDeviceMetricsOverride',{width:W,height:H,deviceScaleFactor:mobile?2:1,mobile});
  if(mobile)await send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:5});
  const book=await(await fetch(`${base}/api/book/preview?player=${encodeURIComponent(player)}`)).json();const ch=book.chapter;if(!ch)throw Error('no chapter');
@@ -81,6 +82,7 @@ try{
  }
  if(await until(`!!document.querySelector('.bk-quest')`,40000)){await sleep(800);await shot(`${player}-${label}-end.png`);result.ended=true;}
  const audit=await js('__bookAudio');result.refused=audit.filter(a=>a.clip&&!a.ok&&a.err!=='AbortError').length;result.interrupted=audit.filter(a=>a.err==='AbortError').length;result.failures=audit.filter(a=>a.clip&&!a.ok&&a.err!=='AbortError');result.plays=audit.filter(a=>a.clip&&a.ok).length;
+ result.deviceVoice=await js('__deviceVoice');if(result.deviceVoice.length)result.errors.push('the device voice was used: '+result.deviceVoice.join(' | '));
  result.ok=result.beforeTap==='NotAllowedError'&&result.pages.length===ch.pages.length&&result.pages.every(p=>p.played)&&result.refused===0&&result.ended===true&&!result.errors.length;
 }catch(e){result.errors.push(String(e.message||e));result.ok=false;}
 finally{try{ws.close();}catch{}proc.kill();}

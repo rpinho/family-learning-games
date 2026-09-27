@@ -59,8 +59,9 @@ EACH PAGE IS A PICTURE (compose it only from this library)
 - "actors": up to 4 of: ${acts}. Write "id" or "id:pose". ${plan.name} (id "${plan.player}") is in the picture on most pages. Pick poses that match the action (kick for soccer, cheer for joy, fly for flying).
 - "props": up to 3 of: ${props}. "train" with "ride": true puts the actors in the train's carriages.
 - "fx": one of ${FX.join(', ')}.
-- "caption": ${early?'usually empty; at most ONE word or letter on screen (e.g. the letter he is learning, or a short word like "GO")':'optional; at most 6 short, easy words on screen'}.
-- "say": the narration as [["narrator","..."],["<friend id or dad>","..."]]. Friends and Dad speak in their own voices; ${plan.name} never speaks (he acts, taps and shouts). Put spoken words in the line itself, no quotation marks needed.
+- "caption": ${early?'usually empty; at most ONE word or letter on screen (e.g. the letter he is learning, or a short word like "GO")':plan.reading==='decodable'?'usually empty; at most 3 words, and ONLY three-letter word-family words he can sound out (cat, big, hop, sun, bug, pin), or none. Never a name or a longer word':'optional; at most 6 short, easy words on screen'}.${plan.reading==='decodable'?`
+- He is a BEGINNING reader: anything he must read himself is a three-letter word-family word (cat, big, hop). Station, place and friends' names are said aloud by the narrator, never something he is asked to read.`:''}
+- "say": the narration as [["narrator","..."],["<friend id or dad>","..."]]. Every line is real words: never a bare hum or sound ("Mmm.", "Hmm", "Zzz"); a sleepy or thinking friend says so in words, and a friend with a catchphrase uses it (see the cast). Friends and Dad speak in their own voices; ${plan.name} never speaks (he acts, taps and shouts). Put spoken words in the line itself, no quotation marks needed.
 
 SHAPE
 - ${L.pages[0]}-${L.pages[1]} pages. Page 1 is a story page that starts the adventure; the last page is a story page with a warm ending and a small cliffhanger for tomorrow.
