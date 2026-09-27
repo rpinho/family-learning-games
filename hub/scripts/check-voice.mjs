@@ -21,11 +21,12 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 export const INSTRUMENT=`(()=>{const log=[];globalThis.__sources=log;const now=()=>Math.round(performance.now());const hooked=new WeakSet();
  function capture(el){const m=globalThis.__mix;if(!m||hooked.has(el))return;hooked.add(el);try{const s=m.ctx.createMediaElementSource(el);s.connect(m.dest);s.connect(m.ctx.destination);}catch(e){log.push({kind:'cap-err',err:String(e).slice(0,80)});}}
  globalThis.__startMix=()=>{if(globalThis.__mix)return;try{const ctx=new AudioContext(),dest=ctx.createMediaStreamDestination(),rec=new MediaRecorder(dest.stream,{mimeType:'audio/webm;codecs=opus'}),chunks=[];void ctx.resume();rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};rec.start(1000);globalThis.__mix={ctx,dest,rec,chunks,t0:now()};}catch(e){log.push({kind:'mix-err',err:String(e).slice(0,80)});}};
- addEventListener('pointerdown',()=>globalThis.__startMix(),{capture:true,once:true});addEventListener('click',()=>globalThis.__startMix(),{capture:true,once:true});
+ addEventListener('pointerdown',()=>globalThis.__startMix(),{capture:true,once:true});
+ for(const ty of ['click','pointerdown','touchend'])addEventListener(ty,e=>{const t=e.target;log.push({kind:ty,t:now(),trusted:e.isTrusted,el:String(t&&(t.className||t.tagName)).slice(0,30)});},{capture:true});addEventListener('click',()=>globalThis.__startMix(),{capture:true,once:true});
  globalThis.__stopMix=async()=>{const m=globalThis.__mix;if(!m)return null;await new Promise(r=>{m.rec.onstop=r;m.rec.stop();});const b=new Blob(m.chunks,{type:'audio/webm'});const u=new Uint8Array(await b.arrayBuffer());let s='';for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode(...u.subarray(i,i+32768));return {b64:btoa(s),t0:m.t0};};
  const play=HTMLMediaElement.prototype.play;
- HTMLMediaElement.prototype.play=function(){const el=this.__id??=(globalThis.__elN=(globalThis.__elN||0)+1);const e={kind:'audio',el,src:String(this.currentSrc||this.src||'').split('/').pop(),t:now()};log.push(e);capture(this);
-  e.by=String(new Error().stack||'').split('\n').slice(2,5).map(x=>x.trim().replace(/^at /,'').replace(/\(?https?:\/\/[^/]+\//,'(').slice(0,70)).join(' < ');
+ HTMLMediaElement.prototype.play=function(){const el=this.__id??=(globalThis.__elN=(globalThis.__elN||0)+1);const e={kind:'audio',el,src:String(this.getAttribute('src')||this.src||this.currentSrc||'').split('/').pop(),t:now()};log.push(e);capture(this);
+  e.by=String(new Error().stack||'').split(String.fromCharCode(10)).slice(2,12).map(x=>x.trim().replace('at ','').split('/').slice(-1)[0].slice(0,40)).join(' < ');
   // The line ends when this element finishes, is paused, or starts another line.
   if(this.__cur&&!this.__cur.end)this.__cur.end=now(),this.__cur.cut=1;this.__cur=e;
   const onEnd=ev=>{if(this.__cur===e&&!e.end){e.end=now();if(ev.type==='pause')e.paused=1;}};this.addEventListener('ended',onEnd,{once:true});this.addEventListener('pause',onEnd,{once:true});
@@ -112,12 +113,18 @@ async function main(){
   }
   const log=await js('__sources');result.sources={audio:log.filter(e=>e.kind==='audio').length,tts:log.filter(e=>e.kind==='tts').length,webaudio:log.filter(e=>e.kind==='webaudio').length,getUserMedia:log.filter(e=>e.kind==='getUserMedia')};
   result.log=log.filter(e=>e.kind!=='webaudio').slice(0,400);
-  if(mixOut){const m=await js('__stopMix()');if(m){await writeFile(mixOut,Buffer.from(m.b64,'base64'));result.mix=mixOut;}}
+  if(mixOut){const m=await js('__stopMix()').catch(()=>null);if(m&&m.b64.length>200){await writeFile(mixOut,Buffer.from(m.b64,'base64'));result.mix=mixOut;}}
   ws.close();
  }catch(e){result.errors.push(String(e.message||e));}
  finally{proc.kill();await sleep(300);await rm(profile,{recursive:true,force:true}).catch(()=>{});}
- // Hear it: transcribe the mixdown with the local recogniser (faster-whisper), with word times.
- if(result.mix&&flag('--transcribe')){const wav=result.mix.replace(/\.\w+$/,'')+'.wav';try{execFileSync('nice',['-n','19','taskpolicy','-b',process.env.FFMPEG||'ffmpeg','-loglevel','error','-y','-i',result.mix,'-ac','1','-ar','16000',wav]);
+ // Hear it: headless Chrome with --mute-audio does not render sound, so the mixdown is rebuilt from the play log:
+ // every clip in the order it started, cut where the next line started when the page cut it (a real device plays
+ // exactly this), then transcribed with the local recogniser.
+ if(flag('--transcribe')&&result.log?.length){const dir=await mkdtemp(join(tmpdir(),'voice-seq-'));const plays=result.log.filter(e=>e.kind==='audio'&&e.src&&!e.err);const list=[];
+  try{for(const [i,e] of plays.entries()){const f=join(dir,`c${String(i).padStart(4,'0')}.wav`);const r=await fetch(`${base}/book-voice/${e.src}`);if(!r.ok)continue;await writeFile(f,Buffer.from(await r.arrayBuffer()));list.push(`file '${f}'`);}
+   await writeFile(join(dir,'list.txt'),list.join('\n'));result.mix=(mixOut||join(dir,'seq')).replace(/\.\w+$/,'')+'-sequence.wav';
+   execFileSync('nice',['-n','19','taskpolicy','-b',process.env.FFMPEG||'ffmpeg','-loglevel','error','-y','-f','concat','-safe','0','-i',join(dir,'list.txt'),'-ac','1','-ar','16000',result.mix]);}catch(e){result.errors.push('sequence: '+String(e.message).slice(0,160));}}
+ if(result.mix&&flag('--transcribe')){const wav=result.mix.endsWith('.wav')?result.mix:result.mix.replace(/\.\w+$/,'')+'.wav';try{if(wav!==result.mix)execFileSync('nice',['-n','19','taskpolicy','-b',process.env.FFMPEG||'ffmpeg','-loglevel','error','-y','-i',result.mix,'-ac','1','-ar','16000',wav]);
   const py=(process.env.FAMILY_LISTEN_PYTHON||join(homedir(),'.local/share/whisper-env/bin/python'));
   const out=execFileSync('nice',['-n','19','taskpolicy','-b',py,'-c',`import sys,json\nfrom faster_whisper import WhisperModel\nm=WhisperModel('small',device='cpu',compute_type='int8',cpu_threads=4)\nsegs,_=m.transcribe(sys.argv[1],language='en',beam_size=1,condition_on_previous_text=False,vad_filter=True)\nprint(json.dumps([[round(s.start,1),round(s.end,1),s.text.strip()] for s in segs]))`,wav],{encoding:'utf8',env:{...process.env,HF_HUB_OFFLINE:'1'},maxBuffer:1<<24});
   result.heard=JSON.parse(out.trim().split('\n').at(-1));

@@ -206,7 +206,8 @@ export function director(camera,post,{frame=null}={}){
    const A=(frame||raw)(shot.from),B=(frame||raw)(shot.to);
    P.lerpVectors(A.P,B.P,k);L.lerpVectors(A.L,B.L,k);
    camera.fov=lerp(A.fov,B.fov,k);camera.updateProjectionMatrix();
-   if(shot.focusFrom!=null)post.uFocus=lerp(shot.focusFrom,shot.focusTo??shot.focusFrom,shot.focusEase?shot.focusEase(k):k);
+   if(A.focus!=null&&B.focus!=null)post.uFocus=lerp(A.focus,B.focus,shot.focusEase?shot.focusEase(k):k);
+   else if(shot.focusFrom!=null)post.uFocus=lerp(A.focus??shot.focusFrom,B.focus??(shot.focusTo??shot.focusFrom),shot.focusEase?shot.focusEase(k):k);
    if(shot.aperture!=null)post.uAperture=shot.aperture;
    const h=shot.handheld??.03;drift.set(Math.sin(now*.00071)*h,Math.sin(now*.00093+1)*h*.6,Math.sin(now*.00053+2)*h*.4);
    camera.position.copy(P).add(drift);camera.lookAt(L);

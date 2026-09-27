@@ -54,7 +54,7 @@ async function run(size){
   for(let i=0;i<120;i++){const ok=await js(`typeof __living==='object'&&__living.beat!=='loading'`).catch(()=>false);if(ok)break;await sleep(250);}
   await sleep(600);await shot('title');
   if(!flag('--auto'))await tap('#begin');
-  let lastBeat='',lastCp=null,lastExpect=null,choseWrong=false,micTapped=false;
+  let lastBeat='',lastCp=null,lastExpect=null,choseWrong=false,micTapped=false;const measuredSay=new Set();
   const S=()=>js(`JSON.stringify({beat:__living.beat,done:__living.done,cp:__living.checkpoint,ack:__living.ack,expect:__living.expect&&{kind:__living.expect.kind,answer:__living.expect.answer??null,selector:__living.expect.selector||null,id:__living.expect.id||null},stats:__living.stats})`).then(JSON.parse);
   while(Date.now()-t0<timeout){
    const s=await S().catch(()=>null);if(!s){await sleep(300);continue;}
@@ -68,6 +68,7 @@ async function run(size){
     // Every option must be a big target.
     const opts=await js(`[...document.querySelectorAll('#ui .lv-opt')].map(b=>{const r=b.getBoundingClientRect();return {v:b.dataset.v,x:r.x+r.width/2,y:r.y+r.height/2,w:r.width,h:r.height}})`);
     if(!opts.length){await sleep(200);continue;}
+    await sleep(700);const mo=await js('JSON.stringify(__living.measure())').then(JSON.parse).catch(()=>null);if(mo)R.checkpoints.push({id:`${e.id||'choose'}-options`,...mo});
     await shot(`${e.id||'choose'}-options`);
     const wrong=opts.find(o=>o.v!==String(e.answer)),right=opts.find(o=>o.v===String(e.answer));
     if(!choseWrong&&wrong){choseWrong=true;await tapAt(wrong.x,wrong.y);await sleep(4500);}
@@ -78,6 +79,7 @@ async function run(size){
    if(e&&e.kind==='say'){
     const before=await js(`__sources.filter(x=>x.kind==='getUserMedia').length`);
     const c=await center(e.selector);if(!c){await sleep(250);continue;}
+    if(!measuredSay.has(e.selector+e.id)){measuredSay.add(e.selector+e.id);const mo=await js('JSON.stringify(__living.measure())').then(JSON.parse).catch(()=>null);if(mo)R.checkpoints.push({id:'say-'+(e.id||'word'),...mo});}
     const tapT=await js('Math.round(performance.now())');await tapAt(c.x,c.y);
     if(!micTapped){micTapped=true;await sleep(1500);const g=await js(`__sources.filter(x=>x.kind==='getUserMedia')`);const first=g[before];
      R.mic={askedOnFirstTap:!!first&&first.t-tapT<1200,msAfterTap:first?first.t-tapT:null,userActivation:first?.activation??null,micUsable:await js(`!!document.querySelector('#ui .lv-mic-badge')&&document.querySelector('#ui .lv-mic-badge').textContent==='🎤'`).catch(()=>null)};
@@ -100,7 +102,7 @@ async function run(size){
     continue;}
    await sleep(250);
   }
-  R.final=await js('JSON.stringify({beat:__living.beat,done:__living.done,telemetry:__living.telemetry.map(b=>({beat:b.beat,attempts:b.attempts,misses:b.misses,firstTapMs:b.firstTapMs,correct:b.correct,guess:b.guess,via:b.via})),stats:__living.stats,voice:__living.voice.length,missingClips:[...new Set(__living.voice.filter(v=>!v.clip).map(v=>v.key))]})').then(JSON.parse).catch(()=>null);
+  R.minutes=+((Date.now()-t0)/60000).toFixed(1);R.final=await js('JSON.stringify({beat:__living.beat,done:__living.done,telemetry:__living.telemetry.map(b=>({beat:b.beat,attempts:b.attempts,misses:b.misses,firstTapMs:b.firstTapMs,correct:b.correct,guess:b.guess,via:b.via})),stats:__living.stats,voice:__living.voice.length,missingClips:[...new Set(__living.voice.filter(v=>!v.clip).map(v=>v.key))]})').then(JSON.parse).catch(()=>null);
   R.gum=await js(`__sources.filter(x=>x.kind==='getUserMedia')`).catch(()=>[]);R.deviceVoice=await js(`__sources.filter(x=>x.kind==='tts').map(x=>x.text)`).catch(()=>['(unknown)']);
   ws.close();
  }catch(e){R.errors.push(String(e.message||e));}

@@ -24,7 +24,13 @@ lines=json.loads(subprocess.check_output(['node',str(root/'scripts/chess-voice-l
 options=ort.SessionOptions();options.intra_op_num_threads=4;options.inter_op_num_threads=1
 session=ort.InferenceSession(str(args.models/'kokoro-v1.0.onnx'),sess_options=options,providers=['CPUExecutionProvider'])
 model=Kokoro.from_session(session,str(args.models/'voices-v1.0.bin'))
-voice='am_michael';output=args.data/'chess-voice';output.mkdir(parents=True,exist_ok=True)
+# The coach's voice is the household's named "rook" voice (book/cast.json "voices"), am_michael by default.
+voice='am_michael'
+for cast in [os.environ.get('FAMILY_BOOK') and Path(os.environ['FAMILY_BOOK'])/'cast.json',Path(os.environ.get('FAMILY_DEPLOY_ROOT') or Path.home()/'.local/share/family-games')/'book'/'cast.json']:
+ try:
+  if cast and cast.exists():voice=json.loads(cast.read_text()).get('voices',{}).get('rook') or voice;break
+ except Exception:pass
+output=args.data/'chess-voice';output.mkdir(parents=True,exist_ok=True)
 manifest={'version':'rook-chess-v2','voice':voice,'engine':'Kokoro-82M','clips':{}}
 start=time.monotonic()
 for i,text in enumerate(lines):

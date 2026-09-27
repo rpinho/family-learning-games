@@ -48,7 +48,9 @@ export function makeFramer(camera,{getKeep=()=>[],marginX=.84,marginY=.86,letter
   }
   const back=Math.max(0,need(slide));
   P.addScaledVector(r,slide).addScaledVector(f,-back);L.addScaledVector(r,slide);
-  return {P,L,fov};
+  // Focus on what the shot keeps (depth of field never blurs the characters that matter).
+  let zs=0;for(const z of Z)zs+=z;const focus=zs/Z.length+back;
+  return {P,L,fov,focus};
  };
 }
 

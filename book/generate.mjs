@@ -116,7 +116,7 @@ export async function generateOne(player,{paths,profiles,date,noLLM=false,noVoic
  const speakers=['narrator',...(plan.grownups||[{id:'dad'}]).map(g=>g.id),...plan.cast.map(c=>c.id)];
  plan.dadLines=plan.dadLines.map(t=>safeDadLine(t,{extra,allow})).filter(Boolean);
  const {story,source,lint}=noLLM?{story:templateChapter(plan,library),source:'template (--no-llm)',lint:[]}:await writeStory(plan,{extra,allow,dadLines:plan.dadLines,ask,log:m=>log(m),library,actors:ids.all,speakers});
- const voices=voicesFor(plan,{narrator:profile.voice});
+ const voices=voicesFor(plan,{narrator:profile.voice,named:cast?.voices||{}});
  const ch=assemble(story,plan,{number:await chapterNumber(dir,date),source,lint,dadLines:plan.dadLines,library,actors:ids.all,voices});
  if(!noVoice){try{const n=await narrate(speechLines(ch),{paths});attachClips(ch,n.clips);log(`${player} ${date}: ${n.made} new clips`);}
   catch(e){log(`${player} ${date}: narration failed, device speech will be used (${String(e.message).slice(0,200)})`);}}

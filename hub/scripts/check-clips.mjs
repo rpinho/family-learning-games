@@ -6,13 +6,15 @@
 // Usage: node hub/scripts/check-clips.mjs --book <dir> [--today YYYY-MM-DD] [--json]
 import {readFile,readdir,access} from 'node:fs/promises';
 import {join} from 'node:path';
+import {resolveVoices} from '../../book/paths.mjs';
 const args=process.argv.slice(2),arg=(k,d=null)=>{const i=args.indexOf(k);return i>=0?args[i+1]:d;};
 export async function missingClips(book,{today=new Date().toISOString().slice(0,10)}={}){
  const missing=[],exists=async f=>{try{await access(join(book,'voice',f));return true;}catch{return false;}};
  let f=null;try{f=JSON.parse(await readFile(join(book,'living','stories.json'),'utf8'));}catch{}
- for(const [id,s] of Object.entries(f?.stories||{}))for(const [key,[who,text]] of Object.entries(s.lines||{})){if(!text)continue;
-  const v=s.voices?.[who]||s.voices?.narrator;const clip=v&&f.clips?.[`${v.voice}|${v.speed}|${text}`];
-  if(!clip)missing.push({where:`living:${id}`,key,text});else if(!await exists(clip))missing.push({where:`living:${id}`,key,text,file:clip});}
+ let named={};try{named=JSON.parse(await readFile(join(book,'cast.json'),'utf8')).voices||{};}catch{}
+ for(const [id,s] of Object.entries(f?.stories||{})){const voices=resolveVoices(s.voices,named);for(const [key,[who,text]] of Object.entries(s.lines||{})){if(!text)continue;
+  const v=voices[who]||voices.narrator;const clip=v&&f.clips?.[`${v.voice}|${v.speed}|${text}`];
+  if(!clip)missing.push({where:`living:${id}`,key,text});else if(!await exists(clip))missing.push({where:`living:${id}`,key,text,file:clip});}}
  let players=[];try{players=(await readdir(book,{withFileTypes:true})).filter(d=>d.isDirectory()&&!['voice','art','cast','living'].includes(d.name)).map(d=>d.name);}catch{}
  for(const p of players){let files=[];try{files=(await readdir(join(book,p))).filter(x=>/^\d{4}-\d{2}-\d{2}\.json$/.test(x)&&x.slice(0,10)>=today);}catch{}
   for(const file of files){let ch;try{ch=JSON.parse(await readFile(join(book,p,file),'utf8'));}catch{continue;}

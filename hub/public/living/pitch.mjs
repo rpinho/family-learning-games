@@ -90,7 +90,7 @@ export async function pitch(ctx){
  const mom=R.grownup?await P(R.grownup,1.75,'biped',['idle','cheer','kneel']):null;
  const people=[hero,flyer,friend,pet,mom].filter(Boolean);
  // Where everyone stands: spread along the pitch on a wide screen; closer together on a tall one.
- const FORM={wide:{hero:[-2.5,2.4],friend:[-3.8,.6],pet:[2.8,1.8],mom:[4.6,.2]},tall:{hero:[-1.9,4.3],friend:[-1.7,1.6],pet:[1.8,3.0],mom:[1.7,.6]}};let formation='wide';
+ const FORM={wide:{hero:[-2.5,2.4],friend:[-3.8,.6],pet:[2.8,1.8],mom:[4.6,.2]},tall:{hero:[-1.9,4.3],friend:[-.5,1.3],pet:[1.9,3.1],mom:[1.8,.3]}};let formation='wide';
  function arrange(tall){formation=tall?'tall':'wide';const f=FORM[formation];for(const [k,p] of [['hero',hero],['friend',friend],['pet',pet],['mom',mom]])if(p){p.stop?.();p.root.position.set(f[k][0],0,f[k][1]);}}
  // Balls: plain soccer balls in 3D; each one's letter is a flat, readable badge in the overlay above it.
  const balls=[0,1,2].map(i=>{const b=new THREE.Mesh(new THREE.SphereGeometry(.24,24,16),new THREE.MeshLambertMaterial({map:soccerTexture(null)}));b.rotation.y=-Math.PI/2;b.visible=false;scene.add(b);return b;});
@@ -132,10 +132,13 @@ export async function pitch(ctx){
  // Anyone who has wandered comes back to their place, walking (never popping).
  async function regroup(){const f=FORM[formation];await Promise.all([['hero',hero],['friend',friend],['pet',pet],['mom',mom]].map(([k,p])=>p?p.walkTo([[f[k][0],0,f[k][1]]],2.4):null));}
  const up=new THREE.Vector3(0,.36,0);
- return {scene,update,people,hero,flyer,friend,pet,mom,balls,kick,flyerArrives,goal:goalG,arrange,relabel,toGoal,toBar,dive,penalty,fetchBall,regroup,
-  ballTop:i=>()=>balls[i].visible?balls[i].position.clone().add(up):null,
+ // The opening leaves drift up and away once the picture has opened (they never stay in front of anyone).
+ function clearLeaves(ms=2200){const y0=leaves.position.y,t0=performance.now();return new Promise(res=>{const f=()=>{const k=clamp((performance.now()-t0)/ms);leaves.position.y=y0+easeInOut(k)*6;leaves.scale.setScalar(1-k*.4);if(k<1)requestAnimationFrame(f);else{leaves.visible=false;res();}};f();});}
+ return {scene,update,people,hero,flyer,friend,pet,mom,balls,kick,flyerArrives,goal:goalG,arrange,clearLeaves,relabel,toGoal,toBar,dive,penalty,fetchBall,regroup,
+  // Where a ball's letter badge hangs: above the ball, or (below=true) just under it.
+  ballTop:(i,below=false)=>()=>balls[i].visible?balls[i].position.clone().add(below?new THREE.Vector3(0,-.24,0):up):null,
   // keep: what must stay in frame; tall: the same shot for an upright phone (closer to the action).
-  shots:{leaves:{pos:[0,5.2,13],look:[0,2.6,-2],fov:38},reveal:{pos:[0,3.4,11.5],look:[0,1.2,-3],fov:40,keep:['people','goal'],tall:{pos:[0,4.6,12.5],look:[0,.9,-1],fov:40}},
+  shots:{leaves:{pos:[0,5.2,13],look:[0,2.6,-2],fov:38},reveal:{pos:[0,3.4,11.5],look:[0,1.2,-3],fov:40,keep:['hero','friend','pet','mom','goal'],tall:{pos:[0,4.6,12.5],look:[0,.9,-1],fov:40}},
    crossbar:{pos:[1.8,2.2,-2.4],look:[0,1.95,-6.4],fov:36,keep:['flyer']},friends:{pos:[-.9,1.5,7.2],look:[-1.5,.85,1.4],fov:40,keep:['hero','friend'],tall:{pos:[-1.5,2.2,8.6],look:[-1.8,.8,2.2],fov:40}},
    kick:{pos:[.2,2,8.2],look:[-.2,.7,-2],fov:44,keep:['balls','hero'],tall:{pos:[-.2,2.6,9],look:[-.3,.5,1.2],fov:44}},
    cheer:{pos:[.4,3,11.5],look:[0,1,0],fov:42,keep:['hero','friend','pet','mom'],tall:{pos:[0,4.4,11.5],look:[0,.8,1.2],fov:42}},

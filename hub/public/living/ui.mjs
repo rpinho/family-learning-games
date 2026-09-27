@@ -24,17 +24,20 @@ export function createUI({layer,say,sound=null,player='',preview=false,story='',
  const token=(text,kind='word')=>`<span class="lv-read lv-${kind}">${esc(text)}</span>`;
  // ---- anchoring flat things to places in the 3D world ----
  const v=new THREE.Vector3();
- function anchor(e,where,{dy=0}={}){e._where=where;e._dy=dy;e.classList.add('lv-anchored');anchored.add(e);return e;}
+ // below: hang it under the point (on a tall screen the empty ground below the balls is the best place).
+ function anchor(e,where,{dy=0,below=false}={}){e._where=where;e._dy=dy;e._below=below;e.classList.add('lv-anchored');e.classList.toggle('below',below);anchored.add(e);return e;}
  function update(camera,rect){
   const items=[];
   for(const e of anchored){if(!e.isConnected){anchored.delete(e);continue;}const p=e._where();if(!p){e.style.visibility='hidden';continue;}
    v.copy(p).project(camera);if(v.z>1){e.style.visibility='hidden';continue;}e.style.visibility='';
-   items.push({e,x:(v.x+1)/2*rect.width,y:(1-v.y)/2*rect.height+e._dy,w:e.offsetWidth,h:e.offsetHeight});}
+   items.push({e,x:(v.x+1)/2*rect.width,y:(1-v.y)/2*rect.height+(e._below?-e._dy+22:e._dy),w:e.offsetWidth,h:e.offsetHeight,below:e._below});}
   // Options never overlap (spread apart around their middle) and never leave the screen.
   const opts=items.filter(i=>i.e.classList.contains('lv-opt')).sort((a,b)=>a.x-b.x);
-  for(let k=0;k<4;k++)for(let i=1;i<opts.length;i++){const a=opts[i-1],b=opts[i],need=(a.w+b.w)/2+10-(b.x-a.x);if(need>0){a.x-=need/2;b.x+=need/2;}}
-  const pad=10;for(const i of items){i.x=clamp(i.x,i.w/2+pad,rect.width-i.w/2-pad);i.y=clamp(i.y,i.h+pad,rect.height-pad);
-   i.e.style.transform=`translate(${i.x.toFixed(1)}px,${i.y.toFixed(1)}px) translate(-50%,-100%)`;}
+  // Spread apart (keeping a 14 px gap) and inside the screen, alternating until both hold.
+  const pad=10,gap=14,edge=i=>{i.x=clamp(i.x,i.w/2+pad,rect.width-i.w/2-pad);};
+  for(let k=0;k<12;k++){let moved=false;for(let i=1;i<opts.length;i++){const a=opts[i-1],b=opts[i],need=(a.w+b.w)/2+gap-(b.x-a.x);if(need>.5){a.x-=need/2;b.x+=need/2;moved=true;}}opts.forEach(edge);if(!moved)break;}
+  for(const i of items){edge(i);i.y=i.below?clamp(i.y,pad,rect.height-i.h-pad):clamp(i.y,i.h+pad,rect.height-pad);
+   i.e.style.transform=`translate(${i.x.toFixed(1)}px,${i.y.toFixed(1)}px) translate(-50%,${i.below?'0':'-100%'})`;}
  }
  // ---- telemetry per beat ----
  function beatLog(id,extra={}){const b={story,beat:id,shownAt:performance.now(),taps:[],attempts:0,misses:0,...extra};tele.push(b);
@@ -85,16 +88,16 @@ export function createUI({layer,say,sound=null,player='',preview=false,story='',
  // ---- choices: a board of words, letter balls, signs ----
  // layout 'board' (a panel: rows on a tall screen, one row on a wide one) or 'anchored' (each option floats
  // above a place in the world, e.g. a ball). soundOut(value): the friend sounds the tapped word out.
- function choose({id,options,answer,layout='board',title='',kind='word',anchors=null,onWrong=null,soundOut=null,glowAfter=2,cls=''}){
+ function choose({id,options,answer,layout='board',title='',kind='word',anchors=null,below=false,onWrong=null,soundOut=null,glowAfter=2,cls=''}){
   const log=beatLog(id,{answer:String(answer),options:options.map(String)});
   return new Promise(resolve=>{
    const wrap=el('div',`lv-choices lv-${layout} ${cls}`);if(title)wrap.append(el('div','lv-board-title',esc(title)));
    let misses=0,busy=false,done=false;
    options.forEach((o,i)=>{const b=el('button',`lv-opt lv-opt-${kind}`,token(o,kind));b.type='button';b.dataset.v=o;
-    if(layout==='anchored'&&anchors?.[i]){anchor(b,anchors[i],{dy:-6});layer.append(b);}else wrap.append(b);
+    if(layout==='anchored'&&anchors?.[i]){anchor(b,anchors[i],{dy:-6,below:below&&document.body.classList.contains('tall')});layer.append(b);}else wrap.append(b);
     b.onclick=async e=>{e.stopPropagation();if(done||busy)return;const ok=String(o)===String(answer);log.tap(o,ok);busy=true;b.classList.add('pressed');
      if(soundOut)await soundOut(o,ok);busy=false;b.classList.remove('pressed');
-     if(ok){done=true;b.classList.add('right');wrap.querySelectorAll('.lv-opt').forEach(x=>x.classList.remove('glow'));log.done('tap');resolve({value:o,misses,button:b,log,remove});return;}
+     if(ok){done=true;b.classList.add('right');[...wrap.querySelectorAll('.lv-opt'),...layer.querySelectorAll('.lv-opt.lv-anchored')].forEach(x=>{x.classList.remove('glow');if(x!==b)x.classList.add('gone');});log.done('tap');resolve({value:o,misses,button:b,log,remove});return;}
      misses++;b.classList.remove('wiggle');void b.offsetWidth;b.classList.add('wiggle');sound?.play('soft');
      if(misses>=glowAfter)(layout==='anchored'?[...layer.querySelectorAll('.lv-opt')]:[...wrap.querySelectorAll('.lv-opt')]).find(x=>x.dataset.v===String(answer))?.classList.add('glow');
      await onWrong?.(o,misses);};});
@@ -129,7 +132,7 @@ export function createUI({layer,say,sound=null,player='',preview=false,story='',
   const W=innerWidth,H=innerHeight,short=Math.min(W,H),cv=new OffscreenCanvas(8,8),g=cv.getContext('2d');
   const rgb=s=>{const m=String(s).match(/rgba?\(([^)]+)\)/);if(!m)return null;const p=m[1].split(/[ ,/]+/).filter(Boolean).map(Number);return {r:p[0],g:p[1],b:p[2],a:p.length>3?p[3]:1};};
   const lum=c=>{const f=x=>{x/=255;return x<=.03928?x/12.92:Math.pow((x+.055)/1.055,2.4);};return .2126*f(c.r)+.7152*f(c.g)+.0722*f(c.b);};
-  return [...layer.querySelectorAll('.lv-read')].filter(e=>{const s=getComputedStyle(e);return s.visibility!=='hidden'&&s.display!=='none'&&e.getClientRects().length;}).map(e=>{
+  return [...layer.querySelectorAll('.lv-read')].filter(e=>{if(e.closest('.gone'))return false;const s=getComputedStyle(e);return s.visibility!=='hidden'&&s.display!=='none'&&e.getClientRects().length;}).map(e=>{
    const s=getComputedStyle(e),r=e.getBoundingClientRect();g.font=`${s.fontWeight} ${s.fontSize} ${s.fontFamily}`;const m=g.measureText(e.textContent);
    const glyph=(m.actualBoundingBoxAscent||0)+(m.actualBoundingBoxDescent||0);
    // Its own solid badge (or the nearest solid background behind it).
@@ -138,7 +141,7 @@ export function createUI({layer,say,sound=null,player='',preview=false,story='',
    return {text:e.textContent,kind:e.classList.contains('lv-letter')?'letter':'word',glyphPx:+glyph.toFixed(1),ratio:+(glyph/short).toFixed(3),contrast:+contrast.toFixed(2),
     onScreen:r.left>=0&&r.top>=0&&r.right<=W+.5&&r.bottom<=H+.5,rect:[Math.round(r.left),Math.round(r.top),Math.round(r.width),Math.round(r.height)]};});
  }
- function targets(){return [...layer.querySelectorAll('button')].filter(b=>b.getClientRects().length&&getComputedStyle(b).visibility!=='hidden').map(b=>{const r=b.getBoundingClientRect();return {cls:b.className.split(' ')[0],w:Math.round(r.width),h:Math.round(r.height)};});}
- function covers(){return [...document.querySelectorAll('#ui .lv-choices,#ui button,#ui .lv-card,#ui .lv-hint,#no,#exit')].filter(e=>e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'&&!e.hidden).map(e=>e.getBoundingClientRect());}
+ function targets(){return [...layer.querySelectorAll('button')].filter(b=>b.getClientRects().length&&getComputedStyle(b).visibility!=='hidden'&&!b.closest('.gone')).map(b=>{const r=b.getBoundingClientRect();return {cls:b.className.split(' ')[0],w:Math.round(r.width),h:Math.round(r.height)};});}
+ function covers(){return [...document.querySelectorAll('#ui .lv-choices,#ui button,#ui .lv-card,#ui .lv-hint,#no,#exit')].filter(e=>e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'&&!e.hidden&&!e.closest('.gone')).map(e=>e.getBoundingClientRect());}
  return {token,anchor,update,choose,sayIt,talkButton,card,hint,controls,beatLog,measureReadables,targets,covers,micUsable,clear(){layer.innerHTML='';anchored.clear();},dispose(){alive=false;}};
 }

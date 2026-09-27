@@ -33,3 +33,9 @@ export function readCast(paths){try{const c=JSON.parse(readFileSync(paths.cast,'
 export const localDate=(ms,timeZone)=>new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(ms));
 export function addDays(date,n){const [y,m,d]=date.split('-').map(Number);return new Date(Date.UTC(y,m-1,d+n)).toISOString().slice(0,10);}
 export const exists=existsSync;
+// Named voices (the household's cast.json "voices": {"rook": "am_michael"}): a role whose voice is "@rook" uses that
+// one value everywhere (the book's Dad, the living book's grown-up, the chess coach), so a voice swap is one line
+// plus a re-render of the missing clips.
+export const NAMED_VOICES={rook:'am_michael'};
+export const resolveVoice=(v,named={})=>v&&typeof v.voice==='string'&&v.voice.startsWith('@')?{...v,voice:named?.[v.voice.slice(1)]||NAMED_VOICES[v.voice.slice(1)]||'am_michael'}:v;
+export const resolveVoices=(voices,named={})=>Object.fromEntries(Object.entries(voices||{}).map(([k,v])=>[k,resolveVoice(v,named)]));

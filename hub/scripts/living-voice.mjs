@@ -12,7 +12,7 @@ import {join,dirname} from 'node:path';
 import {tmpdir} from 'node:os';
 import {fileURLToPath} from 'node:url';
 import {bareSound,spelledSound} from '../../book/lint.mjs';
-import {bookPaths} from '../../book/paths.mjs';
+import {bookPaths,resolveVoices} from '../../book/paths.mjs';
 import {isFamilyWord,isLookAlike} from '../public/word-families.mjs';
 const here=dirname(fileURLToPath(import.meta.url));
 const args=process.argv.slice(2),arg=(k,d=null)=>{const i=args.indexOf(k);return i>=0?args[i+1]:d;},flag=k=>args.includes(k);
@@ -31,7 +31,8 @@ const issues=Object.entries(f.stories||{}).flatMap(([id,s])=>lintStory(id,s));
 if(issues.length){console.error(issues.join('\n'));process.exit(1);}
 if(flag('--check')){console.log('ok');process.exit(0);}
 const want=new Map();
-for(const s of Object.values(f.stories||{}))for(const [who,text] of Object.values(s.lines||{})){if(!text)continue;const v=s.voices[who]||s.voices.narrator;const k=`${v.voice}|${v.speed}|${text}`;if(!f.clips?.[k])want.set(k,{text,voice:v.voice,speed:v.speed});}
+let named={};try{named=JSON.parse(await readFile(join(book,'cast.json'),'utf8')).voices||{};}catch{}
+for(const s0 of Object.values(f.stories||{})){const s={...s0,voices:resolveVoices(s0.voices,named)};for(const [who,text] of Object.values(s.lines||{})){if(!text)continue;const v=s.voices[who]||s.voices.narrator;const k=`${v.voice}|${v.speed}|${text}`;if(!f.clips?.[k])want.set(k,{text,voice:v.voice,speed:v.speed});}}
 if(!want.size){console.log(JSON.stringify({made:0}));process.exit(0);}
 const dir=await mkdtemp(join(tmpdir(),'living-voice-'));const req=join(dir,'req.json');
 await writeFile(req,JSON.stringify({lines:[...want.values()],out:join(book,'voice'),models:arg('--models',paths.voiceModels)}));

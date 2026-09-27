@@ -10,8 +10,8 @@ export const UI_LINES={goal:'Goal!',saved:'Ooh, saved! Try again!',go:'Toot toot
  traceIt:'Draw the big letter with your finger!',traced:'You drew it!'};
 export const DEFAULT_VOICES={narrator:{voice:'af_heart',speed:0.95},dad:{voice:'am_michael',speed:0.95},mom:{voice:'af_sarah',speed:0.95}};
 const FRIEND_VOICES=[{voice:'am_puck',speed:1},{voice:'af_bella',speed:1},{voice:'bm_fable',speed:1},{voice:'af_nova',speed:1.05}];
-export function voicesFor(plan,{narrator}={}){
- const v={narrator:{...DEFAULT_VOICES.narrator,...(narrator||{})},dad:{...DEFAULT_VOICES.dad},mom:{...DEFAULT_VOICES.mom}};
+export function voicesFor(plan,{narrator,named={}}={}){
+ const v={narrator:{...DEFAULT_VOICES.narrator,...(narrator||{})},dad:{...DEFAULT_VOICES.dad,...(named.rook?{voice:named.rook}:{})},mom:{...DEFAULT_VOICES.mom}};
  (plan.cast||[]).forEach((c,i)=>{v[c.id]=c.voice?{voice:c.voice,speed:Number(c.speed)||1}:FRIEND_VOICES[i%FRIEND_VOICES.length];});
  return v;
 }

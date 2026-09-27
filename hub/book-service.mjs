@@ -7,7 +7,7 @@ import {readFile,writeFile,rename,mkdir,readdir,access,mkdtemp,rm} from 'node:fs
 import {execFile} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {tmpdir} from 'node:os';
-import {bookPaths} from '../book/paths.mjs';
+import {bookPaths,resolveVoices} from '../book/paths.mjs';
 import {join,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 const here=dirname(fileURLToPath(import.meta.url)),publicArt=join(here,'public','book-art');
@@ -126,7 +126,8 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
    }
    // One story from the household's private story file (words, voices, cast roles) with its narration clips.
    if(u.pathname==='/api/book/living'&&req.method==='GET'){const f=await readJSON(join(bookDir,'living','stories.json'),{stories:{},clips:{}});const id=String(u.searchParams.get('story')||'');
-    const story=Object.hasOwn(f.stories||{},id)?f.stories[id]:null;if(!story)return send(res,404,{error:'No such story.'});
+    const raw=Object.hasOwn(f.stories||{},id)?f.stories[id]:null;if(!raw)return send(res,404,{error:'No such story.'});
+    const named=(await readJSON(join(bookDir,'cast.json'),{}))?.voices||{},story={...raw,voices:resolveVoices(raw.voices,named)};
     const clips=Object.fromEntries(Object.values(story.lines||{}).map(([who,text])=>{const v=story.voices?.[who]||story.voices?.narrator||{};const k=`${v.voice}|${v.speed}|${text}`;return [k,f.clips?.[k]];}).filter(([,c])=>c));
     return send(res,200,{story,clips});}
    // A missing narration clip, rendered now: {story, key} (a living-book line) or {player, date, text, voice, speed}
@@ -134,7 +135,8 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
    if(u.pathname==='/api/book/voice'&&req.method==='POST'){let b;try{b=await body(req);}catch(e){return send(res,e.status||400,{error:e.message});}
     let line=null;
     if(b.story){const f=await readJSON(join(bookDir,'living','stories.json'),{stories:{}});const st=Object.hasOwn(f.stories||{},b.story)?f.stories[b.story]:null;const l=st?.lines?.[b.key];
-     if(l){const v=st.voices?.[l[0]]||st.voices?.narrator;if(v)line={text:l[1],voice:v.voice,speed:v.speed};}}
+     const voices=resolveVoices(st?.voices,(await readJSON(join(bookDir,'cast.json'),{}))?.voices||{});
+     if(l){const v=voices[l[0]]||voices.narrator;if(v)line={text:l[1],voice:v.voice,speed:v.speed};}}
     else if(kids.some(k=>k.id===b.player)&&DATE.test(String(b.date||''))){const ch=await chapter(b.player,b.date);const want={text:String(b.text||''),voice:String(b.voice||''),speed:Number(b.speed)};if(ch&&want.text&&lineIn(ch,want))line=want;}
     if(!line||!line.text||line.text.length>400)return send(res,404,{error:'No such line.'});
     try{return send(res,200,{clip:await renderLine(line)});}catch(e){await log({type:'book_voice_error',detail:String(e.message).slice(0,160)});return send(res,503,{error:'Could not render the line.'});}}

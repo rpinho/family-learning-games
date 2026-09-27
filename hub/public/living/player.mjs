@@ -91,10 +91,10 @@ async function main(){
  const setWorld=w=>{world=w;applyMode();};
  // A reading beat: he finds the word among look-alikes (the friend sounds out each word he taps, right or wrong),
  // then reads it aloud (the book's listening flow; a tap counts when there is no microphone).
- async function readBeat({id,options,answer,layout,title='',anchors=null,ask=null,wrongLine,sayLine='uiTapSay',kind='word'}){
+ async function readBeat({id,options,answer,layout,title='',anchors=null,below=false,ask=null,wrongLine,sayLine='uiTapSay',kind='word'}){
   const soundOut=async w=>{await say((kind==='letter'?'lt:':'so:')+String(w).toLowerCase());};
   const e={kind:'choose',answer,id};expect(e);
-  const res=await ui.choose({id,options,answer,layout,title,kind,anchors,soundOut,onWrong:async()=>{if(wrongLine)await say(wrongLine);}});
+  const res=await ui.choose({id,options,answer,layout,title,kind,anchors,below,soundOut,onWrong:async()=>{if(wrongLine)await say(wrongLine);}});
   // Read it aloud: the chosen word itself is the talk button.
   const log=ui.beatLog(id+'-say',{answer:String(answer)});
   const target=kind==='letter'?{kind:'letter',letter:String(answer).toUpperCase(),names:story.names?.[String(answer).toUpperCase()]||[]}:{kind:'word',word:String(answer)};
@@ -187,13 +187,13 @@ async function main(){
   setWorld(await pitch(ctx));mark('pitch');const s=world.shots,w=world;letterbox=0;applyMode();post.uIris=0;post.uBloom=.45;post.uBloomT=.85;post.uWarm=.6;post.uSat=1.1;post.uExposure=1.02;post.uGain.setRGB(1.02,1.01,.97);
   start();
   await shot('leaves',s.leaves,s.leaves,{dur:.1});await irisOpen();
-  const rv=shot('reveal',s.leaves,s.reveal,{dur:8,focusFrom:1.8,focusTo:13,aperture:.6,focusEase:t=>smooth(Math.min(1,t*1.6))});await say('d1');const bird=w.flyerArrives(host);await rv;await checkpoint('reveal');
+  const rv=shot('reveal',s.leaves,s.reveal,{dur:8,focusFrom:1.8,focusTo:13,aperture:.6,focusEase:t=>smooth(Math.min(1,t*1.6))});setTimeout(()=>w.clearLeaves(),2600);await say('d1');const bird=w.flyerArrives(host);await rv;await checkpoint('reveal');
   await shot('crossbar',s.reveal,s.crossbar,{dur:3.5,focusFrom:12,focusTo:4.2,aperture:.8});await bird;await say('d2');
   await shot('friends',s.crossbar,s.friends,{dur:3.5,focusFrom:4.2,focusTo:5,aperture:.8});w.friend?.setPose('happy');w.friend?.hop(.15);await say('d3');await say('d4');w.friend?.setPose('idle');await checkpoint('friends');
   // 1. The letter balls: kick the one with Birdie's letter (then say its sound).
   const K=story.kick||{balls:story.balls||['D','B','P'],answer:story.answer||'B'};w.relabel(K.balls);for(const b of w.balls)b.visible=true;sound?.play('sparkle');
   await shot('kick',s.friends,s.kick,{dur:3,focusFrom:5,focusTo:5,aperture:.25});await say('d5');mark('kick');await checkpoint('kick');
-  const res=await readBeat({id:'kick-letter',options:K.balls,answer:K.answer,layout:'anchored',anchors:K.balls.map((_,i)=>w.ballTop(i)),wrongLine:'dWrong',sayLine:'uiLetterSay',kind:'letter'});
+  const res=await readBeat({id:'kick-letter',options:K.balls,answer:K.answer,layout:'anchored',anchors:K.balls.map((_,i)=>w.ballTop(i,mode.tall)),below:true,wrongLine:'dWrong',sayLine:'uiLetterSay',kind:'letter'});
   const ball=w.balls[K.balls.indexOf(K.answer)];w.balls.forEach(b=>{if(b!==ball)b.visible=false;});await w.kick(ball,host);
   mark('goal');await say('dGoal');await shot('cheer',s.kick,s.cheer,{dur:3});if(w.mom&&L.dMom){w.mom.setPose('cheer');await say('dMom');}w.pet?.hop(.3);await checkpoint('cheer');
   // 2. A penalty: Birdie in goal. He taps where he wants to kick (anywhere counts).
@@ -215,7 +215,7 @@ async function main(){
   // 4. Fetch: the puppy fetches only the ball with her letter.
   if(L.f1){const F=story.fetch||{balls:['T','L','I'],answer:'L'};await w.regroup();w.relabel(F.balls);for(const b of w.balls)b.visible=true;
    await shot('fetch',s.bar,s.fetch,{dur:3,focusFrom:5,focusTo:9,aperture:.2});await say('f1');await say('f2');mark('fetch');await checkpoint('fetch');
-   await readBeat({id:'fetch-letter',options:F.balls,answer:F.answer,layout:'anchored',anchors:F.balls.map((_,i)=>w.ballTop(i)),wrongLine:'fWrong',sayLine:'uiLetterSay',kind:'letter'});
+   await readBeat({id:'fetch-letter',options:F.balls,answer:F.answer,layout:'anchored',anchors:F.balls.map((_,i)=>w.ballTop(i,mode.tall)),below:true,wrongLine:'fWrong',sayLine:'uiLetterSay',kind:'letter'});
    const fb=w.balls[F.balls.indexOf(F.answer)];w.balls.forEach(b=>{if(b!==fb)b.visible=false;});await w.fetchBall(fb,host);await say('f3');}
   // Breakfast under the treehouse.
   await w.regroup();await shot('cheer2',s.fetch||s.kick,s.cheer,{dur:3});if(L.e1&&w.mom){w.mom.setPose('cheer');await say('e1');}await say('d6');
