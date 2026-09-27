@@ -6,7 +6,7 @@
 import {spawnSync, spawn} from 'node:child_process';
 import {existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, readdirSync, statSync, lstatSync, readlinkSync,
   symlinkSync, copyFileSync, rmSync, appendFileSync, realpathSync, constants as fsc} from 'node:fs';
-import {join, dirname, resolve, basename} from 'node:path';
+import {join, dirname, resolve, basename, isAbsolute, sep} from 'node:path';
 import {homedir} from 'node:os';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
@@ -94,6 +94,23 @@ function saveFiles(name, dir) {
 function walk(abs, rel, out) {for (const f of safeList(abs)) {const a = join(abs, f), r = join(rel, f), s = statSync(a); if (s.isDirectory()) walk(a, r, out); else if (s.isFile()) out.push(r);}}
 function safeList(d) {try {return readdirSync(d);} catch {return [];}}
 const sha256 = file => createHash('sha256').update(readFileSync(file)).digest('hex');
+// Optional household-only artwork overrides live in private deploy.json. The
+// public checkout and archive remain the default; no private asset enters git.
+function applyOverlays(name, dir) {
+  const applied = [];
+  for (const item of game(name).overlays || []) {
+    if (!item || typeof item.from !== 'string' || typeof item.to !== 'string') throw new Error(`${name}: invalid overlay`);
+    const source = exp(item.from), target = resolve(dir, item.to);
+    if (!isAbsolute(source) || !existsSync(source) || !statSync(source).isFile() ||
+        target === dir || !target.startsWith(dir + sep) || !existsSync(target) ||
+        !lstatSync(target).isFile() || !realpathSync(dirname(target)).startsWith(realpathSync(dir) + sep)) {
+      throw new Error(`${name}: overlay must replace an existing release file from an absolute private file`);
+    }
+    copyFileSync(source, target);
+    applied.push({file: item.to, sha256: sha256(target)});
+  }
+  return applied;
+}
 function hashSaves(name, dir) {return Object.fromEntries(saveFiles(name, dir).map(f => [f, sha256(join(dir, f))]));}
 function backupSaves(name, dir, tag, base) {
   const dest = join(base || join(BACKUPS, `${stamp()}-${tag}`), name);
@@ -144,6 +161,7 @@ async function build(name, ref, {voice = true} = {}) {
     console.log(`${name}: exporting ${r.sha.slice(0, 7)} -> ${tmp}`);
     const tar = spawnSync('/bin/sh', ['-c', `git -C "$1" archive --format=tar "$2" | tar -x -C "$3"`, 'sh', g.repo, r.sha, tmp], {stdio: 'inherit'});
     if (tar.status !== 0) throw new Error('git archive failed');
+    const overlays = applyOverlays(name, tmp);
     if (g.deps) {
       const lockA = join(tmp, 'package-lock.json'), lockB = join(g.repo, 'package-lock.json');
       const same = existsSync(lockA) && existsSync(lockB) && sha256(lockA) === sha256(lockB) && existsSync(join(g.repo, 'node_modules'));
@@ -151,7 +169,7 @@ async function build(name, ref, {voice = true} = {}) {
       else {console.log(`${name}: npm ci`); heavy(join(NODE_BIN, 'npm'), ['ci', '--no-audit', '--no-fund'], {cwd: tmp, env: {...process.env, PATH: PATH_ENV}});}
     }
     if (g.build) {console.log(`${name}: ${g.build.join(' ')}`); heavy(g.build[0] === 'npm' ? join(NODE_BIN, 'npm') : g.build[0], g.build.slice(1), {cwd: tmp, env: {...process.env, PATH: PATH_ENV, NODE_ENV: 'production'}});}
-    const meta = {game: name, version: r.version, commit: r.sha, ref: ref || 'HEAD', repo: g.repo, builtAt: now(), voice: null};
+    const meta = {game: name, version: r.version, commit: r.sha, ref: ref || 'HEAD', repo: g.repo, builtAt: now(), overlays, voice: null};
     if (g.voice) meta.voice = voice ? buildVoice(name, tmp) : declareLiveVoice(name, tmp);
     writeJSON(join(tmp, '.release.json'), meta);
     if (existsSync(final)) {rmSync(tmp, {recursive: true, force: true}); return r.version;}
