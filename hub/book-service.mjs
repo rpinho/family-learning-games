@@ -13,7 +13,9 @@ export const localDate=(ms=Date.now(),timeZone)=>new Intl.DateTimeFormat('en-CA'
 const DATE=/^\d{4}-\d{2}-\d{2}$/;
 // Only chapters in the picture-book format are served (an older chapter is treated as missing).
 export const CHAPTER_SCHEMA='family-book-chapter-2';
-export const AUTO_OPENS=3; // a book never keeps a child out of his games: it stops opening itself after 3 unfinished opens
+export const AUTO_OPENS=3;
+// Real-world hunts (find things that start with a sound, find a letter or word written at home): up to this many a day.
+export const HUNTS_PER_DAY=3; // a book never keeps a child out of his games: it stops opening itself after 3 unfinished opens
 const readJSON=async(file,fallback)=>{try{return JSON.parse(await readFile(file,'utf8'));}catch(e){if(e.code==='ENOENT'||e instanceof SyntaxError)return fallback;throw e;}};
 async function writeJSON(file,value){const tmp=file+'.tmp';await writeFile(tmp,JSON.stringify(value),{mode:0o600});await rename(tmp,file);}
 export function cleanNote(text){return String(text||'').replace(/[\u0000-\u001f\u007f<>]/g,' ').replace(/\s+/g,' ').trim().slice(0,160);}
@@ -35,7 +37,7 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
  function collect(p,earned){if(!earned||typeof earned!=='object')return;const c=p.collection??={keys:[],words:[]};
   const k=String(earned.key||'');if(/^[A-Z]$/.test(k)&&!c.keys.includes(k))c.keys.push(k);
   const w=String(earned.word||'').toLowerCase();if(/^[a-z]{1,12}$/.test(w)&&!c.words.includes(w))c.words=[...c.words,w].slice(-300);}
- const collectionOf=p=>({keys:p.collection?.keys||[],words:p.collection?.words||[]});
+ const collectionOf=p=>({keys:p.collection?.keys||[],words:p.collection?.words||[],...(p.collection?.hunts?.length?{hunts:p.collection.hunts}:{})});
  // Grown-ups' preview: the newest chapter up to tomorrow (or a given date), read-only.
  async function latest(player,date){if(date)return DATE.test(date)?{date,chapter:await chapter(player,date)}:{date,chapter:null};
   const limit=localDate(now()+864e5,timeZone);let files=[];try{files=(await readdir(join(bookDir,player))).filter(f=>/^\d{4}-\d{2}-\d{2}\.json$/.test(f)&&f.slice(0,10)<=limit).sort();}catch{}
@@ -50,11 +52,18 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
    else if(input.type==='page')day.page=Math.max(day.page,page);
    else if(input.type==='result'){const r=input.result||{};collect(p,r.earned);day.results=[...day.results.filter(x=>x.page!==page),{page,kind:String(r.kind||'').slice(0,20),misses:Math.max(0,Math.min(99,Number(r.misses)||0)),ms:Math.max(0,Math.min(36e5,Number(r.ms)||0)),hints:Math.max(0,Math.min(9,Number(r.hints)||0)),...(['voice','echo','tap'].includes(r.via)?{via:r.via}:{})}].slice(-20);}
    else if(input.type==='finish'){day.finished=true;day.finishedAt=new Date(now()).toISOString();day.page=Math.max(day.page,page);}
+   else if(input.type==='hunt'){
+    // A hunt away from the screen: started (counts toward today's limit) and found (with how many, if a grown-up said).
+    const id=String(input.id||'').slice(0,24),hs=day.hunts??=[];let h=hs.find(x=>x.id===id&&!x.foundAt);
+    if(input.stage==='start'){if(!h){if(hs.length>=HUNTS_PER_DAY)throw Object.assign(Error('That is enough hunting for today.'),{status:429});hs.push(h={id,startedAt:new Date(now()).toISOString()});}}
+    else if(input.stage==='found'&&h){h.foundAt=new Date(now()).toISOString();h.found=Math.max(0,Math.min(20,Number(input.found)||0));h.ms=Date.parse(h.foundAt)-Date.parse(h.startedAt);
+     const c=p.collection??={keys:[],words:[]};c.hunts=[...new Set([...(c.hunts||[]),id])].slice(-100);}
+   }
    else if(input.type==='leave'){day.leftAt=new Date(now()).toISOString();day.page=Math.max(day.page,page);}
    else throw Object.assign(Error('Unsupported action.'),{status:400});
    const keep=Object.keys(p.days).sort().slice(-30);p.days=Object.fromEntries(keep.map(k=>[k,p.days[k]]));
    await mkdir(progressDir,{recursive:true,mode:0o700});await writeJSON(join(progressDir,player+'.json'),p);
-   await log({type:'book',player,action:input.type,date,page,finished:day.finished});
+   await log({type:'book',player,action:input.type,date,page,finished:day.finished,...(input.type==='hunt'?{hunt:String(input.id||'').slice(0,24),stage:input.stage,found:Number(input.found)||0}:{})});
    return progressView(day);
   });
  }
@@ -67,6 +76,14 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
     if(req.method==='POST'){if(!req.headers['content-type']?.startsWith('application/json'))return send(res,415,{error:'JSON required.'});
      try{return send(res,200,{progress:await update(player,await body(req))});}catch(e){return send(res,e.status||500,{error:e.status?e.message:'Could not save.'});}}
     return send(res,405,{error:'Unsupported action.'});
+   }
+   // Today's next hunt for a child (from the household's private hunts.json), and how many are left today.
+   if(u.pathname==='/api/book/hunt'&&req.method==='GET'){
+    const player=u.searchParams.get('player');if(!kids.some(k=>k.id===player))return send(res,400,{error:'Choose a child.'});
+    const cfg=(await readJSON(join(bookDir,'hunts.json'),{players:{}})).players?.[player];if(!cfg?.hunts?.length)return send(res,200,{available:false});
+    const date=today(),p=await progress(player),day=p.days[date]||{},started=(day.hunts||[]).length,done=new Set(p.collection?.hunts||[]);
+    const open=(day.hunts||[]).find(h=>!h.foundAt),hunt=cfg.hunts.find(h=>h.id===open?.id)||cfg.hunts.find(h=>!done.has(h.id))||cfg.hunts[started%cfg.hunts.length];
+    return send(res,200,{available:true,date,left:Math.max(0,HUNTS_PER_DAY-started)+(open?1:0),hunt,friend:cfg.friend||null,label:cfg.label||'Hunt',tomorrow:cfg.tomorrow||null,cheer:cfg.cheer||null});
    }
    if(u.pathname==='/api/book/preview'&&req.method==='GET'){
     const player=u.searchParams.get('player');if(!kids.some(k=>k.id===player))return send(res,400,{error:'Choose a child.'});

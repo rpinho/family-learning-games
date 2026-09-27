@@ -456,8 +456,9 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   if(!preview){void post(player,{type:'finish',date,page:ch.pages.length});event('book_finish',date);}
   const el=view.querySelector('.bk-page')||view;
   const q=ch.quest;
-  el.insertAdjacentHTML('beforeend',`<div class="bk-quest">${q?`<h2>🗺️ ${esc((q.text.match(/^A quest for you and ([^:]+):/)||[,'Dad'])[1]).replace(/^/,'A quest for you and ')}</h2><p>${esc(q.text.replace(/^A quest for you and [^:]+:\s*/,''))}</p>${q.hints?.length?`<div class="bk-hint"></div><button class="bk-btn bk-hintbtn" type="button">🔍 A hint, please</button>`:''}${q.dad?`<p class="bk-dadnote">${esc(q.dad)}</p>`:''}`:'<h2>The end, for today</h2>'}<button class="bk-btn bk-done" type="button">${preview?'Close':'Play games →'}</button></div>`);
+  el.insertAdjacentHTML('beforeend',`<div class="bk-quest">${q?`<h2>🗺️ ${esc((q.text.match(/^A quest for you and ([^:]+):/)||[,'Dad'])[1]).replace(/^/,'A quest for you and ')}</h2><p>${esc(q.text.replace(/^A quest for you and [^:]+:\s*/,''))}</p>${q.hints?.length?`<div class="bk-hint"></div><button class="bk-btn bk-hintbtn" type="button">🔍 A hint, please</button>`:''}${q.dad?`<p class="bk-dadnote">${esc(q.dad)}</p>`:''}`:'<h2>The end, for today</h2>'}${preview?'':'<a class="bk-btn bk-hunt" href="#hunt">🔍 Want to go hunting?</a> '}<button class="bk-btn bk-done" type="button">${preview?'Close':'Play games →'}</button></div>`);
   el.querySelector('.bk-quest .bk-done').onclick=()=>{stop();onDone({finished:true});};
+  const hl=el.querySelector('.bk-hunt');if(hl)hl.onclick=()=>{stop();};
   // Came back empty-handed? One hint picture at a time (things most homes have).
   let hint=0;const hb=el.querySelector('.bk-hintbtn');
   if(hb)hb.onclick=async()=>{const h=q.hints[hint++];if(!h)return;el.querySelector('.bk-hint').innerHTML=`<span class="pic">${esc(h.emoji)}</span><b>${esc(h.word)}</b>`;if(hint>=q.hints.length)hb.remove();if(!preview)event('book_hint',`${date}:${hint}`);await speak(h.line);};

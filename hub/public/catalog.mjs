@@ -44,6 +44,13 @@ export const CATALOG = [
     icon: "/chess/icon.svg",
   },
   {
+    id: "hunt",
+    name: "Letter Hunt",
+    description: "Hunt for letters and words at home!",
+    color: "#ffe7a8",
+    icon: "/hunt-icon.svg",
+  },
+  {
     id: "three-in-a-row",
     name: "Three in a Row",
     description: "Choose X or O. Think one move ahead.",
@@ -139,6 +146,7 @@ export function destination(hash) {
   const item = CATALOG.find((g) => g.id === family);
   if (!item) return { type: "home" };
   if (family === "chess") return { type: "chess", item };
+  if (family === "hunt") return { type: "hunt", item };
   if (FAMILIES[family]) {
     const mode = FAMILIES[family].find((a) => a.id === activity);
     return mode
