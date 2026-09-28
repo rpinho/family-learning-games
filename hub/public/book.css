@@ -204,3 +204,15 @@
 /* golden letter keys */
 .bk-keys-golden .bk-keys b{background:linear-gradient(#fff2a8,#f0c02a 55%,#c98f12);color:#4a2e00;box-shadow:0 0 10px rgba(255,210,60,.7),0 2px 6px rgba(0,0,0,.3)}
 .bk-keys-golden .bk-key-fly{filter:drop-shadow(0 0 16px #ffd54a)}
+
+.bk-board u.pv{text-decoration:none;color:#ffd54a;border-bottom:.08em solid #ffd54a}
+
+/* A letters book ends with the Letter Hunt: one clean card, buttons stacked (never on top of each other) */
+.bk-quest.bk-hunt-end{display:flex;flex-direction:column;align-items:center;gap:.2em;width:min(92vw,520px);max-height:92vh;overflow:auto;box-sizing:border-box}
+.bk-hunt-letter{font-weight:900;font-size:clamp(64px,16vmin,120px);line-height:1;color:#c8341f;text-shadow:0 3px 0 #ffd54a}
+.bk-hunt-letter small{font-size:.5em;margin-left:.15em;color:#7a4a22}
+.bk-hunt-end p{margin:.1em 0 .5em}
+.bk-end-btns{display:flex;flex-direction:column;align-items:stretch;gap:12px;width:100%}
+.bk-end-btns .bk-btn{display:block;text-align:center;text-decoration:none;margin:0}
+.bk-end-btns .bk-btn.big{font-size:clamp(24px,5.2vmin,38px);padding:.45em .8em;background:linear-gradient(#8ee07a,#3aa84a);color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.bk-end-btns .bk-done{font-size:clamp(18px,3.8vmin,26px)}

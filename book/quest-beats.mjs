@@ -19,12 +19,13 @@ export function numOptions(ans,r,near=[]){const set=new Set([String(ans)]);for(c
 
 // Skip counting: a sequence with one gap. Pull-ups flavour: the friend counts his pull-ups on the bar.
 export function skipBeat(id,r,{steps=[2,3,5,10],flavor=null}={}){
- const step=pick(steps,r),start=step*(1+Math.floor(r()*2)),seq=Array.from({length:5},(_,i)=>start+i*step),gap=2+Math.floor(r()*2),ans=seq[gap];
+ const ok=steps.filter(st=>st*5<=50),step=pick(ok.length?ok:[2],r),start=step*(1+Math.floor(r()*Math.min(2,Math.floor(50/step)-4))),seq=Array.from({length:5},(_,i)=>start+i*step),gap=2+Math.floor(r()*2),ans=seq[gap];
+ const said=seq.map((n,i)=>i===gap?'what':String(n)).join(', ');
  const display=seq.map((n,i)=>i===gap?'?':String(n)).join(', ');
  const pull=flavor==='pull-ups';
  return {id,kind:'puzzle',variant:'skip',step,display,answer:String(ans),options:numOptions(ans,r,[ans+step,ans-1]),
   what:pull?`on the training bar he does pull-ups while a friend counts them by ${say(step)}s; one number in the count is missing and he finds it`:`a path of stepping stones is numbered by ${say(step)}s; one stone has lost its number and he finds it`,
-  spoken:pull?`Pull-ups! We count them by ${say(step)}s. Which number is missing?`:`The stones count by ${say(step)}s. Which number is missing?`,
+  spoken:pull?`Pull-ups! We count them by ${say(step)}s: ${said}. Which number is missing?`:`The stones count by ${say(step)}s: ${said}. Which number is missing?`,
   hint:`Count by ${say(step)}s from ${say(start)}.`,done:`Yes! ${ans}!`};
 }
 // The 9s trick: nine times n with the finger trick as the hint.
@@ -57,16 +58,16 @@ export function routeBeat(id,r,{flavor=null}={}){
  return {id,kind:'puzzle',variant:football?'playcard':'route',lines:routes.map(x=>`${x.e} ${x.steps.join(' + ')}`),labels:Object.fromEntries(routes.map(x=>[x.c,x.e])),
   display:football?'Play card':'Map',answer:best.c,options:routes.map(x=>x.c),
   what:football?`an American-football huddle: a play card shows three running routes with their yards; he calls the play that gains the most yards`:`a map shows three routes to the next stop with their steps; he adds them up and picks the shortest`,
-  spoken:football?`Huddle up! The play card has three routes. Which one gains the most yards?`:`Three routes on the map. Add the steps. Which route is shortest?`,
+  spoken:(football?`Huddle up! Three routes on the play card. `:`Three routes on the map. `)+routes.map(x=>`${x.c[0].toUpperCase()+x.c.slice(1)}: ${x.steps.join(' plus ')}.`).join(' ')+(football?` Which one gains the most yards?`:` Which route is shortest?`),
   hint:football?`Add each route. The biggest total wins.`:`Add each route. The smallest total wins.`,done:football?`Touchdown! The ${best.c} route gains ${best.sum} yards!`:`Yes! The ${best.c} route is only ${best.sum} steps!`};
 }
 // Remainders with objects: deal them onto plates, then how many are left over.
 export function remainderBeat(id,r,{thing=['cookies','🍪']}={}){
- let groups,total;do{groups=3+Math.floor(r()*3);total=groups*(2+Math.floor(r()*3))+1+Math.floor(r()*(groups-1));}while(total%groups===0);
+ let groups,total;do{groups=2+Math.floor(r()*4);total=groups*(2+Math.floor(r()*3))+1+Math.floor(r()*(groups-1));}while(total%groups===0||total>20);
  const left=total%groups;
  return {id,kind:'remainder',total,groups,thing:thing[0],emoji:thing[1],answer:String(left),options:numOptions(left,r,[left+1,groups]),
   what:`${total} ${thing[0]} must be shared fairly on ${groups} plates; he deals them round by round, and some are left over`,
-  spoken:`Tap the box to deal one onto every plate. Fair for everyone!`,ask:`How many are left over?`,done:`Yes! ${say(left)} left over.`};
+  spoken:`${total} ${thing[0]}, shared fairly on ${say(groups)} plates. Tap the box to deal one onto every plate.`,ask:`${total} ${thing[0]} on ${say(groups)} plates: how many are left over?`,done:`Yes! ${say(left)} left over.`};
 }
 // The fork: two ways on (both fine); the chosen way gives the chapter's quest item.
 export const FORKS=[

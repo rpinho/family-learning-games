@@ -42,3 +42,11 @@ test('hunt letters always have a shared recorded sound', async()=>{
  const m={literacy:{learning:['L','W','J','Z','F'],letters:['L','V','Y','R']},stuck:[{area:'letters',item:'L'}]};
  const [a,b]=nextLetters(m,{date:'2026-09-28'});assert.ok(hasSound(a)&&hasSound(b),`${a} ${b}`);
 });
+
+test('the day\'s book letter leads the hunts (one letter for the day)', ()=>{
+ const m={literacy:{learning:['F','R'],letters:['F','R','B']}};
+ const who={greet:'Ahoy!',cheer:'Ahoy!',voice:{voice:'bm_fable',speed:1},lower:false};
+ const hs=dayHunts(m,{date:'2026-09-29',today:['B','F'],who,book:'B'});
+ assert.equal(hs[0].letter,'B');assert.equal(hs[1].letter,'B');assert.notEqual(hs[2].letter,'B');
+ assert.equal(dayHunts(m,{date:'2026-09-29',who})[0].letter!=null,true);
+});

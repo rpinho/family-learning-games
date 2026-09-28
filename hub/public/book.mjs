@@ -10,6 +10,9 @@ import {fetchJSON} from './save-request.mjs';
 import {listenOnce,recognise,listenAvailable,checkMic,micState} from './listen.mjs';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const THROW_X=0.44,AUTO_ADVANCE_MS=2200,TAP_GUARD_MS=700,LINE_GAP_MS=320;
+// No dead ends: a beat with no progress for RESCUE_MS shows its answer and lets him go on (checked every RESCUE_TICK_MS).
+// A test harness may shorten both (globalThis.__bookFast).
+const FAST=globalThis.__bookFast||1;export const RESCUE_MS=75000/FAST,RESCUE_TICK_MS=5000/FAST;
 export async function loadBook(player,{preview=false,date=''}={}){try{return await fetchJSON(`/api/book${preview?'/preview':''}?player=${encodeURIComponent(player)}${date?'&date='+date:''}`,{},6000);}catch{return null;}}
 export {lastPlace,rememberPlace} from './places.mjs';
 function post(player,body,keepalive=false){return fetch('/api/book?player='+encodeURIComponent(player),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),keepalive}).then(r=>r.ok?r.json():null).catch(()=>null);}
@@ -45,16 +48,17 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  // explicit replay (the hear-again button, a tap on the caption) or the model answer after two misses says a line again.
  let saidTurn=-1;const said=new Set();
  function pulse(){const t=view.querySelector('.bk-page:last-child')?.querySelectorAll('.bk-play .bk-btn,.bk-glyph,.bk-magic,.bk-ball,.bk-thing,.bk-pizza,.bk-trace');t?.forEach(x=>{x.classList.remove('bk-nudge');void x.offsetWidth;x.classList.add('bk-nudge');});}
+ let lastLine=null;
  function speak(line,{again=false}={}){
   return new Promise(async resolve=>{
    if(!alive||!line?.text)return resolve();
    if(saidTurn!==turn){saidTurn=turn;said.clear();}
    if(said.has(line.text)&&!again){audit.push({clip:line.clip||null,page,turn,skipped:'said'});pulse();return resolve();}
-   said.add(line.text);
-   stopSound();let done=false;const my=turn,est=Math.max(1500,line.text.length*70);
+   said.add(line.text);lastLine=line;
+   stopSound();let done=false;const my=turn,est=Math.max(1500,line.text.length*70)/FAST;
    const fin=()=>{if(done)return;done=true;clearTimeout(t);talking(null);if(current===fin)current=null;resolve();};
    current=fin;talking(line.who);
-   const t=setTimeout(fin,Math.max(4000,line.text.length*140));
+   const t=setTimeout(fin,Math.max(4000,line.text.length*140)/FAST);
    const silent=why=>{if(done)return;audit.push({clip:line.clip||null,page,turn:my,ok:false,err:why});showWords(line.shown||line.text,est);setTimeout(fin,est);};
    if(!line.clip&&!await renderClip(line))return silent('no-clip');
    if(done)return;
@@ -110,6 +114,14 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  function cheer(){const pg=ch.pages[page];if(!pg)return;for(const el of view.querySelectorAll('.bk-actor')){const A=art.actors[el.dataset.id];const P=A?.poses.cheer||A?.poses.happy;if(P)el.querySelector('img').src=P.url;}}
  function renderDots(){dots.innerHTML=ch.pages.map((_,i)=>`<i class="${i<page?'done':i===page?'now':''}"></i>`).join('');const k=root.querySelector('.bk-keys');if(k)k.innerHTML=[...keys].map(l=>`<b>🔑${esc(l)}</b>`).join('');}
  function setNext(on){canNext=on;tapnext.classList.toggle('on',on);}
+ // The no-dead-ends guard for a page: while it is not finished, a quiet stretch with no progress (no tap, nothing
+ // finished) lets him go on: onRescue (e.g. show the answer), then "tap to go on".
+ let lastInput=Date.now();root.addEventListener('pointerdown',()=>{lastInput=Date.now();},{passive:true});
+ function guard(my,finished,onRescue=()=>{}){lastInput=Date.now();const watch=()=>later(()=>{if(my!==turn||finished()||canNext)return;
+  if(Date.now()-lastInput<RESCUE_MS)return watch();onRescue();setNext(true);},RESCUE_TICK_MS);watch();}
+ // What "Hear it again" says while a beat waits: the beat's own question (the NO! beat: the claim and the begging).
+ function promptOf(b){if(b.kind==='no')return [b.claim,b.ask].filter(Boolean);if(b.kind==='teach-letter')return (b.lines||[]).slice(-1);
+  return [b.ask&&b.kind!=='count'?b.ask:null,b.spoken].filter(Boolean).slice(0,1);}
  // ---- navigation: tap anywhere / swipe; each turn speaks the new page at once ----
  let touchX=null;
  root.addEventListener('pointerdown',e=>{touchX=e.clientX;},{passive:true});
@@ -154,7 +166,13 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   el.querySelector('.bk-caption')?.addEventListener('click',()=>{const l=(p.say||[]).find(x=>(x.shown||x.text).toLowerCase().includes(p.caption.toLowerCase()));if(l)void speak(l,{again:true});});
   return el;
  }
- function replay(){const p=page_();const my=++turn;void speakAll(p.say,my,{again:true});}
+ // "Hear it again" never cancels what is going on (it used to start a new turn, which silently disabled the beat's
+ // buttons: 2026-09-28, Francisco's NO! page could not be answered or left). During the page's opening lines it
+ // restarts the current line; while a beat waits for him it says the beat's question again; otherwise the page again.
+ let intro=false,beatPrompt=null;
+ function replay(){const p=page_();if(intro)return void speak(lastLine,{again:true});
+  if(beatPrompt)return void speakAll(beatPrompt,turn,{again:true});
+  void speakAll(p.say,turn,{again:true});}
  function cover(){
   page=-1;const p=ch.pages[0],b=art.backgrounds[ch.cover?.scene?.bg||p.scene.bg];
   const hero=p.scene.actors.find(a=>a.id===player)||p.scene.actors[0];const H=hero&&art.actors[hero.id]?.poses[hero.pose];
@@ -173,12 +191,13 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   if(n>=ch.pages.length)return void ending();
   if(!preview&&page>=0&&page!==n)void post(player,{type:'dwell',date,page,ms:Date.now()-pageShownAt});pageShownAt=Date.now();tele=null;
   page=Math.max(0,n);if(!preview&&!back)void post(player,{type:'page',date,page});
-  renderDots();shownAt=Date.now();const my=++turn;audit.push({page,shown:shownAt});
+  renderDots();shownAt=Date.now();const my=++turn;intro=false;beatPrompt=null;audit.push({page,shown:shownAt});
   const p=page_();preload(page+1);
   if(p.kind==='beat')return void runBeat(p,my);
   const el=pageFrame(p);
   (async()=>{
-   if(!await speakAll(p.say,my))return;
+   intro=true;const ok=await speakAll(p.say,my);if(my===turn)intro=false;if(!ok)return;
+   if(p.action||p.magic)guard(my,()=>false,()=>event('book_rescue',p.action?.kind||'magic'));
    if(p.action){await act(el,p,my);if(my!==turn)return;}
    if(p.magic){await magic(el,p,my);if(my!==turn)return;}
    setNext(true);later(()=>{if(my===turn&&canNext)go(page+1);},AUTO_ADVANCE_MS);
@@ -349,14 +368,21 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
     if(before){busy=true;b.classList.add('pressed');await before(v);b.classList.remove('pressed');busy=false;if(done||my!==turn)return;}
     if(String(v)===String(answer)){done=true;b.classList.add('right');onRight(misses);return;}
     misses++;b.classList.remove('wiggle');void b.offsetWidth;b.classList.add('wiggle');onWrong?.(misses);
+    if(misses>=4){const r=play.querySelector(`[data-v="${CSS.escape(String(answer))}"]`);done=true;teleHint(3);r?.classList.add('right');onRight(misses);return;}
     if(misses>=2){teleHint(2);play.querySelector(`[data-v="${CSS.escape(String(answer))}"]`)?.classList.add('glow');void speak(prompt);}else void speak(spokenWrong||ch.ui.tryAgain);};
    play.append(b);}
  }
  async function runBeat(p,my){
   const el=pageFrame(p,{beat:true}),b=p.beat,play=el.querySelector('.bk-play'),started=Date.now();
   teleStart(b.kind,{target:b.answer??b.letter??b.target??b.right??(b.kind==='order'?'1-5':null),options:b.options||b.balls||b.stones||b.tiles||null});
-  if(!await speakAll(p.say,my))return;
-  const done=r=>finishBeat(p,my,{ms:Date.now()-started,...r});
+  intro=true;beatPrompt=null;const ok=await speakAll(p.say,my);if(my===turn)intro=false;if(!ok)return;
+  beatPrompt=promptOf(b);
+  // No dead ends: whatever he does (or does not do), the page can always be finished. If the beat has not finished
+  // after a quiet stretch, the answer is shown and "tap to go on" appears; the result is kept as rescued.
+  let beatDone=false;
+  guard(my,()=>beatDone,()=>{const ans=b.answer??b.right??b.target;if(ans!=null)play.querySelector(`[data-v="${CSS.escape(String(ans))}"]`)?.classList.add('glow');
+   if(!preview)void post(player,{type:'result',date,page,result:{kind:b.kind,beat:b.id||null,misses:0,ms:Date.now()-started,rescued:true}});event('book_rescue',b.kind);});
+  const done=r=>{if(beatDone)return;beatDone=true;beatPrompt=null;finishBeat(p,my,{ms:Date.now()-started,...r});};
   switch(b.kind){
    case 'teach-letter':{
     // The letter can be tapped at any moment; the friend finishes showing it first.
@@ -501,19 +527,25 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  async function noBeat(el,p,my,done){
   const b=p.beat,play=el.querySelector('.bk-play');
   const board=document.createElement('div');board.className='bk-board';
-  board.innerHTML=early?`<span>${esc(b.claim.text.replace(/!$/,''))}</span>`:`<span>${esc(b.display)}</span>`;
+  // Place value ("The 4 in 45 is worth 4!"): the number with that digit marked, and what the friend says it is worth.
+  const pvm=b.pv||(String(b.display||'').match(/^(\d) in (\d+) = (\d+)$/)||[]).slice(1).reduce((o,x,i)=>({...o,[['digit','n','claimed'][i]]:Number(x)}),null);
+  const pvHTML=v=>{const s=String(pvm.n),i=s.indexOf(String(pvm.digit));return `<span>${esc(s.slice(0,i))}<u class="pv">${esc(s[i])}</u>${esc(s.slice(i+1))}</span><span>→</span><span>${esc(v)}</span>`;};
+  board.innerHTML=early?`<span>${esc(b.claim.text.replace(/!$/,''))}</span>`:pvm?.n?pvHTML(pvm.claimed):`<span>${esc(b.display)}</span>`;
   if(early){const w=b.claim.text.split(' ')[0];board.innerHTML=`<span class="pic">${esc(w)}</span><span>→</span><span>${esc(b.wrong)}</span>`;}
   el.append(board);
   const who=el.querySelector(`.bk-actor[data-id="${CSS.escape(b.who||'')}"]`);
   await speak(b.claim);if(my!==turn)return;await speak(b.ask);if(my!==turn)return;
+  let okays=0;
   const offer=async()=>{
    play.innerHTML='';const no=document.createElement('button');no.type='button';no.className='bk-btn no';no.textContent='NO!';
    const ok=document.createElement('button');ok.type='button';ok.className='bk-btn ok';ok.textContent='Okay…';play.append(no,ok);
    void speak(ch.ui.noPrompt);
-   ok.onclick=async()=>{if(my!==turn)return;teleTap('okay',false);play.innerHTML='';board.classList.add('buzz');await speak(b.ifYes);board.classList.remove('buzz');if(my!==turn)return;await speak(b.ask);if(my===turn)offer();};
-   no.onclick=async()=>{if(my!==turn)return;teleTap('NO',true);play.innerHTML='';burst('confetti');who?.classList.add('hop');await speak(b.caught);if(my!==turn)return;await speak(b.fixSpoken);if(my!==turn)return;
+   ok.onclick=async()=>{if(my!==turn)return;teleTap('okay',false);okays++;play.innerHTML='';board.classList.add('buzz');await speak(b.ifYes);board.classList.remove('buzz');if(my!==turn)return;
+    // Twice "okay": the book helps (the scoreboard buzzed, so it was wrong) and goes on to the fix.
+    if(okays>=2)return no.onclick();await speak(b.ask);if(my===turn)offer();};
+   no.onclick=async()=>{if(my!==turn||no.dataset.used)return;no.dataset.used='1';teleTap('NO',okays===0);play.innerHTML='';burst('confetti');who?.classList.add('hop');await speak(b.caught);if(my!==turn)return;await speak(b.fixSpoken);if(my!==turn)return;
     choices(play,b.options,{cls:early?'key':'ball',answer:b.right,prompt:b.fixSpoken,my,onWrong:m=>{if(m===2)void speak(b.hint);},onRight:async m=>{
-     board.innerHTML=early?`<span class="pic">${esc(b.claim.text.split(' ')[0])}</span><span>→</span><span>${esc(b.right)}</span>`:`<span>${esc(b.display.replace(/=.*$/,'= '+b.right))}</span>`;
+     board.innerHTML=early?`<span class="pic">${esc(b.claim.text.split(' ')[0])}</span><span>→</span><span>${esc(b.right)}</span>`:pvm?.n?pvHTML(b.right):`<span>${esc(b.display.replace(/=.*$/,'= '+b.right))}</span>`;
      burst('stars');await speak(ch.ui.yes);if(my===turn)done({misses:m});}});};
   };
   offer();
@@ -523,6 +555,11 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   if(!preview){void post(player,{type:'finish',date,page:ch.pages.length});event('book_finish',date);}
   const el=view.querySelector('.bk-page')||view;
   const q=ch.quest;
+  // A letters book ENDS with the Letter Hunt: one clean card, the day's letter (the same letter the Letter Hunt game
+  // opens on), one big button to start it there (the hunt has the hints and the grown-up's "We found them!" count).
+  const huntL=ch.level==='early'?(ch.letter||ch.pages.find(x=>x.beat?.kind==='teach-letter')?.beat?.letter||''):'';
+  if(huntL&&!preview){el.insertAdjacentHTML('beforeend',`<div class="bk-quest bk-hunt-end"><div class="bk-hunt-letter">${esc(huntL)}<small>${esc(huntL.toLowerCase())}</small></div><h2>🔍 Letter hunt!</h2><p>Find things at home that start with <b>${esc(huntL)}</b>.</p><div class="bk-end-btns"><a class="bk-btn bk-hunt big" href="#hunt">Start the letter hunt 🔍</a><button class="bk-btn bk-done" type="button">Play games →</button></div></div>`);}
+  else
   el.insertAdjacentHTML('beforeend',`<div class="bk-quest">${q?`<h2>🗺️ ${esc((q.text.match(/^A quest for you and ([^:]+):/)||[,'Dad'])[1]).replace(/^/,'A quest for you and ')}</h2><p>${esc(q.text.replace(/^A quest for you and [^:]+:\s*/,''))}</p>${q.hints?.length?`<div class="bk-hint"></div><button class="bk-btn bk-hintbtn" type="button">🔍 A hint, please</button>`:''}${q.dad?`<p class="bk-dadnote">${esc(q.dad)}</p>`:''}`:'<h2>The end, for today</h2>'}${preview?'':'<a class="bk-btn bk-hunt" href="#hunt">🔍 Want to go hunting?</a> '}<button class="bk-btn bk-done" type="button">${preview?'Close':'Play games →'}</button></div>`);
   if(ch.style==='quest'&&items.length)el.querySelector('.bk-quest')?.insertAdjacentHTML('afterbegin',`<div class="bk-spellbook" aria-label="Your spellbook">${items.slice(-8).map(i=>`<span title="${esc(i.name)}">${esc(i.emoji)}</span>`).join('')}</div>`);
   el.querySelector('.bk-quest .bk-done').onclick=()=>{stop();onDone({finished:true});};

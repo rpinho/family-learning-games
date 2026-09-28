@@ -119,15 +119,15 @@ function readerBeats(m,r,{collection,decodable=false}){
  const useShare=(math.hardShares||[]).length>0||r()<.5;
  const numberBeat=useShare?
   {id:'b3',kind:'share',what:`share ${share.total} pizza slices fairly on ${share.groups} plates (each tap deals one slice onto every plate; then he says how many each)`,total:share.total,groups:share.groups,thing:'pizza slices',
-   spoken:`Tap the pizza to deal one slice onto every plate.`,ask:`How many slices on each plate?`,answer:String(each),options:numberOptions(each,r)}
+   spoken:`${share.total} pizza slices, shared fairly on ${WORD_NUM[share.groups]||share.groups} plates. Tap the pizza to deal one slice onto every plate.`,ask:`How many slices on each plate?`,answer:String(each),options:numberOptions(each,r)}
   :{id:'b3',kind:'score',what:`the scoreboard: each goal is worth ${a} points and the team scored ${b} goals; he works out the points`,a,b,
-   spoken:`Each goal is worth ${a} points. We scored ${b} goals. How many points?`,display:`${b} × ${a}`,answer:String(a*b),options:numberOptions(a*b,r,[a*b+a,a*b-a])};
+   spoken:`Each goal is worth ${a} points. We scored ${b} goals. What is ${b} times ${a}?`,display:`${b} × ${a}`,answer:String(a*b),options:numberOptions(a*b,r,[a*b+a,a*b-a])};
  const ma=pick([2,5,10],r),mb=3+Math.floor(r()*5),right=ma*mb,wrongN=r()<.5?right+ma:right+1;
  // An outside tutor (Sage) says he is practising place value (he says a digit's face value): the NO! beat is that mistake.
  const sagePV=(m.sage?.practising||[]).some(s=>/place value/i.test(s));
  const tens=2+Math.floor(r()*7),ones=[1,2,3,4,5,6,7,8,9].filter(d=>d!==tens)[Math.floor(r()*8)],pv=tens*10+ones;
  const noBeat=sagePV?{id:'b4',kind:'no',what:`a friend insists the ${tens} in ${pv} is worth just ${tens} (its face value, not its place value) and wants to write that on the scoreboard; ${m.name} says NO! and fixes it`,who:null,
-    claim:`The ${tens} in ${pv} is worth ${tens}!`,display:`${tens} in ${pv} = ${tens}`,ask:`Can I write ${tens} on the scoreboard? Can I? Please?`,wrong:String(tens),right:String(tens*10),options:shuffle([String(tens*10),String(tens),String(pv)],r),
+    claim:`The ${tens} in ${pv} is worth ${tens}!`,display:`${tens} in ${pv} = ${tens}`,pv:{n:pv,digit:tens,claimed:tens},ask:`Can I write ${tens} on the scoreboard? Can I? Please?`,wrong:String(tens),right:String(tens*10),options:shuffle([String(tens*10),String(tens),String(pv)],r),
     ifYes:`Oops! The scoreboard buzzes. That does not look right.`,caught:`You said NO! The ${tens} in ${pv} is in the tens place. It is worth ${tens*10}.`,fixSpoken:`What is the ${tens} in ${pv} worth?`,hint:`${pv} is ${WORD_NUM[tens]||tens} tens and ${WORD_NUM[ones]||ones} ones.`,source:'sage'}
   :null;
  return {

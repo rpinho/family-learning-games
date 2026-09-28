@@ -38,14 +38,15 @@ export const SHAPES={
 const PLACES=['📦','📚','⌨️','🥣','🧃'];
 const hash=s=>{let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;};
 // The two letters for tomorrow: the next one he is still learning, then a weak one to revisit (never today's).
-export function nextLetters(model,{today=[],lower=false,date=''}={}){
+export function nextLetters(model,{today=[],lower=false,date='',book=null}={}){
  const lit=model?.literacy||{},norm=c=>lower?String(c).toLowerCase():String(c).toUpperCase();
  const ok=c=>/^[a-z]$/i.test(c)&&hasSound(c)&&THINGS[c.toLowerCase()]?.length>=2&&!today.map(norm).includes(norm(c));
  const mastered=new Set((lower?[...(lit.lettersMastered||[])].filter(c=>c===c.toLowerCase()):[...(lit.lettersMastered||[])].filter(c=>c===c.toUpperCase())).map(norm));
  const learning=(lower?(lit.learning||[]).filter(c=>c===c.toLowerCase()):(lit.learning||[]).filter(c=>c===c.toUpperCase())).map(norm).filter(c=>ok(c)&&!mastered.has(c));
  const weak=(model?.stuck||[]).filter(s=>s.area==='letters'&&s.item).map(s=>norm(s.item)).filter(ok);
  const known=(lower?(lit.lower||[]):(lit.letters||[])).map(norm).filter(ok);
- const first=learning[hash(date)%Math.max(1,Math.min(2,learning.length))]||weak[0]||known[0]||(lower?'b':'B');
+ // The day's book letter comes first (one letter for the day: the book ends by sending him on this hunt).
+ const first=(book&&hasSound(book)?norm(book):null)||learning[hash(date)%Math.max(1,Math.min(2,learning.length))]||weak[0]||known[0]||(lower?'b':'B');
  const second=[...weak,...learning,...known].find(c=>c!==first)||(first===(lower?'m':'M')?(lower?'s':'S'):(lower?'m':'M'));
  return [first,second];
 }
@@ -55,8 +56,8 @@ function hintsFor(letter,interests,date,n=4){
  return ordered.slice(0,n);
 }
 // One day's hunts for a child. who: {greet, cheer, voice:{voice,speed}, lower}.
-export function dayHunts(model,{date,today=[],interests=[],who}){
- const [L1,L2]=nextLetters(model,{today,lower:who.lower,date});const V=t=>({text:t,...who.voice});const cap=w=>w[0].toUpperCase()+w.slice(1);
+export function dayHunts(model,{date,today=[],interests=[],who,book=null}){
+ const [L1,L2]=nextLetters(model,{today:book?today.filter(t=>t.toUpperCase()!==book.toUpperCase()):today,lower:who.lower,date,book});const V=t=>({text:t,...who.voice});const cap=w=>w[0].toUpperCase()+w.slice(1);
  const sound=L=>SOUNDS[L.toUpperCase()],shape=L=>SHAPES[who.lower?'lower':'upper'][L];
  const soundHunt=(L,n)=>{const H=hintsFor(L,interests,date+n);const [w0]=H[0]||['thing'];
   return {id:`${L}-sound-${date}`,mode:'letter',kind:'sound',letter:L.toUpperCase(),generated:date,
@@ -97,7 +98,9 @@ export async function writeHunts({paths=bookPaths(),date,players=null,dry=false,
    const today=cfg.generatedFor===date&&Array.isArray(cfg.basedOn)?cfg.basedOn:[...new Set(current.map(h=>h.letter).filter(Boolean))];
    const interests=[...new Set([...(model.interests||[]),...((profiles[player]||{}).interests||[])])];
    migrate(cfg,player,{cast,paths,who});
-   const fresh=dayHunts(model,{date,today,interests,who});
+   // The book for that day (written just before, in the nightly): a letters book's letter leads the hunts.
+   let book=null;try{const c=JSON.parse(await readFile(join(paths.book,player,date+'.json'),'utf8'));if(c.level==='early')book=c.letter||c.pages?.find(p=>p.beat?.kind==='teach-letter')?.beat?.letter||null;}catch{}
+   const fresh=dayHunts(model,{date,today,interests,who,book});
    cfg.hunts=[...fresh,...(cfg.hunts||[]).filter(h=>h.mode==='word')];cfg.generatedFor=date;cfg.basedOn=today;delete cfg.replayable;
    results[player]={letters:[...new Set(fresh.map(h=>h.letter))],ids:fresh.map(h=>h.id)};
   }catch(e){results[player]={error:String(e.message).slice(0,200)};cfg.replayable=true;log(`hunts ${player}: kept yesterday's (${e.message})`);}}

@@ -64,6 +64,9 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
   const lib=await readJSON(join(bookDir,'art','lib','library.json'),null);
   if(lib?.actors){const fresh=artFor(c.pages,lib),old=c.art||{};c.art={backgrounds:{...old.backgrounds,...fresh.backgrounds},actors:{...old.actors,...fresh.actors},props:{...old.props,...fresh.props}};}
   return c;}
+ // Today's book letter (a letters book): the chapter's letter, else its teach-letter beat's.
+ async function bookLetter(player,date){const c=await readJSON(join(bookDir,player,date+'.json'),null);if(c?.level!=='early')return null;
+  const L=c.letter||c.pages?.find(p=>p.beat?.kind==='teach-letter')?.beat?.letter;return /^[A-Za-z]$/.test(L||'')?L.toUpperCase():null;}
  async function progress(player){return readJSON(join(progressDir,player+'.json'),{days:{}});}
  async function notes(){const n=await readJSON(notesFile,{notes:[]});return Array.isArray(n.notes)?n.notes:[];}
  async function body(req){let raw='';for await(const part of req){raw+=part;if(raw.length>4096)throw Object.assign(Error('Too much data.'),{status:413});}try{return JSON.parse(raw);}catch{throw Object.assign(Error('Invalid JSON.'),{status:400});}}
@@ -134,7 +137,12 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
     const p=await progress(player),mode=modes.includes(p.huntMode)?p.huntMode:modes.includes('letter')?'letter':modes[0];
     const cfg={...cfg0,...(cfg0.byMode?.[mode]||{}),hunts:cfg0.hunts.filter(h=>modeOf(h)===mode)};
     const date=today(),day=p.days[date]||{},started=(day.hunts||[]).length,done=new Set(p.collection?.hunts||[]);
-    const open=(day.hunts||[]).find(h=>!h.foundAt),hunt=cfg.hunts.find(h=>h.id===open?.id)||cfg.hunts.find(h=>!done.has(h.id))||cfg.hunts[started%cfg.hunts.length];
+    // ONE letter for the day: a letters book's hunt is the book's letter (its closing page sends him here), so the
+    // hunt for that letter comes first, unless it is done; an unfinished hunt of another letter waits behind it.
+    const L=mode==='letter'?await bookLetter(player,date):null,same=h=>L&&String(h.letter||'').toUpperCase()===L;
+    const openH=(day.hunts||[]).find(h=>!h.foundAt),openCfg=cfg.hunts.find(h=>h.id===openH?.id);
+    const hunt=(openCfg&&(!L||same(openCfg))?openCfg:null)||cfg.hunts.find(h=>same(h)&&!done.has(h.id))||openCfg||cfg.hunts.find(h=>!done.has(h.id))||cfg.hunts[started%cfg.hunts.length];
+    const open=openH;
     return send(res,200,{available:true,date,left:Math.max(0,HUNTS_PER_DAY-started)+(open?1:0),hunt,friend:cfg.friend||null,label:cfg.label||'Hunt',tomorrow:cfg.tomorrow||null,cheer:cfg.cheer||null,mode,modes});
    }
    if(u.pathname==='/api/book/preview'&&req.method==='GET'){

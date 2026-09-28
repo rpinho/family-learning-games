@@ -49,6 +49,7 @@ export const LEVELS={
  early:{pages:[9,14],words:[150,470],avgSentence:10,maxWordLength:10,pageWords:45,lineWords:16,captionWords:1,captionWordLength:10},
  reader:{pages:[9,15],words:[180,560],avgSentence:14,maxWordLength:12,pageWords:60,lineWords:22,captionWords:6,captionWordLength:8}
 };
+import {checkBeats} from './puzzle-check.mjs';
 import {isFamilyWord,isLookAlike,readable,DECODABLE_NAMES} from '../hub/public/word-families.mjs';
 // A line that is only a hum or a string of letters ("Mmm.", "Hmm!", "Zzz", "B B B"): the voice either says letter
 // names or a meaningless hum. Every character line must say real words (Pika says "Pika!", not "Mmm").
@@ -144,6 +145,8 @@ export function lintChapter(ch,plan,{extra=[],allow=[],speakers=null,actors=null
  // A word-repeating friend (a parrot) may do its echo joke once per chapter, and never on a page with a game.
  {let echoes=0;pages.forEach((p,i)=>{for(const l of [...sayOf(p),...sayOf({say:p?.after||[]})])if(isEcho(l.text)){echoes++;if(p?.beat)issues.push(`page ${i+1}: an echo line on a game page ("${String(l.text).slice(0,40)}"); say it once`);}});
   if(echoes>1)issues.push(`${echoes} echo lines (the same words said twice in a new order); at most one echo joke per chapter`);}
+ // Number games: well-formed, at his level, and said in full (book/puzzle-check.mjs).
+ for(const i of checkBeats(plan.beats))issues.push(`number game: ${i}`);
  // hints, never answers: a beat page must not give its answer away
  for(const b of plan.beats){const p=pages.find(x=>x?.beat===b.id);if(!p)continue;const t=tokens(sayOf(p).map(l=>l.text).join(' '));
   const ans=b.kind==='no'?b.right:['count','share','score','remainder'].includes(b.kind)||(b.kind==='puzzle'&&/^\d+$/.test(b.answer))?b.answer:null;if(!ans)continue;

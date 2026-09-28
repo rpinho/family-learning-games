@@ -66,3 +66,12 @@ test('An older chapter is served with today\'s art library (pictures only; story
  assert.equal(r.body.chapter.art.actors.pika.poses.idle.url,'/book-art/actors/new-pika.svg');assert.ok(r.body.chapter.art.actors.pika.poses.talk);assert.ok(r.body.chapter.art.props.train.cars);
  assert.equal(r.body.chapter.pages[0].say[0].text,'All aboard!');assert.equal(await readFile(file,'utf8'),original,'the chapter file is not rewritten');
 });
+test('The Letter Hunt opens on the day\'s book letter (a started hunt of another letter waits)',async()=>{
+ const {svc,book}=await setup();const date=new Date().toISOString().slice(0,10);await mkdir(join(book,'kid'),{recursive:true});
+ const hunt=(L)=>({id:`${L}-sound`,letter:L,kind:'sound',intro:{text:`This is ${L}.`}});
+ await writeFile(join(book,'hunts.json'),JSON.stringify({players:{kid:{hunts:[hunt('F'),hunt('R'),hunt('B')]}}}));
+ await writeFile(join(book,'kid',date+'.json'),JSON.stringify({schema:'family-book-chapter-2',player:'kid',level:'early',letter:'B',pages:[{beat:{kind:'teach-letter',letter:'B'}}]}));
+ let r=await call(svc,'GET','/api/book/hunt?player=kid');assert.equal(r.body.hunt.letter,'B','the book letter, not the first in the file');
+ assert.equal((await call(svc,'POST','/api/book?player=kid',{type:'hunt',date,id:'F-sound',stage:'start'})).status,200);
+ r=await call(svc,'GET','/api/book/hunt?player=kid');assert.equal(r.body.hunt.letter,'B','even with an F hunt started');
+});

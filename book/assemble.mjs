@@ -58,7 +58,7 @@ export function assemble(story,plan,{number=1,source='template',lint=[],generate
  ui.numbers=Object.fromEntries(Array.from({length:12},(_,i)=>[String(i+1),N(String(i+1))]));
  return {schema:CHAPTER_SCHEMA,player:plan.player,name:plan.name,date:plan.date,number,title:cover.title,level:plan.level,cover,
   cast:(plan.cast||[]).map(c=>({id:c.id,name:c.name,emoji:c.emoji||'⭐'})),art,pages,ui,
-  ...(plan.theme?{theme:plan.theme}:{}),...(plan.style&&plan.style!=='classic'?{style:plan.style}:{}),...(plan.keyStyle?{keyStyle:plan.keyStyle}:{}),
+  ...(plan.level==='early'&&plan.letter?{letter:plan.letter}:{}),...(plan.theme?{theme:plan.theme}:{}),...(plan.style&&plan.style!=='classic'?{style:plan.style}:{}),...(plan.keyStyle?{keyStyle:plan.keyStyle}:{}),
   // The quest is always doable at home: hint pictures for a hunt, or word cards Dad prints and hides.
   quest:plan.quest?(q=>({...N(`A quest for you and ${plan.lead?.name||'Dad'}: ${q.text}`),...(q.hints?.length?{hints:q.hints.slice(0,7).map(h=>({word:h.word,emoji:h.emoji,line:N(h.text)}))}:{}),...(q.cards?.length?{cards:q.cards,dad:q.dad}:{})}))(typeof plan.quest==='string'?{text:plan.quest}:plan.quest):null,reward:plan.reward||null,
   summary:clean(story.summary),hook:clean(story.hook),
