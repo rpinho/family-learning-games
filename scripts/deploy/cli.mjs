@@ -464,7 +464,7 @@ function previewPorts(reg, busy = listenerPid) {
 }
 function previewEnv(p) {
   const env = envFor(p.game, 'staging', {port: p.port, uiPort: p.uiPort || undefined, data: p.data, deployDir: join(p.dir, 'deploy')});
-  env.FAMILY_CHANNEL = 'preview'; env.FAMILY_PREVIEW = p.name;
+  env.FAMILY_CHANNEL = 'preview'; env.FAMILY_PREVIEW = p.name; env.HOST = '127.0.0.1';   // reached only through the staging site
   if (p.game === 'hub') {env.FAMILY_CONFIG = join(p.data, 'config.json'); env.FAMILY_BOOK = join(p.dir, 'book');}
   return env;
 }
