@@ -26,3 +26,27 @@ test('Characters step out of a band (goal, counting) and stay below the words', 
  const dad=out.find(a=>a.id==='dad'),kid=out.find(a=>a.id==='kid');assert.ok(dad.height>kid.height,'Dad stays taller');
  const [a,b]=coverBand([.4,.3,.2,.1],{width:390,height:844});assert.ok(a<.5&&b>.5&&b-a>.2,'a goal is wider on a tall phone (cover crop)');
 });
+
+// One picture, one scale: people and props share one ground line and one unit; nobody overlaps; turned either way the
+// same sizes (the smaller side sets them); a too-wide row drops props before anyone shrinks.
+import {composeScene,PEOPLE} from '../public/book-scene.mjs';
+const fam={props:{ball:{h:.1,ar:1},pizza:{h:.12,ar:1.6}},actors:{dad:{h:.64,poses:{idle:{ar:.4}}},mom:{h:.6,poses:{idle:{ar:.42}}},diogo:{h:.45,poses:{idle:{ar:.5}}},monkey:{h:.5,poses:{idle:{ar:.7}}}}};
+const famScene={actors:A(['diogo','mom','dad','monkey']),props:[{id:'pizza'},{id:'ball'}]};
+for(const [W,H] of [[412,915],[915,412],[1366,768]])test(`Composition at ${W}x${H}: one ground, no overlaps, Dad > Mom > Diogo > toy`,()=>{
+ const L=composeScene(famScene,fam,{width:W,height:H,ground:0.93,maxHeight:0.88});
+ const all=[...L.actors,...L.props].sort((a,b)=>a.left-b.left);
+ for(let i=1;i<all.length;i++)assert.ok(all[i].left>=all[i-1].left+all[i-1].width,`${all[i-1].id} overlaps ${all[i].id}`);
+ for(const r of all){assert.ok(Math.abs(r.bottom-0.07)<1e-9,'feet on the ground');assert.ok(r.left>=0&&r.left+r.width<=1,'on screen');}
+ const h=id=>L.actors.find(a=>a.id===id).height;
+ assert.ok(h('dad')>h('mom')&&h('mom')>h('diogo')&&h('diogo')>h('monkey'));
+ for(const p of L.props)assert.ok(p.height<h('diogo')*0.5,`${p.id} smaller than half a boy`);
+ assert.ok(L.sky>=0&&L.sky<1-0.07-h('dad')+1e-9);
+});
+test('Composition: portrait and landscape use the same unit (the smaller side)',()=>{
+ const a=composeScene(famScene,fam,{width:412,height:915,ground:0.93,maxHeight:0.88}),b=composeScene(famScene,fam,{width:915,height:412,ground:0.93,maxHeight:0.88});
+ assert.ok(Math.abs(a.unit-b.unit)<1);assert.equal(PEOPLE.dad,1);
+});
+test('Composition: a crowded row drops props before shrinking people',()=>{
+ const L=composeScene({actors:A(['dad','mom','diogo','monkey','dad']),props:[{id:'pizza'},{id:'ball'}]},fam,{width:412,height:915});
+ assert.equal(L.props.length,0);
+});

@@ -34,14 +34,16 @@ const CSS=`
 @keyframes hunt-glow{50%{box-shadow:0 6px 0 rgba(0,0,0,.2),0 0 0 14px rgba(120,220,110,.25)}}@keyframes hunt-conf{to{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
 @media (prefers-reduced-motion:reduce){.hunt *{animation:none!important}}`;
 function style(){if(document.getElementById('hunt-css'))return;const s=document.createElement('style');s.id='hunt-css';s.textContent=CSS;document.head.append(s);}
-export async function huntInfo(player){try{return await fetchJSON('/api/book/hunt?player='+encodeURIComponent(player),{},5000);}catch{return null;}}
+// (?r= the newest letter-sound re-render, from the hunt's info: a re-made clip keeps its name, so the URL changes)
+let voiceRev='';
+export async function huntInfo(player){try{const r=await fetchJSON('/api/book/hunt?player='+encodeURIComponent(player),{},5000);if(r?.voiceRev)voiceRev=r.voiceRev;return r;}catch{return null;}}
 function post(player,body){return fetch('/api/book?player='+encodeURIComponent(player),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.ok?r.json():null).catch(()=>null);}
 export function mountHunt(main,{player,event=()=>{},onClose=()=>{location.hash='';}}){
  style();let alive=true;const audio=new Audio();
  const say=line=>new Promise(res=>{if(!alive||!line?.text)return res();const done=()=>res();const t=setTimeout(done,Math.max(3000,line.text.length*90));
   // Only its own clip speaks a line (never the device's voice); a line without one stays silent.
   if(!line.clip){clearTimeout(t);return res();}
-  audio.src='/book-voice/'+line.clip;audio.onended=()=>{clearTimeout(t);res();};audio.play().catch(()=>{clearTimeout(t);res();});});
+  audio.src='/book-voice/'+line.clip+(voiceRev?'?r='+encodeURIComponent(voiceRev):'');audio.onended=()=>{clearTimeout(t);res();};audio.play().catch(()=>{clearTimeout(t);res();});});
  const sayAll=async lines=>{for(const l of lines){if(!alive)return;await say(l);}};
  const root=document.createElement('section');root.className='hunt';root.setAttribute('aria-label','A hunt at home');main.innerHTML='';main.append(root);
  async function show(){

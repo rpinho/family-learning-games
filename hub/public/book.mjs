@@ -4,7 +4,8 @@
 // The first tap on the cover unlocks sound for the session; one <audio> element is reused for every line.
 // Learning happens inside the story ("beats"): letter keys, stepping-stones, counting, magic words he
 // reads to make things happen, spells, sharing, and the NO! beat where a friend wants to do something wrong.
-import {layoutActors,layoutTrain,coverBand} from './book-scene.mjs';
+import {layoutActors,layoutTrain,coverBand,composeScene,relHeight,sceneUnit} from './book-scene.mjs';
+const GOAL_W=0.4;   // a stand-in goal frame's width (share of the screen) when the painted goal is cropped away
 import {IDLE_REPEAT_MS,IDLE_REPEATS,shuffle} from './word-break.mjs';
 import {fetchJSON} from './save-request.mjs';
 import {listenOnce,recognise,listenAvailable,checkMic,micState} from './listen.mjs';
@@ -82,49 +83,57 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  // a file even when it was preloaded, so the praise after a trace waited ~1 s for the network (2026-09-28).
  const blobs=new Map(),MAX_BLOBS=80;
  function holdClip(f){if(!f||blobs.has(f))return;blobs.set(f,null);
-  fetch('/book-voice/'+f).then(r=>r.ok?r.blob():null).then(b=>{if(!b||!alive){blobs.delete(f);return;}blobs.set(f,URL.createObjectURL(b));
+  fetch('/book-voice/'+f+vq).then(r=>r.ok?r.blob():null).then(b=>{if(!b||!alive){blobs.delete(f);return;}blobs.set(f,URL.createObjectURL(b));
    while(blobs.size>MAX_BLOBS){const [k,u]=blobs.entries().next().value;if(ui.has(k))break;blobs.delete(k);if(u)URL.revokeObjectURL(u);}}).catch(()=>blobs.delete(f));}
- const clipURL=f=>blobs.get(f)||'/book-voice/'+f;
+ // (?r= the newest letter-sound re-render: a re-made clip keeps its name, so the URL changes instead)
+ const vq=book.voiceRev?'?r='+encodeURIComponent(book.voiceRev):'';
+ const clipURL=f=>blobs.get(f)||'/book-voice/'+f+vq;
  const ui=new Set();let uiLoaded=false;function preloadUi(){if(uiLoaded)return;uiLoaded=true;const w=v=>{if(!v||typeof v!=='object')return;if(Array.isArray(v))return v.forEach(w);if(v.clip)ui.add(v.clip);for(const x of Object.values(v))if(x&&typeof x==='object')w(x);};w(ch.ui);w(ch.keysLine);
   for(const f of ui)holdClip(f);}
  function preload(i){preloadUi();const p=ch.pages[i];if(!p)return;const files=new Set();const walk=v=>{if(!v||typeof v!=='object')return;if(Array.isArray(v))return v.forEach(walk);if(v.clip)files.add(v.clip);for(const x of Object.values(v))if(x&&typeof x==='object')walk(x);};walk(p);
   for(const f of files)holdClip(f);const b=art.backgrounds[p.scene?.bg];if(b){const im=new Image();im.src=b.url;}}
  function talking(who){view.querySelectorAll('.bk-actor').forEach(a=>a.classList.toggle('talking',!!who&&a.dataset.id===who));}
  // ---- pictures ----
- function actorsHTML(scene,{ground=0.93,scale=1,maxHeight=1,avoid=null}={}){
+ // People and props: one row on one ground line, sized from one unit (book-scene.mjs composeScene). The sky above
+ // them is remembered for the effects.
+ let sky=0.3,trainBand=null;
+ function actorsHTML(scene,{ground=0.93,scale=1,maxHeight=1,avoid=null,beat=false,play=false,keeper=null}={}){
   const W=root.clientWidth||innerWidth,H=root.clientHeight||innerHeight;
   // A train in the picture always carries the friends (all aboard!).
-  if((scene.ride||scene.props.some(p=>p.id==='train'))&&(art.props.train?.seats||art.props.train?.cars)){return trainHTML(scene,W,H,{ground,maxHeight});}
-  return layoutActors(scene.actors,art,{width:W,height:H,ground,scale,maxHeight,avoid}).map((a,i)=>{const P=art.actors[a.id].poses[a.pose];
+  if((scene.ride||scene.props.some(p=>p.id==='train'))&&(art.props.train?.seats||art.props.train?.cars)){
+   // (other props stand beside the train, never in front of it)
+   const train=trainHTML(scene,W,H,{ground,maxHeight,beat}),L=composeScene({actors:[],props:scene.props},art,{width:W,height:H,ground,maxHeight,beat,playBall:play,avoid:trainBand});
+   return train+propHTML(L.props);}
+  const L=composeScene(scene,art,{width:W,height:H,ground,maxHeight,avoid,beat,playBall:play,aside:keeper});sky=L.sky;
+  return propHTML(L.props)+L.actors.map((a,i)=>{const P=art.actors[a.id].poses[a.pose]||art.actors[a.id].poses.idle;
    return `<div class="bk-actor${P.fly||a.pose==='fly'?' fly':''}" data-id="${esc(a.id)}" data-pose="${esc(a.pose)}" style="left:${(a.left*100).toFixed(2)}%;width:${(a.width*100).toFixed(2)}%;height:${(a.height*100).toFixed(2)}%;bottom:${(a.bottom*100).toFixed(2)}%;--from:${a.left+a.width/2<0.5?-40:40}vw;animation-delay:${i*0.15}s"><div style="animation-delay:${-i*0.7}s;animation-duration:${(2.2+i*0.37).toFixed(2)}s"><img src="${esc(P.url)}" alt="${esc(art.actors[a.id].name)}"></div></div>`;}).join('');
  }
- function trainHTML(scene,W,H,{ground=0.93,maxHeight=1}={}){
-  // On a beat page the train rides above the play band (the answers are below it), never into the words above.
-  const T=art.props.train,L=layoutTrain(scene.actors,art,{width:W,height:H,bottom:1-ground+0.02,maxHeight:Math.min(0.5,maxHeight*0.75)});
+ function propHTML(list){return list.map(r=>{const P=art.props[r.id];return P?`<div class="bk-prop" data-id="${esc(r.id)}" style="left:${(r.left*100).toFixed(2)}%;width:${(r.width*100).toFixed(2)}%;height:${(r.height*100).toFixed(2)}%;bottom:${(r.bottom*100).toFixed(2)}%"><img src="${esc(P.url)}" alt=""></div>`:'';}).join('');}
+ function trainHTML(scene,W,H,{ground=0.93,maxHeight=1,beat=false}={}){
+  // The train is sized from the same unit as everyone (its wagons about Dad's height x 0.62), so a scene with a train
+  // reads the same turned either way; riders keep the family's relative heights (Dad > Mom > the boys > the toys).
+  const U=sceneUnit({width:W,height:H,beat,maxHeight,tallest:1}),rel={...art,actors:Object.fromEntries(Object.entries(art.actors).map(([k,A])=>[k,{...A,h:relHeight(k,A)}]))};
+  const T=art.props.train,L=layoutTrain(scene.actors,rel,{width:W,height:H,bottom:1-ground+0.02,maxHeight:Math.min(0.5,maxHeight*0.75,U*0.62/H)});sky=Math.max(0,1-(1-ground+0.02)-(L?.train.height||0)*1.4);
   if(L){
    // Wagons repeat so every friend has his own; each is drawn after its rider (the front wall hides only his legs).
-   const t=L.train,pc=v=>(v*100).toFixed(3)+'%';
+   const t=L.train,pc=v=>(v*100).toFixed(3)+'%';trainBand=[t.left-0.02,t.left+t.width+0.02];
    const piece=p=>{const span=p.src[1]-p.src[0];return `<div class="bk-car ${p.kind}" style="left:${pc((p.left-t.left)/t.width)};width:${pc(p.width/t.width)}"><img src="${esc(T.url)}" alt="" style="width:${pc(1/span)};margin-left:${pc(-p.src[0]/span)}"></div>`;};
    const rider=r=>{const P=art.actors[r.id].poses[r.pose]||Object.values(art.actors[r.id].poses)[0];
     return `<div class="bk-actor rider" data-id="${esc(r.id)}" data-pose="${esc(r.pose)}" style="left:${pc((r.left-t.left)/t.width)};width:${pc(r.width/t.width)};height:${pc(r.height/t.height)};bottom:${pc((r.bottom-t.bottom)/t.height)}"><div><img src="${esc(P.url)}" alt="${esc(art.actors[r.id].name)}"></div></div>`;};
    const inner=L.parts.map(p=>p.kind==='wagon'?(L.riders.find(r=>r.wagon===p.i)?rider(L.riders.find(r=>r.wagon===p.i)):'')+piece(p):piece(p)).join('');
    return `<div class="bk-prop train cars" style="left:${pc(t.left)};width:${pc(t.width)};height:${pc(t.height)};bottom:${pc(t.bottom)}">${inner}</div>`;
   }
-  const h=Math.min(T.h*1.2,0.4),w=h*T.ar*H/W,left=(1-w)/2,bottom=0.06;
+  const h=Math.min(T.h*1.2,0.4),w=h*T.ar*H/W,left=(1-w)/2,bottom=0.06;trainBand=[left-0.02,left+w+0.02];
   const seats=T.seats||[[.5,.4]];
   const riders=scene.actors.slice(0,seats.length).map((a,i)=>{const P=art.actors[a.id].poses[a.pose]||Object.values(art.actors[a.id].poses)[0];const rh=h*0.8*Math.min(1,(art.actors[a.id].h||0.4)/0.6),rw=rh*P.ar*H/W,[sx,sy]=seats[i];
    return `<div class="bk-actor" data-id="${esc(a.id)}" style="left:${((left+sx*w-rw/2)*100).toFixed(2)}%;width:${(rw*100).toFixed(2)}%;height:${(rh*100).toFixed(2)}%;bottom:${((bottom+h*(1-sy))*100).toFixed(2)}%"><div><img src="${esc(P.url)}" alt=""></div></div>`;}).join('');
   return riders+`<div class="bk-prop train" style="left:${(left*100).toFixed(2)}%;width:${(w*100).toFixed(2)}%;height:${(h*100).toFixed(2)}%;bottom:${(bottom*100).toFixed(2)}%"><img src="${esc(T.url)}" alt="the train"></div>`;
  }
- function propsHTML(scene,{ground=0.93,play=false}={}){
-  const W=root.clientWidth||innerWidth,H=root.clientHeight||innerHeight;
-  // On a page where he plays with a ball, the only ball is the one he kicks or throws.
-  return scene.props.filter(p=>(p.id!=='train'||!art.props.train?.seats)&&!(play&&p.id==='ball')).map((p,i)=>{const P=art.props[p.id];if(!P)return '';const h=P.h,w=h*P.ar*H/W;const x=[0.8,0.12,0.62][i%3]-w/2;
-   return `<div class="bk-prop" style="left:${(x*100).toFixed(2)}%;width:${(w*100).toFixed(2)}%;height:${(h*100).toFixed(2)}%;bottom:${((1-ground)*100).toFixed(2)}%"><img src="${esc(P.url)}" alt=""></div>`;}).join('');
- }
+ function propsHTML(){return '';}   // props are placed with the people (composeScene)
  function fxHTML(fx,burst=false){
   const set={sparkles:'✨',stars:'⭐',confetti:'🎉',hearts:'💛',bubbles:'🫧'}[fx];if(!set)return '<div class="bk-fx"></div>';
-  const n=burst?18:10;return `<div class="bk-fx${burst?' burst':''}">${Array.from({length:n},(_,i)=>`<i style="left:${burst?50:(8+Math.random()*84).toFixed(1)}%;top:${burst?45:(6+Math.random()*60).toFixed(1)}%;font-size:${(18+Math.random()*26).toFixed(0)}px;animation-delay:${(Math.random()*(burst?0.2:2.4)).toFixed(2)}s;--dx:${((Math.random()-.5)*80).toFixed(0)}vw;--dy:${((Math.random()-.5)*70).toFixed(0)}vh">${set}</i>`).join('')}</div>`;
+  // Effects stay in the sky above everyone's heads (never over a face or a body).
+  const H=root.clientHeight||innerHeight,top=Math.max(0,(sky*H-50)/H*100-4),n=burst?18:top<3?0:10;return `<div class="bk-fx${burst?' burst':''}">${Array.from({length:n},(_,i)=>`<i style="left:${burst?50:(8+Math.random()*84).toFixed(1)}%;top:${burst?Math.min(12,top).toFixed(1):(4+Math.random()*top).toFixed(1)}%;font-size:${(18+Math.random()*26).toFixed(0)}px;animation-delay:${(Math.random()*(burst?0.2:2.4)).toFixed(2)}s;--dx:${((Math.random()-.5)*80).toFixed(0)}vw;--dy:${burst?(-Math.min(12,top)+Math.random()*Math.max(0,sky*100-12)).toFixed(0):((Math.random()-.5)*70).toFixed(0)}vh">${set}</i>`).join('')}</div>`;
  }
  function burst(fx='sparkles'){view.querySelector('.bk-page')?.insertAdjacentHTML('beforeend',fxHTML(fx,true));view.querySelectorAll('.bk-actor').forEach(a=>{a.classList.remove('hop');void a.offsetWidth;a.classList.add('hop');});}
  function cheer(){const pg=ch.pages[page];if(!pg)return;for(const el of view.querySelectorAll('.bk-actor')){const A=art.actors[el.dataset.id];const P=A?.poses.cheer||A?.poses.happy;if(P)el.querySelector('img').src=P.url;}}
@@ -164,11 +173,11 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   // Bands the characters step out of: the goal (keeper) and the ball's column, the things he counts or shares,
   // the big letter a friend teaches, and the spot where he holds the ball to throw.
   const ball=Math.max(56,Math.min(W,H)*0.16)/W,mid=(a,b)=>[a,b];let avoid=null;
-  if(p.action?.kind==='kick'||kind==='kick-letter'){if(wide){const g=art.backgrounds[p.scene.bg]?.goal||[0.38,0.3,0.24,0.17];const [a,b]=coverBand(g,{width:W,height:H});avoid=[Math.min(a,0.5-ball)-0.04,Math.max(b,0.5+ball)+0.04];}else avoid=mid(0.5-ball*0.75,0.5+ball*0.75);}
+  if(p.action?.kind==='kick'||kind==='kick-letter'){if(wide){const g=art.backgrounds[p.scene.bg]?.goal||[0.38,0.3,0.24,0.17];const [a,b]=coverBand(g,{width:W,height:H});avoid=[Math.min(a,0.5-ball)-0.04,Math.max(b,0.5+ball)+0.04];}else avoid=mid(0.5-Math.max(ball*0.75,GOAL_W/2+0.03),0.5+Math.max(ball*0.75,GOAL_W/2+0.03));}
   else if(p.action?.kind==='throw')avoid=[THROW_X-ball*0.6,THROW_X+ball*0.6];
   else if(wide&&['count','share'].includes(kind))avoid=[0.26,0.74];
   else if(wide&&kind==='teach-letter')avoid=[0.5-Math.min(W,H)*0.13/W,0.5+Math.min(W,H)*0.13/W];
-  return {ground,scale,maxHeight,avoid};
+  return {ground,scale,maxHeight,avoid,beat,play:!!p.action||kind==='kick-letter',keeper:p.action?.kind==='kick'||kind==='kick-letter'?keeperFor(null,p):null};
  }
  function pageFrame(p,{beat=false}={}){
   const b=art.backgrounds[p.scene.bg];
@@ -219,6 +228,8 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
    layer.innerHTML=propsHTML(p.scene,{ground:st.ground,play:!!p.action||p.beat?.kind==='kick-letter'})+actorsHTML(p.scene,st);
    layer.querySelectorAll('.bk-actor,.bk-prop').forEach(a=>{a.style.animation='none';});
    for(const [id,pose] of Object.entries(poseNow))setPose(el,id,pose);if(talkingId)talking(talkingId);}
+  // the sky moved with the people: the stars move with it
+  const fx=el.querySelector('.bk-fx:not(.burst)');if(fx&&p.scene.fx)fx.outerHTML=fxHTML(p.scene.fx);
   const W=root.clientWidth,H=root.clientHeight;
   for(const b of el.querySelectorAll('.bk-ball')){const size=Number(b.dataset.fs)*Math.min(W,H),x=Number(b.dataset.fx)*W,y=Number(b.dataset.fy)*H;if(!Number.isFinite(size))continue;
    b.style.left=`${x-size/2}px`;b.style.top=`${y-size/2}px`;b.style.width=b.style.height=`${size}px`;b.style.setProperty('--s',`${size}px`);}
@@ -251,7 +262,11 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  // Where the goal is on screen: the picture's own goal (fractions of the image, which is drawn "cover").
  function goalRect(p){const g=art.backgrounds[p.scene.bg]?.goal||[0.38,0.3,0.24,0.17];const img=view.querySelector('.bk-page:last-child .bk-bg');
   const W=root.clientWidth,H=root.clientHeight,nw=img?.naturalWidth||1600,nh=img?.naturalHeight||1067,k=Math.max(W/nw,H/nh),dw=nw*k,dh=nh*k,ox=(W-dw)/2,oy=(H-dh)/2;
-  return {x:ox+g[0]*dw,y:oy+g[1]*dh,w:g[2]*dw,h:g[3]*dh,drawn:!!art.backgrounds[p.scene.bg]?.goal};}
+  const r={x:ox+g[0]*dw,y:oy+g[1]*dh,w:g[2]*dw,h:g[3]*dh,drawn:!!art.backgrounds[p.scene.bg]?.goal};
+  // A goal painted into the picture can fall outside a tall phone's crop: then a goal frame stands in the middle,
+  // its posts on the ground line (the friends step out of its band, see stage()).
+  if(r.x<0||r.x+r.w>W){const w=GOAL_W*W,h=Math.min(w*0.6,H*0.2),gy=stage(p,p.kind==='beat').ground*H;return {x:(W-w)/2,y:gy-h,w,h,drawn:false};}
+  return r;}
  function ballEl(el,{x,y,size,label}){const B=art.props.ball;const b=document.createElement('button');b.type='button';b.className='bk-ball';b.style.cssText=`left:${x-size/2}px;top:${y-size/2}px;width:${size}px;height:${size}px;--s:${size}px`;
   b.innerHTML=`${B?`<img src="${esc(B.url)}" alt="">`:'<span>⚽</span>'}${label?`<b>${esc(label)}</b>`:''}`;b.dataset.fx=x/(root.clientWidth||1);b.dataset.fy=y/(root.clientHeight||1);b.dataset.fs=size/Math.max(1,Math.min(root.clientWidth,root.clientHeight));el.append(b);return b;}
  function flyTo(node,to,{ms=700,spin=720,scale=0.4,arc=0}={}){const f=rectOf(node),dx=to.x-(f.x+f.w/2),dy=to.y-(f.y+f.h/2);
@@ -262,7 +277,9 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  function keeperFor(el,p){const ids=p.scene.actors.map(a=>a.id).filter(id=>id!==player);const pick=ids.find(id=>art.actors[id]?.poses.dive)||ids.find(id=>id!=='dad')||ids[0];return pick;}
  // The keeper stands in the goal, ready and swaying (a friend who can dive, else any friend but Dad).
  function placeKeeper(el,p,g){const kp=keeperFor(el,p),k=kp&&el.querySelector(`.bk-actor[data-id="${CSS.escape(kp)}"]`);if(!k)return;
-  setPose(el,kp,art.actors[kp].poses.idle?'idle':k.dataset.pose);const P=art.actors[kp].poses[k.dataset.pose];const h=g.h*1.3,w=h*P.ar,H=root.clientHeight;
+  setPose(el,kp,art.actors[kp].poses.idle?'idle':k.dataset.pose);const P=art.actors[kp].poses[k.dataset.pose];
+  // Keeper keeps the height the layout gave him (the family's relative heights), never taller than the goal, feet on its line.
+  const h=Math.min(g.h*1.05,k.getBoundingClientRect().height||g.h),w=h*P.ar,H=root.clientHeight;
   k.style.cssText+=`;left:${g.x+g.w/2-w/2}px;width:${w}px;height:${h}px;bottom:${H-(g.y+g.h)}px;animation:none`;k.classList.add('keeper-ready');}
  function goalFrame(el,g){if(g.drawn)return;el.insertAdjacentHTML('beforeend',`<div class="bk-goal" style="left:${g.x}px;top:${g.y}px;width:${g.w}px;height:${g.h}px"></div>`);}
  async function shoot(el,p,my,ball,aim){
@@ -464,8 +481,8 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
    case 'kick-letter':{
     const g=goalRect(p);goalFrame(el,g);placeKeeper(el,p,g);
     await speak(b.spoken);if(my!==turn)return;
-    // Big balls on a phone: the letter on each is flat, solid and at least 12% of the short side tall.
-    const W=root.clientWidth,H=root.clientHeight,size=Math.max(84,Math.min(W,H)*0.25);let misses=0,done_=false,repeats=0;
+    // Balls a size a ball is next to the people (a fifth of the short side, still an easy tap); the letter on each is flat and solid.
+    const W=root.clientWidth,H=root.clientHeight,size=Math.max(72,Math.min(W,H)*0.2);let misses=0,done_=false,repeats=0;
     const nudge=()=>later(()=>{if(done_||my!==turn||repeats>=IDLE_REPEATS)return;repeats++;void speak(b.spoken);nudge();},IDLE_REPEAT_MS);nudge();
     const balls=b.balls.map((l,i)=>{const x=W*(0.5+(i-(b.balls.length-1)/2)*Math.max(Math.min(0.26,0.8/b.balls.length),(size+14)/W)),bl=ballEl(el,{x,y:H*0.8,size,label:l});bl.dataset.v=l;return bl;});
     await new Promise(res=>{for(const bl of balls){let st=null;

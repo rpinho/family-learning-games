@@ -76,6 +76,10 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
   const w=String(earned.word||'').toLowerCase();if(/^[a-z]{1,12}$/.test(w)&&!c.words.includes(w))c.words=[...c.words,w].slice(-300);
   // A quest item (a quest-style book's fork): only an item that exists in today's chapter is kept (id, name, emoji).
   const it=String(earned.item||'');if(/^[a-z0-9-]{1,32}$/.test(it)&&earned.itemInfo&&!(c.items||[]).some(x=>x.id===it))c.items=[...(c.items||[]),{id:it,name:String(earned.itemInfo.name||it).slice(0,40),emoji:String(earned.itemInfo.emoji||'✨').slice(0,4)}].slice(-60);}
+ // Clips keep their names when their letter sounds are re-rendered (hub/scripts/rerender-sounds.mjs moves the old ones
+ // to voice-replaced-<stamp>/), and clips are cached as immutable, so every clip URL carries the newest re-render stamp:
+ // a device that cached the old sound fetches the new one.
+ const voiceRev=async()=>{try{return (await readdir(bookDir)).filter(n=>/^voice-replaced-\d{8}T\d{6}$/.test(n)).sort().at(-1)?.slice(15)||'';}catch{return '';}};
  const collectionOf=p=>({keys:p.collection?.keys||[],words:p.collection?.words||[],...(p.collection?.items?.length?{items:p.collection.items}:{}),...(p.collection?.hunts?.length?{hunts:p.collection.hunts}:{})});
  // Grown-ups' preview: the newest chapter up to tomorrow (or a given date), read-only.
  async function latest(player,date){if(date)return DATE.test(date)?{date,chapter:await chapter(player,date)}:{date,chapter:null};
@@ -122,7 +126,7 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
     if(req.method==='GET'){const date=today(),ch=await chapter(player,date),p=await progress(player),day=p.days[date];
      // peek: only whether an unread chapter is waiting (the hub asks at session start; the chapter loads when opened).
      if(u.searchParams.get('peek'))return send(res,200,{date,hasChapter:!!ch,open:shouldOpen(ch,day)});
-     return send(res,200,{date,chapter:ch,progress:progressView(day),collection:collectionOf(p),open:shouldOpen(ch,day)});}
+     return send(res,200,{voiceRev:await voiceRev(),date,chapter:ch,progress:progressView(day),collection:collectionOf(p),open:shouldOpen(ch,day)});}
     if(req.method==='POST'){if(!req.headers['content-type']?.startsWith('application/json'))return send(res,415,{error:'JSON required.'});
      try{return send(res,200,{progress:await update(player,await body(req))});}catch(e){return send(res,e.status||500,{error:e.status?e.message:'Could not save.'});}}
     return send(res,405,{error:'Unsupported action.'});
@@ -145,12 +149,12 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
     const openH=(day.hunts||[]).find(h=>!h.foundAt),openCfg=cfg.hunts.find(h=>h.id===openH?.id);
     const hunt=(openCfg&&(!L||same(openCfg))?openCfg:null)||cfg.hunts.find(h=>same(h)&&!done.has(h.id))||openCfg||cfg.hunts.find(h=>!done.has(h.id))||cfg.hunts[started%cfg.hunts.length];
     const open=openH;
-    return send(res,200,{available:true,date,left:Math.max(0,HUNTS_PER_DAY-started)+(open?1:0),hunt,friend:cfg.friend||null,label:cfg.label||'Hunt',tomorrow:cfg.tomorrow||null,cheer:cfg.cheer||null,mode,modes});
+    return send(res,200,{available:true,voiceRev:await voiceRev(),date,left:Math.max(0,HUNTS_PER_DAY-started)+(open?1:0),hunt,friend:cfg.friend||null,label:cfg.label||'Hunt',tomorrow:cfg.tomorrow||null,cheer:cfg.cheer||null,mode,modes});
    }
    if(u.pathname==='/api/book/preview'&&req.method==='GET'){
     const player=u.searchParams.get('player');if(!kids.some(k=>k.id===player))return send(res,400,{error:'Choose a child.'});
     const {date,chapter:ch}=await latest(player,u.searchParams.get('date'));const p=await progress(player);
-    return send(res,200,{date,chapter:ch,progress:progressView(null),collection:collectionOf(p),open:!!ch,preview:true});
+    return send(res,200,{voiceRev:await voiceRev(),date,chapter:ch,progress:progressView(null),collection:collectionOf(p),open:!!ch,preview:true});
    }
    // The living book: the whole picture library (with URLs) and its narration clips (private manifest).
    if(u.pathname==='/api/book/library'&&req.method==='GET'){

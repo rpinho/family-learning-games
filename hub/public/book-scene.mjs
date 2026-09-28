@@ -68,6 +68,54 @@ export function layoutActors(actors,art,{width=16,height=9,ground=0.93,maxShare=
  }
  return row(items,(1-maxShare)/2,(1+maxShare)/2);
 }
+// ---- Composition (2026-09-28): one size system for every page, phone portrait, landscape and Chromebook ----
+// Everyone is sized from ONE unit, U = the SMALLER screen side x k (so a scene reads the same turned either way; a
+// tall phone's extra height is sky, not smaller people). Heights are relative to Dad (1.0): Dad > Mom > the boys >
+// the toys; props are relative to the people (a ball is knee-high to Diogo). Everyone stands on ONE ground line;
+// people and props share one row with a gap between neighbours, never overlapping (the row shrinks, and props give
+// way first, when it does not fit). A friend who flies is lifted. Pure: sizes in, fractions of the screen out.
+export const PEOPLE={dad:1,'grown-up':1,mom:0.93,francisco:0.74,hero:0.72,diogo:0.64};
+export const PROP_REL={ball:0.12,pizza:0.16,egg:0.14,chest:0.28,'baby-dino':0.34,target:0.46};
+export const relHeight=(id,A)=>PEOPLE[id]??Math.max(0.3,Math.min(0.55,((A?.h??0.4)/0.64)*0.85));
+export const propHeight=(id,P)=>PROP_REL[id]??Math.max(0.1,Math.min(0.4,(P?.h??0.12)/0.64));
+export function sceneUnit({width,height,beat=false,maxHeight=0.9,tallest=1}){
+ // Everything is measured on the SMALLER side, so a page turned the other way has the same people at the same size
+ // (the room above the words' band is taken as a share of the smaller side too; portrait's extra height is sky).
+ const S=Math.min(width,height);return Math.min(S*(beat?0.5:0.64),maxHeight*S/Math.max(0.3,tallest));}
+export function composeScene(scene,art,{width=16,height=9,ground=0.93,maxHeight=0.9,avoid=null,beat=false,playBall=false,margin=0.03,aside=null}={}){
+ // aside: a friend placed elsewhere by the page (the keeper stands in the goal): sized with everyone, not in the row.
+ const actors=(scene.actors||[]).filter(a=>a.id!==aside).map(a=>{const A=art.actors[a.id],P=A?.poses[a.pose]||A?.poses?.idle;if(!P)return null;return {kind:'actor',id:a.id,pose:a.pose,rel:relHeight(a.id,A),ar:P.ar,fly:!!P.fly||a.pose==='fly'};}).filter(Boolean);
+ let props=(scene.props||[]).filter(p=>p.id!=='train'&&!(playBall&&p.id==='ball')).map(p=>{const P=art.props?.[p.id];return P?{kind:'prop',id:p.id,rel:propHeight(p.id,P),ar:P.ar||1}:null;}).filter(Boolean);
+ const tallest=Math.max(0.3,...actors.map(a=>a.rel));let U=sceneUnit({width,height,beat,maxHeight,tallest});
+ // Props stand between people (after the first person, and at the end), never under them.
+ const order=list=>{const out=[];actors.forEach((a,i)=>{out.push(a);if(i===0&&list[0])out.push(list[0]);});out.push(...list.slice(1));if(!actors.length)out.push(...list.slice(0,1));return out;};
+ const bands=(()=>{const L=margin,R=1-margin;if(avoid&&avoid[1]>avoid[0]){const a=Math.max(L,avoid[0]),b=Math.min(R,avoid[1]);const out=[];if(a-L>0.08)out.push([L,a]);if(R-b>0.08)out.push([b,R]);if(out.length)return out;}return [[L,R]];})();
+ const room=bands.reduce((s,[a,b])=>s+(b-a),0)*width;
+ // Sizing uses a row no wider than the smaller side (same people, same size, turned either way); placing uses the
+ // whole width (the friends spread out a little when there is room).
+ const fit=Math.min(room,Math.min(width,height)*(1-2*margin));
+ const widthAt=(items,u)=>items.reduce((s,i)=>s+i.rel*u*i.ar,0)+Math.max(0,items.length-1)*Math.max(8,0.06*u)+bands.length*0;
+ let items=order(props);
+ // Too wide: props give way first (the last one, then the next), then everyone shrinks together.
+ while(widthAt(items,U)>fit&&items.some(i=>i.kind==='prop')){const k=items.map(i=>i.kind).lastIndexOf('prop');items.splice(k,1);}
+ const need=widthAt(items,U);if(need>fit)U*=fit/need;
+ const bodies=items.reduce((s,i)=>s+i.rel*U*i.ar,0),gaps=Math.max(1,items.length-bands.length);
+ const gap=Math.max(8,0.06*U,Math.min(0.3*U,(room-bodies)/(gaps+2)));
+ // Fill the bands left to right (two bands: split the row at the item that balances them).
+ const groups=[];if(bands.length===1)groups.push(items);else{const total=widthAt(items,U),share=(bands[0][1]-bands[0][0])*width/room;let acc=0,cut=items.length;for(let i=0;i<items.length;i++){acc+=items[i].rel*U*items[i].ar+gap;if(acc>total*share){cut=Math.max(1,i);break;}}groups.push(items.slice(0,cut),items.slice(cut));}
+ const out={actors:[],props:[],unit:U};
+ const rowW=g=>g.reduce((s,i)=>s+i.rel*U*i.ar,0)+Math.max(0,g.length-1)*gap;
+ groups.forEach((g,bi)=>{const [a,b]=bands[Math.min(bi,bands.length-1)],gb=g.reduce((s,i)=>s+i.rel*U*i.ar,0);
+  // a group squeezed into its side keeps inside it (smaller gaps first)
+  const gg=g.length>1?Math.max(4,Math.min(gap,((b-a)*width-gb)/(g.length-1))):gap,w=gb+Math.max(0,g.length-1)*gg;let x=(a+b)/2*width-w/2;
+  for(const i of g){const h=i.rel*U,wd=h*i.ar,lift=i.fly?Math.min(0.2*height,Math.max(0,maxHeight*height-h-(1-ground)*height)):0;
+   const r={id:i.id,left:x/width,width:wd/width,height:h/height,bottom:(1-ground)+lift/height};if(i.kind==='actor')out.actors.push({...r,pose:i.pose});else out.props.push(r);x+=wd+gg;}});
+ const K=aside&&(scene.actors||[]).find(a=>a.id===aside),KA=K&&art.actors[K.id],KP=KA&&(KA.poses[K.pose]||KA.poses.idle);
+ if(KP){const h=relHeight(K.id,KA)*U,w=h*KP.ar;out.actors.push({id:K.id,pose:K.pose,left:0.5-w/2/width,width:w/width,height:h/height,bottom:1-ground});}
+ // The sky: effects (stars, hearts) stay above everyone's head.
+ out.sky=1-Math.max(0,...[...out.actors,...out.props].map(r=>r.bottom+r.height));
+ return out;
+}
 // Where a band of the background picture (fractions of the image, drawn "cover") lands on the screen, 0..1.
 export function coverBand([x,,w],{width,height,nw=1600,nh=1067}){const k=Math.max(width/nw,height/nh),dw=nw*k,ox=(width-dw)/2;return [(ox+x*dw)/width,(ox+(x+w)*dw)/width];}
 // A train carries every friend in the picture: one open wagon each (the wagons in the picture repeat), never on
