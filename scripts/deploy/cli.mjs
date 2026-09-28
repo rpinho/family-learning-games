@@ -405,8 +405,12 @@ async function stage(name, ref, opts) {
     const previous = currentVersion('staging', name);
     atomicSymlink(releaseDir(name, version), channelLink('staging', name));
     const {label, obj} = plistFor(name, 'staging'), file = plistPath(label);
+    await bootout(label);
+    for (const port of [portFor(name, 'staging'), uiPortFor(name, 'staging')].filter(Boolean)) {
+      if (!await waitPortFree(port, 25)) throw new Error(`${name}: staging port ${port} did not stop`);
+    }
     writePlist(file, obj);
-    if (loaded(label)) kickstart(label); else await bootstrap(file, label);
+    await bootstrap(file, label);
     const v = await verifyServing(name, 'staging', version);
     if (!v.ok) {log(`STAGING-FAILED ${name} ${version} ${v.why} (previous ${previous})`); throw new Error(`staging ${name} ${version} unhealthy: ${v.why}`);}
     setCurrent('staging', name, version);

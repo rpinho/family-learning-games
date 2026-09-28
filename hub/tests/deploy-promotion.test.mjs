@@ -53,3 +53,23 @@ for(const failure of ['start','health','port'])test(`A ${failure} failure restor
   assert.deepEqual(f.files.get(f.file),f.original);assert.equal(f.metadata,undefined);
   assert.ok(f.calls.includes('voice-old'));assert.ok(f.calls.includes('verify:old'));
 });
+
+test('Staging also reloads the loaded configuration, so API checks exercise the intended environment',async()=>{
+  const calls=[],desired={EnvironmentVariables:{COACH:'lively'}};let fileConfiguration,loadedConfiguration={EnvironmentVariables:{COACH:'quiet'}};
+  const context={
+    build:async()=> 'new',narrationGate:()=>{},lock:()=>()=>{},existsSync:()=>true,
+    dataDir:()=>'/fixture/data',refreshStagingData:()=>{},stagingHubConfig:()=>{},applyVoice:()=>{},
+    currentVersion:()=> 'old',atomicSymlink:()=>{},releaseDir:()=>'/fixture/new',channelLink:()=>'/fixture/staging',
+    plistFor:()=>({label:'fixture.staging',obj:desired}),plistPath:()=>'/fixture/service.plist',
+    bootout:async()=>{calls.push('stop');loadedConfiguration=null;},
+    portFor:()=>1234,uiPortFor:()=>1235,waitPortFree:async()=>true,
+    writePlist:(_file,obj)=>{calls.push('configure');fileConfiguration=obj;},
+    kickstart:()=>{throw Error('old loaded environment would remain');},
+    bootstrap:async()=>{calls.push('start');loadedConfiguration=fileConfiguration;},
+    verifyServing:async()=>({ok:loadedConfiguration?.EnvironmentVariables.COACH==='lively'}),
+    setCurrent:()=>{},log:()=>{},console:{log:()=>{}},cfg:{lanHost:'fixture.local'},
+  };
+  vm.createContext(context);const stage=cli.slice(cli.indexOf('async function stage('),cli.indexOf('\n// ---------- promotion ----------'));
+  vm.runInContext(stage+'\nthis.deploy=stage;',context);await context.deploy('hub','new',{});
+  assert.deepEqual(calls,['stop','configure','start']);assert.equal(loadedConfiguration.EnvironmentVariables.COACH,'lively');
+});
