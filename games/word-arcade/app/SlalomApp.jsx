@@ -19,10 +19,10 @@ export default function SlalomApp(){
    if(!r.ok){if(d.profile){current.current=d.profile;setP(d.profile);}throw Error(d.error);}current.current=d.profile;setP(d.profile);return d;}
   catch(e){void event('error','request',e.message);return null;}finally{lock.current=false;setBusy(false);}}
  function submitGate(questionId,answer,durationMs,hinted=false){const task=gateQueue.current.then(async()=>{for(let i=0;i<6;i++){for(let w=0;w<60&&lock.current;w++)await new Promise(r=>setTimeout(r,100));const res=await action({kind:'answer',gate:true,questionId,answer,durationMs,...(hinted?{hinted:true}:{})});if(res)return res;if(current.current?.session?.q?.id!==questionId)return null;await new Promise(r=>setTimeout(r,700*(i+1)));}return null;});gateQueue.current=task.catch(()=>{});return task;}
- async function checkpoint(reason){voice.current?.stop();try{const who=current.current.id,lvl=await fetchWordLevel(`/api/${who}/word-break`,DEFAULT_TRACK[who]);await wordBreak({player:who,level:lvl,effects:()=>!!audio.current?.prefs?.effects,speak:(line,essential)=>{if(soundRef.current||essential)void voice.current?.speak(line,essential);},log:r=>void event('word-break',reason,JSON.stringify(r)),reason});}catch(e){void event('error','word-break',e.message);}}
+ async function checkpoint(reason,item){voice.current?.stop();try{const who=current.current.id,lvl=await fetchWordLevel(`/api/${who}/word-break`,DEFAULT_TRACK[who]);await wordBreak({player:who,level:lvl,effects:()=>!!audio.current?.prefs?.effects,speak:(line,essential)=>{if(soundRef.current||essential)void voice.current?.speak(line,essential);},log:r=>void event('word-break',reason,JSON.stringify(r)),reason,...(item?{item}:{})});}catch(e){void event('error','word-break',e.message);}}
  // leaving goes back to the Games home screen when inside the hub
  function exit(){voice.current?.stop();try{if(window.parent!==window){window.parent.location.hash='';return;}}catch{}setPhase('start');}
- async function start(ride){voice.current?.stop();void audio.current?.unlock();const d=await action({kind:'start',game:'slalom',...(ride?{ride}:{})});if(d){setPaused(false);setPhase('run');void event('button','slalom_start',ride||'');}}
+ async function start(ride,track){voice.current?.stop();void audio.current?.unlock();const d=await action({kind:'start',game:'slalom',...(ride?{ride}:{}),...(track?{track}:{})});if(d){setPaused(false);setPhase('run');void event('button','slalom_start',[ride||'',track||''].join(' ').trim());}}
  useEffect(()=>{
   const q=new URLSearchParams(location.search).get('player'),who=PLAYERS.includes(q)?q:'explorer';
   voice.current=new CoachVoice(setError,(kind,detail)=>void event('voice',kind,JSON.stringify(detail)));
@@ -40,7 +40,7 @@ export default function SlalomApp(){
  return <div className="slalom-app" onPointerDownCapture={()=>void audio.current?.unlock()}>
   {id&&<div className="active-player-banner" data-player={id} aria-label="Active player">{name}</div>}
   {(phase==='boot'||!p)&&<Boot text={error?`${error} Tap Games and try again.`:'Waxing the skis…'}/>}
-  {p&&phase==='start'&&<SlalomStart p={p} busy={busy} onStart={ride=>void start(ride)} onBack={exit}/>}
+  {p&&phase==='start'&&<SlalomStart p={p} busy={busy} onStart={(ride,track)=>void start(ride,track)} onBack={exit}/>}
   {p&&phase==='run'&&p.session?.game==='slalom'&&<Slalom key={p.session.run} p={p} session={p.session} voice={voice} soundRef={soundRef} audio={audio} paused={paused} onPause={()=>{voice.current?.stop();setPaused(true);}} onHome={exit} onAgain={()=>void start()} submitGate={submitGate} checkpoint={checkpoint} event={event}/>}
   {paused&&phase==='run'&&<div className="overlay"><section role="dialog" aria-modal="true" aria-label="Paused"><h2>Take your time.</h2><button className="primary" onClick={()=>setPaused(false)}>Continue →</button><button onClick={exit}>Back to Games</button></section></div>}
  </div>;

@@ -1,5 +1,12 @@
 # Word Arcade
 
+## September 28 (morning): Letter Slalom teaches words before testing them
+
+- **Letters or words** on the start screen (not for a letters-only player), remembered in the save. The words reader starts on letters until two word runs are read over 70% on their own (no glow); then words is the default and a star offers it.
+- **One word family per run** (at, an, ig, op, ug, in): 3-4 target words, introduced first in a ~15-20 s warm-up (picture where one is clear, a slow sound-out with the letters lighting up, the whole word). Gate look-alikes still share the first letter.
+- **Adapts inside the run:** after two misses in a row every row left is a pair, its question is the sound-out, and the rider cruises slower with no go-faster (a support case in the timing budget). Over 40% of the last 8 word rows missed: the next run starts easier (same family, 3 words, four pairs).
+- **After the run:** the recap replays only the missed words, each sounded out once; the word break after the finish stays in the run's family. Per-word tallies go to `drills['slalom:words'].skills` (`{hits, errors}`) for any learner model to read.
+
 ## September 28 (night): Letter Slalom's own light page
 
 `/?play=slalom` serves `slalom.html` (`slalom-main.tsx`, `app/SlalomApp.jsx`): a snowy "Letter Slalom" loading screen and only the slalom's code, never the Arcade shell. The 3D code and the voice list load while the child picks skis or snowboard. The voice list is fetched when idle after load (or on the first spoken line) instead of at start. No module preloads (behind a proxy that disables caching they were fetched twice).
