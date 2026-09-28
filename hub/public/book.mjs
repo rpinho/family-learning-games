@@ -210,8 +210,8 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   const W=root.clientWidth,H=root.clientHeight;
   for(const b of el.querySelectorAll('.bk-ball')){const size=Number(b.dataset.fs)*Math.min(W,H),x=Number(b.dataset.fx)*W,y=Number(b.dataset.fy)*H;if(!Number.isFinite(size))continue;
    b.style.left=`${x-size/2}px`;b.style.top=`${y-size/2}px`;b.style.width=b.style.height=`${size}px`;b.style.setProperty('--s',`${size}px`);}
-  const goal=el.querySelector('.bk-goal');
-  if(goal&&(p.action?.kind==='kick'||p.beat?.kind==='kick-letter')){const g=goalRect(p);for(const n of el.querySelectorAll('.bk-goal,.bk-net'))Object.assign(n.style,{left:`${g.x}px`,top:`${g.y}px`,width:`${g.w}px`,height:`${g.h}px`});
+  // (a picture with its own goal drawn in has no goal frame, but its keeper still stands in that goal)
+  if(p.action?.kind==='kick'||p.beat?.kind==='kick-letter'){const g=goalRect(p);for(const n of el.querySelectorAll('.bk-goal,.bk-net'))Object.assign(n.style,{left:`${g.x}px`,top:`${g.y}px`,width:`${g.w}px`,height:`${g.h}px`});
    if(!el.querySelector('.bk-actor.keeper'))placeKeeper(el,p,g);}
  }
  const onResize=()=>{clearTimeout(relayoutTimer);relayoutTimer=setTimeout(relayout,160);};
