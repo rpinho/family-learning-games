@@ -465,7 +465,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
     await speak(b.spoken);if(my!==turn)return;
     const plates=document.createElement('div');plates.className='bk-plates';plates.innerHTML=Array.from({length:b.groups},()=>'<div class="bk-plate"></div>').join('');el.append(plates);
     const box=document.createElement('button');box.type='button';box.className='bk-pizza bk-box';box.innerHTML=`<span style="font-size:80px">${esc(b.emoji||'🍪')}</span><b>${b.total}</b>`;el.append(box);
-    let left=b.total;box.onclick=async()=>{if(left<b.groups||my!==turn)return;for(const plate of plates.children){plate.insertAdjacentHTML('beforeend',`<span>${esc(b.emoji||'🍪')}</span>`);left--;}box.querySelector('b').textContent=left;
+    let left=b.total;box.onclick=async()=>{if(left<b.groups||my!==turn)return;for(const plate of plates.children){plate.insertAdjacentHTML('beforeend',`<span>${esc(b.emoji||'🍪')}</span>`);left--;}box.querySelector('b').textContent=left<b.groups?'?':left;
      if(left<b.groups){box.classList.add('left');await speak(b.ask);if(my!==turn)return;
       choices(play,b.options,{cls:'ball',answer:b.answer,prompt:b.ask,my,onRight:async m=>{burst('confetti');cheer();await speak(b.done);if(my===turn)done({misses:m});}});}};
     return;}
