@@ -12,9 +12,16 @@ export class CoachVoice {
     this.player.hidden=true;
     this.player.preload='auto';
     document.body.append(this.player);
-    this.ready=this.load();
+    // The clip list (manifest) is not needed to show the page: fetch it when the browser is idle after load, or on the
+    // first line spoken, whichever comes first (it used to be one of the largest downloads at start).
+    if(typeof window!=='undefined'&&typeof document!=='undefined'){
+      const soon=()=>{const go=()=>{void this.ready;};if(window.requestIdleCallback)window.requestIdleCallback(go,{timeout:2500});else setTimeout(go,600);};
+      if(document.readyState==='complete')setTimeout(soon,50);else window.addEventListener('load',soon,{once:true});
+    }
     for(const name of ['ended','error'])this.player.addEventListener(name,()=>{this.player.dataset.status=name;this.lastSpeech=Date.now();if(!this.queued)this.mode=null;});
   }
+  get ready(){return this._ready??=this.load();}
+  set ready(value){this._ready=value;}
   async load(){
     try{
       const response=await fetch('/voice/manifest.json');

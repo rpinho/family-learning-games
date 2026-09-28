@@ -77,7 +77,9 @@ const server=http.createServer(async(req,res)=>{
   if(url.pathname.startsWith('/api/'))return send(res,404,{error:'Unknown route'});
   if(!['GET','HEAD'].includes(req.method))return send(res,405,{error:'Read only'});
   if(url.pathname!=='/'&&url.pathname!=='/og.png'&&!/^\/assets\/[a-zA-Z0-9_./-]+$/.test(url.pathname))return send(res,404,{error:'Not found'});
-  const file=resolve(staticRoot,'.'+(url.pathname==='/'?'/index.html':decodeURIComponent(url.pathname)));if(!file.startsWith(staticRoot))return send(res,404,{error:'Not found'});
+  // The hub's Letter Slalom card opens /?play=slalom: the slalom's own light page, never the Arcade shell.
+  const page=url.pathname==='/'?(url.searchParams.get('play')==='slalom'?'/slalom.html':'/index.html'):decodeURIComponent(url.pathname);
+  const file=resolve(staticRoot,'.'+page);if(!file.startsWith(staticRoot))return send(res,404,{error:'Not found'});
   const body=await readFile(file);const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp'};res.writeHead(200,{'Content-Type':mime[extname(file)]||'application/octet-stream','Cache-Control':'no-cache'});res.end(req.method==='HEAD'?undefined:body);
  }catch(e){if(e.code==='ENOENT')return send(res,404,{error:'Not found'});await log({type:'error',error:e.message});send(res,500,{error:'Could not save or load. Please keep this page open and retry.'});}
 });

@@ -1,5 +1,9 @@
 # Word Arcade
 
+## September 28 (night): Letter Slalom's own light page
+
+`/?play=slalom` serves `slalom.html` (`slalom-main.tsx`, `app/SlalomApp.jsx`): a snowy "Letter Slalom" loading screen and only the slalom's code, never the Arcade shell. The 3D code and the voice list load while the child picks skis or snowboard. The voice list is fetched when idle after load (or on the first spoken line) instead of at start. No module preloads (behind a proxy that disables caching they were fetched twice).
+
 ## September 28: Letter Slalom on the Games home screen
 
 The hub has its own Letter Slalom card (deep link `?play=slalom`); the card inside Word Arcade is gone. Finish-line friends use page-relative URLs (standees load inside the hub) and stand in a line across the finish camera's view. The letter-sound check catches a click right at the edge of silence (`letter_sound_check.py selftest`).
