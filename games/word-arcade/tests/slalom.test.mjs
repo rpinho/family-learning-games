@@ -5,12 +5,20 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawn} from 'node:child_process';
 import {fresh,act,voiceLines,GAMES} from '../lib/engine.mjs';
-import {slalomRun,easeGate,SLALOM_LINES,SLALOM_GATES,CVC_WORDS,CVC_FAMILIES,canSoundOut,afterGate,supportGate,easyNext,slalomChoice,pickFamily,familyTargets,familyWords,SLALOM_FAMILIES,trickyWords,familyBreakItem,wordPicture,FAMILY_PICTURES,soundOutLine} from '../lib/slalom.mjs';
+import {slalomRun,easeGate,SLALOM_LINES,SLALOM_GATES,CVC_WORDS,CVC_FAMILIES,canSoundOut,afterGate,supportGate,easyNext,slalomChoice,pickFamily,familyTargets,familyWords,SLALOM_FAMILIES,trickyWords,trickyLetters,familyBreakItem,wordPicture,FAMILY_PICTURES,soundOutLine} from '../lib/slalom.mjs';
 import {literacyFrom,PICTURE_NAMES,PICTURE_REJECTED} from '../lib/word-break.mjs';
 const send=(p,input,ctx)=>act(p,{...input,revision:p.revision,questionId:p.session?.q?.id},ctx);
 const beginner={...literacyFrom(null,'letters'),source:'letter-quest',letters:[...'FRANCISOETL'],lower:['f','r','a'],learning:[...'FRANCISOETL','f','r','a']};
 const explorer={...literacyFrom(null,'words'),source:'letter-quest',wordLevel:2};
 const lines=new Set(voiceLines());
+test('letter finish reviews at most three distinct missed or hinted letters, with misses first',()=>{
+ const gates=['O','E','S','a','R','I','L','E'].map(answer=>({track:'letters',answer}));
+ const outcomes=[{ok:true},{ok:true,hinted:true},{ok:true},{ok:true,hinted:true},{ok:false},{ok:false},{ok:false},{ok:false}];
+ assert.deepEqual(trickyLetters(gates,outcomes),[4,5,6]);
+ assert.deepEqual(trickyLetters(gates,outcomes,2),[4,5]);
+ assert.deepEqual(trickyLetters(gates,outcomes.map(()=>({ok:true}))),[]);
+ assert.deepEqual(trickyLetters(gates,[{ok:false},{ok:false},{ok:true},{ok:true},{ok:true},{ok:true},{ok:true},{ok:false}]),[0,1]);
+});
 function checkGate(g){
  assert.equal(new Set(g.options).size,g.options.length,g.options.join());assert.ok(g.options.includes(g.answer));assert.equal(g.options[g.lane],g.answer);
  for(const line of [g.prompt,g.praise,g.correction,g.recap,g.recapSoundOut].filter(Boolean))assert.ok(lines.has(line),line);
