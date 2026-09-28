@@ -327,7 +327,7 @@ export function publicChess(p, now = Date.now(), settings = {}) {
     game: p.game ? { ...p.game, coaching: undefined, hint: p.game.hint ? {
       ...p.game.hint, ...hintPublic(p.game.hint, now),
     } : null } : null,
-    settings: p.settings,
+    settings: { ...p.settings, coachChatter: settings.coachChatter === 'lively' ? 'lively' : 'quiet' },
     match: publicMatch(p, settings),
   };
 }

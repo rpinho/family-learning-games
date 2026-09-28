@@ -54,6 +54,19 @@ test("Captures drive dramatic, sparse speech and still move the coach when silen
   assert.equal(reactionFor(game, {...child,captured:null,loss:400}, {captured:'r'}, null).kind,'pounce');
 });
 
+test('Lively coaching reacts to consecutive captures and checks, rotates jokes and spaces quiet-turn remarks',()=>{
+ const game={id:'varied',side:'w',records:[{},{}],moves:['e2e4'],spokeAt:1};
+ const child={uci:'e4d5',piece:'p',captured:'p',loss:0};
+ const lively={coachChatter:'lively'};
+ assert.equal(reactionFor(game,child,null,null).line,null,'quiet is still the public default');
+ const first=reactionFor(game,child,null,null,lively);assert.equal(first.kind,'youCapture');assert.ok(first.line);
+ game.records.push({});const second=reactionFor(game,child,null,null,lively);assert.notEqual(second.line,first.line);
+ game.records.push({});assert.equal(reactionFor(game,{...child,captured:null},{captured:'q'},null,lively).kind,'meQueen');
+ game.records.push({});assert.equal(reactionFor(game,{...child,captured:null,check:true},null,null,lively).kind,'youCheck');
+ game.records.push({});assert.equal(reactionFor(game,{...child,captured:null},null,null,lively),null);
+ game.records.push({},{},{});assert.equal(reactionFor(game,{...child,captured:null},null,null,lively).kind,'thinking');
+});
+
 test("Legal moves only: an illegal move is refused and changes nothing", async () => {
   const p = freshChess();
   await act(p, "match-start", {}, { engine: fakeEngine(), settings: strong });

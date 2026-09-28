@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
-import {mkdtemp,readFile,readdir} from 'node:fs/promises';
+import {mkdtemp,readFile,readdir,mkdir,writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {once} from 'node:events';
@@ -62,5 +62,12 @@ test('Hub persists only the chosen profile, rejects replay/foreign origins, and 
   const checkpoint=await(await request({type:'live-checkpoint',liveRules:1,revision:live.profile.revision,roundId:live.profile.live.round.id,inputs:'iwee'})).json();
   assert.equal(checkpoint.profile.live.round.inputs,'iwee');
   const reloaded=await(await fetch(base+'/api/dribble?player=admin')).json();assert.equal(reloaded.profile.live.round.inputs,'iwee');
+  await mkdir(join(data,'chess-voice'));
+  const clip=Buffer.from('RIFFsynthetic audio fixture');await writeFile(join(data,'chess-voice','0123456789abcdef.wav'),clip);
+  const audio=await fetch(base+'/chess-voice/0123456789abcdef.wav');
+  assert.equal(audio.headers.get('content-length'),String(clip.length));assert.match(audio.headers.get('cache-control'),/immutable/);
+  assert.deepEqual(Buffer.from(await audio.arrayBuffer()),clip);
+  await writeFile(join(data,'chess-voice','manifest.json'),'{}');
+  assert.equal((await fetch(base+'/chess-voice/manifest.json')).headers.get('cache-control'),'no-store');
  }finally{child.kill('SIGTERM');await once(child,'exit');}
 });

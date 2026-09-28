@@ -49,6 +49,12 @@ export const DIALOGUE = {
     'Nobody lost. My mustache finds this acceptable.'
   ],
   success: [ROOK_CHEERS[0], ROOK_CHEERS[1],
+    'You found it! I was still adjusting my thinking face.',
+    'Excellent! I shall claim I helped. Very quietly.',
+    'Aha! My detective hat is jealous.',
+    'You got it! I will supply the dramatic applause.',
+    'Well spotted! I was distracted by my own eyebrows.',
+    'Brilliant! My job was mostly looking mysterious.',
     'Ah, a masterpiece in miniature!',
     'My moustache is positively impressed.',
     'A tiny move with tremendous style.',

@@ -80,7 +80,7 @@ function instruct(text,queued=false){if(mute||!profile?.settings.sound||!text||!
 function narrate(text,queued=false){if(mute||!profile?.settings.sound||!text)return;return queued?coachVoice.enqueue(briefLine(text)):coachVoice.instruction(briefLine(text));}
 // One gentle repeat of the content prompt after ~9 s with no taps, while the same question is still open.
 setInterval(()=>{const c=lastContent,now=Date.now();if(!c||c.repeated||!c.key||busy||document.hidden||document.querySelector('dialog[open]'))return;if(c.key!==contentKey()){lastContent=null;return;}if(now-c.at<9000||now-lastTouch<9000||coachVoice.mode||coachVoice.promptTimer)return;c.repeated=true;coachVoice.instruction(c.text);},1000);
-function praise(ok=true){if(!mute&&profile?.settings.sound)void coachVoice.feedback(ok);}
+function praise(ok=true,text=null){if(!mute&&profile?.settings.sound)void coachVoice.feedback(ok,text||pickDialogue(ok?'success':'retry'));}
 function readingPrompt(q,manual=false){if(!q)return;if(manual){coachVoice.stop();void coachVoice.enqueue(q.prompt);if(q.listenLine)void coachVoice.enqueue(q.listenLine);return;}if(mute)return;
  // Decode/act/story never speak the printed answer; their prompt is a how-to instruction.
  if(['decode','act','story'].includes(q.type))instruct(q.prompt);else speak(q.listenLine||q.prompt);}
@@ -252,7 +252,7 @@ async function submit(answer){
  if(busy||feedback)return;busy=true;saveError='';
  const payload={challengeId:challenge.id,answer,strokes,helped,durationMs:elapsedMs(started)};
  telemetry.record('attempt_submit',{answer,durationMs:payload.durationMs});render();
- try{const data=await request('attempt',payload);profile=data.profile;feedback=data.result;feedback.submittedAnswer=answer;feedback.next=data.challenge;feedback.line=pickDialogue(feedbackCategory(challenge,feedback,helped));telemetry.record('feedback',{ok:feedback.ok,reason:feedback.reason||'',message:feedback.line});if(feedback.ok)chime();if(coachVoice.mode!=='letter')coachVoice.stop();praise(feedback.ok);}
+ try{const data=await request('attempt',payload);profile=data.profile;feedback=data.result;feedback.submittedAnswer=answer;feedback.next=data.challenge;feedback.line=pickDialogue(feedbackCategory(challenge,feedback,helped));telemetry.record('feedback',{ok:feedback.ok,reason:feedback.reason||'',message:feedback.line});if(feedback.ok)chime();if(coachVoice.mode!=='letter'&&coachVoice.mode!=='phoneme')coachVoice.stop();praise(feedback.ok,feedback.line);}
  catch(e){saveError=e.message;}
  finally{busy=false;render();}
 }

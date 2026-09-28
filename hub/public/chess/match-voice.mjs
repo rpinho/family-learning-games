@@ -1,6 +1,6 @@
 // Original, short lines for full games against the coach.
 // The lines never say the coach's name, so a private install can show its own name on screen.
-// Reactions are rare by design: key moments only, never a line every move.
+// Installs choose quiet or lively reactions; teaching directions remain separate.
 export const MATCH_VOICE = {
   howTo: "Tap a piece to see where it can go. Then tap a dot to move it.",
   startWhite: "You have white, so you go first. Let the chess drama begin!",
@@ -15,27 +15,43 @@ export const MATCH_VOICE = {
     "My piece! It had plans!",
     "Oh, the drama. That was mine!",
     "You took my piece. I need a moment.",
+    "That was my favorite! Well, one of my sixteen favorites.",
+    "I meant to protect that. In my imagination, I did.",
+    "Farewell, brave piece. Your coach was distracted.",
+    "I shall pretend that was a brilliant sacrifice.",
+    "My defense has a small hole. Piece-sized, apparently.",
   ],
   youQueen: [
     "My queen! There goes my grand plan.",
     "My queen is gone. Pause the music!",
+    "My queen! I may need a smaller crown now.",
+    "Well. My royal protection service has been fired.",
   ],
   meCapture: [
     "A souvenir for my chess shelf!",
     "Mine now. I promise to look after it.",
     "Your piece has joined my team.",
+    "Aha! I do occasionally know what I am doing.",
+    "Mine! Now, how do I look modest?",
+    "A tiny victory. I shall make an enormous fuss.",
+    "Ooh! That went better than my rehearsal.",
   ],
+  meQueen: ["I took your queen! Even I look surprised.", "Your queen! My piece deserves a medal.", "A royal capture! I shall try to look modest."],
   trade: [
     "A trade! I shall try not to gloat.",
     "You took mine, I took yours. Quite a plot twist!",
+    "We both took a piece. Very dramatic shopping.",
+    "A fair exchange. My ego would prefer a discount.",
   ],
   pounce: [
     "A loose piece! My mustache spotted it first.",
     "Ooh, that piece was unprotected. I could not resist!",
     "I took the free piece. Keep an eye on your team!",
   ],
-  youCheck: ["Check? I demand a dramatic pause!", "The royal alarm is ringing!", "My king was not expecting visitors!"],
-  meCheck: ["Check! My dramatic entrance has arrived.", "Your king looks a little nervous!"],
+  youCheck: ["Check? I demand a dramatic pause!", "The royal alarm is ringing!", "My king was not expecting visitors!", "Check! My king suddenly remembers an appointment.", "My king needs a hiding place. Preferably stylish."],
+  meCheck: ["Check! My dramatic entrance has arrived.", "Your king looks a little nervous!", "Check! At last, my plan has a speaking part.", "Check! Do give your king somewhere safe to go."],
+  castle: ["Your king has a little castle. Mine wants curtains.", "Castled! Sensible. I was busy posing.", "A safe king! I should try being sensible too."],
+  thinking: ["I had a plan. It was here a moment ago.", "Thinking face on. Clever thoughts, please arrive.", "Hmm. This is where I look mysterious.", "My pieces are holding a meeting. No snacks yet.", "I am thinking three moves ahead. Or about lunch."],
   youPromote: ["Your pawn became a queen! What a glow-up!"],
   mePromote: ["My pawn became a queen! Clear a path for royalty!"],
   takeback: ["Time travel! Try a different move."],

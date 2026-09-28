@@ -11,6 +11,7 @@ import { Chess } from "./rules.mjs";
 import { narrationFor, createNarrationGate } from "./narration.mjs";
 import { pathProgress, shortPracticeLesson } from "./path.mjs";
 import { MATCH_VOICE } from "./match-voice.mjs";
+import { createBanterPicker, captureReaction } from "./banter.mjs";
 import { wordBreak, fetchWordLevel, onceThisSession, DEFAULT_TRACK } from "../word-break.mjs";
 const esc = (s) =>
   String(s ?? "").replace(
@@ -41,6 +42,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
     completedNotice = "",
     matchReplay = null,
     recapRunning = null,
+    performanceLine = "",
     receivedAt = Date.now();
   const priorScrollRestoration = history.scrollRestoration;
   history.scrollRestoration = "manual";
@@ -65,6 +67,11 @@ export function mountChess(root, { player, name, event = () => {} }) {
       .catch(() => {}),
     speechGeneration = 0;
   const allowNarration = createNarrationGate();
+  const pickBanter = createBanterPicker();
+  let captureReacted = false, lastReactionSpeech = -Infinity;
+  const captureKinds = new Set(), captureTurns = {};
+  void voiceReady.then(()=>voice.warm(['youQueen','meQueen','youCapture','meCapture','trade','youCheck','meCheck','pounce','good']
+    .flatMap(kind=>MATCH_VOICE[kind]).map(text=>voiceManifest[text])));
   async function say(text, { force = false, kind = "automatic" } = {}) {
     if ((!profile?.settings.sound && !force) || !text) return;
     if (!allowNarration(text, { force, kind, scope: profile.session?.id || "practice" })) return;
@@ -78,18 +85,24 @@ export function mountChess(root, { player, name, event = () => {} }) {
       return;
     }
     voice.play(source);
+    performanceLine = text;
   }
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-  async function playLine(text, { force = false } = {}) {
+  async function playLine(text, { force = false, automatic = false, priority = false } = {}) {
+    const requestedAt=Date.now();
     if ((!profile?.settings.sound && !force) || !text) return false;
+    if(automatic&&!priority&&(Date.now()-lastReactionSpeech<5000||voice.isPlaying()))return false;
+    if(automatic)lastReactionSpeech=Date.now();
     utterance();
     const generation = speechGeneration;
     if (!manifestReady) await voiceReady;
     if (!alive || generation !== speechGeneration) return false;
+    if(automatic&&Date.now()-requestedAt>1200)return false;
     const source = voiceManifest[text];
     if (!source) { event("chess_voice_unavailable", "missing original clip"); return false; }
-    voice.play(source);
+    voice.play(source,{maxStartDelayMs:automatic?1200:0});
+    performanceLine = text;
     return true;
   }
   async function waitVoice(min = 600) {
@@ -166,6 +179,9 @@ export function mountChess(root, { player, name, event = () => {} }) {
     analysisView = false;
     exampleView = false;
     utterance();
+    captureReacted = false;
+    performanceLine = "";
+    captureKinds.clear();
     const body = pending;
     const moving = ["move", "game-move", "match-move"].includes(body.type) && boardDispose;
     let preview = null;
@@ -204,7 +220,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
         }
         busy = false;
         const matchKind = body.type === 'match-move' ? profile.match?.game?.react?.kind : null;
-        reaction =
+        reaction = captureReacted && body.type === 'match-move' && !profile.match?.game?.result ? 'idle' :
           data.result?.correct === false
             ? "retry"
             : body.type === 'match-move' && matchKind
@@ -233,6 +249,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
         if (body.type.startsWith("match-")) void afterMatch(body.type, data.result || {});
         const narration = body.type.startsWith("match-") ? null : narrationFor(body.type, profile, currentUnit().cue);
         if (narration && data.result?.advanced !== false) say(narration.text, { kind: narration.kind });
+        else if(!narration){const banter=pickBanter(body.type,profile);if(banter)void playLine(banter,{automatic:true});}
         if(profile.session?.phase==='intro'&&['start','settings'].includes(body.type))say(FOUNDATION_VOICE.ready,{kind:'task'});
         event("chess_action", body.type);
       } catch (e) {
@@ -292,7 +309,8 @@ export function mountChess(root, { player, name, event = () => {} }) {
         hintTo: r ? r.hintTo : g.hint?.to,
         showLegalMoves: true,
         onMove: (from, to, promotion) => send("match-move", { from, to, promotion }),
-        onMotion: (kind) => react(kind),
+        onMotion: (kind) => {if(!captureReacted || !['nod','think','land','capture'].includes(kind))react(kind);},
+        onMoveLanded: matchCaptureLanded,
         onSelect: (text, gaze) => {
           const eyes = root.querySelector(".rook-eyes");
           if (eyes && gaze) eyes.style.transform = `translate(${(gaze.x - .5) * 6}px, ${2 + gaze.y * 3}px)`;
@@ -363,6 +381,18 @@ export function mountChess(root, { player, name, event = () => {} }) {
     puppet.classList.add("react-" + kind);
     if (kind === "celebrate" && view === "lesson") void boardDispose?.celebrate?.();
   }
+  function matchCaptureLanded(move,{preview}){
+    const g=profile.match?.game;
+    const r=captureReaction(move,g?.side);
+    if(!r)return;
+    captureReacted=true;reaction=r.mood;react(r.mood);
+    event('chess_capture_reaction',JSON.stringify({kind:r.kind,preview,move:move.from+move.to}));
+    if(profile.settings.coachChatter!=='lively')return;
+    captureKinds.add(r.kind);
+    const lines=MATCH_VOICE[r.kind],i=captureTurns[r.kind]??0;
+    captureTurns[r.kind]=i+1;
+    void playLine(lines[i%lines.length],{automatic:true,priority:r.priority});
+  }
   const uiIcon = (paths) =>
     `<svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
   const glyph = (kind) =>
@@ -391,6 +421,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
     );
   }
   function spokenText() {
+    if(performanceLine)return performanceLine;
     if (view === "match") {
       const g = profile.match?.game;
       return matchReplay?.caption || g?.hint?.voice || g?.react?.line || MATCH_VOICE.howTo;
@@ -622,7 +653,10 @@ export function mountChess(root, { player, name, event = () => {} }) {
     }
     if (type === "match-ack") return;
     if (g.result) { void runRecap(g.id); return; }
-    if (g.react?.line) void playLine(g.react.line);
+    // A capture was performed at the actual landing, not after the opponent's
+    // animations. Never repeat it here or announce a trade several seconds late.
+    if(captureKinds.size&&['youCapture','youQueen','meQueen','meCapture','trade','pounce'].includes(g.react?.kind))return;
+    if (g.react?.line) void playLine(g.react.line,{automatic:true});
   }
   // After the game: the result line, one short recap sentence and one replayed moment.
   async function runRecap(id) {
@@ -893,6 +927,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
     root.removeEventListener('pointerdown',unlockVoice,{capture:true});
     root.removeEventListener('keydown',unlockVoice,{capture:true});
     utterance();
+    voice.dispose();
   };
   dispose.busy = () => busy || !!pending;
   dispose.prepareLeave = async () => {

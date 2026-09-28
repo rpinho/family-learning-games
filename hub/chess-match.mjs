@@ -19,7 +19,7 @@ const play = (b, u) => b.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotio
 export function matchSettings(s = {}) {
   const name = typeof s.opponent === "string" && /^[\p{L}][\p{L} '-]{0,19}$/u.test(s.opponent) ? s.opponent : "Rook";
   const start = Number.isFinite(s.matchRating) ? clamp(Math.round(s.matchRating), RATING_MIN, RATING_MAX) : DEFAULT_RATING;
-  return { opponent: name, startRating: start, bigHints: s.bigHints === true };
+  return { opponent: name, startRating: start, bigHints: s.bigHints === true, coachChatter: s.coachChatter === 'lively' ? 'lively' : 'quiet' };
 }
 export function freshMatch(settings = {}) {
   const { startRating } = matchSettings(settings);
@@ -142,29 +142,35 @@ export function hintIdea(board, move) {
 function line(g, kind) {
   const list = Array.isArray(V[kind]) ? V[kind] : [V[kind]];
   g.voiceTurn ??= {};
-  const i = g.voiceTurn[kind] ?? 0;
+  const seed = [...(g.id || '')].reduce((sum, c) => sum + c.charCodeAt(0), 0);
+  const i = g.voiceTurn[kind] ?? seed % list.length;
   g.voiceTurn[kind] = (i + 1) % list.length;
   return list[i % list.length];
 }
-// At most one short reaction, at key moments only.
-export function reactionFor(g, rec, reply, result) {
+// Lively installs react to more board events. The client supplies breathing room
+// in seconds as well, so quick consecutive moves never become a speech backlog.
+export function reactionFor(g, rec, reply, result, settings = {}) {
   const n = g.records.length, since = n - (g.spokeAt ?? -10);
+  const lively = settings.coachChatter === 'lively';
   let kind = null;
   const scholar = result?.kind === "win" && result.reason === "checkmate" && rec.piece === "q" && rec.captured === "p" &&
     rec.uci.slice(2, 4) === (g.side === "w" ? "f7" : "f2") && g.moves.length <= 24;
   if (scholar) kind = "scholar";
   else if (result) kind = result.kind === "win" ? "youWin" : result.kind === "loss" ? "meWin" : result.reason === "stalemate" ? "stalemate" : "draw";
   else if (rec.captured === 'q') kind = 'youQueen';
+  else if (lively && reply?.captured === 'q') kind = 'meQueen';
   else if (reply?.captured && VALUE[reply.captured] >= 3 && rec.loss >= 250) kind = "pounce";
   else if (rec.promotion) kind = "youPromote";
   else if (reply?.promotion) kind = "mePromote";
-  else if (since >= 2) {
+  else if (since >= (lively ? 1 : 2)) {
     if (rec.captured && reply?.captured) kind = 'trade';
-    else if (reply?.captured && (VALUE[reply.captured] >= 3 || since >= 4)) kind = 'meCapture';
-    else if (rec.captured && (VALUE[rec.captured] >= 3 || since >= 4)) kind = 'youCapture';
+    else if (reply?.captured && (lively || VALUE[reply.captured] >= 3 || since >= 4)) kind = 'meCapture';
+    else if (rec.captured && (lively || VALUE[rec.captured] >= 3 || since >= 4)) kind = 'youCapture';
     else if (rec.uci === rec.expect && rec.loss < 40 && rec.fork) kind = "good";
-    else if (rec.check && since >= 4) kind = "youCheck";
-    else if (reply?.check && since >= 4) kind = "meCheck";
+    else if (rec.check && (lively || since >= 4)) kind = "youCheck";
+    else if (reply?.check && (lively || since >= 4)) kind = "meCheck";
+    else if (lively && rec.castle) kind = 'castle';
+    else if (lively && since >= 4) kind = 'thinking';
   }
   if (!kind) {
     // A capture still gets a visible reaction when the speech cooldown is on.
@@ -310,7 +316,7 @@ export async function actMatch(p, input, { engine, settings = {}, now = Date.now
     try { mv = b.move({ from: input.from, to: input.to, promotion: input.promotion || "q" }); }
     catch { fail("That move is not legal."); }
     const rec = { ply: g.moves.length, fen: fenBefore, uci: uciOf(mv), san: mv.san, piece: mv.piece, captured: mv.captured || null,
-      promotion: mv.promotion || null, check: b.isCheck(), mate: b.isCheckmate(), fork: targets(b, mv.to).length >= 2 && !attacked(b, mv.to, b.turn()),
+      promotion: mv.promotion || null, castle: mv.flags.includes('k') || mv.flags.includes('q'), check: b.isCheck(), mate: b.isCheckmate(), fork: targets(b, mv.to).length >= 2 && !attacked(b, mv.to, b.turn()),
       expect: g.expect, before: g.evalLearner, after: null, loss: 0, hinted: !!g.hint };
     g.moves.push(rec.uci);
     g.records.push(rec);
@@ -338,7 +344,7 @@ export async function actMatch(p, input, { engine, settings = {}, now = Date.now
       }
       if (mo?.better) mo.betterSan = sanOf(mo.fen, mo.better);
     }
-    g.react = reactionFor(g, rec, reply && { captured: reply.captured, promotion: reply.promotion, check: b.isCheck() && !b.isCheckmate() }, g.result);
+    g.react = reactionFor(g, rec, reply && { captured: reply.captured, promotion: reply.promotion, check: b.isCheck() && !b.isCheckmate() }, g.result, s);
     return { moves: g.lastMoves, react: g.react?.kind || null, result: g.result?.kind || null };
   }
   if (input.type === "match-undo") {
