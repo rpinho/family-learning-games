@@ -10,11 +10,13 @@ export const PLACES=[
 export const BUILD_MAX_PER_PLACE=12;
 export const BUILD_PROMPT_WORDS='Build this number with blocks.';
 export const BUILD_PROMPT_NUMBER='Read the number. Build it with blocks.';
+export const BUILD_PROMPT_HEARD='Build the number you hear.';
 // Saved rounds from before the prompts were shortened.
 const LEGACY_BUILD_PROMPTS=['Build this number with the blocks. Then press check.','Read the number. Build it with the blocks. Then press check.'];
 export const BUILD_HINTS={
  words:'Look at each color. Add that many blocks of each kind.',
- number:'Say the number out loud. Each digit tells you how many blocks of one kind.'
+ number:'Say the number out loud. Each digit tells you how many blocks of one kind.',
+ heard:'Listen again. Think about hundreds, tens, then ones.'
 };
 export const placeName=(i,n)=>n===1?PLACES[i].one:PLACES[i].many;
 export function placeWords(target){
@@ -29,8 +31,9 @@ export function buildQuestion(level,r){
  if(level<=1)target=[0,2+roll(8),1+roll(9)];
  else if(level===2)target=[0,1+roll(9),roll(10)];
  else{target=[1+roll(9),roll(10),roll(10)];if(roll(4)===0)target[1+roll(2)]=0;}
- const total=buildValue(target),show=level<=1?'words':'number';
- return {kind:'place',skill:'place',placeMode:'build',level,target,total,show,answer:total,max:999,prompt:show==='words'?BUILD_PROMPT_WORDS:BUILD_PROMPT_NUMBER};
+ // Some three-digit rounds begin with spoken input instead of a printed numeral.
+ const total=buildValue(target),show=level<=1?'words':level>=3&&roll(3)===0?'heard':'number';
+ return {kind:'place',skill:'place',placeMode:'build',level,target,total,show,answer:total,max:999,prompt:show==='words'?BUILD_PROMPT_WORDS:show==='heard'?BUILD_PROMPT_HEARD:BUILD_PROMPT_NUMBER};
 }
 export function validBuild(counts){
  return Array.isArray(counts)&&counts.length===PLACES.length&&counts.every(n=>Number.isInteger(n)&&n>=0&&n<=BUILD_MAX_PER_PLACE);
@@ -49,7 +52,7 @@ export function buildFeedback(target,counts,checks=0){
  return {ok,parts,lines,message:lines.join(' ')};
 }
 export function placeVoiceLines(){
- const lines=new Set([BUILD_PROMPT_WORDS,BUILD_PROMPT_NUMBER,...LEGACY_BUILD_PROMPTS,...Object.values(BUILD_HINTS)]);
+ const lines=new Set([BUILD_PROMPT_WORDS,BUILD_PROMPT_NUMBER,BUILD_PROMPT_HEARD,...LEGACY_BUILD_PROMPTS,...Object.values(BUILD_HINTS)]);
  PLACES.forEach((place,i)=>{
   lines.add(`${place.many[0].toUpperCase()+place.many.slice(1)} are right.`);
   lines.add(`Too many ${place.many}.`);lines.add(`Too few ${place.many}.`);
