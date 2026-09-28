@@ -488,7 +488,7 @@ export function createSlalomScene(container,opts){
    scene.traverse(o=>{if(o.isMesh||o.isPoints||o.isSprite){o.geometry?.dispose?.();const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{m?.map?.dispose?.();m?.dispose?.();});}});
    sun.shadow.map?.dispose();renderer.dispose();try{renderer.forceContextLoss();}catch{}canvas.remove();}
  };
- canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();opts.onContextLost?.();});
+ canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();if(!disposed)opts.onContextLost?.();});
  void reducedMotion;
  return api;
 }
