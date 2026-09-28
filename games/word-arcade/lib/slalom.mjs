@@ -145,6 +145,19 @@ export function slalomChoice(id,slalom={},defaultTrack=DEFAULT_TRACK[id]||'mixed
 }
 // Missed words (a wrong gate or the glow), once each, in run order: the recap replays only these.
 export function trickyWords(gates,outcomes){const out=[];gates.forEach((g,k)=>{const o=outcomes[k];if(g?.track==='words'&&o&&(!o.ok||o.hinted)&&!out.includes(g.answer))out.push(g.answer);});return out;}
+// The finish still displays every gate. Speak only a few distinct letters that need review,
+// prioritising wrong answers over passes that needed the glow.
+export function trickyLetters(gates,outcomes,limit=3){
+ const chosen=[],seen=new Set();
+ for(const predicate of [o=>!o.ok,o=>o.hinted]){
+  gates.forEach((g,k)=>{
+   const o=outcomes[k],answer=g?.answer;
+   if(g?.track!=='letters'||!o||!predicate(o)||seen.has(answer)||chosen.length>=limit)return;
+   seen.add(answer);chosen.push(k);
+  });
+ }
+ return chosen;
+}
 // The word break after the finish line: a word from the SAME family (a missed one first), against one family
 // neighbour and one same-first-letter look-alike (mat: cat, map).
 export function familyBreakItem(family,{tricky=[],targets=[],r=Math.random}={}){

@@ -4,7 +4,7 @@
 // No score, no streaks, no fail state: a missed gate names the right answer and the run continues.
 import {useEffect,useRef,useState} from 'react';
 import './slalom.css';
-import {SLALOM_LINES,afterGate,slalomChoice,trickyWords,familyBreakItem,soundOutLine,wordPicture} from '../lib/slalom.mjs';
+import {SLALOM_LINES,afterGate,slalomChoice,trickyWords,trickyLetters,familyBreakItem,soundOutLine,wordPicture} from '../lib/slalom.mjs';
 import {onceThisSession,DEFAULT_TRACK} from '../lib/word-break.mjs';
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const qualityParam=()=>{try{return new URLSearchParams(location.search).get('slalomQuality');}catch{return null;}};
@@ -85,7 +85,9 @@ export default function Slalom({p,session,voice,soundRef,audio,paused,onPause,on
    await sleep(1200);
    if(track==='letters'){
     await say(SLALOM_LINES.recapLetters);
-    for(let k=0;k<gates.current.length&&alive.current;k++){setRecapAt(k);await say(gates.current[k].recap);await sleep(150);}
+    const review=trickyLetters(gates.current,outcomes.current);
+    log('slalom_recap',{track:'letters',review:review.map(k=>gates.current[k].answer)});
+    for(const k of review){if(!alive.current)break;setRecapAt(k);await say(gates.current[k].recap);await sleep(150);}
     setRecapAt(gates.current.length);return;
    }
    // words: only the missed ones (a wrong gate or the glow), each sounded out once with its picture
