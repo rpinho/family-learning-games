@@ -38,7 +38,9 @@ def analyse(path, isolated=False, whole=False):
     edge = int(r * .01)
     if env[:edge].max() > 0.02: out['issues'].append(f'starts mid-sound ({env[:edge].max():.3f} in the first 10 ms)')
     if env[-edge:].max() > 0.02: out['issues'].append(f'ends mid-sound ({env[-edge:].max():.3f} in the last 10 ms)')
-    if env.max() >= 0.98: out['issues'].append('digitally clipped (peak at full scale)')
+    # Digitally clipped = samples AT full scale (a loud but whole clip, peak 0.98, is fine).
+    full = env >= 0.999
+    if full.sum() >= 2 or env.max() >= 0.9999: out['issues'].append('digitally clipped (peak at full scale)')
     if shared_clicks(a): out['issues'].append('click at a join (jump out of or into digital silence)')
     if isolated:
         if voiced < 0.06: out['issues'].append(f'sound too short ({voiced:.3f} s voiced)')

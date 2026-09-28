@@ -216,3 +216,6 @@
 .bk-end-btns .bk-btn{display:block;text-align:center;text-decoration:none;margin:0}
 .bk-end-btns .bk-btn.big{font-size:clamp(24px,5.2vmin,38px);padding:.45em .8em;background:linear-gradient(#8ee07a,#3aa84a);color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.25)}
 .bk-end-btns .bk-done{font-size:clamp(18px,3.8vmin,26px)}
+/* The closing card is centred without transform (its pop-in animation also sets transform, which undid the
+   translate(-50%,-50%) and pushed the card to the bottom right, over the picture: 2026-09-28). */
+.bk-quest{left:0;right:0;top:0;bottom:0;margin:auto;width:fit-content;height:fit-content;max-height:92vh;overflow:auto;transform:none}
