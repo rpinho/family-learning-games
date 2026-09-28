@@ -1,7 +1,26 @@
 // One audio element retains gesture permission across subsequent coach clips.
-export function createCoachAudio({createAudio=()=>new Audio(),event=()=>{},talking=()=>{}}={}){
+export function createCoachAudio({createAudio=()=>new Audio(),event=()=>{},talking=()=>{},fetchAudio=(source,options)=>fetch(source,options),urls=URL}={}){
  const audio=createAudio();audio.preload='auto';
  let generation=0,active=false,unlocked=false;
+ const cached=new Map(),warming=new Map(),controllers=new Set();let disposed=false;
+ async function warm(sources){
+  const pending=[...new Set(sources)].filter(source=>source&&!cached.has(source)&&!warming.has(source));
+  let next=0;
+  await Promise.all([0,1].map(async()=>{
+   while(!disposed&&next<pending.length){
+    const source=pending[next++],controller=new AbortController();controllers.add(controller);
+    const timer=setTimeout(()=>controller.abort(),8000);
+    const task=(async()=>{
+     try{const response=await fetchAudio(source,{signal:controller.signal,cache:'force-cache'});
+      if(!response.ok)return;
+      const blob=await response.blob();
+      if(!disposed)cached.set(source,urls.createObjectURL(blob));
+     }catch{}finally{clearTimeout(timer);controllers.delete(controller);warming.delete(source);}
+    })();
+    warming.set(source,task);await task;
+   }
+  }));
+ }
  function stop(){
   generation++;active=false;
   audio.onplaying=audio.onended=audio.onerror=null;
@@ -24,11 +43,12 @@ export function createCoachAudio({createAudio=()=>new Audio(),event=()=>{},talki
    reported=true;active=false;talking(false);
    event('chess_voice_unavailable',JSON.stringify({name:error?.name||'MediaError',message:error?.message||'Clip playback failed',code:audio.error?.code||0,source}));
   };
-  audio.src=source;
+  audio.src=cached.get(source)||source;
   audio.onplaying=()=>{if(current()){unlocked=true;talking(true);event('chess_voice_play',source);}};
   audio.onended=()=>{if(current()){active=false;talking(false);event('chess_voice_end',source);}};
   audio.onerror=()=>fail(audio.error);
   try{Promise.resolve(audio.play()).catch(fail);}catch(error){fail(error);}
  }
- return {play,stop,unlock,isPlaying:()=>active&&!audio.paused};
+ function dispose(){disposed=true;stop();for(const controller of controllers)controller.abort();for(const blob of cached.values())urls.revokeObjectURL(blob);cached.clear();}
+ return {play,stop,unlock,warm,dispose,isPlaying:()=>active&&!audio.paused};
 }

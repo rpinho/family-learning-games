@@ -22,3 +22,11 @@ test('Real playback failures retain exception and media source; a later tap can 
 test('Gesture priming reuses the same element and cannot stop a later audible clip',async()=>{
  const f=fixture();f.player.unlock();f.player.play('/cue.mp3');f.audio.onplaying();f.pending[0].resolve();await tick();assert.equal(f.talk.at(-1),true);assert.equal(f.created,1);
 });
+
+test('Warmed reactions play from memory without a new network request, and disposal releases them',async()=>{
+ const audio={pause(){},play(){return Promise.resolve();},paused:false},fetched=[],revoked=[];
+ const player=createCoachAudio({createAudio:()=>audio,fetchAudio:async source=>{fetched.push(source);return {ok:true,blob:async()=>source};},urls:{createObjectURL:source=>'blob:'+source,revokeObjectURL:source=>revoked.push(source)}});
+ await player.warm(['/capture.wav','/capture.wav','/queen.wav']);
+ assert.equal(fetched.length,2);player.play('/queen.wav');assert.equal(audio.src,'blob:/queen.wav');assert.equal(fetched.length,2);
+ player.dispose();assert.equal(revoked.length,2);
+});
