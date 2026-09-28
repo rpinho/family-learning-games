@@ -41,7 +41,12 @@ function earlyBeats(m,r,{cast,collection,things,soccer=false,focus=null,grown='D
  const owners=letterOwners(cast).filter(o=>o.sound);
  // Today's letter: a friend's letter he is still learning, else a friend's letter not yet collected, else any.
  // A grown-up can ask for a letter to be revisited (e.g. the home hunt found nothing): focusLetter in the profile.
- const owner=(focus&&owners.find(o=>o.letter===String(focus).toUpperCase()))||owners.find(o=>learning.includes(o.letter)&&!keys.has(o.letter))||owners.find(o=>!keys.has(o.letter))||pick(owners,r)||{id:null,name:'Bo',letter:'B',sound:SOUNDS.B,word:'bear',shape:'make the shape of the letter B'};
+ // When every friend's own letter key is already his, a friend brings the next letter he is learning (the keys keep
+ // growing towards the goal: 7 keys, 7 hiding places).
+ const nextL=[...learning,...'MSATPBCDFGHINORU'.split('')].find(c=>/^[A-Z]$/.test(c)&&!keys.has(c)&&hasSound(c));
+ const guest=owners.length&&nextL&&owners.every(o=>keys.has(o.letter))?(()=>{const f=owners[(Number(String(r()).slice(2,6))||0)%owners.length],w=pictureFor(nextL)[0]?.[0]||nextL.toLowerCase();
+  return {...f,letter:nextL,sound:SOUNDS[nextL],word:w,shape:`make the shape of the letter ${nextL}`,brings:true};})():null;
+ const owner=(focus&&owners.find(o=>o.letter===String(focus).toUpperCase()))||owners.find(o=>learning.includes(o.letter)&&!keys.has(o.letter))||owners.find(o=>!keys.has(o.letter))||guest||pick(owners,r)||{id:null,name:'Bo',letter:'B',sound:SOUNDS.B,word:'bear',shape:'make the shape of the letter B'};
  const L=owner.letter,sound=owner.sound;
  const others=shuffle(near(L),r).slice(0,2);while(others.length<2)others.push(pick('MTKZX'.split('').filter(c=>c!==L),r));
  const stones=shuffle([L,L,L,...others,others[0]],r);
@@ -197,6 +202,12 @@ export function planChapter(model,{date,profile={},cast=null,collection={},life=
  const quest=!early&&profile.bookStyle==='quest';
  if(quest){const q=questBeats(model,{date,details,have:collection?.items||[]});const [signs,spell,,no]=base.beats;
   base.beats=[signs,q.puzzles[0],spell,q.fork,q.puzzles[1],no].map((b,i)=>({...b,id:`b${i+1}`}));}
+ // The key arc (profile keyGoal, e.g. 7): which key this chapter wins and which hiding place it opens; the last key
+ // is the finale. Keys he already has are counted from his collection.
+ let keyArc=null;
+ if(early&&Number(profile.keyGoal)>0){const have=new Set((collection?.keys||[]).map(String)),L=base.beats[0]?.letter,goal=Number(profile.keyGoal);
+  const n=Math.min(goal,have.size+(L&&!have.has(L)?1:0)),places=(profile.hidingPlaces||[]).filter(Boolean);
+  keyArc={goal,have:[...have].slice(0,goal),letter:L,number:n,place:places.length?places[(Math.max(1,n)-1)%places.length]:null,finale:n>=goal};}
  // Golden letter keys (profile keyStyle "golden").
  if(early&&profile.keyStyle==='golden')for(const b of base.beats)if(b.what)b.what=b.what.replace(/\bthe ([A-Z]) key\b/g,'the golden $1 key');
  // Diogo-style letter books: a detail can set what he counts (pancakes, waffles).
@@ -211,5 +222,5 @@ export function planChapter(model,{date,profile={},cast=null,collection={},life=
   ...base,magic:base.magic||[],actions:ACTIONS,minActions:early?2:1,
   dadLines:(model.recent?.dadLines||[]).map(l=>l.text),yesterday:model.recent?.yesterday||null,play:model.recent?.play||[],
   tricks:(model.tricks||[]).map(t=>t.text),previous:model.story?.book||[],running:model.story?.running||[],
-  details,style:quest?'quest':(profile.bookStyle||'classic'),theme:profile.bookTheme||null,keyStyle:profile.keyStyle||null};
+  details,keyArc,style:quest?'quest':(profile.bookStyle||'classic'),theme:profile.bookTheme||null,keyStyle:profile.keyStyle||null};
 }

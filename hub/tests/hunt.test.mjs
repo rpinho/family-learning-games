@@ -15,12 +15,12 @@ test('Letter Hunt: a friend announces the next hunt, a few a day, finds are reco
  const get=async()=>{const r=res();await svc.handle(req('GET'),r,new URL('http://x/api/book/hunt?player=kid'));return r.body;};
  const post=async b=>{const r=res();await svc.handle(req('POST',{date:'2026-09-27',page:0,...b}),r,new URL('http://x/api/book?player=kid'));return r;};
  let info=await get();assert.equal(info.hunt.id,'M');assert.equal(info.left,HUNTS_PER_DAY);
- for(const id of ['M','S','B']){info=await get();assert.equal(info.hunt.id,id);assert.equal((await post({type:'hunt',id,stage:'start'})).status,200);
+ for(const id of ['M','S','B','T','R']){info=await get();assert.equal(info.hunt.id,id);assert.equal((await post({type:'hunt',id,stage:'start'})).status,200);
   info=await get();assert.equal(info.hunt.id,id,'an unfinished hunt comes back');assert.equal((await post({type:'hunt',id,stage:'found',found:0,confirmed:true})).status,200);assert.equal((await get()).hunt.id,id,'zero found: keep looking');assert.equal((await post({type:'hunt',id,stage:'found',found:3,confirmed:true})).status,200);}
- info=await get();assert.equal(info.left,0,'three a day, then tomorrow');
- assert.equal((await post({type:'hunt',id:'T',stage:'start'})).status,429);
+ info=await get();assert.equal(info.left,0,'five a day, then tomorrow');
+ assert.equal((await post({type:'hunt',id:'Z',stage:'start'})).status,429);
  const saved=JSON.parse(await readFile(join(dir,'book-progress','kid.json'),'utf8'));
- assert.deepEqual(saved.collection.hunts,['M','S','B']);assert.equal(saved.days['2026-09-27'].hunts[0].found,3);
+ assert.deepEqual(saved.collection.hunts,['M','S','B','T','R']);assert.equal(saved.days['2026-09-27'].hunts[0].found,3);
  assert.ok(logs.some(l=>l.action==='hunt'&&l.hunt==='S'&&l.stage==='found'&&l.found===3));
  assert.equal(destination('#hunt').type,'hunt');
 });

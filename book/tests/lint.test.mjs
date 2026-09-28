@@ -171,3 +171,18 @@ test('Fallback chapters put Mom in the picture for every book style', async()=>{
  for(const p of [mk(young,{}),mk(older,{}),mk(older,{bookStyle:'quest'})]){const ids=actorIdsFor(p,lib);p.actorIds=ids;
   const issues=lintChapter(templateChapter(p,lib),p,{actors:ids.all,dadId:ids.dad});assert.ok(!issues.some(i=>i.includes('Mom')),`${p.player} ${p.style}: ${issues.join(' | ')}`);}
 });
+
+test('The key arc: keys keep growing past the friends\' own letters, each opens a hiding place, the last is the finale', async()=>{
+ const {young}=await import('./fixtures.mjs');const {assemble}=await import('../assemble.mjs');const {buildPrompt}=await import('../prompt.mjs').catch(()=>({}));
+ const cast={cast:[{id:'birdie',name:'Birdie',kind:'a parrot',emoji:'🦜'},{id:'george',name:'George',kind:'a monkey',emoji:'🐒'}],children:{young:{fixed:['birdie','george'],rotate:[],perChapter:0}}};
+ const profile={keyGoal:7,hidingPlaces:['the closet','under the bed'],keyStyle:'golden'};
+ let p=planChapter(young,{date:'2026-03-10',profile,cast,collection:{keys:['B']}});
+ assert.equal(p.keyArc.goal,7);assert.equal(p.keyArc.number,2);assert.equal(p.keyArc.place,'under the bed');assert.equal(p.keyArc.finale,false);
+ p=planChapter(young,{date:'2026-03-10',profile,cast,collection:{keys:['B','G']}});
+ assert.ok(!['B','G'].includes(p.keyArc.letter),'a friend brings a new letter once the friends\' own keys are his');assert.equal(p.keyArc.number,3);
+ p=planChapter(young,{date:'2026-03-10',profile,cast,collection:{keys:['B','G','M','S','A','T']}});assert.equal(p.keyArc.finale,true);assert.equal(p.keyArc.number,7);
+ const ids=actorIdsFor(p,library);p.actorIds=ids;const ch=assemble(templateChapter(p,library),p,{library,actors:ids.all});
+ assert.equal(ch.keyring.goal,7);assert.match(ch.keysLine.text,/last key/);
+ const p2=planChapter(young,{date:'2026-03-10',profile,cast,collection:{keys:['B']}});p2.actorIds=actorIdsFor(p2,library);
+ const ch2=assemble(templateChapter(p2,library),p2,{library,actors:p2.actorIds.all});assert.match(ch2.keysLine.text,/You have one of seven keys/);
+});

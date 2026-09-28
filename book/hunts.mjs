@@ -47,8 +47,12 @@ export function nextLetters(model,{today=[],lower=false,date='',book=null}={}){
  const known=(lower?(lit.lower||[]):(lit.letters||[])).map(norm).filter(ok);
  // The day's book letter comes first (one letter for the day: the book ends by sending him on this hunt).
  const first=(book&&hasSound(book)?norm(book):null)||learning[hash(date)%Math.max(1,Math.min(2,learning.length))]||weak[0]||known[0]||(lower?'b':'B');
- const second=[...weak,...learning,...known].find(c=>c!==first)||(first===(lower?'m':'M')?(lower?'s':'S'):(lower?'m':'M'));
- return [first,second];
+ // Then two more letters (they want to do more letters): a weak one, the ones he is learning, the ones he knows,
+ // then the school order of letters with a sound, never repeating today's.
+ const pool=[...weak,...learning,...known,...'MSATPBCDFGHINORU'.split('').map(norm).filter(ok)];
+ const second=pool.find(c=>c!==first)||(first===(lower?'m':'M')?(lower?'s':'S'):(lower?'m':'M'));
+ const third=pool.find(c=>c!==first&&c!==second)||[...'MSATPB'].map(norm).find(c=>c!==first&&c!==second);
+ return [first,second,third];
 }
 function hintsFor(letter,interests,date,n=4){
  const k=letter.toLowerCase(),bank=THINGS[k]||[],fav=new Set(interests.flatMap(i=>INTEREST_THINGS[i]||[]));
@@ -57,7 +61,7 @@ function hintsFor(letter,interests,date,n=4){
 }
 // One day's hunts for a child. who: {greet, cheer, voice:{voice,speed}, lower}.
 export function dayHunts(model,{date,today=[],interests=[],who,book=null}){
- const [L1,L2]=nextLetters(model,{today:book?today.filter(t=>t.toUpperCase()!==book.toUpperCase()):today,lower:who.lower,date,book});const V=t=>({text:t,...who.voice});const cap=w=>w[0].toUpperCase()+w.slice(1);
+ const [L1,L2,L3]=nextLetters(model,{today:book?today.filter(t=>t.toUpperCase()!==book.toUpperCase()):today,lower:who.lower,date,book});const V=t=>({text:t,...who.voice});const cap=w=>w[0].toUpperCase()+w.slice(1);
  const sound=L=>SOUNDS[L.toUpperCase()],shape=L=>SHAPES[who.lower?'lower':'upper'][L];
  const soundHunt=(L,n)=>{const H=hintsFor(L,interests,date+n);const [w0]=H[0]||['thing'];
   return {id:`${L}-sound-${date}`,mode:'letter',kind:'sound',letter:L.toUpperCase(),generated:date,
@@ -68,7 +72,8 @@ export function dayHunts(model,{date,today=[],interests=[],who,book=null}){
   intro:V(`${who.greet} A letter hunt! Look at ${who.lower?'little ':''}${L}. It looks like ${shape(L)}.`),tip:`${L}: ${shape(L)}`,places:PLACES,
   goal:{text:`Find the letter ${L} written somewhere`,line:V(`Your hunt: find the letter ${L} written somewhere. Letters hide on boxes, books and keyboards!`)},
   hints:[['a box','📦'],['a book','📚'],['a keyboard','⌨️']].map(([w,e])=>({word:w,emoji:e,line:V(`Hint: look on ${w}.`)})),done:V(`${who.cheer} You found the letter ${L}!`)});
- return [soundHunt(L1,1),shapeHunt(L1),soundHunt(L2,2)];
+ // Three letters a day: the book's letter (its sound, then its shape), then two more letters' sounds.
+ return [soundHunt(L1,1),shapeHunt(L1),soundHunt(L2,2),soundHunt(L3,3)];
 }
 // Who hunts with each child (voice and greeting), from the hunts file, with sensible defaults.
 const WHO={diogo:{greet:'Ahoy, Diogo!',cheer:'Ahoy!',voice:{voice:'bm_fable',speed:1.05},lower:false},francisco:{greet:'Pika-pi! Conductor!',cheer:'Pika!',voice:{voice:'am_adam',speed:0.88},lower:true}};

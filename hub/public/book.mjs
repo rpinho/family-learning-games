@@ -20,7 +20,11 @@ function post(player,body,keepalive=false){return fetch('/api/book?player='+enco
 const audit=globalThis.__bookAudio||(globalThis.__bookAudio=[]);
 export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=false,startPage=0}){
  const ch=book.chapter,date=book.date,art=ch.art||{backgrounds:{},actors:{},props:{}},early=ch.level==='early';
- const keys=new Set(book.collection?.keys||[]);
+ const keys=new Set(book.collection?.keys||[]),keysAtStart=new Set(keys);
+ // The key ring (a letters book with a key goal): goal slots, his keys on them; today's key slides on at the end.
+ const ring=ch.keyring||null;
+ function keyringHTML({slide=null}={}){if(!ring)return '';const have=[...keys].filter(k=>/^[A-Z]$/.test(k)),goal=Math.max(ring.goal,have.length);
+  return `<div class="bk-keyring" role="img" aria-label="${have.length} of ${goal} keys"><span class="ring">⭕</span>${Array.from({length:goal},(_,i)=>{const k=have[i];return k?`<b class="${k===slide?'new':''}">🗝️<i>${esc(k)}</i></b>`:'<b class="empty">🗝️</b>';}).join('')}<em>${have.length} of ${goal} keys</em></div>`;}
  // Quest items in his spellbook (a quest-style book): [{id,name,emoji}].
  const items=[...(book.collection?.items||[])];
  let page=preview?0:Math.min(Math.max(0,book.progress?.page||0),ch.pages.length-1),alive=true,finished=false,turn=0,timers=[],shownAt=0,canNext=false,autoTimer=null;
@@ -179,13 +183,13 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  function cover(){
   page=-1;const p=ch.pages[0],b=art.backgrounds[ch.cover?.scene?.bg||p.scene.bg];
   const hero=p.scene.actors.find(a=>a.id===player)||p.scene.actors[0];const H=hero&&art.actors[hero.id]?.poses[hero.pose];
-  view.innerHTML=`<div class="bk-page">${b?`<img class="bk-bg" src="${esc(b.url)}" alt="">`:''}<div class="bk-cover"><div class="card"><div class="kicker">${esc(ch.name)}'s ${ch.theme==='spellbook'?'Spellbook':'Book'} · Chapter ${esc(ch.number)}</div><h1>${esc(ch.title)}</h1>${H?`<img src="${esc(H.url)}" alt="" style="height:min(22vh,180px)">`:''}<br><button class="bk-open" type="button" aria-label="Open the book">📖</button></div></div></div>`;
+  view.innerHTML=`<div class="bk-page">${b?`<img class="bk-bg" src="${esc(b.url)}" alt="">`:''}<div class="bk-cover"><div class="card"><div class="kicker">${esc(ch.name)}'s ${ch.theme==='spellbook'?'Spellbook':'Book'} · Chapter ${esc(ch.number)}</div><h1>${esc(ch.title)}</h1>${keyringHTML()}${H?`<img src="${esc(H.url)}" alt="" style="height:min(22vh,180px)">`:''}<br><button class="bk-open" type="button" aria-label="Open the book">📖</button></div></div></div>`;
   dots.innerHTML='';renderDots();
   view.querySelector('.bk-open').onclick=async e=>{
    e.currentTarget.disabled=true;if(!preview)event('book_open',`${date}:${page}`);
    // This tap is the user gesture that unlocks sound for the whole session.
    const start=preview?Math.min(Math.max(0,startPage|0),ch.pages.length-1):book.progress?.page?Math.min(book.progress.page,ch.pages.length-1):0;
-   await speak(ch.cover?.line);if(alive)go(start);
+   await speak(ch.cover?.line);if(alive&&ch.keysLine)await speak(ch.keysLine);if(alive)go(start);
   };
   preload(0);
  }
@@ -561,7 +565,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   // A letters book ENDS with the Letter Hunt: one clean card, the day's letter (the same letter the Letter Hunt game
   // opens on), one big button to start it there (the hunt has the hints and the grown-up's "We found them!" count).
   const huntL=ch.level==='early'?(ch.letter||ch.pages.find(x=>x.beat?.kind==='teach-letter')?.beat?.letter||''):'';
-  if(huntL&&!preview){el.insertAdjacentHTML('beforeend',`<div class="bk-quest bk-hunt-end"><div class="bk-hunt-letter">${esc(huntL)}<small>${esc(huntL.toLowerCase())}</small></div><h2>🔍 Letter hunt!</h2><p>Find things at home that start with <b>${esc(huntL)}</b>.</p><div class="bk-end-btns"><a class="bk-btn bk-hunt big" href="#hunt">Start the letter hunt 🔍</a><button class="bk-btn bk-done" type="button">Play games →</button></div></div>`);}
+  if(huntL&&!preview){el.insertAdjacentHTML('beforeend',`<div class="bk-quest bk-hunt-end">${keyringHTML({slide:[...keys].find(k=>!keysAtStart.has(k))||null})}<div class="bk-hunt-letter">${esc(huntL)}<small>${esc(huntL.toLowerCase())}</small></div><h2>🔍 Letter hunt!</h2><p>Find things at home that start with <b>${esc(huntL)}</b>.</p><div class="bk-end-btns"><a class="bk-btn bk-hunt big" href="#hunt">Start the letter hunt 🔍</a><button class="bk-btn bk-done" type="button">Play games →</button></div></div>`);}
   else
   el.insertAdjacentHTML('beforeend',`<div class="bk-quest">${q?`<h2>🗺️ ${esc((q.text.match(/^A quest for you and ([^:]+):/)||[,'Dad'])[1]).replace(/^/,'A quest for you and ')}</h2><p>${esc(q.text.replace(/^A quest for you and [^:]+:\s*/,''))}</p>${q.hints?.length?`<div class="bk-hint"></div><button class="bk-btn bk-hintbtn" type="button">🔍 A hint, please</button>`:''}${q.dad?`<p class="bk-dadnote">${esc(q.dad)}</p>`:''}`:'<h2>The end, for today</h2>'}${preview?'':'<a class="bk-btn bk-hunt" href="#hunt">🔍 Want to go hunting?</a> '}<button class="bk-btn bk-done" type="button">${preview?'Close':'Play games →'}</button></div>`);
   if(ch.style==='quest'&&items.length)el.querySelector('.bk-quest')?.insertAdjacentHTML('afterbegin',`<div class="bk-spellbook" aria-label="Your spellbook">${items.slice(-8).map(i=>`<span title="${esc(i.name)}">${esc(i.emoji)}</span>`).join('')}</div>`);

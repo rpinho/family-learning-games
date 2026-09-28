@@ -22,7 +22,7 @@ export async function missingClips(book,{today=new Date().toISOString().slice(0,
   for(const file of files){let ch;try{ch=JSON.parse(await readFile(join(book,p,file),'utf8'));}catch{continue;}
    for(const l of setRookVoice(ch,named.rook||'am_michael'))l.clip=clipName(l);
    const lines=[];const walk=(v,path)=>{if(!v||typeof v!=='object')return;if(Array.isArray(v))return v.forEach((x,i)=>walk(x,`${path}[${i}]`));if(typeof v.text==='string'&&v.voice)lines.push([path,v]);for(const [k,x] of Object.entries(v))if(x&&typeof x==='object')walk(x,`${path}.${k}`);};
-   for(const k of ['cover','pages','ui','quest'])walk(ch[k],k);
+   for(const k of ['cover','pages','ui','quest','keysLine'])walk(ch[k],k);
    for(const [path,l] of lines){if(!l.text.trim())continue;if(!l.clip)missing.push({where:`${p}/${file}`,key:path,text:l.text});else if(!await exists(l.clip))missing.push({where:`${p}/${file}`,key:path,text:l.text,file:l.clip});}}}
  return missing;
 }

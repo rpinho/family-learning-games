@@ -99,6 +99,19 @@ export function actorIdsFor(plan,library){
  return {hero,dad,...grown,sibling:sib,all:[hero,dad,...Object.values(grown),...(sib?[sib]:[]),...friends].filter(has)};
 }
 // What he has collected in the book so far (letter keys, words he read), from the hub's progress file.
+// What the last three chapters leaned on (places and foods), so today's can vary it (2026-09-28: pizza everywhere).
+const FOODS=['pizza','pancake','waffle','cookie','cake','ice cream','sandwich','nugget','fries','apple','banana','picnic'];
+export async function recentSettings(dir,date){
+ let files=[];try{files=(await readdir(dir)).filter(f=>/^\d{4}-\d{2}-\d{2}\.json$/.test(f)&&f.slice(0,10)<date).sort().slice(-3);}catch{return [];}
+ const bgs=new Map(),foods=new Map();
+ for(const f of files){let c;try{c=JSON.parse(await readFile(join(dir,f),'utf8'));}catch{continue;}
+  for(const p of c.pages||[]){if(p.scene?.bg)bgs.set(p.scene.bg,(bgs.get(p.scene.bg)||0)+1);}
+  const text=JSON.stringify(c.pages||[]).toLowerCase();for(const w of FOODS){const n=(text.match(new RegExp(`\\b${w}`,'g'))||[]).length;if(n)foods.set(w,(foods.get(w)||0)+n);}}
+ const out=[];const top=m=>[...m.entries()].sort((a,b)=>b[1]-a[1]).map(([k])=>k);
+ if(bgs.size)out.push(`places: ${top(bgs).slice(0,6).join(', ')}`);
+ if(foods.size)out.push(`foods and snacks: ${top(foods).slice(0,4).join(', ')} (pick a different treat, or none)`);
+ return out;
+}
 export async function readCollection(paths,player){try{const p=JSON.parse(await readFile(join(paths.data.hub,'book-progress',player+'.json'),'utf8'));return {keys:p.collection?.keys||[],words:p.collection?.words||[]};}catch{return {keys:[],words:[]};}}
 export async function generateOne(player,{paths,profiles,date,noLLM=false,noVoice=false,force=false,life:forceLife=false,now=Date.now(),log=console.log,ask=askModel}){
  const dir=join(paths.book,player),file=join(dir,date+'.json');
@@ -112,6 +125,7 @@ export async function generateOne(player,{paths,profiles,date,noLLM=false,noVoic
  const life=await ensureLife(player,{paths,profile:{...profile,name:model.name},extra,allow,ask:noLLM?null:ask,log,now,force:forceLife}).catch(e=>{log(`${player}: life context failed (${e.message})`);return null;});
  const collection=await readCollection(paths,player);
  const plan=planChapter(model,{date,profile,cast,collection,life});
+ plan.recent=await recentSettings(join(paths.book,player),date);
  const library=readLibrary(paths);
  const ids=actorIdsFor(plan,library);plan.actorIds=ids;
  const speakers=['narrator',...(plan.grownups||[{id:'dad'}]).map(g=>g.id),...plan.cast.map(c=>c.id)];

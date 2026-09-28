@@ -27,6 +27,8 @@ export function nameForms(plan){
  return people.map(p=>({id:p.id,forms:[...new Set(p.names.flatMap(n=>{const core=String(n).replace(/^the\s+/i,'');const ws=core.split(/\s+/).filter(w=>!GENERIC.has(w.toLowerCase())&&words.get(w.toLowerCase())?.size===1);return [core,...ws];}))]}));
 }
 export function mentions(text,forms){const t=String(text).replace(/\[\[[^\]]*\]\]/g,' ');return forms.filter(f=>f.forms.some(n=>new RegExp(`\\b${n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}s?\\b`,'i').test(t))).map(f=>f.id);}
+const WORDN=['zero','one','two','three','four','five','six','seven','eight','nine','ten'];
+const cap=w=>String(w)[0].toUpperCase()+String(w).slice(1);
 export function assemble(story,plan,{number=1,source='template',lint=[],generatedAt=new Date().toISOString(),dadLines=[],library,actors,voices,pronounce={}}){
  // Every spoken line goes to the voice through the one pronunciation map (names as phonemes, never guessed).
  const V=voices||voicesFor(plan),line=(who,text)=>{const w=V[who]?who:'narrator',t=clean(text),s=phonemize(t,pronounce);return {who:w,text:s,...(s!==t?{shown:t}:{}),...V[w]};};
@@ -58,7 +60,12 @@ export function assemble(story,plan,{number=1,source='template',lint=[],generate
  ui.numbers=Object.fromEntries(Array.from({length:12},(_,i)=>[String(i+1),N(String(i+1))]));
  return {schema:CHAPTER_SCHEMA,player:plan.player,name:plan.name,date:plan.date,number,title:cover.title,level:plan.level,cover,
   cast:(plan.cast||[]).map(c=>({id:c.id,name:c.name,emoji:c.emoji||'⭐'})),art,pages,ui,
-  ...(plan.level==='early'&&plan.letter?{letter:plan.letter}:{}),...(plan.theme?{theme:plan.theme}:{}),...(plan.style&&plan.style!=='classic'?{style:plan.style}:{}),...(plan.keyStyle?{keyStyle:plan.keyStyle}:{}),
+  ...(plan.level==='early'&&plan.letter?{letter:plan.letter}:{}),
+  // The key ring (a letters book with a key goal): what he has, how many to find, and what the keys open, said once at
+  // the start of every chapter.
+  ...(plan.keyArc?{keyring:{goal:plan.keyArc.goal,have:plan.keyArc.have,letter:plan.keyArc.letter},
+   keysLine:N(plan.keyArc.finale?`This is the last key! ${cap(WORDN[plan.keyArc.goal]||String(plan.keyArc.goal))} keys for ${WORDN[plan.keyArc.goal]||plan.keyArc.goal} hiding places, and today is Dad's birthday party!`
+    :`Every golden key opens a hiding place with your secret presents for Dad. You have ${WORDN[plan.keyArc.have.length]||plan.keyArc.have.length} of ${WORDN[plan.keyArc.goal]||plan.keyArc.goal} keys.`)}:{}),...(plan.theme?{theme:plan.theme}:{}),...(plan.style&&plan.style!=='classic'?{style:plan.style}:{}),...(plan.keyStyle?{keyStyle:plan.keyStyle}:{}),
   // The quest is always doable at home: hint pictures for a hunt, or word cards Dad prints and hides.
   quest:plan.quest?(q=>({...N(`A quest for you and ${plan.lead?.name||'Dad'}: ${q.text}`),...(q.hints?.length?{hints:q.hints.slice(0,7).map(h=>({word:h.word,emoji:h.emoji,line:N(h.text)}))}:{}),...(q.cards?.length?{cards:q.cards,dad:q.dad}:{})}))(typeof plan.quest==='string'?{text:plan.quest}:plan.quest):null,reward:plan.reward||null,
   summary:clean(story.summary),hook:clean(story.hook),
@@ -91,7 +98,7 @@ export function speechLines(ch){
  const out=new Map();const add=l=>{if(l&&l.text&&l.voice)out.set(`${l.voice}|${l.speed}|${l.text}`,{text:l.text,voice:l.voice,speed:l.speed});};
  // A line may carry nested lines (the quest carries its hint lines).
  const walk=v=>{if(!v||typeof v!=='object')return;if(Array.isArray(v))return v.forEach(walk);if(typeof v.text==='string'&&v.voice)add(v);for(const x of Object.values(v))if(x&&typeof x==='object')walk(x);};
- walk(ch.cover);walk(ch.pages);walk(ch.ui);walk(ch.quest);
+ walk(ch.cover);walk(ch.pages);walk(ch.ui);walk(ch.quest);walk(ch.keysLine);
  return [...out.values()];
 }
 // Read-time voice selection also applies to already-written chapters, without
@@ -107,7 +114,7 @@ export function setRookVoice(ch,voice='am_michael'){
 // Attach narration clips: clips maps "voice|speed|text" to a file name.
 export function attachClips(ch,clips){
  const walk=v=>{if(!v||typeof v!=='object')return;if(Array.isArray(v))return v.forEach(walk);if(typeof v.text==='string'&&v.voice){const f=clips[`${v.voice}|${v.speed}|${v.text}`];if(f)v.clip=f;}for(const x of Object.values(v))if(x&&typeof x==='object')walk(x);};
- walk(ch.cover);walk(ch.pages);walk(ch.ui);walk(ch.quest);return ch;
+ walk(ch.cover);walk(ch.pages);walk(ch.ui);walk(ch.quest);walk(ch.keysLine);return ch;
 }
 // A short plain-text summary for grown-ups (what he will practise, the lines in order).
 export function markdown(ch){

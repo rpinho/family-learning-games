@@ -39,6 +39,13 @@ HIS BOOK IS A QUEST (he is 8 and finds baby books boring: this one plays like a 
 - End the chapter with the treasure going into his spellbook and a cliffhanger.
 `:''}${plan.keyStyle==='golden'?`
 - His letter keys are GOLDEN keys (his favourite colour is gold): always say "golden key".
+`:''}${plan.keyArc?(k=>`
+THE KEYS (the thread he follows across chapters)
+- He is collecting ${k.goal} golden keys; he has ${k.have.length} so far${k.have.length?` (${k.have.join(', ')})`:''}. Today he wins key number ${k.number} of ${k.goal}${k.letter?`, the ${k.letter} key`:''}.
+${k.finale?`- THIS IS THE LAST KEY: the finale. It opens the last hiding place, and then it is Dad's birthday party: everyone (Mom, Dad, all his friends) unwraps together the presents Diogo wrapped and hid for Dad. A joyful, proud ending to the whole book.`:`- Today's key opens one hiding place${k.place?`: ${k.place}`:''}, where some of the presents Diogo secretly wrapped for Dad's birthday are hidden. He peeks at the wrapped presents and keeps them secret (they are for Dad's birthday, when all ${k.goal} keys are found). Never say what is inside.`}
+`)(plan.keyArc):''}${(plan.recent||[]).length?`
+VARY IT (recent chapters used these; choose OTHER places, foods and set pieces today)
+- ${plan.recent.join('\n- ')}
 `:''}${plan.arc?`
 HIS SEASON-LONG QUEST (the continuing adventure; each chapter moves it one small step and ends with a gentle cliffhanger)
 - ${plan.arc}${plan.collection.keys.length?`\n- Letter keys he has collected so far: ${plan.collection.keys.join(', ')}.`:''}

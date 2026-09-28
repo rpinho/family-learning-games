@@ -24,7 +24,7 @@ const DATE=/^\d{4}-\d{2}-\d{2}$/;
 export const CHAPTER_SCHEMA='family-book-chapter-2';
 export const AUTO_OPENS=3;
 // Real-world hunts (find things that start with a sound, find a letter or word written at home): up to this many a day.
-export const HUNTS_PER_DAY=3; // a book never keeps a child out of his games: it stops opening itself after 3 unfinished opens
+export const HUNTS_PER_DAY=5; // the day's hunts cover 3 letters (2026-09-28: "they want to do more letters")
 // Tries on a beat: how many, whether the first was right, and how fast it came (a guess is under 1.5 s).
 const attemptsOf=r=>{const o={};if(Number.isFinite(Number(r.attempts))&&r.attempts!=null)o.attempts=Math.max(0,Math.min(99,Number(r.attempts)));if(typeof r.correct==='boolean')o.correct=r.correct;if(Number.isFinite(Number(r.firstTapMs))&&r.firstTapMs!=null){o.firstTapMs=Math.max(0,Math.min(36e5,Math.round(Number(r.firstTapMs))));o.guess=o.firstTapMs<1500;}return o;};
 const readJSON=async(file,fallback)=>{try{return JSON.parse(await readFile(file,'utf8'));}catch(e){if(e.code==='ENOENT'||e instanceof SyntaxError)return fallback;throw e;}};
