@@ -135,7 +135,8 @@ export function lintChapter(ch,plan,{extra=[],allow=[],speakers=null,actors=null
  if(!dad)issues.push(`${dadName} must be in the adventure (actor "${dadId}" or a line spoken by ${plan.lead?.id||'dad'}) at least once`);
  // Every grown-up with a picture (Dad and Mom) is in the book at least once, in the picture.
  for(const g of plan.grownups||[]){if(!actors||!actors.includes(g.id)||g.id===dadId)continue;
-  if(!pages.some(p=>(Array.isArray(p?.actors)?p.actors:[]).some(a=>String(a).split(':')[0].toLowerCase()===g.id)))issues.push(`${g.name} must be in the picture (actor "${g.id}") on at least one page`);}
+  const n=pages.filter(p=>(Array.isArray(p?.actors)?p.actors:[]).some(a=>String(a).split(':')[0].toLowerCase()===g.id)).length;
+  if(n<2)issues.push(`${g.name} must be in the picture (actor "${g.id}") on at least two pages (a regular in his book; found ${n})`);}
  // Only this child's own friends.
  const castWords=(plan.cast||[]).flatMap(c=>String(c.name).toLowerCase().split(/\s+/));
  for(const n of otherFriends(all,others.filter(o=>!castWords.some(w=>w.startsWith(String(o).toLowerCase())))))issues.push(`"${n}" is not one of ${plan.name}'s friends; use only his cast`);

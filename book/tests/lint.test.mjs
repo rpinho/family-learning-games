@@ -161,6 +161,7 @@ test('A household cast without a grown-ups list still has Mom and Dad, and a cha
  const ids=actorIdsFor(p,lib);p.actorIds=ids;const o={actors:ids.all,dadId:ids.dad};
  const ch=templateChapter(p,lib);const noMom={...ch,pages:ch.pages.map(x=>({...x,actors:(x.actors||[]).filter(a=>!String(a).startsWith('mom'))}))};
  assert.ok(lintChapter(noMom,p,o).some(i=>i.includes('Mom must be in the picture')));
+ const once={...ch,pages:ch.pages.map((x,i)=>({...x,actors:(x.actors||[]).filter(a=>!String(a).startsWith('mom')||i===0)}))};once.pages[0].actors=[...(once.pages[0].actors||[]).filter(a=>!String(a).startsWith('mom')),'mom'];assert.ok(lintChapter(once,p,o).some(i=>i.includes('at least two pages')),'one page is not enough');
 });
 
 test('Fallback chapters put Mom in the picture for every book style', async()=>{
