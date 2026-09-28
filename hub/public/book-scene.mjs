@@ -82,7 +82,7 @@ export function sceneUnit({width,height,beat=false,maxHeight=0.9,tallest=1}){
  // Everything is measured on the SMALLER side, so a page turned the other way has the same people at the same size
  // (the room above the words' band is taken as a share of the smaller side too; portrait's extra height is sky).
  const S=Math.min(width,height);return Math.min(S*(beat?0.5:0.64),maxHeight*S/Math.max(0.3,tallest));}
-export function composeScene(scene,art,{width=16,height=9,ground=0.93,maxHeight=0.9,avoid=null,beat=false,playBall=false,margin=0.03,aside=null}={}){
+export function composeScene(scene,art,{width=16,height=9,ground=0.93,maxHeight=0.9,avoid=null,beat=false,playBall=false,margin=0.03,aside=null,reserve=0}={}){
  // aside: a friend placed elsewhere by the page (the keeper stands in the goal): sized with everyone, not in the row.
  const actors=(scene.actors||[]).filter(a=>a.id!==aside).map(a=>{const A=art.actors[a.id],P=A?.poses[a.pose]||A?.poses?.idle;if(!P)return null;return {kind:'actor',id:a.id,pose:a.pose,rel:relHeight(a.id,A),ar:P.ar,fly:!!P.fly||a.pose==='fly'};}).filter(Boolean);
  let props=(scene.props||[]).filter(p=>p.id!=='train'&&!(playBall&&p.id==='ball')).map(p=>{const P=art.props?.[p.id];return P?{kind:'prop',id:p.id,rel:propHeight(p.id,P),ar:P.ar||1}:null;}).filter(Boolean);
@@ -93,16 +93,26 @@ export function composeScene(scene,art,{width=16,height=9,ground=0.93,maxHeight=
  const room=bands.reduce((s,[a,b])=>s+(b-a),0)*width;
  // Sizing uses a row no wider than the smaller side (same people, same size, turned either way); placing uses the
  // whole width (the friends spread out a little when there is room).
- const fit=Math.min(room,Math.min(width,height)*(1-2*margin));
+ // reserve: pixels the page keeps clear in BOTH orientations (the ball's column, a goal on the ground line).
+ const fit=Math.min(room,Math.max(Math.min(width,height)*0.3,Math.min(width,height)*(1-2*margin)-reserve));
  const widthAt=(items,u)=>items.reduce((s,i)=>s+i.rel*u*i.ar,0)+Math.max(0,items.length-1)*Math.max(8,0.06*u)+bands.length*0;
- let items=order(props);
+ let items=order(props);const U0=U;
+ const bodyW=(g,u)=>g.reduce((s,i)=>s+i.rel*u*i.ar,0);
+ // Lay the row out at unit u: split it over the bands (two bands: at the item that balances them), then the unit
+ // that lets the whole row, and each side its group, fit.
+ function plan(list,u){
+  const need=widthAt(list,u);if(need>fit)u*=fit/need;
+  const gap=Math.max(8,0.06*u,Math.min(0.3*u,(room-bodyW(list,u))/(Math.max(1,list.length-bands.length)+2)));
+  // two bands: the split (at any friend) that lets everyone stay biggest; each side must hold its group
+  const fitSide=(g,[a,b],uu)=>{const gb=bodyW(g,uu),n8=Math.max(0,g.length-1)*8;return gb>0&&gb+n8>(b-a)*width?uu*Math.max(0.3,((b-a)*width-n8)/gb):uu;};
+  let groups=[list];
+  if(bands.length>1){let best=-1;for(let cut=0;cut<=list.length;cut++){const g=[list.slice(0,cut),list.slice(cut)],v=Math.min(fitSide(g[0],bands[0],u),fitSide(g[1],bands[1],u));
+   if(v>best+1e-9){best=v;groups=g;}}u=best;}
+  return {u,gap,groups};}
  // Too wide: props give way first (the last one, then the next), then everyone shrinks together.
- while(widthAt(items,U)>fit&&items.some(i=>i.kind==='prop')){const k=items.map(i=>i.kind).lastIndexOf('prop');items.splice(k,1);}
- const need=widthAt(items,U);if(need>fit)U*=fit/need;
- const bodies=items.reduce((s,i)=>s+i.rel*U*i.ar,0),gaps=Math.max(1,items.length-bands.length);
- const gap=Math.max(8,0.06*U,Math.min(0.3*U,(room-bodies)/(gaps+2)));
- // Fill the bands left to right (two bands: split the row at the item that balances them).
- const groups=[];if(bands.length===1)groups.push(items);else{const total=widthAt(items,U),share=(bands[0][1]-bands[0][0])*width/room;let acc=0,cut=items.length;for(let i=0;i<items.length;i++){acc+=items[i].rel*U*items[i].ar+gap;if(acc>total*share){cut=Math.max(1,i);break;}}groups.push(items.slice(0,cut),items.slice(cut));}
+ let P=plan(items,U);
+ while(P.u<U0*0.97&&items.some(i=>i.kind==='prop')){const k=items.map(i=>i.kind).lastIndexOf('prop');items.splice(k,1);P=plan(items,U);}
+ U=P.u;const {gap,groups}=P;
  const out={actors:[],props:[],unit:U};
  const rowW=g=>g.reduce((s,i)=>s+i.rel*U*i.ar,0)+Math.max(0,g.length-1)*gap;
  groups.forEach((g,bi)=>{const [a,b]=bands[Math.min(bi,bands.length-1)],gb=g.reduce((s,i)=>s+i.rel*U*i.ar,0);

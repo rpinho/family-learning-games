@@ -75,6 +75,16 @@ test('The Letter Hunt opens on the day\'s book letter (a started hunt of another
  assert.equal((await call(svc,'POST','/api/book?player=kid',{type:'hunt',date,id:'F-sound',stage:'start'})).status,200);
  r=await call(svc,'GET','/api/book/hunt?player=kid');assert.equal(r.body.hunt.letter,'B','even with an F hunt started');
 });
+test('The book\'s closing hunt card shows the letter the Letter Hunt screen opens on (a reader too, even in word mode)',async()=>{
+ const {svc,book}=await setup();const date=new Date().toISOString().slice(0,10);await mkdir(join(book,'kid'),{recursive:true});
+ const hunt=(L)=>({id:`${L}-sound`,letter:L,mode:'letter',kind:'sound',intro:{text:`This is ${L}.`}});
+ await writeFile(join(book,'hunts.json'),JSON.stringify({players:{kid:{hunts:[{id:'cat-rhymes',mode:'word',word:'cat',intro:{text:'Rhymes!'}},hunt('F'),hunt('R')]}}}));
+ await writeFile(join(book,'kid',date+'.json'),JSON.stringify({schema:'family-book-chapter-2',player:'kid',level:'reader',pages:[{scene:{bg:'x',actors:[],props:[]},say:[]}]}));
+ assert.equal((await call(svc,'POST','/api/book?player=kid',{type:'huntMode',mode:'word'})).status,200);
+ const b=await call(svc,'GET','/api/book?player=kid');assert.equal(b.body.hunt?.letter,'F','the first letter hunt, although word mode is remembered');
+ assert.equal((await call(svc,'POST','/api/book?player=kid',{type:'huntMode',mode:'letter'})).status,200);   // what the card's button does
+ const h=await call(svc,'GET','/api/book/hunt?player=kid');assert.equal(h.body.mode,'letter');assert.equal(h.body.hunt.letter,b.body.hunt.letter);
+});
 test('Changing a companion resolves archived dialogue and nested responses without rewriting the chapter',async()=>{
  const {svc,book,rendered}=await setup(),date='2026-01-01';await mkdir(join(book,'kid'));
  const line={who:'pirate-friend',text:'Ahoy!',voice:'bm_fable',speed:1.05,clip:'old.wav'};

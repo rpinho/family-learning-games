@@ -114,9 +114,10 @@ async function render() {
   }
   const seq = ++renderSeq;
   // Grown-ups' preview of a child's book: the same player, same narration, nothing saved.
-  const watch = location.hash.match(/^#book\/([\w-]+)(?:\/p(\d{1,2}))?$/);
+  // (#book/<child>/p<page>/<YYYY-MM-DD>: a given day's chapter, for grown-ups and the layout checks)
+  const watch = location.hash.match(/^#book\/([\w-]+)(?:\/p(\d{1,2}))?(?:\/(\d{4}-\d{2}-\d{2}))?$/);
   if (watch && config.players.some((k) => k.id === watch[1] && k.id !== "admin")) {
-    const book = await loadBook(watch[1], { preview: true });
+    const book = await loadBook(watch[1], { preview: true, date: watch[3] || "" });
     if (seq !== renderSeq) return;
     if (book?.chapter) {
       dispose = await mountBook(main, { player: watch[1], book, preview: true, startPage: watch[2] ? Number(watch[2]) - 1 : 0, onDone: () => { dispose = null; location.hash = ""; } });

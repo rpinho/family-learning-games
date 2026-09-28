@@ -9,7 +9,7 @@
 //   - turned the other way the page reads the same (people the same size within 25%: the smaller side sets the size).
 // Fails (exit 1) on any violation. Headless Chrome, muted, device voice stubbed, read-only grown-ups' preview.
 // Usage: node hub/scripts/check-composition.mjs --base URL [--players diogo,francisco] [--sizes 412x915,915x412,1366x768]
-//   [--pages 1,5] [--shots dir] [--json]
+//   [--pages 1,5] [--date YYYY-MM-DD] [--shots dir] [--json] [--dump]
 import {spawn} from 'node:child_process';
 import {mkdtemp,readFile,writeFile,mkdir} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
@@ -41,7 +41,7 @@ const SNAP=`(()=>{const R=document.querySelector('.bk').getBoundingClientRect(),
   balls:[...pg.querySelectorAll('.bk-ball:not(.used)')].map(box),goal:[...pg.querySelectorAll('.bk-goal')].map(box),
   fx:[...pg.querySelectorAll('.bk-fx:not(.burst) i')].map(box)};})()`;
 async function size([W,H]){await send('Emulation.setDeviceMetricsOverride',{width:W,height:H,deviceScaleFactor:W>1000?1:2,mobile:W<1000,screenOrientation:W>H?{type:'landscapePrimary',angle:90}:{type:'portraitPrimary',angle:0}});}
-async function open(player,ch,pageNo){await send('Page.navigate',{url:`${base}/?player=admin&r=${Date.now()}#book/${player}/p${pageNo}`});
+async function open(player,ch,pageNo){await send('Page.navigate',{url:`${base}/?player=admin&r=${Date.now()}#book/${player}/p${pageNo}${arg('--date')?`/${arg('--date')}`:''}`});
  await until(`!!document.querySelector('.bk-open')`,20000);await js(`document.querySelector('.bk-open').click()`);
  const p=ch.pages[pageNo-1];const ready=p.beat?(p.beat.kind==='kick-letter'?'.bk-ball':'.bk-play .bk-btn,.bk-thing,.bk-box,.bk-pizza,.bk-glyph,.bk-btn.stone,.bk-quest'):['kick','throw'].includes(p.action?.kind)?'.bk-ball':'.bk-actor,.bk-prop,.bk-caption';
  await until(`document.querySelectorAll('.bk-view .bk-page').length===1&&!!document.querySelector('.bk-view .bk-page:last-child ${ready.split(',').join(', .bk-view .bk-page:last-child ')}')`,40000);
@@ -77,7 +77,7 @@ function judge(s,p){
  return [...new Set(issues)];}
 const results=[];let fails=0;
 for(const player of players){
- const ch=(await(await fetch(`${base}/api/book/preview?player=${encodeURIComponent(player)}`)).json()).chapter;if(!ch){console.log(`${player}: no chapter`);continue;}
+ const date=arg('--date');const ch=(await(await fetch(`${base}/api/book/preview?player=${encodeURIComponent(player)}${date?`&date=${date}`:''}`)).json()).chapter;if(!ch){console.log(`${player}: no chapter`);continue;}
  const pages=only||ch.pages.map((_,i)=>i+1);
  for(const [W,H] of sizes){await size([W,H]);
   for(const n of pages){const p=ch.pages[n-1];if(!p)continue;

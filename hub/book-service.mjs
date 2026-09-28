@@ -17,7 +17,8 @@ const here=dirname(fileURLToPath(import.meta.url)),publicArt=join(here,'public',
 // (book-3: a line with an isolated letter sound, e.g. [[b]]; see book/narrate.py)
 export const clipName=({voice,speed,text})=>{const n=Number(speed),sp=Number.isInteger(n)?n.toFixed(1):String(n),v=String(voice).startsWith('local:')?'book-4':([...String(text).matchAll(/\[\[([^\]]*)\]\]/g)].some(m=>{const x=m[1].replace(/[ˈˌ]/g,'');return x.length>0&&x.length<=2;})?'book-3':'book-1');return createHash('sha256').update(`${v}\0${voice}\0${sp}\0${text}`).digest('hex').slice(0,16)+'.wav';};
 const ART_TYPES={webp:'image/webp',png:'image/png',svg:'image/svg+xml',jpg:'image/jpeg'};
-const send=(res,status,obj)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(obj));};
+// (no-store: never a stale book or hunt from a browser cache)
+const send=(res,status,obj)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(obj));};
 export const localDate=(ms=Date.now(),timeZone)=>new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(ms));
 const DATE=/^\d{4}-\d{2}-\d{2}$/;
 // Only chapters in the picture-book format are served (an older chapter is treated as missing).
@@ -67,6 +68,24 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
  // Today's book letter (a letters book): the chapter's letter, else its teach-letter beat's.
  async function bookLetter(player,date){const c=await readJSON(join(bookDir,player,date+'.json'),null);if(c?.level!=='early')return null;
   const L=c.letter||c.pages?.find(p=>p.beat?.kind==='teach-letter')?.beat?.letter;return /^[A-Za-z]$/.test(L||'')?L.toUpperCase():null;}
+ // Today's hunt for a child: the ONE place that decides which hunt (and so which letter) comes first. The Letter
+ // Hunt screen and the book's closing hunt card both use it, so they always show the same letter.
+ async function dayHunt(player,{mode:want=null}={}){
+  const cfg0=(await readJSON(join(bookDir,'hunts.json'),{players:{}})).players?.[player];if(!cfg0?.hunts?.length)return null;
+  const cast=await readJSON(join(bookDir,'cast.json'),{});
+  for(const l of setCharacterVoices(cfg0,cast,cfg0.friend?.id)){const file=clipName(l);try{await access(join(bookDir,'voice',file));l.clip=file;}catch{}}
+  // Two kinds of hunt: a LETTER (its sound or its shape) or a WORD. The mode is remembered per child on this
+  // computer (not in one browser); a hunt without a mode is a letter hunt. Letter is the default.
+  const modeOf=h=>h.mode==='word'?'word':'letter',modes=[...new Set(cfg0.hunts.map(modeOf))].sort();
+  const p=await progress(player),mode=modes.includes(want)?want:modes.includes(p.huntMode)?p.huntMode:modes.includes('letter')?'letter':modes[0];
+  const cfg={...cfg0,...(cfg0.byMode?.[mode]||{}),hunts:cfg0.hunts.filter(h=>modeOf(h)===mode)};
+  const date=today(),day=p.days[date]||{},started=(day.hunts||[]).length,done=new Set(p.collection?.hunts||[]);
+  // ONE letter for the day: a letters book's hunt is the book's letter (its closing page sends him here), so the
+  // hunt for that letter comes first, unless it is done; an unfinished hunt of another letter waits behind it.
+  const L=mode==='letter'?await bookLetter(player,date):null,same=h=>L&&String(h.letter||'').toUpperCase()===L;
+  const openH=(day.hunts||[]).find(h=>!h.foundAt),openCfg=cfg.hunts.find(h=>h.id===openH?.id);
+  const hunt=(openCfg&&(!L||same(openCfg))?openCfg:null)||cfg.hunts.find(h=>same(h)&&!done.has(h.id))||openCfg||cfg.hunts.find(h=>!done.has(h.id))||cfg.hunts[started%cfg.hunts.length];
+  return {cfg,hunt,mode,modes,date,started,open:openH};}
  async function progress(player){return readJSON(join(progressDir,player+'.json'),{days:{}});}
  async function notes(){const n=await readJSON(notesFile,{notes:[]});return Array.isArray(n.notes)?n.notes:[];}
  async function body(req){let raw='';for await(const part of req){raw+=part;if(raw.length>4096)throw Object.assign(Error('Too much data.'),{status:413});}try{return JSON.parse(raw);}catch{throw Object.assign(Error('Invalid JSON.'),{status:400});}}
@@ -126,7 +145,9 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
     if(req.method==='GET'){const date=today(),ch=await chapter(player,date),p=await progress(player),day=p.days[date];
      // peek: only whether an unread chapter is waiting (the hub asks at session start; the chapter loads when opened).
      if(u.searchParams.get('peek'))return send(res,200,{date,hasChapter:!!ch,open:shouldOpen(ch,day)});
-     return send(res,200,{voiceRev:await voiceRev(),date,chapter:ch,progress:progressView(day),collection:collectionOf(p),open:shouldOpen(ch,day)});}
+     // The closing hunt card: today's first LETTER hunt, exactly the one the Letter Hunt screen opens on (dayHunt).
+     const H=ch?await dayHunt(player,{mode:'letter'}).catch(()=>null):null,hunt=H?.mode==='letter'&&/^[A-Za-z]$/.test(H.hunt?.letter||'')?{letter:H.hunt.letter.toUpperCase(),intro:H.hunt.intro||null}:null;
+     return send(res,200,{voiceRev:await voiceRev(),date,chapter:ch,progress:progressView(day),collection:collectionOf(p),open:shouldOpen(ch,day),...(hunt?{hunt}:{})});}
     if(req.method==='POST'){if(!req.headers['content-type']?.startsWith('application/json'))return send(res,415,{error:'JSON required.'});
      try{return send(res,200,{progress:await update(player,await body(req))});}catch(e){return send(res,e.status||500,{error:e.status?e.message:'Could not save.'});}}
     return send(res,405,{error:'Unsupported action.'});
@@ -134,21 +155,7 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
    // Today's next hunt for a child (from the household's private hunts.json), and how many are left today.
    if(u.pathname==='/api/book/hunt'&&req.method==='GET'){
     const player=u.searchParams.get('player');if(!kids.some(k=>k.id===player))return send(res,400,{error:'Choose a child.'});
-    const cfg0=(await readJSON(join(bookDir,'hunts.json'),{players:{}})).players?.[player];if(!cfg0?.hunts?.length)return send(res,200,{available:false});
-    const cast=await readJSON(join(bookDir,'cast.json'),{});
-    for(const l of setCharacterVoices(cfg0,cast,cfg0.friend?.id)){const file=clipName(l);try{await access(join(bookDir,'voice',file));l.clip=file;}catch{}}
-    // Two kinds of hunt: a LETTER (its sound or its shape) or a WORD. The mode is remembered per child on this
-    // computer (not in one browser); a hunt without a mode is a letter hunt. Letter is the default.
-    const modeOf=h=>h.mode==='word'?'word':'letter',modes=[...new Set(cfg0.hunts.map(modeOf))].sort();
-    const p=await progress(player),mode=modes.includes(p.huntMode)?p.huntMode:modes.includes('letter')?'letter':modes[0];
-    const cfg={...cfg0,...(cfg0.byMode?.[mode]||{}),hunts:cfg0.hunts.filter(h=>modeOf(h)===mode)};
-    const date=today(),day=p.days[date]||{},started=(day.hunts||[]).length,done=new Set(p.collection?.hunts||[]);
-    // ONE letter for the day: a letters book's hunt is the book's letter (its closing page sends him here), so the
-    // hunt for that letter comes first, unless it is done; an unfinished hunt of another letter waits behind it.
-    const L=mode==='letter'?await bookLetter(player,date):null,same=h=>L&&String(h.letter||'').toUpperCase()===L;
-    const openH=(day.hunts||[]).find(h=>!h.foundAt),openCfg=cfg.hunts.find(h=>h.id===openH?.id);
-    const hunt=(openCfg&&(!L||same(openCfg))?openCfg:null)||cfg.hunts.find(h=>same(h)&&!done.has(h.id))||openCfg||cfg.hunts.find(h=>!done.has(h.id))||cfg.hunts[started%cfg.hunts.length];
-    const open=openH;
+    const H=await dayHunt(player);if(!H)return send(res,200,{available:false});const {cfg,hunt,mode,modes,date,started,open}=H;
     return send(res,200,{available:true,voiceRev:await voiceRev(),date,left:Math.max(0,HUNTS_PER_DAY-started)+(open?1:0),hunt,friend:cfg.friend||null,label:cfg.label||'Hunt',tomorrow:cfg.tomorrow||null,cheer:cfg.cheer||null,mode,modes});
    }
    if(u.pathname==='/api/book/preview'&&req.method==='GET'){

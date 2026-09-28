@@ -5,7 +5,9 @@
 // Learning happens inside the story ("beats"): letter keys, stepping-stones, counting, magic words he
 // reads to make things happen, spells, sharing, and the NO! beat where a friend wants to do something wrong.
 import {layoutActors,layoutTrain,coverBand,composeScene,relHeight,sceneUnit} from './book-scene.mjs';
-const GOAL_W=0.4;   // a stand-in goal frame's width (share of the screen) when the painted goal is cropped away
+const GOAL_W=0.4;
+// The ball he kicks or throws: small next to the people (about a boy's knee height), still an easy flick.
+const actionBall=(W,H)=>Math.max(48,Math.min(W,H)*0.12);   // a stand-in goal frame's width (share of the screen) when the painted goal is cropped away
 import {IDLE_REPEAT_MS,IDLE_REPEATS,shuffle} from './word-break.mjs';
 import {fetchJSON} from './save-request.mjs';
 import {listenOnce,recognise,listenAvailable,checkMic,micState} from './listen.mjs';
@@ -97,23 +99,23 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  // People and props: one row on one ground line, sized from one unit (book-scene.mjs composeScene). The sky above
  // them is remembered for the effects.
  let sky=0.3,trainBand=null;
- function actorsHTML(scene,{ground=0.93,scale=1,maxHeight=1,avoid=null,beat=false,play=false,keeper=null}={}){
+ function actorsHTML(scene,{ground=0.93,scale=1,maxHeight=1,avoid=null,reserve=0,beat=false,play=false,keeper=null}={}){
   const W=root.clientWidth||innerWidth,H=root.clientHeight||innerHeight;
   // A train in the picture always carries the friends (all aboard!).
   if((scene.ride||scene.props.some(p=>p.id==='train'))&&(art.props.train?.seats||art.props.train?.cars)){
    // (other props stand beside the train, never in front of it)
    const train=trainHTML(scene,W,H,{ground,maxHeight,beat}),L=composeScene({actors:[],props:scene.props},art,{width:W,height:H,ground,maxHeight,beat,playBall:play,avoid:trainBand});
    return train+propHTML(L.props);}
-  const L=composeScene(scene,art,{width:W,height:H,ground,maxHeight,avoid,beat,playBall:play,aside:keeper});sky=L.sky;
+  const L=composeScene(scene,art,{width:W,height:H,ground,maxHeight,avoid,reserve,beat,playBall:play,aside:keeper});sky=L.sky;
   return propHTML(L.props)+L.actors.map((a,i)=>{const P=art.actors[a.id].poses[a.pose]||art.actors[a.id].poses.idle;
    return `<div class="bk-actor${P.fly||a.pose==='fly'?' fly':''}" data-id="${esc(a.id)}" data-pose="${esc(a.pose)}" style="left:${(a.left*100).toFixed(2)}%;width:${(a.width*100).toFixed(2)}%;height:${(a.height*100).toFixed(2)}%;bottom:${(a.bottom*100).toFixed(2)}%;--from:${a.left+a.width/2<0.5?-40:40}vw;animation-delay:${i*0.15}s"><div style="animation-delay:${-i*0.7}s;animation-duration:${(2.2+i*0.37).toFixed(2)}s"><img src="${esc(P.url)}" alt="${esc(art.actors[a.id].name)}"></div></div>`;}).join('');
  }
  function propHTML(list){return list.map(r=>{const P=art.props[r.id];return P?`<div class="bk-prop" data-id="${esc(r.id)}" style="left:${(r.left*100).toFixed(2)}%;width:${(r.width*100).toFixed(2)}%;height:${(r.height*100).toFixed(2)}%;bottom:${(r.bottom*100).toFixed(2)}%"><img src="${esc(P.url)}" alt=""></div>`:'';}).join('');}
  function trainHTML(scene,W,H,{ground=0.93,maxHeight=1,beat=false}={}){
-  // The train is sized from the same unit as everyone (its wagons about Dad's height x 0.62), so a scene with a train
+  // The train is sized from the same unit as everyone (about Dad's height), so a scene with a train
   // reads the same turned either way; riders keep the family's relative heights (Dad > Mom > the boys > the toys).
   const U=sceneUnit({width:W,height:H,beat,maxHeight,tallest:1}),rel={...art,actors:Object.fromEntries(Object.entries(art.actors).map(([k,A])=>[k,{...A,h:relHeight(k,A)}]))};
-  const T=art.props.train,L=layoutTrain(scene.actors,rel,{width:W,height:H,bottom:1-ground+0.02,maxHeight:Math.min(0.5,maxHeight*0.75,U*0.62/H)});sky=Math.max(0,1-(1-ground+0.02)-(L?.train.height||0)*1.4);
+  const T=art.props.train,L=layoutTrain(scene.actors,rel,{width:W,height:H,bottom:1-ground+0.02,maxHeight:Math.min(0.5,maxHeight*0.75,U*0.95/H)});sky=Math.max(0,1-(1-ground+0.02)-(L?.train.height||0)*1.4);
   if(L){
    // Wagons repeat so every friend has his own; each is drawn after its rider (the front wall hides only his legs).
    const t=L.train,pc=v=>(v*100).toFixed(3)+'%';trainBand=[t.left-0.02,t.left+t.width+0.02];
@@ -172,12 +174,18 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   const maxHeight=ground-(beat?0.30:p.magic?0.34:p.caption?0.15:0.05);
   // Bands the characters step out of: the goal (keeper) and the ball's column, the things he counts or shares,
   // the big letter a friend teaches, and the spot where he holds the ball to throw.
-  const ball=Math.max(56,Math.min(W,H)*0.16)/W,mid=(a,b)=>[a,b];let avoid=null;
-  if(p.action?.kind==='kick'||kind==='kick-letter'){if(wide){const g=art.backgrounds[p.scene.bg]?.goal||[0.38,0.3,0.24,0.17];const [a,b]=coverBand(g,{width:W,height:H});avoid=[Math.min(a,0.5-ball)-0.04,Math.max(b,0.5+ball)+0.04];}else avoid=mid(0.5-Math.max(ball*0.75,GOAL_W/2+0.03),0.5+Math.max(ball*0.75,GOAL_W/2+0.03));}
+  const ball=actionBall(W,H)/W,mid=(a,b)=>[a,b],S=Math.min(W,H);let avoid=null;
+  // What the row gives up, the same in both orientations (so the people are the same size turned either way).
+  const reserve=kind==='kick-letter'?Math.max(ball*W*1.5,(GOAL_W+0.06)*S):['kick','throw'].includes(p.action?.kind)?ball*W*1.5:0;
+  if(p.action?.kind==='kick'||kind==='kick-letter'){if(wide){const g=art.backgrounds[p.scene.bg]?.goal||[0.38,0.3,0.24,0.17];const [a,b]=coverBand(g,{width:W,height:H});avoid=[Math.min(a,0.5-ball)-0.04,Math.max(b,0.5+ball)+0.04];}else{
+   // Tall screen: the ball's column; on a kick-letter page whose goal stands on the friends' ground line (the painted
+   // goal is cropped away, see goalRect), the goal's band too. A kick page's goal is up in the field, above everyone.
+   const g=art.backgrounds[p.scene.bg]?.goal||[0.38,0.3,0.24,0.17],vis=(W/H)/(1600/1067),cropped=g[0]<0.5-vis/2||g[0]+g[2]>0.5+vis/2;
+   const half=kind==='kick-letter'&&cropped?Math.max(ball*0.75,GOAL_W/2+0.03):ball*0.75;avoid=mid(0.5-half,0.5+half);}}
   else if(p.action?.kind==='throw')avoid=[THROW_X-ball*0.6,THROW_X+ball*0.6];
   else if(wide&&['count','share'].includes(kind))avoid=[0.26,0.74];
   else if(wide&&kind==='teach-letter')avoid=[0.5-Math.min(W,H)*0.13/W,0.5+Math.min(W,H)*0.13/W];
-  return {ground,scale,maxHeight,avoid,beat,play:!!p.action||kind==='kick-letter',keeper:p.action?.kind==='kick'||kind==='kick-letter'?keeperFor(null,p):null};
+  return {ground,scale,maxHeight,avoid,reserve,beat,play:!!p.action||kind==='kick-letter',keeper:p.action?.kind==='kick'||kind==='kick-letter'?keeperFor(null,p):null};
  }
  function pageFrame(p,{beat=false}={}){
   const b=art.backgrounds[p.scene.bg];
@@ -234,7 +242,10 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   for(const b of el.querySelectorAll('.bk-ball')){const size=Number(b.dataset.fs)*Math.min(W,H),x=Number(b.dataset.fx)*W,y=Number(b.dataset.fy)*H;if(!Number.isFinite(size))continue;
    b.style.left=`${x-size/2}px`;b.style.top=`${y-size/2}px`;b.style.width=b.style.height=`${size}px`;b.style.setProperty('--s',`${size}px`);}
   // (a picture with its own goal drawn in has no goal frame, but its keeper still stands in that goal)
-  if(p.action?.kind==='kick'||p.beat?.kind==='kick-letter'){const g=goalRect(p);for(const n of el.querySelectorAll('.bk-goal,.bk-net'))Object.assign(n.style,{left:`${g.x}px`,top:`${g.y}px`,width:`${g.w}px`,height:`${g.h}px`});
+  if(p.action?.kind==='kick'||p.beat?.kind==='kick-letter'){const g=goalRect(p);
+   // turned, the painted goal may come into view (no frame) or be cropped away (a frame stands in for it)
+   if(g.drawn)el.querySelectorAll('.bk-goal').forEach(n=>n.remove());else if(!el.querySelector('.bk-goal'))goalFrame(el,g);
+   for(const n of el.querySelectorAll('.bk-goal,.bk-net'))Object.assign(n.style,{left:`${g.x}px`,top:`${g.y}px`,width:`${g.w}px`,height:`${g.h}px`});
    if(!el.querySelector('.bk-actor.keeper'))placeKeeper(el,p,g);}
  }
  const onResize=()=>{clearTimeout(relayoutTimer);relayoutTimer=setTimeout(relayout,160);};
@@ -265,7 +276,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   const r={x:ox+g[0]*dw,y:oy+g[1]*dh,w:g[2]*dw,h:g[3]*dh,drawn:!!art.backgrounds[p.scene.bg]?.goal};
   // A goal painted into the picture can fall outside a tall phone's crop: then a goal frame stands in the middle,
   // its posts on the ground line (the friends step out of its band, see stage()).
-  if(r.x<0||r.x+r.w>W){const w=GOAL_W*W,h=Math.min(w*0.6,H*0.2),gy=stage(p,p.kind==='beat').ground*H;return {x:(W-w)/2,y:gy-h,w,h,drawn:false};}
+  if(r.x<0||r.x+r.w>W){const w=GOAL_W*W,h=Math.min(w*0.6,H*0.2),gy=(p.kind==='beat'?stage(p,true).ground:0.55)*H;return {x:(W-w)/2,y:gy-h,w,h,drawn:false};}
   return r;}
  function ballEl(el,{x,y,size,label}){const B=art.props.ball;const b=document.createElement('button');b.type='button';b.className='bk-ball';b.style.cssText=`left:${x-size/2}px;top:${y-size/2}px;width:${size}px;height:${size}px;--s:${size}px`;
   b.innerHTML=`${B?`<img src="${esc(B.url)}" alt="">`:'<span>⚽</span>'}${label?`<b>${esc(label)}</b>`:''}`;b.dataset.fx=x/(root.clientWidth||1);b.dataset.fy=y/(root.clientHeight||1);b.dataset.fs=size/Math.max(1,Math.min(root.clientWidth,root.clientHeight));el.append(b);return b;}
@@ -280,7 +291,9 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   setPose(el,kp,art.actors[kp].poses.idle?'idle':k.dataset.pose);const P=art.actors[kp].poses[k.dataset.pose];
   // Keeper keeps the height the layout gave him (the family's relative heights), never taller than the goal, feet on its line.
   const h=Math.min(g.h*1.05,k.getBoundingClientRect().height||g.h),w=h*P.ar,H=root.clientHeight;
-  k.style.cssText+=`;left:${g.x+g.w/2-w/2}px;width:${w}px;height:${h}px;bottom:${H-(g.y+g.h)}px;animation:none`;k.classList.add('keeper-ready');}
+  k.style.cssText+=`;left:${g.x+g.w/2-w/2}px;width:${w}px;height:${h}px;bottom:${H-(g.y+g.h)}px;animation:none`;k.classList.add('keeper-ready');
+  // the keeper stands up in the field, maybe in the sky band: no star over him
+  const kx=g.x+g.w/2-w/2,ky=g.y+g.h-h;for(const i of el.querySelectorAll('.bk-fx:not(.burst) i'))if(i.offsetLeft<kx+w&&kx<i.offsetLeft+i.offsetWidth&&i.offsetTop<ky+h&&ky<i.offsetTop+i.offsetHeight)i.remove();}
  function goalFrame(el,g){if(g.drawn)return;el.insertAdjacentHTML('beforeend',`<div class="bk-goal" style="left:${g.x}px;top:${g.y}px;width:${g.w}px;height:${g.h}px"></div>`);}
  async function shoot(el,p,my,ball,aim){
   const g=goalRect(p),keeperId=keeperFor(el,p),kp=keeperId&&el.querySelector(`.bk-actor[data-id="${CSS.escape(keeperId)}"]`);
@@ -293,7 +306,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   await speak(ch.ui.goal);
  }
  async function act(el,p,my){
-  const a=p.action,W=root.clientWidth,H=root.clientHeight,size=Math.max(56,Math.min(W,H)*0.16),started=Date.now();
+  const a=p.action,W=root.clientWidth,H=root.clientHeight,size=actionBall(W,H),started=Date.now();
   if(a.kind==='kick'){
    const g=goalRect(p);goalFrame(el,g);placeKeeper(el,p,g);
    const ball=ballEl(el,{x:W/2,y:H*0.82,size});ball.classList.add('pulse');
@@ -618,19 +631,23 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   if(!preview){void post(player,{type:'finish',date,page:ch.pages.length});event('book_finish',date);}
   const el=view.querySelector('.bk-page')||view;
   const q=ch.quest;
-  // A letters book ENDS with the Letter Hunt: one clean card, the day's letter (the same letter the Letter Hunt game
-  // opens on), one big button to start it there (the hunt has the hints and the grown-up's "We found them!" count).
-  const huntL=ch.level==='early'?(ch.letter||ch.pages.find(x=>x.beat?.kind==='teach-letter')?.beat?.letter||''):'';
+  // Every book ENDS with the Letter Hunt: one clean card, the day's letter, one big button to start it there (the
+  // hunt has the hints and the grown-up's "We found them!" count). The letter is the one the Letter Hunt screen opens
+  // on (the server's dayHunt, in letter mode: book.hunt); a letters book's letter leads that hunt anyway.
+  const early=ch.level==='early',huntL=(early?(ch.letter||ch.pages.find(x=>x.beat?.kind==='teach-letter')?.beat?.letter):null)||book.hunt?.letter||'';
   if(huntL&&!preview){el.insertAdjacentHTML('beforeend',`<div class="bk-quest bk-hunt-end">${keyringHTML({slide:[...keys].find(k=>!keysAtStart.has(k))||null})}<div class="bk-hunt-letter">${esc(huntL)}<small>${esc(huntL.toLowerCase())}</small></div><h2>🔍 Letter hunt!</h2><p>Find things at home that start with <b>${esc(huntL)}</b>.</p><div class="bk-end-btns"><a class="bk-btn bk-hunt big" href="#hunt">Start the letter hunt 🔍</a><button class="bk-btn bk-done" type="button">Play games →</button></div></div>`);}
   else
   el.insertAdjacentHTML('beforeend',`<div class="bk-quest">${q?`<h2>🗺️ ${esc((q.text.match(/^A quest for you and ([^:]+):/)||[,'Dad'])[1]).replace(/^/,'A quest for you and ')}</h2><p>${esc(q.text.replace(/^A quest for you and [^:]+:\s*/,''))}</p>${q.hints?.length?`<div class="bk-hint"></div><button class="bk-btn bk-hintbtn" type="button">🔍 A hint, please</button>`:''}${q.dad?`<p class="bk-dadnote">${esc(q.dad)}</p>`:''}`:'<h2>The end, for today</h2>'}${preview?'':'<a class="bk-btn bk-hunt" href="#hunt">🔍 Want to go hunting?</a> '}<button class="bk-btn bk-done" type="button">${preview?'Close':'Play games →'}</button></div>`);
   if(ch.style==='quest'&&items.length)el.querySelector('.bk-quest')?.insertAdjacentHTML('afterbegin',`<div class="bk-spellbook" aria-label="Your spellbook">${items.slice(-8).map(i=>`<span title="${esc(i.name)}">${esc(i.emoji)}</span>`).join('')}</div>`);
   el.querySelector('.bk-quest .bk-done').onclick=()=>{stop();onDone({finished:true});};
-  const hl=el.querySelector('.bk-hunt');if(hl)hl.onclick=()=>{stop();};
+  // The card is a LETTER hunt: the hunt screen opens in letter mode (a remembered word mode would show a word).
+  const hl=el.querySelector('.bk-hunt');if(hl)hl.onclick=async e=>{e.preventDefault();stop();if(huntL)await post(player,{type:'huntMode',mode:'letter'}).catch(()=>null);location.hash='hunt';};
   // Came back empty-handed? One hint picture at a time (things most homes have).
   let hint=0;const hb=el.querySelector('.bk-hintbtn');
   if(hb)hb.onclick=async()=>{const h=q.hints[hint++];if(!h)return;el.querySelector('.bk-hint').innerHTML=`<span class="pic">${esc(h.emoji)}</span><b>${esc(h.word)}</b>`;if(hint>=q.hints.length)hb.remove();if(!preview)event('book_hint',`${date}:${hint}`);await speak(h.line);};
-  if(ch.quest)await speak(ch.quest);if(my===turn)await speak(ch.ui.nextTime);
+  // A reader's book speaks its hunt's own opening line (his friend, the letter's sound); a letters book its quest.
+  const closing=huntL&&!preview&&!early&&book.hunt?.intro?.clip?book.hunt.intro:ch.quest;
+  if(closing)await speak(closing);if(my===turn)await speak(ch.ui.nextTime);
  }
  function stop(){alive=false;clearTimers();stopSound();for(const u of blobs.values())if(u)URL.revokeObjectURL(u);blobs.clear();removeEventListener('deviceorientation',tilt);removeEventListener('resize',onResize);removeEventListener('orientationchange',onResize);globalThis.visualViewport?.removeEventListener('resize',onResize);try{audio.removeAttribute('src');audio.load();}catch{}}
  if(!preview)void post(player,{type:'open',date,page});
