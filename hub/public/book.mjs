@@ -82,9 +82,11 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  // a file even when it was preloaded, so the praise after a trace waited ~1 s for the network (2026-09-28).
  const blobs=new Map(),MAX_BLOBS=80;
  function holdClip(f){if(!f||blobs.has(f))return;blobs.set(f,null);
-  fetch('/book-voice/'+f).then(r=>r.ok?r.blob():null).then(b=>{if(!b||!alive){blobs.delete(f);return;}blobs.set(f,URL.createObjectURL(b));
+  fetch('/book-voice/'+f+vq).then(r=>r.ok?r.blob():null).then(b=>{if(!b||!alive){blobs.delete(f);return;}blobs.set(f,URL.createObjectURL(b));
    while(blobs.size>MAX_BLOBS){const [k,u]=blobs.entries().next().value;if(ui.has(k))break;blobs.delete(k);if(u)URL.revokeObjectURL(u);}}).catch(()=>blobs.delete(f));}
- const clipURL=f=>blobs.get(f)||'/book-voice/'+f;
+ // (?r= the newest letter-sound re-render: a re-made clip keeps its name, so the URL changes instead)
+ const vq=book.voiceRev?'?r='+encodeURIComponent(book.voiceRev):'';
+ const clipURL=f=>blobs.get(f)||'/book-voice/'+f+vq;
  const ui=new Set();let uiLoaded=false;function preloadUi(){if(uiLoaded)return;uiLoaded=true;const w=v=>{if(!v||typeof v!=='object')return;if(Array.isArray(v))return v.forEach(w);if(v.clip)ui.add(v.clip);for(const x of Object.values(v))if(x&&typeof x==='object')w(x);};w(ch.ui);w(ch.keysLine);
   for(const f of ui)holdClip(f);}
  function preload(i){preloadUi();const p=ch.pages[i];if(!p)return;const files=new Set();const walk=v=>{if(!v||typeof v!=='object')return;if(Array.isArray(v))return v.forEach(walk);if(v.clip)files.add(v.clip);for(const x of Object.values(v))if(x&&typeof x==='object')walk(x);};walk(p);
