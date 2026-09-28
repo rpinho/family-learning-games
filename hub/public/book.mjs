@@ -24,7 +24,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  // The key ring (a letters book with a key goal): goal slots, his keys on them; today's key slides on at the end.
  const ring=ch.keyring||null;
  function keyringHTML({slide=null}={}){if(!ring)return '';const have=[...keys].filter(k=>/^[A-Z]$/.test(k)),goal=Math.max(ring.goal,have.length);
-  return `<div class="bk-keyring" role="img" aria-label="${have.length} of ${goal} keys"><span class="ring">⭕</span>${Array.from({length:goal},(_,i)=>{const k=have[i];return k?`<b class="${k===slide?'new':''}">🗝️<i>${esc(k)}</i></b>`:'<b class="empty">🗝️</b>';}).join('')}<em>${have.length} of ${goal} keys</em></div>`;}
+  return `<div class="bk-keyring" role="img" aria-label="${have.length} of ${goal} keys">${Array.from({length:goal},(_,i)=>{const k=have[i];return k?`<b class="${k===slide?'new':''}">🔑<i>${esc(k)}</i></b>`:'<b class="empty">🔑</b>';}).join('')}<em>${have.length} of ${goal} keys</em></div>`;}
  // Quest items in his spellbook (a quest-style book): [{id,name,emoji}].
  const items=[...(book.collection?.items||[])];
  let page=preview?0:Math.min(Math.max(0,book.progress?.page||0),ch.pages.length-1),alive=true,finished=false,turn=0,timers=[],shownAt=0,canNext=false,autoTimer=null;
