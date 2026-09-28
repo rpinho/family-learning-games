@@ -4,7 +4,7 @@
 // scenes and narration, lint it (one repair pass, then the template), narrate every line in its own
 // voice with local Kokoro, and publish the chapter atomically.
 // Usage: node book/generate.mjs [--date YYYY-MM-DD] [--player id] [--no-llm] [--no-voice] [--force] [--life]
-//   --date defaults to today before noon, tomorrow after (so a 04:30 run and an evening run agree).
+//   --date defaults to today before noon, tomorrow after (so an evening run, 21:05 after bedtime, and a morning run agree).
 import {spawn} from 'node:child_process';
 import {readFile,writeFile,mkdir,rename,readdir,rm} from 'node:fs/promises';
 import {existsSync,readFileSync} from 'node:fs';

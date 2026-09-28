@@ -39,4 +39,27 @@ function reader(plan,lib){
   {scene:bg(lib,'night-hill','castle-moon-hill','night'),actors:A(H,D,c.id,d.id),fx:'stars',say:[['narrator',`The map has one more stop. ${name} rolls it up carefully.`],['narrator','A word shines on the map, under the moon.']],...magic(3,'the map','The map glows. Tomorrow, the train goes somewhere new!')}
  ],summary:`${name} followed the lost map by train with ${list(cast.map(x=>x.name))} and Dad, reading signs and fixing a spell.`,hook:'The map has one more stop.'};
 }
-export function templateChapter(plan,library){return plan.level==='early'?early(plan,library):reader(plan,library);}
+// A quest-style reader chapter (beats: signs, puzzle, spell, fork, puzzle, no): same reading, game-like middle.
+function quest(plan,lib){
+ const {name}=plan,ids=idsOf(plan,lib),cast=plan.cast,B=Object.fromEntries(plan.beats.map(b=>[b.id,b])),m=plan.magic;
+ const c=cast[0],d=cast[1]||cast[0],no=plan.beats.find(b=>b.kind==='no'),noWho=cast.find(x=>x.id===no?.who)||d,H=ids.hero,D=ids.dad;
+ const other=(plan.grownups||[]).find(g=>g.id!==(plan.lead||{id:'dad'}).id&&lib.actors[g.id])?.id;
+ const A=(...xs)=>xs.filter(Boolean).filter((x,i,a)=>lib.actors[x.split(':')[0]]&&a.indexOf(x)===i).slice(0,4);
+ const magic=(i,object,after)=>m[i]?{magic:{word:m[i],object,after:[['narrator',after]]}}:{};
+ const setUp={puzzle:'A riddle is carved into the stone. Only a sharp mind can solve it.',remainder:'The snacks must be shared fairly. Fair for everyone, that is the rule.',fork:'The path splits in two. Which way?'};
+ const beatPage=(id,bgs,actors,extra=[])=>({beat:id,scene:bg(lib,...bgs),actors,say:[['narrator',setUp[B[id].kind]||'Something blocks the way.'],...extra]});
+ return {title:`${name} and the Wizard's Map`,pages:[
+  {scene:bg(lib,'treehouse-town','castle','meadow'),actors:A(H,D,c.id,other),fx:'sparkles',say:[['narrator',`${name} opens his spellbook. An old map falls out.`],['dad','A wizard map! Shall we follow it?'],['narrator','A word glows on the map. Can you read it?']],...magic(0,'the old map','The map glows, and a dotted path appears!')},
+  {beat:'b1',scene:bg(lib,'train-valley','meadow'),actors:A(H,c.id),props:['train'],say:[['narrator','At the station, three trains are ready to go.'],['narrator',`${c.name} yawns. "Which one is ours?"`]]},
+  beatPage('b2',['dino-land','meadow','forest'],A(H,c.id,D)),
+  {scene:bg(lib,'dino-land','meadow','forest'),actors:A(pose(lib,H,'cheer'),d.id,D),fx:'stars',say:[['narrator','Solved! The path winds on, past the giant ferns.'],['narrator','A tall sign stands by the lake. What does it say?']],...magic(1,'the tall sign','The ground rumbles softly, and a secret path opens!')},
+  {beat:'b3',scene:bg(lib,'castle-gate','castle','forest'),actors:A(H,d.id,c.id),say:[['narrator','A gate blocks the path. Its spell has fallen to pieces!'],['dad',`Read each word, ${name}. Not where they lie. What they say.`]]},
+  beatPage('b4',['forest-path','forest','meadow'],A(H,c.id,D)),
+  {scene:bg(lib,'chess-courtyard','castle','meadow'),actors:A(pose(lib,H,'cheer'),c.id,D),fx:'sparkles',say:[['narrator','Both ways meet at a sunny courtyard.'],['narrator','A chest has a word on its lid.']],...magic(2,'the chest lid','The lid pops open. Inside is the next piece of the map!')},
+  beatPage('b5',['pizza-party','soccer-pitch','meadow'],A(H,c.id,d.id,other)),
+  {beat:'b6',scene:bg(lib,'soccer-pitch','pitch','meadow'),actors:A(H,noWho.id),props:['ball'],say:[['narrator',`${noWho.name} runs to the scoreboard with a big grin.`]]},
+  {scene:bg(lib,'soccer-pitch','pitch','meadow'),actors:A(H,D,noWho.id),action:'kick',say:[['narrator',`${noWho.name} giggles. You were right, ${name}!`],['dad','Now the real match. Your turn. Shoot!']],after:[['narrator','Goal! The crowd of birds goes wild!'],['dad','Great thinking, and a great kick.']]},
+  {scene:bg(lib,'night-hill','castle-moon-hill','night'),actors:A(H,D,c.id,other),fx:'stars',say:[['narrator',`${name} puts the treasure in his spellbook. The map has one more stop.`],['narrator','A word shines on the map, under the moon.']],...magic(3,'the map','The map glows. Tomorrow, the quest goes somewhere new!')}
+ ],summary:`${name} followed the wizard map with ${list(cast.map(x=>x.name))}, solving riddles, choosing his way and reading signs and spells.`,hook:'The map has one more stop.'};
+}
+export function templateChapter(plan,library){return plan.level==='early'?early(plan,library):plan.style==='quest'?quest(plan,library):reader(plan,library);}

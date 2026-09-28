@@ -130,3 +130,25 @@ test('He plays: action pages are required, need a reaction after he acts, and a 
  assert.equal(b2.kind,'kick-letter');assert.equal(b2.balls.filter(x=>x===b2.letter).length,1);assert.equal(b2.balls.length,3);
  assert.deepEqual(lintChapter(templateChapter(k,library),k,opts(k)),[],'the template handles the kick-letter beat');
 });
+
+test('Quest-style chapters: game beats in order, template passes the lint, puzzles are right', async()=>{
+ const {older,young}=await import('./fixtures.mjs');const {assemble}=await import('../assemble.mjs');
+ const details=[{id:'pull-ups',seed:'pull-ups on a bar'},{id:'american football',seed:'a football huddle'},{id:'mcdonalds',seed:'nuggets'}];
+ for(const d of ['2026-03-10','2026-03-11','2026-03-12','2026-03-13','2026-03-14','2026-09-29']){
+  const p=planChapter(older,{date:d,profile:{bookStyle:'quest',bookTheme:'spellbook',details}});
+  assert.equal(p.style,'quest');assert.deepEqual(p.beats.map(b=>b.id),['b1','b2','b3','b4','b5','b6']);
+  assert.deepEqual(p.beats.map(b=>b.kind==='remainder'?'puzzle':b.kind),['signs','puzzle','spell','fork','puzzle','no']);
+  assert.ok(p.details.length>=1&&p.details.length<=2);
+  for(const b of p.beats){
+   if(b.kind==='puzzle'){assert.ok(b.options.includes(b.answer),`${d} ${b.variant}`);assert.equal(new Set(b.options).size,b.options.length);
+    if(b.variant==='nines'){const n=Number(b.display.split('×')[1]);assert.equal(Number(b.answer),9*n);}
+    if(b.variant==='skip'){const seq=b.display.split(', ');const i=seq.indexOf('?');const step=Number(seq[1]==='?'?seq[2]-seq[0]:seq[1]-seq[0])/(seq[1]==='?'?2:1);assert.equal(Number(b.answer),Number(seq[0])+i*step);}}
+   if(b.kind==='remainder'){assert.equal(Number(b.answer),b.total%b.groups);assert.ok(b.total%b.groups>0);}
+   if(b.kind==='fork'){assert.equal(b.options.length,2);assert.ok(b.options.every(o=>o.item?.id&&o.item.name));}}
+  assert.deepEqual(lintChapter(templateChapter(p,library),p,opts(p)),[],`quest template ${d}`);
+  const ch=assemble(templateChapter(p,library),p,{library,actors:p.actorIds.all});assert.equal(ch.theme,'spellbook');assert.equal(ch.style,'quest');
+  const fork=ch.pages.find(x=>x.beat?.kind==='fork').beat;assert.ok(fork.options.every(o=>o.reply?.text&&o.got?.text));}
+ // The younger child's book keeps its own shape: golden keys and a counting detail only.
+ const y=planChapter(young,{date:'2026-09-28',profile:{keyStyle:'golden',details:[{id:'michaelmas',window:['09-26','10-02'],seed:'Michaelmas dragon'},{id:'pancakes',count:['pancake','pancakes','🥞'],seed:'pancakes'}]}});
+ assert.notEqual(y.style,'quest');assert.equal(y.details[0].id,'michaelmas');assert.ok(y.beats[0].what.includes('golden'));
+});

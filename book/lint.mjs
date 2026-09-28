@@ -139,7 +139,7 @@ export function lintChapter(ch,plan,{extra=[],allow=[],speakers=null,actors=null
  pages.forEach((p,i)=>{for(const l of [...sayOf(p),...sayOf({say:p?.after||[]}),...sayOf({say:p?.magic?.after||[]})]){const r=repeatedWords(l.text);if(r.length)issues.push(`page ${i+1}: "${r[0]}" is said twice in a row; say every word once`);}});
  // hints, never answers: a beat page must not give its answer away
  for(const b of plan.beats){const p=pages.find(x=>x?.beat===b.id);if(!p)continue;const t=tokens(sayOf(p).map(l=>l.text).join(' '));
-  const ans=b.kind==='no'?b.right:['count','share','score'].includes(b.kind)?b.answer:null;if(!ans)continue;
+  const ans=b.kind==='no'?b.right:['count','share','score','remainder'].includes(b.kind)||(b.kind==='puzzle'&&/^\d+$/.test(b.answer))?b.answer:null;if(!ans)continue;
   if(t.some(x=>x===String(ans)||(/^\d+$/.test(ans)&&x.toLowerCase()===NUMBER_WORDS[Number(ans)])))issues.push(`beat ${b.id} page gives away the answer ${ans}`);
   if(b.kind==='spell'&&norm(pageText(p)).includes(norm(b.sentence)))issues.push(`beat ${b.id} page writes out the spell; he must build it`);}
  const wrong=wrongEquations(all);if(wrong.length)issues.push(`arithmetic mistakes in the story (the only mistake is the planned NO! beat, which the game says itself): ${wrong.join('; ')}`);

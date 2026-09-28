@@ -19,10 +19,12 @@ const audit=globalThis.__bookAudio||(globalThis.__bookAudio=[]);
 export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=false,startPage=0}){
  const ch=book.chapter,date=book.date,art=ch.art||{backgrounds:{},actors:{},props:{}},early=ch.level==='early';
  const keys=new Set(book.collection?.keys||[]);
+ // Quest items in his spellbook (a quest-style book): [{id,name,emoji}].
+ const items=[...(book.collection?.items||[])];
  let page=preview?0:Math.min(Math.max(0,book.progress?.page||0),ch.pages.length-1),alive=true,finished=false,turn=0,timers=[],shownAt=0,canNext=false,autoTimer=null;
  const later=(fn,ms)=>{const t=setTimeout(()=>{if(alive)fn();},ms);timers.push(t);return t;};
  const clearTimers=()=>{timers.forEach(clearTimeout);timers=[];};
- const root=document.createElement('section');root.className=`bk bk-${ch.level}`;root.setAttribute('aria-label',`${ch.name}'s book`);
+ const root=document.createElement('section');root.className=`bk bk-${ch.level}${ch.theme?` bk-theme-${ch.theme}`:''}${ch.keyStyle?` bk-keys-${ch.keyStyle}`:''}`;root.setAttribute('aria-label',`${ch.name}'s book`);
  root.innerHTML=`<div class="bk-view"></div><div class="bk-chrome"><button class="bk-exit" type="button" aria-label="Back to the games">✕</button><button class="bk-hear" type="button" aria-label="Hear it again">🔊</button>${early?'<div class="bk-keys" aria-hidden="true"></div>':''}<div class="bk-dots" aria-hidden="true"></div><div class="bk-tapnext" aria-hidden="true">👉</div>${preview?'<div class="bk-preview-bar">PREVIEW · nothing is saved</div>':''}</div>`;
  main.innerHTML='';main.append(root);
  const view=root.querySelector('.bk-view'),dots=root.querySelector('.bk-dots'),tapnext=root.querySelector('.bk-tapnext');
@@ -157,7 +159,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  function cover(){
   page=-1;const p=ch.pages[0],b=art.backgrounds[ch.cover?.scene?.bg||p.scene.bg];
   const hero=p.scene.actors.find(a=>a.id===player)||p.scene.actors[0];const H=hero&&art.actors[hero.id]?.poses[hero.pose];
-  view.innerHTML=`<div class="bk-page">${b?`<img class="bk-bg" src="${esc(b.url)}" alt="">`:''}<div class="bk-cover"><div class="card"><div class="kicker">${esc(ch.name)}'s Book · Chapter ${esc(ch.number)}</div><h1>${esc(ch.title)}</h1>${H?`<img src="${esc(H.url)}" alt="" style="height:min(22vh,180px)">`:''}<br><button class="bk-open" type="button" aria-label="Open the book">📖</button></div></div></div>`;
+  view.innerHTML=`<div class="bk-page">${b?`<img class="bk-bg" src="${esc(b.url)}" alt="">`:''}<div class="bk-cover"><div class="card"><div class="kicker">${esc(ch.name)}'s ${ch.theme==='spellbook'?'Spellbook':'Book'} · Chapter ${esc(ch.number)}</div><h1>${esc(ch.title)}</h1>${H?`<img src="${esc(H.url)}" alt="" style="height:min(22vh,180px)">`:''}<br><button class="bk-open" type="button" aria-label="Open the book">📖</button></div></div></div>`;
   dots.innerHTML='';renderDots();
   view.querySelector('.bk-open').onclick=async e=>{
    e.currentTarget.disabled=true;if(!preview)event('book_open',`${date}:${page}`);
@@ -334,7 +336,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   });
  }
  function finishBeat(p,my,result){
-  if(!preview){const detail=teleOut();void post(player,{type:'result',date,page,result:{kind:p.beat.kind,beat:p.beat.id||null,misses:result.misses||0,ms:result.ms||0,...(result.via?{via:result.via}:{}),...(result.earned?{earned:result.earned}:{}),...teleSummary(detail),detail}});event('book_beat',`${p.beat.kind}:${result.misses||0}`);}
+  if(!preview){const detail=teleOut();void post(player,{type:'result',date,page,result:{kind:p.beat.kind,beat:p.beat.id||null,misses:result.misses||0,ms:result.ms||0,...(result.via?{via:result.via}:{}),...(result.earned?{earned:result.earned}:{}),...(result.choice?{choice:result.choice}:{}),...teleSummary(detail),detail}});event('book_beat',`${p.beat.kind}:${result.misses||0}`);}
   setNext(true);later(()=>{if(my===turn&&canNext)go(page+1);},1600);
  }
  // Buttons with the usual rules: wrong wiggles and says try again; two misses glow the right one.
@@ -384,7 +386,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
      s.onclick=async()=>{if(s.classList.contains('lit')||found>=b.need||my!==turn)return;teleTap(l,l===b.letter);
       if(l===b.letter){s.classList.add('lit');found++;view.querySelector('.bk-actor')?.classList.add('hop');void speak(b.tap);
        if(found>=b.need){await new Promise(r=>later(r,900));if(my!==turn)return;burst('stars');await speak(b.done);if(my!==turn)return;
-        const earned=b.letter;keys.add(earned);renderDots();el.insertAdjacentHTML('beforeend',`<div class="bk-key-fly">🔑</div>`);done({misses,earned:{key:earned}});}}
+        const earned=b.letter;keys.add(earned);renderDots();el.insertAdjacentHTML('beforeend',`<div class="bk-key-fly">${ch.keyStyle==='golden'?'🗝️':'🔑'}</div>`);done({misses,earned:{key:earned}});}}
       else{misses++;s.classList.remove('wiggle');void s.offsetWidth;s.classList.add('wiggle');void speak(b.notIt);if(misses>=2)[...play.children].find(x=>x.textContent===b.letter&&!x.classList.contains('lit'))?.classList.add('glow');}};
      play.append(s);});
     return;}
@@ -401,7 +403,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
       if(bl.dataset.v!==b.letter){misses++;bl.classList.remove('wiggle');void bl.offsetWidth;bl.classList.add('wiggle');void speak(b.notIt);if(misses>=2)balls.find(x=>x.dataset.v===b.letter)?.classList.add('glow');return;}
       done_=true;balls.filter(x=>x!==bl).forEach(x=>x.classList.add('used'));await shoot(el,p,my,bl,aim);res();};}});
     if(my!==turn)return;await speak(b.done);if(my!==turn)return;
-    keys.add(b.letter);renderDots();el.insertAdjacentHTML('beforeend',`<div class="bk-key-fly">🔑</div>`);done({misses,earned:{key:b.letter}});
+    keys.add(b.letter);renderDots();el.insertAdjacentHTML('beforeend',`<div class="bk-key-fly">${ch.keyStyle==='golden'?'🗝️':'🔑'}</div>`);done({misses,earned:{key:b.letter}});
     return;}
    case 'count':{
     await speak(b.spoken);if(my!==turn)return;
@@ -448,6 +450,38 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
     await speak(b.spoken);if(my!==turn)return;
     choices(play,b.options,{cls:'ball',answer:b.answer,prompt:b.spoken,my,onRight:async m=>{board.textContent=`${b.display} = ${b.answer}`;burst('confetti');cheer();await speak(b.done);if(my===turn)done({misses:m});}});
     return;}
+   case 'puzzle':{
+    // A maths or logic puzzle at his level: the board shows it in numbers and symbols (anything to read stays
+    // decodable; clues are spoken). Two misses: the hint, and the answer glows.
+    const board=document.createElement('div');board.className=`bk-board bk-puzzle ${b.variant||''}`;
+    board.innerHTML=b.lines?`<small>${esc(b.display)}</small>${b.lines.map(l=>`<div>${esc(l)}</div>`).join('')}`:`${esc(b.display)}${/[?]/.test(b.display)?'':' = ?'}`;el.append(board);
+    await speak(b.spoken);if(my!==turn)return;
+    choices(play,b.options,{cls:b.labels?'ball route':'ball',answer:b.answer,prompt:b.hint||b.spoken,my,label:v=>b.labels?.[v]||v,onRight:async m=>{
+     if(!b.lines)board.textContent=/[?]/.test(b.display)?b.display.replace('?',b.answer):`${b.display} = ${b.answer}`;else board.querySelectorAll('div').forEach(d=>d.classList.toggle('won',d.textContent.startsWith(b.labels[b.answer])));
+     burst('confetti');cheer();await speak(b.done);if(my===turn)done({misses:m});}});
+    return;}
+   case 'remainder':{
+    // Remainders with objects: each tap deals one onto every plate; what cannot go round stays in the box.
+    await speak(b.spoken);if(my!==turn)return;
+    const plates=document.createElement('div');plates.className='bk-plates';plates.innerHTML=Array.from({length:b.groups},()=>'<div class="bk-plate"></div>').join('');el.append(plates);
+    const box=document.createElement('button');box.type='button';box.className='bk-pizza bk-box';box.innerHTML=`<span style="font-size:80px">${esc(b.emoji||'🍪')}</span><b>${b.total}</b>`;el.append(box);
+    let left=b.total;box.onclick=async()=>{if(left<b.groups||my!==turn)return;for(const plate of plates.children){plate.insertAdjacentHTML('beforeend',`<span>${esc(b.emoji||'🍪')}</span>`);left--;}box.querySelector('b').textContent=left;
+     if(left<b.groups){box.classList.add('left');await speak(b.ask);if(my!==turn)return;
+      choices(play,b.options,{cls:'ball',answer:b.answer,prompt:b.ask,my,onRight:async m=>{burst('confetti');cheer();await speak(b.done);if(my===turn)done({misses:m});}});}};
+    return;}
+   case 'fork':{
+    // A choice that matters: two ways on, both fine; the way he picks gives the chapter's treasure.
+    await speak(b.spoken);if(my!==turn)return;
+    play.innerHTML='';if(tele)tele.readyAt=Date.now();
+    for(const o of b.options){const btn=document.createElement('button');btn.type='button';btn.className='bk-btn fork';btn.dataset.v=o.id;btn.innerHTML=`<span class="pic">${esc(o.emoji)}</span><small>${esc(o.label)}</small>`;
+     btn.onclick=async()=>{if(my!==turn||play.dataset.chosen)return;play.dataset.chosen=o.id;teleTap(o.id,true);btn.classList.add('right');
+      [...play.children].forEach(x=>{if(x!==btn)x.classList.add('used');});
+      await speak(o.reply);if(my!==turn)return;
+      if(!items.some(i=>i.id===o.item.id))items.push(o.item);
+      el.insertAdjacentHTML('beforeend',`<div class="bk-key-fly bk-item-fly">${esc(o.item.emoji)}</div>`);await speak(o.got);
+      if(my===turn)done({misses:0,earned:{item:o.item.id},choice:o.id});};
+     play.append(btn);}
+    return;}
    case 'order':{
     // Numbers in order: tap 1, then 2, ... A wrong tile wiggles; two misses make the next one glow.
     await speak(b.spoken);if(my!==turn)return;
@@ -491,6 +525,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   const el=view.querySelector('.bk-page')||view;
   const q=ch.quest;
   el.insertAdjacentHTML('beforeend',`<div class="bk-quest">${q?`<h2>🗺️ ${esc((q.text.match(/^A quest for you and ([^:]+):/)||[,'Dad'])[1]).replace(/^/,'A quest for you and ')}</h2><p>${esc(q.text.replace(/^A quest for you and [^:]+:\s*/,''))}</p>${q.hints?.length?`<div class="bk-hint"></div><button class="bk-btn bk-hintbtn" type="button">🔍 A hint, please</button>`:''}${q.dad?`<p class="bk-dadnote">${esc(q.dad)}</p>`:''}`:'<h2>The end, for today</h2>'}${preview?'':'<a class="bk-btn bk-hunt" href="#hunt">🔍 Want to go hunting?</a> '}<button class="bk-btn bk-done" type="button">${preview?'Close':'Play games →'}</button></div>`);
+  if(ch.style==='quest'&&items.length)el.querySelector('.bk-quest')?.insertAdjacentHTML('afterbegin',`<div class="bk-spellbook" aria-label="Your spellbook">${items.slice(-8).map(i=>`<span title="${esc(i.name)}">${esc(i.emoji)}</span>`).join('')}</div>`);
   el.querySelector('.bk-quest .bk-done').onclick=()=>{stop();onDone({finished:true});};
   const hl=el.querySelector('.bk-hunt');if(hl)hl.onclick=()=>{stop();};
   // Came back empty-handed? One hint picture at a time (things most homes have).

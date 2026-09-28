@@ -59,8 +59,10 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
  // What he keeps from the book: letter keys (A-Z) and words he read himself (magic words).
  function collect(p,earned){if(!earned||typeof earned!=='object')return;const c=p.collection??={keys:[],words:[]};
   const k=String(earned.key||'');if(/^[A-Z]$/.test(k)&&!c.keys.includes(k))c.keys.push(k);
-  const w=String(earned.word||'').toLowerCase();if(/^[a-z]{1,12}$/.test(w)&&!c.words.includes(w))c.words=[...c.words,w].slice(-300);}
- const collectionOf=p=>({keys:p.collection?.keys||[],words:p.collection?.words||[],...(p.collection?.hunts?.length?{hunts:p.collection.hunts}:{})});
+  const w=String(earned.word||'').toLowerCase();if(/^[a-z]{1,12}$/.test(w)&&!c.words.includes(w))c.words=[...c.words,w].slice(-300);
+  // A quest item (a quest-style book's fork): only an item that exists in today's chapter is kept (id, name, emoji).
+  const it=String(earned.item||'');if(/^[a-z0-9-]{1,32}$/.test(it)&&earned.itemInfo&&!(c.items||[]).some(x=>x.id===it))c.items=[...(c.items||[]),{id:it,name:String(earned.itemInfo.name||it).slice(0,40),emoji:String(earned.itemInfo.emoji||'✨').slice(0,4)}].slice(-60);}
+ const collectionOf=p=>({keys:p.collection?.keys||[],words:p.collection?.words||[],...(p.collection?.items?.length?{items:p.collection.items}:{}),...(p.collection?.hunts?.length?{hunts:p.collection.hunts}:{})});
  // Grown-ups' preview: the newest chapter up to tomorrow (or a given date), read-only.
  async function latest(player,date){if(date)return DATE.test(date)?{date,chapter:await chapter(player,date)}:{date,chapter:null};
   const limit=localDate(now()+864e5,timeZone);let files=[];try{files=(await readdir(join(bookDir,player))).filter(f=>/^\d{4}-\d{2}-\d{2}\.json$/.test(f)&&f.slice(0,10)<=limit).sort();}catch{}
@@ -73,7 +75,11 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
    const page=Math.max(0,Math.min(60,Number(input.page)||0));
    if(input.type==='open')day.opens++;
    else if(input.type==='page')day.page=Math.max(day.page,page);
-   else if(input.type==='result'){const r=input.result||{};collect(p,r.earned);day.results=[...day.results.filter(x=>x.page!==page),{page,kind:String(r.kind||'').slice(0,20),misses:Math.max(0,Math.min(99,Number(r.misses)||0)),ms:Math.max(0,Math.min(36e5,Number(r.ms)||0)),hints:Math.max(0,Math.min(9,Number(r.hints)||0)),...(['voice','echo','tap'].includes(r.via)?{via:r.via}:{}),...attemptsOf(r)}].slice(-20);}
+   // Time on a page (sent when he leaves it): summed per page, each visit capped at 30 minutes.
+   else if(input.type==='dwell'){const ms=Math.max(0,Math.min(18e5,Math.round(Number(input.ms)||0)));const d=day.dwell??={};d[page]=Math.min(36e5,(d[page]||0)+ms);}
+   else if(input.type==='result'){const r=input.result||{};
+    if(r.earned?.item){const ch=await chapter(player,date);const o=ch?.pages?.flatMap(pg=>pg.beat?.kind==='fork'?pg.beat.options:[]).find(o=>o.item?.id===r.earned.item);r.earned={...r.earned,itemInfo:o?.item||null};}
+    collect(p,r.earned);day.results=[...day.results.filter(x=>x.page!==page),{page,kind:String(r.kind||'').slice(0,20),misses:Math.max(0,Math.min(99,Number(r.misses)||0)),ms:Math.max(0,Math.min(36e5,Number(r.ms)||0)),hints:Math.max(0,Math.min(9,Number(r.hints)||0)),...(['voice','echo','tap'].includes(r.via)?{via:r.via}:{}),...(/^[a-z0-9-]{1,24}$/.test(String(r.choice||''))?{choice:String(r.choice)}:{}),...attemptsOf(r)}].slice(-20);}
    // The living book: one record per beat (tries, first-try right, time to the first tap; a guess is under 1.5 s).
    else if(input.type==='living'){const L=day.living??=[];L.push({story:String(input.story||'').slice(0,40),beat:String(input.beat||'').slice(0,24),at:new Date(now()).toISOString(),...attemptsOf(input),misses:Math.max(0,Math.min(99,Number(input.misses)||0)),ms:Math.max(0,Math.min(36e5,Number(input.ms)||0)),...(['voice','echo','tap'].includes(input.via)?{via:input.via}:{})});if(L.length>60)L.splice(0,L.length-60);}
    else if(input.type==='finish'){day.finished=true;day.finishedAt=new Date(now()).toISOString();day.page=Math.max(day.page,page);}

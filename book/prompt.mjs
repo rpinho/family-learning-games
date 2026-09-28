@@ -28,6 +28,17 @@ ${plan.cast.map(c=>`  - ${c.name} (id "${c.id}"): ${c.kind}.`).join('\n')}
 ${plan.tricks.length?`- He sometimes ${plan.tricks.join('; ')}. One friend models the better habit once, gently, inside the story, never as a lecture.\n`:''}${plan.themes.length?`
 FROM HIS LIFE (use ONE or TWO as gentle allegory, the Primer's way: never literal, never naming real people or places; always empowering, never labelling him)
 ${plan.themes.map(t=>`- ${t.seed}`).join('\n')}
+`:''}${(plan.details||[]).length?`
+SMALL THINGS HE LOVES (weave each in as ONE short story touch, once; never a lecture, never a list)
+${plan.details.map(d=>`- ${d.seed}`).join('\n')}
+`:''}${plan.style==='quest'?`
+HIS BOOK IS A QUEST (he is 8 and finds baby books boring: this one plays like a game)
+- Tone: a young wizard's adventure, not a baby book. Short, punchy lines; real stakes (a lock, a route, a choice); humour; no baby talk, no "yay", no cooing.
+- His book is his spellbook: the magic words he reads are SPELLS he casts. The narration may call him a young wizard (a boy wizard).
+- The fork beat: he chooses one of two ways. The pages after the fork must work for EITHER way (write the next place so both ways lead there; never say which way he took). The game gives him the treasure of the way he chose.
+- End the chapter with the treasure going into his spellbook and a cliffhanger.
+`:''}${plan.keyStyle==='golden'?`
+- His letter keys are GOLDEN keys (his favourite colour is gold): always say "golden key".
 `:''}${plan.arc?`
 HIS SEASON-LONG QUEST (the continuing adventure; each chapter moves it one small step and ends with a gentle cliffhanger)
 - ${plan.arc}${plan.collection.keys.length?`\n- Letter keys he has collected so far: ${plan.collection.keys.join(', ')}.`:''}

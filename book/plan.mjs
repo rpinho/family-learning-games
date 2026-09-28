@@ -6,6 +6,7 @@
 // only works when its words are put back in order; pizza is shared fairly; and once per chapter a friend
 // insists on something wrong and the child says NO! (then fixes it). Same learner model + date = same plan.
 import {letterQuest,readerQuest} from './quests.mjs';
+import {questBeats,chooseDetails} from './quest-beats.mjs';
 import {FIRST_WORDS,WORD_GROUPS,SENTENCES,SENTENCE_DISTRACT,scramble,tilesOf,endMark,shuffle} from '../hub/public/word-break.mjs';
 import {FAMILIES,familyOf,isFamilyWord,lookAlikes,soundOut,familyTarget,DECODABLE_SENTENCES,hasSound} from '../hub/public/word-families.mjs';
 
@@ -187,6 +188,18 @@ export function planChapter(model,{date,profile={},cast=null,collection={},life=
   base.magic=magicWords(model,r,{collection,decodable});
   base.quest=readerQuest(base.magic.length?base.magic:[base.beats[0].target],{grown:leadName,seed:Number(String(date).replace(/-/g,''))||0});
  }
+ // Interest details (the household's private profile "details"): one or two small story touches per chapter.
+ const details=chooseDetails(profile,{date});
+ // A quest-style book (profile bookStyle "quest"): the reading stays where it is, but the chapter plays like a game:
+ // maths and logic puzzles at his real level, and a fork whose choice decides the chapter's quest item.
+ const quest=!early&&profile.bookStyle==='quest';
+ if(quest){const q=questBeats(model,{date,details,have:collection?.items||[]});const [signs,spell,,no]=base.beats;
+  base.beats=[signs,q.puzzles[0],spell,q.fork,q.puzzles[1],no].map((b,i)=>({...b,id:`b${i+1}`}));}
+ // Golden letter keys (profile keyStyle "golden").
+ if(early&&profile.keyStyle==='golden')for(const b of base.beats)if(b.what)b.what=b.what.replace(/\bthe ([A-Z]) key\b/g,'the golden $1 key');
+ // Diogo-style letter books: a detail can set what he counts (pancakes, waffles).
+ if(early){const food=details.find(d=>d.count);const cb=base.beats.find(b=>b.kind==='count');
+  if(food&&cb){const [one,many,emoji]=food.count;cb.thing=one;cb.things=many;cb.emoji=emoji;cb.spoken=`Tap each one to count the ${many}.`;cb.ask=`How many ${many}?`;cb.what=`count the ${many} (${food.seed})`;}}
  const interests=shuffle(model.interests||[],r).slice(0,3);
  // The grown-ups take turns leading the adventure (balanced by date); the other may appear too.
  const grownups=(cast?.grownups?.length?cast.grownups:[{id:'dad',name:'Dad'}]).map(g=>({id:g.id,name:g.name,...(g.alsoCalled?{alsoCalled:g.alsoCalled}:{}),...(g.note?{note:g.note}:{})}));
@@ -195,5 +208,6 @@ export function planChapter(model,{date,profile={},cast=null,collection={},life=
   arc:profile.arc||null,compass:profile.compass||[],themes:chooseThemes(life,r),collection:{keys:collection?.keys||[],words:collection?.words||[]},
   ...base,magic:base.magic||[],actions:ACTIONS,minActions:early?2:1,
   dadLines:(model.recent?.dadLines||[]).map(l=>l.text),yesterday:model.recent?.yesterday||null,play:model.recent?.play||[],
-  tricks:(model.tricks||[]).map(t=>t.text),previous:model.story?.book||[],running:model.story?.running||[]};
+  tricks:(model.tricks||[]).map(t=>t.text),previous:model.story?.book||[],running:model.story?.running||[],
+  details,style:quest?'quest':(profile.bookStyle||'classic'),theme:profile.bookTheme||null,keyStyle:profile.keyStyle||null};
 }

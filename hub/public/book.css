@@ -166,3 +166,41 @@
 /* A reminder without words: the things to tap pulse once (a line is never said twice on a page). */
 .bk-nudge{animation:bk-nudge .9s ease-in-out 2}
 @keyframes bk-nudge{50%{transform:scale(1.08);filter:brightness(1.15) drop-shadow(0 0 12px rgba(255,220,90,.9))}}
+
+/* ---- Quest beats (an older reader's book plays like a game) ---- */
+.bk-board.bk-puzzle{flex-direction:column;align-items:center;gap:.05em;white-space:nowrap}
+.bk-board.bk-puzzle small{font-size:.38em;letter-spacing:.12em;text-transform:uppercase;opacity:.8}
+.bk-board.bk-puzzle.route div,.bk-board.bk-puzzle.playcard div{font-size:.62em;line-height:1.25;padding:0 .2em;border-radius:10px}
+.bk-board.bk-puzzle div.won{background:rgba(255,213,74,.35);box-shadow:0 0 0 3px #ffd54a}
+.bk-board.bk-puzzle.playcard{background:#23452a;border-color:#e8e8e8;background-image:repeating-linear-gradient(90deg,transparent 0 22%,rgba(255,255,255,.18) 22% 23%)}
+.bk-btn.ball.route{font-size:clamp(40px,9vmin,80px);background:radial-gradient(circle at 35% 30%,#fff,#eef3ff 60%,#c9d6f2)}
+.bk-box.left b{background:#d9412b}
+.bk-btn.fork{display:flex;flex-direction:column;align-items:center;gap:4px;padding:.2em .5em;border-radius:24px;min-width:clamp(120px,30vmin,220px)}
+.bk-btn.fork .pic{font-size:clamp(48px,11vmin,96px);line-height:1}
+.bk-btn.fork small{font-size:clamp(15px,3.2vmin,24px);font-weight:800;color:#3b3a55}
+.bk-btn.fork.used{opacity:.35;transform:scale(.92)}
+.bk-item-fly{filter:drop-shadow(0 0 18px #9fd0ff)}
+.bk-spellbook{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:0 0 8px;padding:6px 10px;border-radius:14px;background:linear-gradient(#26407a,#1a2c57);font-size:30px;box-shadow:inset 0 0 0 2px #c9a24a}
+
+/* ---- Spellbook theme (a young wizard's book: blue, gold trim, a map for the page trail) ---- */
+.bk-theme-spellbook{background:#0f1c3a}
+.bk-theme-spellbook .bk-cover{background:radial-gradient(ellipse at 50% 40%,rgba(10,20,60,.05),rgba(8,14,40,.6))}
+.bk-theme-spellbook .bk-cover .card{background:linear-gradient(160deg,#1d3470,#13244f);color:#f4ecd8;border:3px solid #c9a24a;box-shadow:0 0 0 6px #13244f,0 0 0 8px #c9a24a,0 16px 44px rgba(0,0,0,.5)}
+.bk-theme-spellbook .bk-cover .kicker{color:#9fd0ff}
+.bk-theme-spellbook .bk-cover h1{font-family:Georgia,"Times New Roman",serif;letter-spacing:.01em}
+.bk-theme-spellbook .bk-cover .card::before{content:"✦ ✧ ✦";display:block;color:#c9a24a;letter-spacing:.4em;font-size:14px}
+.bk-theme-spellbook .bk-quest{background:linear-gradient(160deg,#1d3470,#13244f);color:#f4ecd8;border:3px solid #c9a24a}
+.bk-theme-spellbook .bk-quest h2{color:#9fd0ff}
+.bk-theme-spellbook .bk-board{background:#13244f;border-color:#c9a24a}
+.bk-theme-spellbook .bk-btn.ball{background:radial-gradient(circle at 35% 30%,#fff,#e3ecff 60%,#9fb6e6);color:#13244f}
+/* the page trail becomes a map route: a dashed line with a star for where he is */
+.bk-theme-spellbook .bk-dots{gap:0;align-items:center;padding:4px 10px;border-radius:14px;background:rgba(15,28,58,.55)}
+.bk-theme-spellbook .bk-dots i{width:16px;height:3px;border-radius:2px;background:rgba(159,208,255,.35);margin:0 2px}
+.bk-theme-spellbook .bk-dots i.done{background:#c9a24a}
+.bk-theme-spellbook .bk-dots i.now{width:18px;height:18px;border-radius:0;background:none;transform:none;position:relative}
+.bk-theme-spellbook .bk-dots i.now::after{content:"★";position:absolute;inset:-4px 0 0;color:#ffd54a;font-size:18px;font-style:normal;line-height:18px;text-align:center;text-shadow:0 0 8px #ffd54a}
+.bk-theme-spellbook .bk-words,.bk-theme-spellbook .bk-caption{font-family:Georgia,"Times New Roman",serif}
+
+/* golden letter keys */
+.bk-keys-golden .bk-keys b{background:linear-gradient(#fff2a8,#f0c02a 55%,#c98f12);color:#4a2e00;box-shadow:0 0 10px rgba(255,210,60,.7),0 2px 6px rgba(0,0,0,.3)}
+.bk-keys-golden .bk-key-fly{filter:drop-shadow(0 0 16px #ffd54a)}

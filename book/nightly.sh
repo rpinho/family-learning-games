@@ -1,5 +1,6 @@
 #!/bin/bash
-# The Book nightly: yesterday's recap (optional), then learner models + tomorrow's chapters.
+# The Book nightly (21:05, after bedtime): the kids' day recap (optional), then learner models + tomorrow's chapters
+# and tomorrow's Letter Hunts.
 # Low priority and time-boxed; a failure never touches the games. Configure with environment:
 #   FAMILY_DEPLOY_ROOT, BOOK_RECAP_SCRIPT (optional recap generator), BOOK_CLAUDE_TOKEN_FILE,
 #   BOOK_TIMEOUT (seconds, default 2700). Extra arguments go to generate.mjs.
@@ -10,8 +11,12 @@ if command -v taskpolicy >/dev/null; then LOW=(nice -n 19 taskpolicy -b); else L
 limit() { perl -e '$t=shift; alarm $t; exec @ARGV or exit 127' "$1" "${LOW[@]}" "${@:2}"; }
 echo "== book nightly $(date '+%Y-%m-%d %H:%M:%S')"
 if [ -n "${BOOK_RECAP_SCRIPT:-}" ] && [ -f "$BOOK_RECAP_SCRIPT" ]; then
-  yesterday="$(node -e 'const d=new Date(Date.now()-864e5);console.log(new Intl.DateTimeFormat("en-CA",{year:"numeric",month:"2-digit",day:"2-digit"}).format(d))')"
-  limit 120 node "$BOOK_RECAP_SCRIPT" --date "$yesterday" || echo "recap failed (non-fatal)"
+  # The kids' day being recapped: after noon it is TODAY (an evening run, after bedtime), before noon YESTERDAY
+  # (an early-morning run). Same rule as generate.mjs and hunts.mjs use for the chapter date.
+  recapday="$(node -e 'const tz=process.env.FAMILY_TZ||Intl.DateTimeFormat().resolvedOptions().timeZone,now=Date.now(),h=Number(new Intl.DateTimeFormat("en-US",{timeZone:tz,hour:"numeric",hourCycle:"h23"}).format(now)),d=new Date(h<12?now-864e5:now);console.log(new Intl.DateTimeFormat("en-CA",{timeZone:tz,year:"numeric",month:"2-digit",day:"2-digit"}).format(d))')"
+  limit 120 node "$BOOK_RECAP_SCRIPT" --date "$recapday" || echo "recap failed (non-fatal)"
+  # The Book's part of the recap (per-beat tries, first-try right, fast taps, time per page, hunts found).
+  limit 60 node "$here/recap-book.mjs" --date "$recapday" || echo "book recap failed (non-fatal)"
 fi
 limit "${BOOK_TIMEOUT:-2700}" node "$here/generate.mjs" "$@"
 rc=$?

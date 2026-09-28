@@ -52,15 +52,17 @@ export function assemble(story,plan,{number=1,source='template',lint=[],generate
  });
  const art=artFor(pages,library);
  const first=pages[0];
- const cover={title:clean(story.title),line:N(`${plan.name}'s Book. Chapter ${number}. ${clean(story.title).replace(/[.!?]*$/,'.')}`),scene:first.scene};
+ const bookWord=plan.theme==='spellbook'?'Spellbook':'Book';
+ const cover={title:clean(story.title),line:N(`${plan.name}'s ${bookWord}. Chapter ${number}. ${clean(story.title).replace(/[.!?]*$/,'.')}`),scene:first.scene};
  const ui=Object.fromEntries(Object.entries(UI_LINES).map(([k,t])=>[k,N(t)]));
  ui.numbers=Object.fromEntries(Array.from({length:12},(_,i)=>[String(i+1),N(String(i+1))]));
  return {schema:CHAPTER_SCHEMA,player:plan.player,name:plan.name,date:plan.date,number,title:cover.title,level:plan.level,cover,
   cast:(plan.cast||[]).map(c=>({id:c.id,name:c.name,emoji:c.emoji||'⭐'})),art,pages,ui,
+  ...(plan.theme?{theme:plan.theme}:{}),...(plan.style&&plan.style!=='classic'?{style:plan.style}:{}),...(plan.keyStyle?{keyStyle:plan.keyStyle}:{}),
   // The quest is always doable at home: hint pictures for a hunt, or word cards Dad prints and hides.
   quest:plan.quest?(q=>({...N(`A quest for you and ${plan.lead?.name||'Dad'}: ${q.text}`),...(q.hints?.length?{hints:q.hints.slice(0,7).map(h=>({word:h.word,emoji:h.emoji,line:N(h.text)}))}:{}),...(q.cards?.length?{cards:q.cards,dad:q.dad}:{})}))(typeof plan.quest==='string'?{text:plan.quest}:plan.quest):null,reward:plan.reward||null,
   summary:clean(story.summary),hook:clean(story.hook),
-  meta:{generatedAt,source,lint,sceneNotes:notes,practises:plan.beats.map(b=>`${b.kind}: ${b.what}`),magic:plan.magic,dadLines,themes:(plan.themes||[]).map(t=>t.id||t.seed),yesterday:plan.yesterday}};
+  meta:{generatedAt,source,lint,sceneNotes:notes,practises:plan.beats.map(b=>`${b.kind}: ${b.what}`),magic:plan.magic,dadLines,themes:(plan.themes||[]).map(t=>t.id||t.seed),details:(plan.details||[]).map(d=>d.id),yesterday:plan.yesterday}};
 }
 // A decodable word sounded out slowly (c-a-t, cat), in the narrator's voice.
 const soundLines=(sounds,N)=>Object.fromEntries(Object.entries(sounds).map(([w,t])=>[w,N(t)]));
@@ -77,6 +79,9 @@ function beatLines(b,{N,line,plan}){
   case 'spell':return {...b,spoken:N(b.spoken),done:N(b.sentence),...(b.sounds?{sounds:soundLines(b.sounds,N)}:{})};
   case 'share':return {...b,spoken:N(b.spoken),ask:N(b.ask),done:N(`Yes! ${b.answer} slices on each plate. Fair for everyone!`)};
   case 'score':return {...b,spoken:N(b.spoken),done:N(`Yes! ${b.answer} points!`)};
+  case 'puzzle':return {...b,spoken:N(b.spoken),hint:N(b.hint),done:N(b.done)};
+  case 'remainder':return {...b,spoken:N(b.spoken),ask:N(b.ask),done:N(b.done)};
+  case 'fork':return {...b,spoken:N(b.spoken),options:b.options.map(o=>({...o,reply:N(o.reply),got:N(`${o.item.name[0].toUpperCase()+o.item.name.slice(1)} for your spellbook!`)}))};
   case 'no':return {...b,claim:line(who,b.claim),ask:line(who,b.ask),ifYes:line(who,b.ifYes),caught:N(b.caught),fixSpoken:N(b.fixSpoken),hint:N(b.hint)};
  }
  return b;

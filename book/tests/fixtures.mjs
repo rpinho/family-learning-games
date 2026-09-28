@@ -55,6 +55,6 @@ export async function deployment({players=['young','older']}={}){
  return {root,env};
 }
 
-const young=buildLearner({player:'young',name:'Ada',profile:{age:5,mathTrack:'early',companions:[{name:'Bo',kind:'a big gentle bear',emoji:'🐻'}],interests:['dinosaurs']},now:NOW,saves:saves('young')});
-const older=buildLearner({player:'older',name:'Leo',profile:{age:8,mathTrack:'facts',companions:[{name:'Gizmo',kind:'a small robot pup',emoji:'🤖'}],interests:['robots']},now:NOW,saves:saves('older')});
+export const young=buildLearner({player:'young',name:'Ada',profile:{age:5,mathTrack:'early',companions:[{name:'Bo',kind:'a big gentle bear',emoji:'🐻'}],interests:['dinosaurs']},now:NOW,saves:saves('young')});
+export const older=buildLearner({player:'older',name:'Leo',profile:{age:8,mathTrack:'facts',companions:[{name:'Gizmo',kind:'a small robot pup',emoji:'🤖'}],interests:['robots']},now:NOW,saves:saves('older')});
 export const plans=(dates=['2026-03-10','2026-03-11','2026-03-12','2026-03-13','2026-03-14'])=>dates.flatMap(d=>[planChapter(young,{date:d,profile:{sibling:'Leo'}}),planChapter(older,{date:d,profile:{sibling:'Ada'}})]);
