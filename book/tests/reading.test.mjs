@@ -78,3 +78,8 @@ test('an echo (same words said again in a new order) is caught', async()=>{
  const {isEcho}=await import('../lint.mjs');
  assert.ok(isEcho('Learn my sound, matey! My sound learn, matey!'));assert.ok(!isEcho('Kick the ball with B. It says [[b]].'));assert.ok(!isEcho('Pika! Pika-pi!'));
 });
+
+test('the quest card never says the grown-up twice in a row', async()=>{
+ const {readerQuest}=await import('../quests.mjs');const {repeatedWords}=await import('../lint.mjs');
+ for(const g of ['Dad','Mom'])for(let s=0;s<20;s++){const t=`A quest for you and ${g}: ${readerQuest(['cat','dog','sun'],{grown:g,seed:s}).text}`;assert.deepEqual(repeatedWords(t),[],t);}
+});

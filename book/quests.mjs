@@ -52,12 +52,13 @@ export function letterQuest(L,{sound=L,friend=null,grown='Dad',kind='sound'}={})
  return {kind:'sound',text:`Sound hunt: find three things that start with ${L} and show ${grown}!`,hints};
 }
 // Reader: a rhyme hunt when the house can answer it, otherwise word cards Dad hides (printed from Grown-ups).
+const WN=n=>(['zero','One','Two','Three','Four','Five','Six'][n]||String(n));
 export function readerQuest(words,{seed=0,grown='Dad'}={}){
  const ws=[...new Set(words.map(w=>String(w).toLowerCase()).filter(Boolean))];
  const rhymeable=ws.find(w=>family(w));
  if(rhymeable&&seed%2===0){const f=family(rhymeable),things=RHYMES[f].filter(t=>t.split('|')[0]!==rhymeable);
   return {text:`Rhyme hunt! Find something at home that rhymes with ${rhymeable}, and show ${grown}.`,hints:things.map(t=>{const [r,d]=t.split('|');return {word:r,emoji:'🔎',text:`Look for ${d}. ${cap(r)}, ${rhymeable}!`};})};}
  const cards=ws.slice(0,3);
- return {text:`Dad is hiding ${cards.length===1?'a word card':cards.length+' word cards'} around the house. Find ${cards.length===1?'it':'them'} and read ${cards.length===1?'it':'each one'} to ${grown}!`,cards,
+ return {text:`${cards.length===1?'A word card is':WN(cards.length)+' word cards are'} hidden around the house. Find ${cards.length===1?'it':'them'} and read ${cards.length===1?'it':'each one'} to ${grown}!`,cards,
   dad:`For Dad: print the word cards (Grown-ups, then Word cards) and hide them before he starts looking.`};
 }
