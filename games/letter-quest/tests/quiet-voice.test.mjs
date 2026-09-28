@@ -66,6 +66,9 @@ test('Lively performances use full character lines more often without interrupti
  const {voice,player}=harness(t);await voice.ready;
  voice.manifest.performance='lively';voice.manifest.clips['A dramatic victory!']='joke';
  voice.manifest.clips['A second joke.']='second';
+ voice.instruction('prompt');t.mock.timers.tick(251);await tick();
+ await voice.feedback(true,'A dramatic victory!');assert.equal(player.played.at(-1),'prompt','the clue finishes first');
+ player.dispatchEvent(new Event('ended'));
  await voice.feedback(true,'A dramatic victory!');assert.equal(player.played.at(-1),'joke');
  player.dispatchEvent(new Event('ended'));t.mock.timers.tick(6501);
  await voice.feedback(true,'A second joke.');assert.equal(player.played.at(-1),'second');

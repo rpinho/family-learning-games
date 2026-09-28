@@ -46,7 +46,7 @@ export class CoachVoice {
   feedback(ok=true,text=null){
     const now=Date.now();
     const lively=this.manifest?.performance==='lively';
-    if(this.mode||this.queued||now-this.lastSpeech<(lively?750:3000)||now-this.lastFeedback<(lively?6500:15000)){this.record('voice_skip',{reason:'breathing_room'});return;}
+    if(this.mode||this.queued||now-this.lastSpeech<(lively?0:3000)||now-this.lastFeedback<(lively?6500:15000)){this.record('voice_skip',{reason:'breathing_room'});return;}
     this.lastFeedback=now;this.stop();this.mode='feedback';
     return this.play(lively&&text?text:ok?SHORT_FEEDBACK[this.feedbackIndex++%3]:SHORT_FEEDBACK[3],this.generation);
   }
