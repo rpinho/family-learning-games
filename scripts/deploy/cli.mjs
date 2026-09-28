@@ -433,15 +433,34 @@ async function applyLive(name, version, why = 'PROMOTED') {
   if (!existsSync(releaseDir(name, version))) throw new Error(`release ${name}/${version} missing`);
   if (previous === version) {log(`SKIP ${name} ${version} already live`); return true;}
   const {dest, hashes} = backupSaves(name, g.data, `promote-${name}-${version}`);
+  const file = plistPath(label), original = readFileSync(file);
+  copyFileSync(file, join(dest, 'service.plist'));
+  const {obj} = plistFor(name, 'live');
+  // launchd retains the loaded environment; kickstart does not reread the plist.
+  // Reload only this service, inside the promoter's existing idle guard.
+  async function reload(configuration) {
+    await bootout(label);
+    for (const port of [g.port, g.uiPort].filter(Boolean)) {
+      if (!await waitPortFree(port, 25)) throw new Error(`${name}: port ${port} did not stop`);
+    }
+    if (Buffer.isBuffer(configuration)) {
+      const temp = `${file}.restore-${process.pid}`;
+      writeFileSync(temp, configuration); renameSync(temp, file);
+    } else writePlist(file, configuration);
+    await bootstrap(file, label);
+  }
   const voice = applyVoice(name, version, g.data);
-  atomicSymlink(releaseDir(name, version), link);
-  kickstart(label);
-  const v = await verifyServing(name, 'live', version);
-  if (!v.ok) {
-    log(`FAILED ${name} ${version}: ${v.why}; rolling back to ${previous}`);
+  let v;
+  try {
+    atomicSymlink(releaseDir(name, version), link);
+    await reload(obj);
+    v = await verifyServing(name, 'live', version);
+    if (!v.ok) throw new Error(v.why);
+  } catch (error) {
+    log(`FAILED ${name} ${version}: ${error.message}; rolling back to ${previous}`);
     if (previous) atomicSymlink(releaseDir(name, previous), link);
     restoreVoiceManifests(name, g.data, voice);
-    kickstart(label);
+    await reload(original);
     const back = previous ? await verifyServing(name, 'live', previous) : {ok: false, why: 'no previous release'};
     log(`ROLLBACK ${name} -> ${previous}: ${back.ok ? 'healthy' : 'UNHEALTHY ' + back.why}`);
     return false;

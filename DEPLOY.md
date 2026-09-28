@@ -20,8 +20,9 @@ under a running server freezes their game. So production never runs from a worki
 A top-level `env` in `deploy.json` is added to every service's environment (a game's own `env` wins). Use it for
 `FAMILY_EXTRA_HOSTS`: extra names or addresses this machine answers to (comma separated, e.g. a VPN name), which
 every game and the hub accept in their host allowlist alongside `localhost`, the hostname and the current interface
-addresses (re-read every few seconds). Promotion only restarts a service, so an env change reaches a live service
-when its launchd plist is rewritten (`prepare-cutover` with the live refs, then the cutover).
+addresses (re-read every few seconds). At an idle-gated promotion, the service's launchd plist is regenerated
+from these settings and that service is unloaded/reloaded, so the new process receives changed environment
+variables. Merely writing a plist and calling `kickstart` would retain launchd's old environment.
 
 ## HTTPS (installable app, microphone)
 
@@ -56,11 +57,12 @@ installed app opens that child's profile.
   open pages, write requests through the hub, and save-file times. The promoter then:
   1. backs up the saves (with SHA-256 sums) to the backups directory;
   2. adds the new voice clips;
-  3. switches the symlink and restarts that one service;
+  3. switches the symlink, updates the launchd configuration and reloads that one service;
   4. checks health and that the listening process runs from the new release;
   5. checks that the saves are byte-identical.
 
-  If the health check fails, it rolls back to the previous release automatically. Every step is logged
+  The original service plist is included in the backup. If loading the service or checking its health fails,
+  it restores the previous release, voice manifest and original service configuration automatically. Every step is logged
   to `promotions.log`.
 - **No stale pages.** The hub injects each page's release ids and exposes `/__deploy/version`. Open pages
   poll it every minute. When their game's release (or the hub's) changes, they reload themselves at a
