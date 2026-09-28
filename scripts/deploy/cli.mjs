@@ -420,12 +420,37 @@ async function stage(name, ref, opts) {
 }
 
 // ---------- promotion ----------
+// ---------- forward only ----------
+// A release may go live only if its commit CONTAINS the live release's commit (git merge-base --is-ancestor), so an
+// agent promoting from a branch that missed someone else's newer live work cannot roll it back by accident
+// (2026-09-28: a queued hub build lacked the live primer transition). Real rollbacks say so: --allow-rollback
+// (the rollback command sets it). Returns null when fine, else the reason.
+function forwardCheck(repo, liveSha, candSha, git = (args) => spawnSync('git', args, {encoding: 'utf8'})) {
+  if (!liveSha || !candSha || liveSha === candSha) return null;
+  const r = git(['-C', repo, 'merge-base', '--is-ancestor', liveSha, candSha]);
+  if (r.status === 0) return null;
+  if (r.status === 1) return `live ${liveSha.slice(0, 7)} is not in candidate ${candSha.slice(0, 7)}; merge first (or --allow-rollback for a deliberate rollback)`;
+  return `cannot tell whether live ${liveSha.slice(0, 7)} is in candidate ${candSha.slice(0, 7)} (${String(r.stderr || '').trim().slice(0, 120) || 'git failed'}); merge first or --allow-rollback`;
+}
+function releaseCommit(name, version) {return version ? readJSON(join(releaseDir(name, version), '.release.json'), null)?.commit || null : null;}
+function forwardOnly(name, version, allowRollback = false) {
+  if (allowRollback) return null;
+  const live = currentVersion('live', name);
+  if (!live || live === version) return null;
+  const liveSha = releaseCommit(name, live), candSha = releaseCommit(name, version);
+  if (!liveSha) return null;                     // live is not a managed release (dev tree before the cutover)
+  if (!candSha) return `candidate ${version} has no recorded commit; cannot prove it contains live ${live}`;
+  const why = forwardCheck(game(name).repo, liveSha, candSha);
+  return why ? `${name}: ${why} (live ${live}, candidate ${version})` : null;
+}
+
 async function promote(name, ref, opts) {
   const version = await build(name, ref, opts);
+  {const why = forwardOnly(name, version, opts.allowRollback); if (why) {log(`REFUSED ${name} ${version}: ${why}`); throw new Error(why);}}
   await check(name, version);
   narrationGate(name, version, 'live');
   applyVoice(name, version, game(name).data, {dryRun: true});
-  const q = {game: name, version, queuedAt: now(), by: process.env.USER || 'agent'};
+  const q = {game: name, version, queuedAt: now(), by: process.env.USER || 'agent', ...(opts.allowRollback ? {allowRollback: true} : {})};
   writeJSON(join(ROOT, 'queue', name + '.json'), q);
   log(`QUEUED ${name} ${version}`);
   const s = idleState();
@@ -493,6 +518,9 @@ async function tick() {
       if (!idleState().ok) break;
       const qf = join(ROOT, 'queue', q.game + '.json');
       if (readJSON(qf, {}).version !== q.version) continue;
+      // Forward only, checked again at the moment of going live (live may have moved since it was queued).
+      const why = forwardOnly(q.game, q.version, q.allowRollback === true);
+      if (why) {log(`REFUSED ${q.game} ${q.version}: ${why}`); mkdirSync(join(ROOT, 'queue', 'refused'), {recursive: true}); renameSync(qf, join(ROOT, 'queue', 'refused', `${q.game}-${q.version}.json`)); continue;}
       let ok = false;
       try {ok = await applyLive(q.game, q.version);} catch (e) {log(`FAILED ${q.game} ${q.version}: ${e.message}`);}
       if (readJSON(qf, {}).version === q.version) {
@@ -598,11 +626,12 @@ function status() {
 
 const [cmd, ...args] = process.argv.slice(2);
 const flags = new Set(args.filter(a => a.startsWith('--'))), pos = args.filter(a => !a.startsWith('--'));
-const opts = {voice: !flags.has('--no-voice')};
+const opts = {voice: !flags.has('--no-voice'), allowRollback: flags.has('--allow-rollback')};
 const usage = `usage: cli.mjs <command>
   build <game> [ref]            build an immutable release (no deploy)
   stage <game|all> [ref]        build + deploy to STAGING (safe any time)
-  promote <game> [ref|staging]  build + health-check + QUEUE for live (idle-gated)
+  promote <game> [ref|staging]  build + health-check + QUEUE for live (idle-gated); refused unless the
+                                candidate contains the live commit (--allow-rollback to go back on purpose)
   status                        versions, queue, idle state
   staging-refresh <game|all>    copy live saves into staging data
   rollback <game> [--now]       queue (or with --now apply immediately) the previous live release
@@ -623,7 +652,7 @@ try {
     const cur = currentVersion('live', name), prev = [...hist].reverse().find(v => v !== cur);
     if (!prev) die(`no previous live release recorded for ${name}`);
     if (flags.has('--now')) {const r = lock('live'); if (!r) die('live lock busy'); try {await applyLive(name, prev, 'ROLLED-BACK');} finally {r();}}
-    else {writeJSON(join(ROOT, 'queue', name + '.json'), {game: name, version: prev, queuedAt: now(), by: 'rollback'}); log(`QUEUED ${name} ${prev} (rollback)`);}
+    else {writeJSON(join(ROOT, 'queue', name + '.json'), {game: name, version: prev, queuedAt: now(), by: 'rollback', allowRollback: true}); log(`QUEUED ${name} ${prev} (rollback)`);}
   }
   else if (cmd === 'print-plist') console.log(JSON.stringify(plistFor(pos[0], pos[1] || 'live').obj, null, 1));
   else if (cmd === 'tick') await tick();
