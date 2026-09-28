@@ -124,7 +124,7 @@ export async function generateOne(player,{paths,profiles,date,noLLM=false,noVoic
  // Every voiced line says each word once (template lines are covered by tests; this catches anything else).
  const twice=speechLines(ch).filter(l=>repeatedWords(l.text).length);if(twice.length)log(`${player} ${date}: WARNING word said twice in a row: `+twice.slice(0,3).map(l=>l.text.slice(0,60)).join(' | '));
  if(!noVoice){try{const n=await narrate(speechLines(ch),{paths});attachClips(ch,n.clips);log(`${player} ${date}: ${n.made} new clips`);}
-  catch(e){log(`${player} ${date}: narration failed, device speech will be used (${String(e.message).slice(0,200)})`);}}
+  catch(e){log(`${player} ${date}: narration failed; chapter was not published (${String(e.message).slice(0,200)})`);throw e;}}
  // Publish: write into a staging folder, then rename each file into place (clips already exist).
  const stage=join(paths.book,'.staging',`${player}-${date}-${process.pid}`);await mkdir(stage,{recursive:true,mode:0o700});await mkdir(dir,{recursive:true,mode:0o700});
  await writeFile(join(stage,date+'.md'),markdown(ch),{mode:0o600});

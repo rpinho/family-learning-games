@@ -8,6 +8,8 @@ the words next to it, which made "[[lll]]" come out as "lol"). Longer phoneme sp
 inline. Clips are content-addressed and only ever added: an existing clip is never rewritten.
 Prints {"made": n, "clips": {"voice|speed|text": file}} as JSON."""
 import hashlib, json, os, re, sys
+sys.dont_write_bytecode = True
+from external_voice import render_external
 from pathlib import Path
 req = json.loads(Path(sys.argv[1]).read_text())
 out = Path(req['out']); out.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -17,10 +19,18 @@ SOUND = re.compile(r'\[\[([^\]]*)\]\]')
 def is_sound(p): return 0 < len(p.replace('ˈ', '').replace('ˌ', '')) <= 2
 # A line with an isolated letter sound is made differently, so its clip has its own key (old clips stay as they were).
 # book-2 used Letter Quest's Kokoro phonemes; book-3 uses the shared recorded letter sounds.
-def version(l): return 'book-3' if any(is_sound(p) for p in SOUND.findall(l['text'])) else 'book-1'
+def version(l): return 'book-4' if l['voice'].startswith('local:') else ('book-3' if any(is_sound(p) for p in SOUND.findall(l['text'])) else 'book-1')
 def key(l): return hashlib.sha256(f"{version(l)}\0{l['voice']}\0{l['speed']}\0{l['text']}".encode()).hexdigest()[:16]
 def ref(l, speed): return f"{l['voice']}|{speed}|{l['text']}"
 todo = {key(l): l for l in lines if not (out / (key(l) + '.wav')).exists()}
+made = len(todo)
+# Household-owned renderer configuration, never a command supplied by a browser.
+# A versioned local voice id has its own cache identity; missing configuration fails
+# explicitly instead of quietly reverting to another speaker.
+external = {k: l for k, l in todo.items() if l['voice'].startswith('local:')}
+if external:
+    render_external(external, req, out)
+todo = {k: l for k, l in todo.items() if k not in external}
 # ---- letter sounds: ONE source of truth, the family's shared recorded letter sounds ----
 # ~/.local/share/family-games/letter-sounds/<letter>.wav (private; provenance in letter-sounds.json), processed for
 # playback exactly as the other games do it: word-arcade's scripts/soundout.py letter_sound() (trimmed only in silence,
@@ -109,4 +119,4 @@ clips = {}
 for raw in req['lines']:
     if not str(raw.get('text', '')).strip(): continue
     l = norm(raw); clips[f"{raw.get('voice') or 'af_heart'}|{raw.get('speed') if raw.get('speed') is not None else 0.95}|{l['text']}"] = key(l) + '.wav'
-print(json.dumps({'made': len(todo), 'clips': clips}))
+print(json.dumps({'made': made, 'clips': clips}))

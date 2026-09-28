@@ -8,12 +8,13 @@ import {execFile} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {tmpdir} from 'node:os';
 import {bookPaths,resolveVoices,soundSource} from '../book/paths.mjs';
+import {setRookVoice} from '../book/assemble.mjs';
 import {join,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 const here=dirname(fileURLToPath(import.meta.url)),publicArt=join(here,'public','book-art');
 // A narration clip's file name (the same key as book/narrate.py): content-addressed, only ever added.
 // (book-3: a line with an isolated letter sound, e.g. [[b]]; see book/narrate.py)
-export const clipName=({voice,speed,text})=>{const n=Number(speed),sp=Number.isInteger(n)?n.toFixed(1):String(n),v=[...String(text).matchAll(/\[\[([^\]]*)\]\]/g)].some(m=>{const x=m[1].replace(/[ˈˌ]/g,'');return x.length>0&&x.length<=2;})?'book-3':'book-1';return createHash('sha256').update(`${v}\0${voice}\0${sp}\0${text}`).digest('hex').slice(0,16)+'.wav';};
+export const clipName=({voice,speed,text})=>{const n=Number(speed),sp=Number.isInteger(n)?n.toFixed(1):String(n),v=String(voice).startsWith('local:')?'book-4':([...String(text).matchAll(/\[\[([^\]]*)\]\]/g)].some(m=>{const x=m[1].replace(/[ˈˌ]/g,'');return x.length>0&&x.length<=2;})?'book-3':'book-1');return createHash('sha256').update(`${v}\0${voice}\0${sp}\0${text}`).digest('hex').slice(0,16)+'.wav';};
 const ART_TYPES={webp:'image/webp',png:'image/png',svg:'image/svg+xml',jpg:'image/jpeg'};
 const send=(res,status,obj)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(obj));};
 export const localDate=(ms=Date.now(),timeZone)=>new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(ms));
@@ -38,7 +39,7 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
  // a chapter can be rendered. narrate(lines) -> {clips} can be replaced in tests.
  let voiceQueue=Promise.resolve();
  const narrate=voiceEngine||(async lines=>{const p=bookPaths();const dir=await mkdtemp(join(tmpdir(),'book-voice-'));const req=join(dir,'req.json');
-  await writeFile(req,JSON.stringify({lines,out:join(bookDir,'voice'),models:p.voiceModels,...soundSource(p)}));
+  await writeFile(req,JSON.stringify({lines,out:join(bookDir,'voice'),models:p.voiceModels,...soundSource({...p,voiceRenderers:join(bookDir,'voice-renderers.json')})}));
   try{const out=await new Promise((ok,no)=>execFile('nice',['-n','19','taskpolicy','-b',p.python,join(here,'..','book','narrate.py'),req],{timeout:90000,maxBuffer:1<<22,env:{...process.env,BOOK_VOICE_THREADS:'2'}},(e,so)=>e?no(e):ok(so)));
    return JSON.parse(String(out).trim().split('\n').at(-1));}finally{await rm(dir,{recursive:true,force:true}).catch(()=>{});}});
  async function renderLine(line){const file=clipName(line),at=join(bookDir,'voice',file);
@@ -52,7 +53,11 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
  let queue=Promise.resolve();
  const serial=fn=>(queue=queue.catch(()=>{}).then(fn));
  const today=()=>localDate(now(),timeZone);
- async function chapter(player,date){if(!DATE.test(date))return null;const c=await readJSON(join(bookDir,player,date+'.json'),null);return c&&c.player===player&&c.schema===CHAPTER_SCHEMA&&Array.isArray(c.pages)?c:null;}
+ async function chapter(player,date){if(!DATE.test(date))return null;const c=await readJSON(join(bookDir,player,date+'.json'),null);
+  if(!c||c.player!==player||c.schema!==CHAPTER_SCHEMA||!Array.isArray(c.pages))return null;
+  const named=(await readJSON(join(bookDir,'cast.json'),{}))?.voices||{};
+  for(const l of setRookVoice(c,named.rook||'am_michael')){const file=clipName(l);try{await access(join(bookDir,'voice',file));l.clip=file;}catch{}}
+  return c;}
  async function progress(player){return readJSON(join(progressDir,player+'.json'),{days:{}});}
  async function notes(){const n=await readJSON(notesFile,{notes:[]});return Array.isArray(n.notes)?n.notes:[];}
  async function body(req){let raw='';for await(const part of req){raw+=part;if(raw.length>4096)throw Object.assign(Error('Too much data.'),{status:413});}try{return JSON.parse(raw);}catch{throw Object.assign(Error('Invalid JSON.'),{status:400});}}

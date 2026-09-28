@@ -12,7 +12,7 @@ export const UI_LINES={goal:'Goal!',saved:'Ooh, saved! Try again!',go:'Toot! Off
 export const DEFAULT_VOICES={narrator:{voice:'af_heart',speed:0.95},dad:{voice:'am_michael',speed:0.95},mom:{voice:'af_sarah',speed:0.95}};
 const FRIEND_VOICES=[{voice:'am_puck',speed:1},{voice:'af_bella',speed:1},{voice:'bm_fable',speed:1},{voice:'af_nova',speed:1.05}];
 export function voicesFor(plan,{narrator,named={}}={}){
- const v={narrator:{...DEFAULT_VOICES.narrator,...(narrator||{})},dad:{...DEFAULT_VOICES.dad,...(named.rook?{voice:named.rook}:{})},mom:{...DEFAULT_VOICES.mom}};
+ const v={narrator:{...DEFAULT_VOICES.narrator,...(narrator||{})},dad:{...DEFAULT_VOICES.dad,voiceRole:'rook',...(named.rook?{voice:named.rook}:{})},mom:{...DEFAULT_VOICES.mom}};
  (plan.cast||[]).forEach((c,i)=>{v[c.id]=c.voice?{voice:c.voice,speed:Number(c.speed)||1}:FRIEND_VOICES[i%FRIEND_VOICES.length];});
  return v;
 }
@@ -93,6 +93,16 @@ export function speechLines(ch){
  const walk=v=>{if(!v||typeof v!=='object')return;if(Array.isArray(v))return v.forEach(walk);if(typeof v.text==='string'&&v.voice)add(v);for(const x of Object.values(v))if(x&&typeof x==='object')walk(x);};
  walk(ch.cover);walk(ch.pages);walk(ch.ui);walk(ch.quest);
  return [...out.values()];
+}
+// Read-time voice selection also applies to already-written chapters, without
+// rewriting their story or progress. Legacy Dad lines used the stock Rook voice.
+// An explicitly different Dad voice (and every other actor) stays independent.
+export function setRookVoice(ch,voice='am_michael'){
+ const changed=[];
+ const walk=v=>{if(!v||typeof v!=='object')return;if(Array.isArray(v))return v.forEach(walk);
+  if(v.text&&v.voice&&(v.voiceRole==='rook'||(['dad','rook'].includes(v.who)&&(v.voice==='am_michael'||v.voice.startsWith('local:rook-'))))&&v.voice!==voice){v.voice=voice;delete v.clip;changed.push(v);}
+  for(const x of Object.values(v))if(x&&typeof x==='object')walk(x);};
+ walk(ch);return changed;
 }
 // Attach narration clips: clips maps "voice|speed|text" to a file name.
 export function attachClips(ch,clips){

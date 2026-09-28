@@ -52,7 +52,7 @@ installed app opens that child's profile.
 - **Promotion.** `promote` builds the release, starts it on a temporary port against a copy-on-write
   clone of the live saves, checks its health, and writes `queue/<game>.json`. The promoter job runs every
   minute. It goes live only when **every game and the hub have been idle for 15 minutes**, or during the
-  night window (21:00–06:30) after 2 quiet minutes. "Idle" uses real play: the last input reported by
+  configured quiet windows after their short idle guard (see below). "Idle" uses real play: the last input reported by
   open pages, write requests through the hub, and save-file times. The promoter then:
   1. backs up the saves (with SHA-256 sums) to the backups directory;
   2. adds the new voice clips;

@@ -68,6 +68,13 @@ test('Every spoken line carries a voice and gets its clip; friends and Dad have 
  assert.ok(all.length>30&&all.every(l=>l.clip),'every line on every page has narration');
  for(const pg of ch.pages)assert.ok(pg.say.length||pg.beat,`page ${pg.id} is narrated`);
 });
+test('A failed narration leaves the existing chapter intact and never publishes an unvoiced replacement',async()=>{
+ const {root,env}=await deployment(),paths=bookPaths(env),profiles=readProfiles(paths),date='2026-03-10';
+ await mkdir(join(paths.book,'older'),{recursive:true});const file=join(paths.book,'older',date+'.json');
+ const before=JSON.stringify({schema:'family-book-chapter-2',title:'Keep this chapter',pages:[]});await writeFile(file,before);
+ await assert.rejects(generateOne('older',{paths:{...paths,python:'false'},profiles,date,force:true,noLLM:true,now:NOW,log:()=>{}}),/narration failed/);
+ assert.equal(await readFile(file,'utf8'),before);
+});
 test('The generic picture library ships with the repository and resolves',()=>{
  const lib=readLibrary(bookPaths({FAMILY_DEPLOY_ROOT:'/nonexistent'}));
  assert.equal(lib.private,false);assert.ok(lib.actors.hero&&lib.actors['grown-up']&&lib.backgrounds.meadow);

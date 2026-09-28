@@ -21,7 +21,7 @@ export function bookPaths(env=process.env){
  if(env.FAMILY_DATA)data.hub??=exp(env.FAMILY_DATA);
  const book=resolve(exp(env.FAMILY_BOOK||join(root,'book')));
  return {root,data,config,book,voice:join(book,'voice'),learner:resolve(exp(env.FAMILY_LEARNER||join(root,'learner'))),
-  profiles:join(book,'profiles.json'),cast:join(book,'cast.json'),notes:data.hub?join(data.hub,'book-notes.json'):null,
+  profiles:join(book,'profiles.json'),cast:join(book,'cast.json'),voiceRenderers:join(book,'voice-renderers.json'),notes:data.hub?join(data.hub,'book-notes.json'):null,
   recap:resolve(exp(env.FAMILY_RECAP_DIR||join(homedir(),'.local/share/family-learning-games-recap'))),
   python:exp(env.FAMILY_BOOK_PYTHON||deploy?.python||'python3'),
   voiceModels:exp(env.FAMILY_VOICE_MODELS||(data['letter-quest']?join(data['letter-quest'],'voice-models'):'')),
@@ -44,4 +44,4 @@ export const NAMED_VOICES={rook:'am_michael'};
 export const resolveVoice=(v,named={})=>v&&typeof v.voice==='string'&&v.voice.startsWith('@')?{...v,voice:named?.[v.voice.slice(1)]||NAMED_VOICES[v.voice.slice(1)]||'am_michael'}:v;
 export const resolveVoices=(voices,named={})=>Object.fromEntries(Object.entries(voices||{}).map(([k,v])=>[k,resolveVoice(v,named)]));
 // What narrate.py needs to voice letter sounds (added to every narration request).
-export const soundSource=paths=>({letter_sounds:paths.letterSounds,soundout:paths.soundout});
+export const soundSource=paths=>({letter_sounds:paths.letterSounds,soundout:paths.soundout,voice_renderers:paths.voiceRenderers});
