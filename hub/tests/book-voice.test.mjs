@@ -56,3 +56,13 @@ test('The release narration gate checks the selected Rook cache rather than an o
  await writeFile(join(book,'voice',clipName({...l,voice:'local:rook-example-v1'})),'RIFF');
  assert.equal((await missingClips(book,{today:date})).length,0);
 });
+test('An older chapter is served with today\'s art library (pictures only; story and file untouched)',async()=>{
+ const {svc,book}=await setup(),date='2026-01-01';await mkdir(join(book,'kid'));await mkdir(join(book,'art','lib'),{recursive:true});
+ const ch={schema:'family-book-chapter-2',player:'kid',pages:[{scene:{bg:'meadow',actors:[{id:'pika',pose:'idle'}],props:[{id:'train'}]},say:[{who:'narrator',voice:'bm_fable',speed:.9,text:'All aboard!',clip:'x.wav'}]}],
+  art:{backgrounds:{meadow:{url:'/book-art/bg/meadow.webp'}},actors:{pika:{name:'Pika',h:.4,poses:{idle:{url:'/book-art/actors/old-pika.svg',ar:.8}}}},props:{train:{url:'/book-art/props/train.webp',h:.3,ar:2}}}};
+ const file=join(book,'kid',date+'.json'),original=JSON.stringify(ch);await writeFile(file,original);
+ await writeFile(join(book,'art','lib','library.json'),JSON.stringify({backgrounds:{meadow:{file:'bg/meadow.webp'}},actors:{pika:{name:'Pika',h:.4,poses:{idle:{file:'actors/new-pika.svg',ar:.82},talk:{file:'actors/new-pika-talk.svg',ar:.82}}}},props:{train:{file:'props/train.webp',h:.3,ar:2,cars:{parts:[{kind:'engine'}]}}}}));
+ const r=await call(svc,'GET',`/api/book/preview?player=kid&date=${date}`);assert.equal(r.status,200);
+ assert.equal(r.body.chapter.art.actors.pika.poses.idle.url,'/book-art/actors/new-pika.svg');assert.ok(r.body.chapter.art.actors.pika.poses.talk);assert.ok(r.body.chapter.art.props.train.cars);
+ assert.equal(r.body.chapter.pages[0].say[0].text,'All aboard!');assert.equal(await readFile(file,'utf8'),original,'the chapter file is not rewritten');
+});

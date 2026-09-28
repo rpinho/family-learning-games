@@ -11,8 +11,7 @@ import {listenOnce,recognise,listenAvailable,checkMic,micState} from './listen.m
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const THROW_X=0.44,AUTO_ADVANCE_MS=2200,TAP_GUARD_MS=700,LINE_GAP_MS=320;
 export async function loadBook(player,{preview=false,date=''}={}){try{return await fetchJSON(`/api/book${preview?'/preview':''}?player=${encodeURIComponent(player)}${date?'&date='+date:''}`,{},6000);}catch{return null;}}
-export function lastPlace(player,storage=globalThis.localStorage){try{const v=JSON.parse(storage.getItem('family-games-last:'+player)||'null');return v&&Date.now()-v.at<36*36e5&&typeof v.hash==='string'?v.hash:'';}catch{return '';}}
-export function rememberPlace(player,hash,storage=globalThis.localStorage){try{if(hash&&hash!=='#')storage.setItem('family-games-last:'+player,JSON.stringify({hash,at:Date.now()}));}catch{}}
+export {lastPlace,rememberPlace} from './places.mjs';
 function post(player,body,keepalive=false){return fetch('/api/book?player='+encodeURIComponent(player),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),keepalive}).then(r=>r.ok?r.json():null).catch(()=>null);}
 // Test hook: every play() attempt is recorded (clip, page, whether the browser allowed it).
 const audit=globalThis.__bookAudio||(globalThis.__bookAudio=[]);

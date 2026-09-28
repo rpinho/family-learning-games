@@ -1,4 +1,5 @@
 import http from 'node:http';
+import {createHash} from 'node:crypto';
 import {readFile,writeFile,rename,appendFile,mkdir} from 'node:fs/promises';
 import {readFileSync,writeFileSync,renameSync} from 'node:fs';
 import {join,resolve,extname} from 'node:path';
@@ -32,7 +33,7 @@ const icons={'letter-quest':'games/letter-quest/public/icons/app-192-v2.png','wo
 const types={'.html':'text/html','.mjs':'text/javascript','.js':'text/javascript','.webp':'image/webp','.css':'text/css','.jpg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml','.webmanifest':'application/manifest+json','.woff2':'font/woff2'};
 // The living book (real-time scenes) and its vendored renderer: one flat folder each, safe names only.
 const LIVING_FILE=/^(?:living|vendor\/three)\/[a-z0-9][a-z0-9._-]{0,60}\.(?:mjs|js|html|css|png|webp|jpg)$/;
-const files=['hunt.mjs','hunt-icon.svg','my-book.svg','slalom-logo.svg','listen.mjs','chess/request.mjs','chess/match-voice.mjs','menu-cache.mjs','chess/tokens.mjs','chess/steps-curriculum.mjs','chess/foundations-curriculum.mjs','chess/sequel-curriculum.mjs','chess/bridge-curriculum.mjs','chess/practice-curriculum.mjs','chess/teaching.mjs','chess/audio.mjs','menu-options.mjs','soccer-logo.svg','drawing-studio.svg','sling.svg','chess/path.mjs','chess/narration.mjs','chess/pieces.mjs','chess/academy-world.png','catalog.mjs','letter-book.svg','chess/rook.mjs','chess/app.mjs','chess/style.css','chess/art.mjs','chess/board.mjs','chess/rules.mjs','chess/curriculum.mjs','chess/icon.svg','chess/CHESS-JS-LICENSE.txt','index.html','hub.mjs','style.css','embedded.css','bridge.mjs','dribble-ui.mjs','dribble-classic.mjs','soccer-mode.mjs','dribble-live.mjs','dribble-live-v1.mjs','dribble-live-v2.mjs','reading-reward.mjs','live-pitch.mjs','pitch.mjs','save-request.mjs','book.mjs','book.css','book-scene.mjs','word-break.mjs','icon.svg','icon-192.png','icon-512.png','icon-maskable-192.png','icon-maskable-512.png','manifest.webmanifest'];
+const files=['hunt.mjs','hunt-icon.svg','my-book.svg','places.mjs','slalom-logo.svg','listen.mjs','chess/request.mjs','chess/match-voice.mjs','menu-cache.mjs','chess/tokens.mjs','chess/steps-curriculum.mjs','chess/foundations-curriculum.mjs','chess/sequel-curriculum.mjs','chess/bridge-curriculum.mjs','chess/practice-curriculum.mjs','chess/teaching.mjs','chess/audio.mjs','menu-options.mjs','soccer-logo.svg','drawing-studio.svg','sling.svg','chess/path.mjs','chess/narration.mjs','chess/pieces.mjs','chess/academy-world.png','catalog.mjs','letter-book.svg','chess/rook.mjs','chess/app.mjs','chess/style.css','chess/art.mjs','chess/board.mjs','chess/rules.mjs','chess/curriculum.mjs','chess/icon.svg','chess/CHESS-JS-LICENSE.txt','index.html','hub.mjs','style.css','embedded.css','bridge.mjs','dribble-ui.mjs','dribble-classic.mjs','soccer-mode.mjs','dribble-live.mjs','dribble-live-v1.mjs','dribble-live-v2.mjs','reading-reward.mjs','live-pitch.mjs','pitch.mjs','save-request.mjs','book.mjs','book.css','book-scene.mjs','word-break.mjs','icon.svg','icon-192.png','icon-512.png','icon-maskable-192.png','icon-maskable-512.png','manifest.webmanifest'];
 function playerManifest(base,p){const first=p.name.split(/\s/)[0],start='/?player='+encodeURIComponent(p.id);return {...base,id:start,start_url:start,name:`${base.name} · ${p.name}`,short_name:`${first}'s Games`};}
 const HUB_VERSION='family-games-2026-09-27-friendly-coach';
 // Optional managed deployment (see DEPLOY.md). A release directory carries .release.json;
@@ -103,7 +104,13 @@ const server=http.createServer(async(req,res)=>{
   if(who&&file.endsWith('manifest.webmanifest'))bytes=Buffer.from(JSON.stringify(playerManifest(JSON.parse(bytes.toString()),config.players.find(p=>p.id===who))));
   if(who&&file.endsWith('index.html'))bytes=Buffer.from(bytes.toString().replace('href="/manifest.webmanifest"',`href="/manifest.webmanifest?player=${who}"`));
   if(channel==='staging'&&file.endsWith('index.html'))bytes=Buffer.from(bytes.toString().replace(/<body([^>]*)>/i,'<body$1><div role="note" style="position:fixed;z-index:99999;top:0;left:50%;transform:translateX(-50%);background:#c62828;color:#fff;font:700 14px/1.2 system-ui,sans-serif;padding:4px 14px;border-radius:0 0 10px 10px;letter-spacing:.08em;pointer-events:none">STAGING · test copy, not the kids\' games</div>'));
-  res.writeHead(200,{'Content-Type':types[extname(file)]||'application/octet-stream','Content-Length':bytes.length,...(file.includes('/vendor/three/')?{'Cache-Control':'max-age=86400'}:{})});res.end(req.method==='HEAD'?undefined:bytes);
+  // Caching (repeat opens on a slow connection should not re-download the app): every file carries a strong ETag and
+  // a repeat request is answered 304 when nothing changed. Pages, code and styles are revalidated on every load
+  // (a new release shows at once); pictures may be reused for a day without asking.
+  const etag='"'+createHash('sha1').update(bytes).digest('base64url').slice(0,22)+'"',ext=extname(file);
+  const cc=file.includes('/vendor/three/')||/^\.(png|jpe?g|webp|svg|woff2)$/.test(ext)?'max-age=86400':'no-cache';
+  if(req.headers['if-none-match']===etag){res.writeHead(304,{ETag:etag,'Cache-Control':cc});res.end();return;}
+  res.writeHead(200,{'Content-Type':types[ext]||'application/octet-stream','Content-Length':bytes.length,ETag:etag,'Cache-Control':cc});res.end(req.method==='HEAD'?undefined:bytes);
  }catch(e){await log({type:'error',detail:e.message});send(res,e.code==='ENOENT'?404:500,{error:'Could not load. Try Refresh.'});}
 });
 let stopping=false;

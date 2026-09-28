@@ -9,6 +9,7 @@ import {createHash} from 'node:crypto';
 import {tmpdir} from 'node:os';
 import {bookPaths,resolveVoices,soundSource} from '../book/paths.mjs';
 import {setRookVoice} from '../book/assemble.mjs';
+import {artFor} from './public/book-scene.mjs';
 import {join,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 const here=dirname(fileURLToPath(import.meta.url)),publicArt=join(here,'public','book-art');
@@ -57,6 +58,11 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
   if(!c||c.player!==player||c.schema!==CHAPTER_SCHEMA||!Array.isArray(c.pages))return null;
   const named=(await readJSON(join(bookDir,'cast.json'),{}))?.voices||{};
   for(const l of setRookVoice(c,named.rook||'am_michael')){const file=clipName(l);try{await access(join(bookDir,'voice',file));l.clip=file;}catch{}}
+  // Pictures come from TODAY's art library, not the one the chapter was written with: an older chapter gets the
+  // current drawings and layouts too (a train that carries its riders instead of covering them, redrawn friends).
+  // Only the pictures change; the story, its lines and their voices stay exactly as written.
+  const lib=await readJSON(join(bookDir,'art','lib','library.json'),null);
+  if(lib?.actors){const fresh=artFor(c.pages,lib),old=c.art||{};c.art={backgrounds:{...old.backgrounds,...fresh.backgrounds},actors:{...old.actors,...fresh.actors},props:{...old.props,...fresh.props}};}
   return c;}
  async function progress(player){return readJSON(join(progressDir,player+'.json'),{days:{}});}
  async function notes(){const n=await readJSON(notesFile,{notes:[]});return Array.isArray(n.notes)?n.notes:[];}
@@ -110,7 +116,10 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
    if(u.pathname==='/api/book'){
     const player=u.searchParams.get('player');
     if(!kids.some(k=>k.id===player)){if(player==='admin'||players.includes(player))return send(res,200,{date:today(),chapter:null,progress:progressView(null),open:false});return send(res,400,{error:'Choose a player.'});}
-    if(req.method==='GET'){const date=today(),ch=await chapter(player,date),p=await progress(player),day=p.days[date];return send(res,200,{date,chapter:ch,progress:progressView(day),collection:collectionOf(p),open:shouldOpen(ch,day)});}
+    if(req.method==='GET'){const date=today(),ch=await chapter(player,date),p=await progress(player),day=p.days[date];
+     // peek: only whether an unread chapter is waiting (the hub asks at session start; the chapter loads when opened).
+     if(u.searchParams.get('peek'))return send(res,200,{date,hasChapter:!!ch,open:shouldOpen(ch,day)});
+     return send(res,200,{date,chapter:ch,progress:progressView(day),collection:collectionOf(p),open:shouldOpen(ch,day)});}
     if(req.method==='POST'){if(!req.headers['content-type']?.startsWith('application/json'))return send(res,415,{error:'JSON required.'});
      try{return send(res,200,{progress:await update(player,await body(req))});}catch(e){return send(res,e.status||500,{error:e.status?e.message:'Could not save.'});}}
     return send(res,405,{error:'Unsupported action.'});

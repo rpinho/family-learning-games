@@ -2,9 +2,14 @@ import {createMenuCache} from './menu-cache.mjs';
 import {fetchJSON} from './save-request.mjs';
 import { mountSoccer } from "./soccer-mode.mjs";
 import { CATALOG, FAMILIES, destination, movedRoute } from "./catalog.mjs";
-import { mountChess } from "./chess/app.mjs";
 import { parentChallenge, parentAnswerMatches, menuStyle, gameArtwork } from "./menu-options.mjs";
-import { loadBook, mountBook, lastPlace, rememberPlace } from "./book.mjs";
+import { lastPlace, rememberPlace } from "./places.mjs";
+// The book and chess load only when opened (the home screen stays light on a slow connection).
+const bookApp = () => import("./book.mjs");
+const loadBook = async (...a) => (await bookApp()).loadBook(...a);
+const mountBook = async (...a) => (await bookApp()).mountBook(...a);
+// Session-start auto-open asks only whether an unread chapter is waiting (no chapter download).
+const peekBook = (p) => fetchJSON(`/api/book?player=${encodeURIComponent(p)}&peek=1`, {}, 6000).catch(() => null);
 import { mountHunt } from "./hunt.mjs";
 const $ = (s) => document.querySelector(s),
   main = $("#main");
@@ -114,7 +119,7 @@ async function render() {
     const book = await loadBook(watch[1], { preview: true });
     if (seq !== renderSeq) return;
     if (book?.chapter) {
-      dispose = mountBook(main, { player: watch[1], book, preview: true, startPage: watch[2] ? Number(watch[2]) - 1 : 0, onDone: () => { dispose = null; location.hash = ""; } });
+      dispose = await mountBook(main, { player: watch[1], book, preview: true, startPage: watch[2] ? Number(watch[2]) - 1 : 0, onDone: () => { dispose = null; location.hash = ""; } });
       return;
     }
     main.innerHTML = `<section class="error"><h1>No chapter yet.</h1><p>The next chapter is written overnight.</p><a class="back-link" href="#">← Back</a></section>`;
@@ -122,10 +127,12 @@ async function render() {
   }
   if (player !== "admin" && !bookChecked.has(player)) {
     bookChecked.add(player);
-    const book = await loadBook(player);
+    const peek = await peekBook(player);
+    if (seq !== renderSeq) return;
+    const book = peek?.open ? await loadBook(player) : null;
     if (seq !== renderSeq) return;
     if (book?.open && book.chapter) {
-      dispose = mountBook(main, { player, book, event, onDone: () => { dispose = null; afterBook(); } });
+      dispose = await mountBook(main, { player, book, event, onDone: () => { dispose = null; afterBook(); } });
       return;
     }
   }
@@ -135,7 +142,7 @@ async function render() {
     if (seq !== renderSeq) return;
     if (book?.chapter) {
       const again = book.progress?.finished ? { ...book, progress: { ...book.progress, page: 0 } } : book;
-      dispose = mountBook(main, { player, book: again, event, onDone: () => { dispose = null; location.hash = ""; } });
+      dispose = await mountBook(main, { player, book: again, event, onDone: () => { dispose = null; location.hash = ""; } });
       return;
     }
     main.innerHTML = `<section class="error"><h1>Your next chapter is being written.</h1><p>It will be ready in the morning.</p><a class="back-link" href="#">← Back</a></section>`;
@@ -151,6 +158,8 @@ async function render() {
     return;
   }
   if (dest.type === "chess") {
+    const { mountChess } = await import("./chess/app.mjs");
+    if (seq !== renderSeq) return;
     dispose = mountChess(main, { player, name: p.name, event });
     return;
   }
