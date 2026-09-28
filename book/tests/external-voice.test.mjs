@@ -56,3 +56,9 @@ test('An on-demand time limit stops a stalled renderer without publishing clips'
  await writeFile(f.py,'import time\ntime.sleep(3)\n');assert.throws(f.run,/TimeoutExpired/);
  assert.ok(!(await readdir(f.out)).some(n=>/^[a-f0-9]{16}\.wav$/.test(n)));
 });
+test('New chapters resolve a named companion while keeping stock public defaults and other speakers',()=>{
+ const plan={cast:[{id:'pirate-friend',voice:'@pirate',speed:1},{id:'quiet-friend',voice:'af_nova',speed:1.1}]};
+ const v=voicesFor(plan,{named:{pirate:'local:pirate-test-v1',rook:'local:rook-test-v1'}});
+ assert.equal(v['pirate-friend'].voice,'local:pirate-test-v1');assert.equal(v['pirate-friend'].voiceRole,'pirate-friend');assert.equal(v['quiet-friend'].voice,'af_nova');assert.equal(v.narrator.voice,'af_heart');
+ assert.equal(voicesFor({cast:[]}).dad.voice,'am_michael');
+});

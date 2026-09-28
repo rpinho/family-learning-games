@@ -12,7 +12,7 @@ import {readFile,writeFile,rename,copyFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {join,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {bookPaths,readProfiles,localDate,addDays} from './paths.mjs';
+import {bookPaths,readProfiles,localDate,addDays,resolveVoice} from './paths.mjs';
 import {SOUNDS} from './plan.mjs';
 import {hasSound} from '../hub/public/word-families.mjs';
 import {repeatedWords} from './lint.mjs';
@@ -103,6 +103,8 @@ export async function writeHunts({paths=bookPaths(),date,players=null,dry=false,
    const today=cfg.generatedFor===date&&Array.isArray(cfg.basedOn)?cfg.basedOn:[...new Set(current.map(h=>h.letter).filter(Boolean))];
    const interests=[...new Set([...(model.interests||[]),...((profiles[player]||{}).interests||[])])];
    migrate(cfg,player,{cast,paths,who});
+   const friend=(cast.cast||[]).find(c=>c.id===cfg.friend?.id);
+   if(friend?.voice)who.voice={...resolveVoice({voice:friend.voice,speed:Number(friend.speed)||1},cast.voices||{}),voiceRole:friend.id};
    // The book for that day (written just before, in the nightly): a letters book's letter leads the hunts.
    let book=null;try{const c=JSON.parse(await readFile(join(paths.book,player,date+'.json'),'utf8'));if(c.level==='early')book=c.letter||c.pages?.find(p=>p.beat?.kind==='teach-letter')?.beat?.letter||null;}catch{}
    const fresh=dayHunts(model,{date,today,interests,who,book});
