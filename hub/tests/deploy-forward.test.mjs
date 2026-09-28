@@ -7,7 +7,7 @@ import vm from 'node:vm';
 import {join} from 'node:path';
 // Forward only: a release goes live only if it contains the live commit (a synthetic repo, no household state).
 const cli=readFileSync(new URL('../../scripts/deploy/cli.mjs',import.meta.url),'utf8');
-const part=cli.slice(cli.indexOf('function forwardCheck('),cli.indexOf('\nasync function promote('));
+const part=cli.slice(cli.indexOf('function forwardCheck('),cli.indexOf('\n// ---------- previews'));
 function repo(){const d=mkdtempSync(join(tmpdir(),'fwd-'));const g=(...a)=>spawnSync('git',['-C',d,...a],{encoding:'utf8'});
  g('init','-q','-b','main');g('config','user.email','t@t');g('config','user.name','t');
  const commit=m=>{writeFileSync(join(d,'f.txt'),m);g('add','.');g('commit','-qm',m);return g('rev-parse','HEAD').stdout.trim();};

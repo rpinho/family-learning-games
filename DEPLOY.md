@@ -84,3 +84,34 @@ After changing the tooling itself, run `node scripts/deploy/cli.mjs install` so 
 
 ## Quiet windows (2026-09-27)
 The children's day runs 06:00-20:00 local (on Saturdays it ends about 19:30; treat it as 20:00). Promotions go live after 15 idle minutes at any time, or inside a quiet window after a short idle: **every night 20:00-06:00** (2 min), and **weekdays 07:30-15:00** while they are at school (5 min idle, a guard for sick days and holidays). Configure with `quietWindows` in the private deploy.json.
+
+## Forward only (2026-09-28)
+
+`promote` and the promoter refuse a release whose commit does not contain the live release's commit
+(`git merge-base --is-ancestor`): "live X is not in candidate Y; merge first". Merge what is live into your branch,
+then stage and promote. A deliberate rollback says so: `promote --allow-rollback`, or the `rollback` command (it sets
+it). Refused queue entries move to `queue/refused/`.
+
+## Previews: ideas waiting for Ricardo's review (2026-09-28)
+
+Staging is for release candidates. A NEW IDEA is built on an `idea/*` branch and shown as a **preview**, never
+promoted without Ricardo's review:
+
+    node scripts/deploy/cli.mjs preview create <name> <game|hub> idea/<branch>   # build, check, run, print the URL
+    node scripts/deploy/cli.mjs preview list
+    node scripts/deploy/cli.mjs preview approve <name>    # marks it approved and prints the merge step
+    node scripts/deploy/cli.mjs preview reject <name>     # stops it; release + data moved to previews-archive/
+    node scripts/deploy/cli.mjs preview close <name>      # after an approved idea went live the normal way
+
+- **URL:** `https://ricardos-mac-mini.tail5a4676.ts.net:8443/preview/<name>/?player=diogo|francisco|admin`, through the
+  staging site (Tailscale is not touched). Opening it sets a cookie; while it is set, the staging hub sends everything to
+  a hub/Book preview's own hub, or only that game's traffic (`/g/<game>/...`) to a game preview. A small
+  "PREVIEW · <name> · exit" banner shows; `/preview/exit` leaves it.
+- **Data:** each preview has its OWN data dir under `previews/<name>/`, a copy-on-write clone of the live saves (a hub
+  preview also clones the book, and uses the STAGING games). It never writes to live or staging data.
+- **Limits:** at most 3 previews run at once (16 GB Mini); a fourth is refused. Ports 5400+ on 127.0.0.1.
+- **Restarts:** one launchd job per preview (`com.ricardo.family-games-preview.<name>`, background priority), so previews
+  come back after a reboot. Creating a preview builds and checks under `nice`/`taskpolicy` like `stage`; it never
+  touches live services, so it is allowed any time. Registry: `previews.json`.
+- **Approved:** merge the idea branch into the normal line (it must contain live), stage, test, then the usual
+  idle-gated promote. Close the preview once it is live.

@@ -444,6 +444,102 @@ function forwardOnly(name, version, allowRollback = false) {
   return why ? `${name}: ${why} (live ${live}, candidate ${version})` : null;
 }
 
+// ---------- previews (idea builds, reviewed by Ricardo before anything is promoted) ----------
+// An idea is built on an idea/* branch and shown as a PREVIEW: an immutable release running on its own local port
+// with its OWN data (a copy-on-write clone of the live saves; a hub preview also gets a clone of the book and uses
+// the STAGING games), reached through the staging site at /preview/<name>/ (see hub/preview-route.mjs). It never
+// writes to live or staging data. At most MAX_PREVIEWS run at once (the Mini has 16 GB). One launchd job each, so a
+// preview survives a reboot. approve prints the merge step (then the usual stage -> idle-gated promote); reject and
+// close stop it and move its release and data to previews-archive/ (nothing is deleted).
+const PREVIEWS = join(ROOT, 'previews.json'), PREVIEW_DIR = join(ROOT, 'previews'), PREVIEW_ARCHIVE = join(ROOT, 'previews-archive');
+const MAX_PREVIEWS = 3, PREVIEW_PORT0 = 5400, PREVIEW_NAME = /^[a-z0-9][a-z0-9-]{1,30}$/;
+const previewLabel = name => `com.ricardo.family-games-preview.${name}`;
+const previewUrl = (name, game) => `https://${cfg.previewHost || 'ricardos-mac-mini.tail5a4676.ts.net:8443'}/preview/${name}/?player=${game === 'hub' ? 'diogo' : 'admin'}`;
+function readPreviews() {return readJSON(PREVIEWS, {previews: {}});}
+const runningPreviews = reg => Object.values(reg.previews).filter(p => ['active', 'approved'].includes(p.state));
+function previewPorts(reg, busy = listenerPid) {
+  const used = new Set(runningPreviews(reg).flatMap(p => [p.port, p.uiPort].filter(Boolean)));
+  const out = []; for (let port = PREVIEW_PORT0; out.length < 2 && port < PREVIEW_PORT0 + 100; port++) if (!used.has(port) && !busy(port)) out.push(port);
+  return out;
+}
+function previewEnv(p) {
+  const env = envFor(p.game, 'staging', {port: p.port, uiPort: p.uiPort || undefined, data: p.data, deployDir: join(p.dir, 'deploy')});
+  env.FAMILY_CHANNEL = 'preview'; env.FAMILY_PREVIEW = p.name;
+  if (p.game === 'hub') {env.FAMILY_CONFIG = join(p.data, 'config.json'); env.FAMILY_BOOK = join(p.dir, 'book');}
+  return env;
+}
+function previewPlist(p) {
+  const g = game(p.game), rel = releaseDir(p.game, p.version);
+  return {Label: previewLabel(p.name), ProgramArguments: programFor(p.game, rel), WorkingDirectory: join(rel, g.cwd || ''), EnvironmentVariables: previewEnv(p),
+    RunAtLoad: true, KeepAlive: true, ProcessType: 'Background', Nice: 10, LowPriorityIO: true,
+    StandardOutPath: join(p.dir, 'server.log'), StandardErrorPath: join(p.dir, 'server-error.log'), ...(g.throttle ? {ThrottleInterval: g.throttle} : {})};
+}
+async function previewCreate(name, gameName, ref, opts) {
+  if (!PREVIEW_NAME.test(name || '')) die('preview name: 2-31 lowercase letters, digits or dashes');
+  const g = game(gameName), reg = readPreviews();
+  if (reg.previews[name] && ['active', 'approved'].includes(reg.previews[name].state)) die(`preview ${name} is already running`);
+  const run = runningPreviews(reg);
+  if (run.length >= MAX_PREVIEWS) die(`${run.length} previews are running (at most ${MAX_PREVIEWS}): ${run.map(p => p.name).join(', ')}; reject or close one first`);
+  if (!/^idea\//.test(ref || '')) console.log(`note: ideas are built on idea/* branches (got "${ref}")`);
+  const version = await build(gameName, ref, opts);
+  await check(gameName, version);
+  const dir = join(PREVIEW_DIR, name), data = join(dir, 'data');
+  if (existsSync(dir)) {mkdirSync(PREVIEW_ARCHIVE, {recursive: true}); renameSync(dir, join(PREVIEW_ARCHIVE, `${name}-stale-${stamp()}`));}
+  mkdirSync(dir, {recursive: true});
+  heavy('cp', ['-cR', g.data, data]);
+  for (const f of ['server.log', 'server-error.log']) rmSync(join(data, f), {force: true});
+  if (gameName === 'hub') {
+    // The preview hub's games are the STAGING games (never live), and it reads a clone of the live book.
+    const conf = readJSON(join(data, 'config.json'), {});
+    for (const k of Object.keys(conf.games || {})) conf.games[k] = portFor(k, 'staging');
+    conf.gameData = Object.fromEntries(Object.keys(conf.games || {}).map(k => [k, dataDir(k, 'staging')]));
+    writeJSON(join(data, 'config.json'), conf);
+    heavy('cp', ['-cR', join(ROOT, 'book'), join(dir, 'book')]);
+  }
+  applyVoice(gameName, version, data);
+  const [port, uiPort] = previewPorts(reg);
+  if (!port || (g.uiPort && !uiPort)) die('no free preview port');
+  const p = {name, game: gameName, ref, commit: releaseCommit(gameName, version), version, port, uiPort: g.uiPort ? uiPort : null, dir, data, state: 'active', createdAt: now(), by: process.env.USER || 'agent'};
+  const label = previewLabel(name), file = plistPath(label);
+  await bootout(label); writePlist(file, previewPlist(p)); await bootstrap(file, label);
+  const h = await health(gameName, port, g.startTimeout || 60);
+  if (!h.ok) {await bootout(label); rmSync(file, {force: true}); throw new Error(`preview ${name} did not start: ${JSON.stringify(h.statuses)} (logs in ${dir})`);}
+  const fresh = readPreviews(); fresh.previews[name] = p; writeJSON(PREVIEWS, fresh);
+  log(`PREVIEW ${name} ${gameName} ${version} (${ref}) on :${port}`);
+  console.log(`\nPreview ${name} is running: ${previewUrl(name, gameName)}\n(players: ?player=diogo, francisco or admin; leave it at /preview/exit)`);
+}
+function previewList() {
+  const reg = readPreviews(), all = Object.values(reg.previews).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+  if (!all.length) return console.log('no previews');
+  for (const p of all) console.log(`${p.name.padEnd(24)} ${p.state.padEnd(9)} ${p.game.padEnd(14)} ${String(p.ref).padEnd(34)} ${p.version}${['active', 'approved'].includes(p.state) ? `  :${p.port}  ${previewUrl(p.name, p.game)}` : ''}`);
+  console.log(`${runningPreviews(reg).length} of ${MAX_PREVIEWS} running`);
+}
+function previewApprove(name) {
+  const reg = readPreviews(), p = reg.previews[name];
+  if (!p || !['active', 'approved'].includes(p.state)) die(`no running preview ${name}`);
+  p.state = 'approved'; p.approvedAt = now(); writeJSON(PREVIEWS, reg); log(`PREVIEW-APPROVED ${name} ${p.version}`);
+  const repo = game(p.game).repo, live = releaseCommit(p.game, currentVersion('live', p.game));
+  console.log(`Approved. Next (the idea goes out the normal way):
+  1. merge ${p.ref} (${String(p.commit).slice(0, 7)}) into your working branch in ${repo}${live ? ` (it must also contain live ${live.slice(0, 7)})` : ''}
+  2. node scripts/deploy/cli.mjs stage ${p.game} <that branch>   and test on staging
+  3. scripts/promote ${p.game} <that branch>                    (idle-gated; refused if it misses the live commit)
+  4. when it is live: node scripts/deploy/cli.mjs preview close ${name}`);
+}
+async function previewStop(name, state) {
+  const reg = readPreviews(), p = reg.previews[name];
+  if (!p || !['active', 'approved'].includes(p.state)) die(`no running preview ${name}`);
+  const label = previewLabel(name), file = plistPath(label), to = join(PREVIEW_ARCHIVE, `${name}-${stamp()}`);
+  await bootout(label); mkdirSync(to, {recursive: true});
+  if (existsSync(file)) renameSync(file, join(to, 'service.plist'));
+  if (existsSync(p.dir)) renameSync(p.dir, join(to, 'preview'));
+  // Its release too, unless live or staging (or another preview) runs it.
+  const inUse = ['live', 'staging'].some(c => currentVersion(c, p.game) === p.version) || runningPreviews(reg).some(o => o.name !== name && o.version === p.version);
+  if (!inUse && existsSync(releaseDir(p.game, p.version))) renameSync(releaseDir(p.game, p.version), join(to, 'release'));
+  p.state = state; p.stoppedAt = now(); p.archivedTo = to; writeJSON(PREVIEWS, reg);
+  log(`PREVIEW-${state.toUpperCase()} ${name} ${p.version}; archived in ${to}`);
+  console.log(`preview ${name} ${state}; everything moved to ${to}`);
+}
+
 async function promote(name, ref, opts) {
   const version = await build(name, ref, opts);
   {const why = forwardOnly(name, version, opts.allowRollback); if (why) {log(`REFUSED ${name} ${version}: ${why}`); throw new Error(why);}}
@@ -633,6 +729,8 @@ const usage = `usage: cli.mjs <command>
   promote <game> [ref|staging]  build + health-check + QUEUE for live (idle-gated); refused unless the
                                 candidate contains the live commit (--allow-rollback to go back on purpose)
   status                        versions, queue, idle state
+  preview create <name> <game|hub> <ref>   run an idea build as a preview (own port and data; staging site /preview/<name>/)
+  preview list | approve <name> | reject <name> | close <name>
   staging-refresh <game|all>    copy live saves into staging data
   rollback <game> [--now]       queue (or with --now apply immediately) the previous live release
   tick                          promoter step (launchd, every minute)
@@ -645,6 +743,15 @@ try {
   else if (cmd === 'stage') {for (const n of pos[0] === 'all' ? cfg.order : [pos[0]]) {game(n); await stage(n, pos[0] === 'all' ? 'HEAD' : pos[1], opts);}}
   else if (cmd === 'promote') {if (!pos[0]) die(usage); game(pos[0]); await promote(pos[0], pos[1], opts);}
   else if (cmd === 'status') status();
+  else if (cmd === 'preview') {
+    const [sub, name, a, b] = pos;
+    if (sub === 'create') {if (!name || !a || !b) die('usage: preview create <name> <game|hub> <ref>'); await previewCreate(name, a, b, opts);}
+    else if (sub === 'list') previewList();
+    else if (sub === 'approve') previewApprove(name);
+    else if (sub === 'reject') await previewStop(name, 'rejected');
+    else if (sub === 'close') await previewStop(name, 'closed');
+    else die('usage: preview create <name> <game|hub> <ref> | list | approve <name> | reject <name> | close <name>');
+  }
   else if (cmd === 'staging-refresh') {for (const n of pos[0] === 'all' ? cfg.order : [pos[0]]) {game(n); refreshStagingData(n);}}
   else if (cmd === 'rollback') {
     const name = pos[0]; game(name);

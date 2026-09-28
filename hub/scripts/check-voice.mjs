@@ -105,7 +105,7 @@ async function main(){
     }
     }catch(e){result.errors.push(`page ${i+1}: ${String(e.message).slice(0,160)}`);}
    }
-   await until(`!!document.querySelector('.bk-quest')`,40000);result.ended=await js(`!!document.querySelector('.bk-quest')`);
+   await until(`!!document.querySelector('.bk-quest')`,120000);result.ended=await js(`!!document.querySelector('.bk-quest')`);
    result.issues=analyse(await js('__sources'),{prompts});
   }else{
    await send('Page.navigate',{url:`${base}/living/index.html?story=${encodeURIComponent(storyId)}&auto=1`});

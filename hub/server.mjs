@@ -8,6 +8,7 @@ import {hostname,networkInterfaces} from 'node:os';
 import {fresh,act,VERSION} from './dribble.mjs';
 import {actLive} from './live-state.mjs';
 import {proxy} from './proxy.mjs';
+import {previewRoute,readRegistry,bannerHTML,cookieOf} from './preview-route.mjs';
 import {chessService} from './chess-service.mjs';
 import {cachedMenuOrderService} from './menu-cache.mjs';
 import {bookService} from './book-service.mjs';
@@ -57,6 +58,12 @@ const assets3d=process.env.FAMILY_ASSETS3D||(deployDir?join(deployDir,'..','asse
 const book=bookService({data,bookDir,players,config,log,timeZone,assets3d});
 const listen=listenService({settings:listenSettings({deployDir}),players,log});
 const chess=chessService({data,players,log,settingsFor:Object.fromEntries(config.players.map(p=>[p.id,{coachChatter:process.env.FAMILY_COACH_CHATTER,...(p.chess||{})}]))});
+// A hub preview: the whole request goes to the preview's own hub (same path, same body; the answer comes back as is).
+function forward(req,res,port){const headers={...req.headers};
+ const up=http.request({host:'127.0.0.1',port,path:req.url,method:req.method,headers,timeout:30000},r=>{res.writeHead(r.statusCode,r.headers);r.pipe(res);});
+ up.on('timeout',()=>up.destroy(new Error('preview timed out')));
+ up.on('error',()=>{if(!res.headersSent)res.writeHead(503,{'Content-Type':'text/html','Retry-After':'3'});res.end('<meta http-equiv="refresh" content="3"><p>This preview is starting. <a href="/preview/exit">Leave the preview</a></p>');});
+ req.on('aborted',()=>up.destroy());req.pipe(up);}
 const server=http.createServer(async(req,res)=>{
  res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','SAMEORIGIN');
  try{
@@ -65,8 +72,13 @@ const server=http.createServer(async(req,res)=>{
   const tls=req.headers['x-forwarded-proto']==='https'&&/^(?:127\.|::1$|::ffff:127\.)/.test(req.socket.remoteAddress||'');
   const u=new URL(req.url,(tls?'https://':'http://')+req.headers.host);
   if(!allowedHosts().has(u.hostname.toLowerCase())||req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host||req.headers['sec-fetch-site']==='cross-site'&&!(['GET','HEAD'].includes(req.method)&&req.headers['sec-fetch-mode']==='navigate'&&['document','empty',undefined].includes(req.headers['sec-fetch-dest'])))return send(res,403,{error:'Use the local games address.'});
+  // Previews (staging site only): /preview/<name>/ opens one, /preview/exit leaves it (see preview-route.mjs).
+  const pv=channel==='staging'&&deployDir?previewRoute(req,u,readRegistry(join(deployDir,'..','previews.json'))):null;
+  if(pv&&['enter','exit','unknown'].includes(pv.kind)){res.writeHead(302,{Location:pv.location,'Set-Cookie':pv.cookie});res.end();return;}
+  if(pv?.kind==='hub')return forward(req,res,pv.preview.port);
   const match=u.pathname.match(/^\/g\/([a-z-]+)\/(\w+)\/(.*)$/);
-  if(match){const [,game,player,path]=match;if(!ids.includes(game)||!players.includes(player))return send(res,404,{error:'Unknown game or player.'});if(!['GET','HEAD','OPTIONS'].includes(req.method))touch(game);return proxy(req,res,{game,player,players,port:config.games[game],prefix:`/g/${game}/${player}/`,path:'/'+path+u.search,releases:{hub:HUB_RELEASE,game:releaseOf(game)}},log);}
+  if(match){const [,game,player,path]=match;
+   if(pv?.kind==='game'&&ids.includes(game)&&players.includes(player))return proxy(req,res,{game,player,players,port:pv.preview.port,prefix:`/g/${game}/${player}/`,path:'/'+path+(u.search||''),releases:{hub:HUB_RELEASE,game:'preview:'+pv.preview.name}},log);if(!ids.includes(game)||!players.includes(player))return send(res,404,{error:'Unknown game or player.'});if(!['GET','HEAD','OPTIONS'].includes(req.method))touch(game);return proxy(req,res,{game,player,players,port:config.games[game],prefix:`/g/${game}/${player}/`,path:'/'+path+u.search,releases:{hub:HUB_RELEASE,game:releaseOf(game)}},log);}
   // Some SSR runtimes construct import paths at runtime from "/" + asset name.
   // Keep their router separators intact and scope those requests using the
   // same-origin embedding document/module, never a caller-selected upstream.
@@ -103,6 +115,9 @@ const server=http.createServer(async(req,res)=>{
   const who=players.includes(u.searchParams.get('player'))?u.searchParams.get('player'):null;
   if(who&&file.endsWith('manifest.webmanifest'))bytes=Buffer.from(JSON.stringify(playerManifest(JSON.parse(bytes.toString()),config.players.find(p=>p.id===who))));
   if(who&&file.endsWith('index.html'))bytes=Buffer.from(bytes.toString().replace('href="/manifest.webmanifest"',`href="/manifest.webmanifest?player=${who}"`));
+  // A preview's own hub, or the staging hub while a game preview is open: the small PREVIEW banner.
+  {const pvName=process.env.FAMILY_PREVIEW||(channel==='staging'&&deployDir?cookieOf(req):null);
+   if(pvName&&file.endsWith('index.html')&&(process.env.FAMILY_PREVIEW||readRegistry(join(deployDir,'..','previews.json')).previews?.[pvName]))bytes=Buffer.from(bytes.toString().replace(/<body([^>]*)>/i,`<body$1>${bannerHTML(pvName)}`));}
   if(channel==='staging'&&file.endsWith('index.html'))bytes=Buffer.from(bytes.toString().replace(/<body([^>]*)>/i,'<body$1><div role="note" style="position:fixed;z-index:99999;top:0;left:50%;transform:translateX(-50%);background:#c62828;color:#fff;font:700 14px/1.2 system-ui,sans-serif;padding:4px 14px;border-radius:0 0 10px 10px;letter-spacing:.08em;pointer-events:none">STAGING · test copy, not the kids\' games</div>'));
   // Caching (repeat opens on a slow connection should not re-download the app): every file carries a strong ETag and
   // a repeat request is answered 304 when nothing changed. Pages, code and styles are revalidated on every load
