@@ -81,6 +81,9 @@ export function repeatedWords(text){const w=(String(text).match(/\[\[[^\]]*\]\]|
  // A phrase of two or more words said again straight away ("try again, try again").
  for(let n=2;n<=4;n++)for(let i=0;i+2*n<=w.length;i++)if(w.slice(i,i+n).join(' ')===w.slice(i+n,i+2*n).join(' '))out.push(w.slice(i,i+n).join(' '));
  return [...new Set(out)];}
+// An echo: a line that says the same thing twice in a new order ("Learn my sound, matey! My sound learn, matey!").
+export function isEcho(text){const parts=String(text).split(/[.!?]+/).map(x=>(x.toLowerCase().match(/\[\[[^\]]*\]\]|[a-z']+/g)||[]).sort().join(' ')).filter(x=>x.split(' ').length>=3);
+ return parts.some((x,i)=>parts.indexOf(x)!==i);}
 // Friends from the household's cast who are NOT in this child's cast must not appear (by name) in his book.
 export function otherFriends(text,others=[]){const t=String(text);return others.filter(n=>n&&new RegExp(`\\b${String(n).replace(/^the\s+/i,'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\\b`,'i').test(t));}
 export function lintChapter(ch,plan,{extra=[],allow=[],speakers=null,actors=null,dadId='dad',dadName='Dad',others=[]}={}){
@@ -137,6 +140,9 @@ export function lintChapter(ch,plan,{extra=[],allow=[],speakers=null,actors=null
  const castWords=(plan.cast||[]).flatMap(c=>String(c.name).toLowerCase().split(/\s+/));
  for(const n of otherFriends(all,others.filter(o=>!castWords.some(w=>w.startsWith(String(o).toLowerCase())))))issues.push(`"${n}" is not one of ${plan.name}'s friends; use only his cast`);
  pages.forEach((p,i)=>{for(const l of [...sayOf(p),...sayOf({say:p?.after||[]}),...sayOf({say:p?.magic?.after||[]})]){const r=repeatedWords(l.text);if(r.length)issues.push(`page ${i+1}: "${r[0]}" is said twice in a row; say every word once`);}});
+ // A word-repeating friend (a parrot) may do its echo joke once per chapter, and never on a page with a game.
+ {let echoes=0;pages.forEach((p,i)=>{for(const l of [...sayOf(p),...sayOf({say:p?.after||[]})])if(isEcho(l.text)){echoes++;if(p?.beat)issues.push(`page ${i+1}: an echo line on a game page ("${String(l.text).slice(0,40)}"); say it once`);}});
+  if(echoes>1)issues.push(`${echoes} echo lines (the same words said twice in a new order); at most one echo joke per chapter`);}
  // hints, never answers: a beat page must not give its answer away
  for(const b of plan.beats){const p=pages.find(x=>x?.beat===b.id);if(!p)continue;const t=tokens(sayOf(p).map(l=>l.text).join(' '));
   const ans=b.kind==='no'?b.right:['count','share','score','remainder'].includes(b.kind)||(b.kind==='puzzle'&&/^\d+$/.test(b.answer))?b.answer:null;if(!ans)continue;

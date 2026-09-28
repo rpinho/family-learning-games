@@ -73,3 +73,8 @@ test('template lines (letter beats, quest hints) never say a word twice in a row
  const src=(await import('node:fs')).readFileSync(new URL('../plan.mjs',import.meta.url),'utf8');
  assert.doesNotMatch(src,/\$\{L\}\. \$\{L\} says/,'a letter must not be said twice in a row ("B. B says")');
 });
+
+test('an echo (same words said again in a new order) is caught', async()=>{
+ const {isEcho}=await import('../lint.mjs');
+ assert.ok(isEcho('Learn my sound, matey! My sound learn, matey!'));assert.ok(!isEcho('Kick the ball with B. It says [[b]].'));assert.ok(!isEcho('Pika! Pika-pi!'));
+});
