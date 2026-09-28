@@ -139,16 +139,28 @@ function lastActivity() {
   for (const [k, t] of Object.entries(times)) if (t > latest) {latest = t; source = k;}
   return {latest, source, times};
 }
-function inNight(d = new Date()) {
-  const m = d.getHours() * 60 + d.getMinutes(), [sh, sm] = cfg.nightStart.split(':').map(Number), [eh, em] = cfg.nightEnd.split(':').map(Number);
-  const s = sh * 60 + sm, e = eh * 60 + em;
-  return s > e ? (m >= s || m < e) : (m >= s && m < e);
+// Quiet windows: when the children are asleep or at school. deploy.json `quietWindows` =
+// [{days:[0-6, 0=Sun], start:'HH:MM', end:'HH:MM', quietMinutes}]; an overnight window belongs to the day it starts.
+// Falls back to nightStart/nightEnd/nightQuietMinutes. Every window still needs a short idle (sick days, holidays).
+function windows() {
+  return cfg.quietWindows?.length ? cfg.quietWindows
+    : [{days: [0, 1, 2, 3, 4, 5, 6], start: cfg.nightStart, end: cfg.nightEnd, quietMinutes: cfg.nightQuietMinutes}];
 }
+function activeWindow(d = new Date()) {
+  const m = d.getHours() * 60 + d.getMinutes(), today = d.getDay(), yesterday = (today + 6) % 7;
+  for (const w of windows()) {
+    const [sh, sm] = w.start.split(':').map(Number), [eh, em] = w.end.split(':').map(Number), s = sh * 60 + sm, e = eh * 60 + em;
+    const hit = s > e ? (m >= s && w.days.includes(today)) || (m < e && w.days.includes(yesterday)) : (m >= s && m < e && w.days.includes(today));
+    if (hit) return w;
+  }
+  return null;
+}
+function inNight(d = new Date()) { return !!activeWindow(d); }
 function idleState() {
   const {latest, source} = lastActivity();
-  const idleMin = latest ? (Date.now() - latest) / 60000 : Infinity, night = inNight();
-  const ok = idleMin >= cfg.idleMinutes || (night && idleMin >= cfg.nightQuietMinutes);
-  return {ok, idleMin, night, source, latest: latest ? new Date(latest).toISOString() : null};
+  const idleMin = latest ? (Date.now() - latest) / 60000 : Infinity, w = activeWindow(), night = !!w;
+  const ok = idleMin >= cfg.idleMinutes || (night && idleMin >= (w.quietMinutes ?? cfg.nightQuietMinutes));
+  return {ok, idleMin, night, window: w ? `${w.start}-${w.end}` : null, source, latest: latest ? new Date(latest).toISOString() : null};
 }
 
 // ---------- build ----------
@@ -413,7 +425,7 @@ async function promote(name, ref, opts) {
   writeJSON(join(ROOT, 'queue', name + '.json'), q);
   log(`QUEUED ${name} ${version}`);
   const s = idleState();
-  console.log(`\nQueued ${name} ${version}. It goes live automatically when every game has been idle ${cfg.idleMinutes} min, or between ${cfg.nightStart} and ${cfg.nightEnd}.`);
+  console.log(`\nQueued ${name} ${version}. It goes live automatically when every game has been idle ${cfg.idleMinutes} min, or inside a quiet window (${windows().map(w => `${w.start}-${w.end}${w.days.length < 7 ? ' weekdays' : ''}`).join(', ')}).`);
   console.log(`Now: last activity ${s.latest || 'none'} (${s.source || '-'}), idle ${s.idleMin.toFixed(1)} min${s.night ? ', night window' : ''}.`);
 }
 async function applyLive(name, version, why = 'PROMOTED') {
