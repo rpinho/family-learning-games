@@ -158,9 +158,12 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   const b=art.backgrounds[p.scene.bg];
   const st=stage(p,beat),{ground,scale}=st;
   const cap=p.caption&&!p.magic&&!(p.beat&&['teach-letter'].includes(p.beat.kind))?`<button class="bk-caption" type="button">${esc(p.caption)}</button>`:'';
-  view.querySelector('.bk-page')?.classList.add('out');
-  const old=view.querySelector('.bk-page');if(old)setTimeout(()=>old.remove(),350);
-  const el=document.createElement('div');el.className='bk-page';
+  const old=view.querySelector('.bk-page:last-child');
+  const sceneChanged=old?.dataset.scene!==p.scene.bg;
+  old?.classList.add('out');
+  if(old)setTimeout(()=>old.remove(),350);
+  const el=document.createElement('div');el.className=`bk-page${sceneChanged?' scene-change':''}`;
+  el.dataset.scene=p.scene.bg;
   el.innerHTML=`${b?`<img class="bk-bg" src="${esc(b.url)}" alt="">`:''}<div class="bk-layer">${propsHTML(p.scene,{ground,play:!!p.action||p.beat?.kind==='kick-letter'})}${actorsHTML(p.scene,st)}</div>${fxHTML(p.scene.fx)}${cap}<div class="bk-play"></div>`;
   view.append(el);
   el.querySelector('.bk-caption')?.addEventListener('click',()=>{const l=(p.say||[]).find(x=>(x.shown||x.text).toLowerCase().includes(p.caption.toLowerCase()));if(l)void speak(l,{again:true});});
