@@ -5,25 +5,28 @@
 // 1.5 s, time), time per page, the fork choice and quest item, and the Letter Hunts (found, how many, how long).
 // Read-only on the book's data; idempotent (re-running replaces the section). Runs in the nightly right after the
 // recap script, so the morning recap and the Sage cross-check see it.
-// Usage: node book/recap-book.mjs [--date YYYY-MM-DD]   (default: the kids' day, today after noon, else yesterday)
+// Usage: node book/recap-book.mjs [--date YYYY-MM-DD]   (default: the kids' day, 06:00-20:00: today after noon, else yesterday)
 import {readFile,writeFile,rename,readdir} from 'node:fs/promises';
 import {join} from 'node:path';
 import {bookPaths,localDate,addDays} from './paths.mjs';
+// The kids' day: 06:00-20:00 local. Anything timestamped outside it (a grown-up testing at night) is not theirs.
+export const KIDS_DAY=[6,20];
+const inDay=(iso,tz)=>{if(!iso)return true;const t=Date.parse(iso);if(!Number.isFinite(t))return true;const h=Number(new Intl.DateTimeFormat('en-US',{timeZone:tz,hour:'numeric',hourCycle:'h23'}).format(t));return h>=KIDS_DAY[0]&&h<KIDS_DAY[1];};
 
 const readJSON=async(f,d=null)=>{try{return JSON.parse(await readFile(f,'utf8'));}catch{return d;}};
 const atomic=async(f,t)=>{await writeFile(f+'.tmp',t,{mode:0o600});await rename(f+'.tmp',f);};
 const sec=ms=>Math.round((Number(ms)||0)/1000);
 
 // One child's book day, from the progress file (and the chapter, for what each beat was).
-export function bookDay(progress,chapter,date){
+export function bookDay(progress,chapter,date,{timeZone=Intl.DateTimeFormat().resolvedOptions().timeZone}={}){
  const day=progress?.days?.[date];if(!day&&!chapter)return null;
  const pages=chapter?.pages||[],beatAt=i=>pages[i]?.beat||null;
- const beats=(day?.results||[]).filter(r=>r.kind).map(r=>{const b=beatAt(r.page);
+ const beats=(day?.results||[]).filter(r=>r.kind&&inDay(r.at,timeZone)).map(r=>{const b=beatAt(r.page);
   const tries=r.attempts??((r.misses||0)+1),firstTry=r.correct!=null?(r.correct&&tries===1):(r.misses||0)===0;
   return {page:r.page+1,kind:r.kind,...(b?.variant?{variant:b.variant}:{}),...(b?.id?{beat:b.id}:{}),tries,firstTry,fastTap:!!r.guess,
    ...(r.firstTapMs!=null?{firstTapSec:Math.round(r.firstTapMs/100)/10}:{}),seconds:sec(r.ms),...(r.hints?{hints:r.hints}:{}),...(r.via?{via:r.via}:{}),...(r.choice?{choice:r.choice}:{})};});
  const dwell=Object.entries(day?.dwell||{}).map(([p,ms])=>[Number(p)+1,sec(ms)]).sort((a,b)=>a[0]-b[0]);
- const hunts=(day?.hunts||[]).map(h=>({id:h.id,found:!!h.foundAt,...(h.found!=null?{count:h.found}:{}),...(h.ms!=null?{minutes:Math.round(h.ms/6e4)}:{})}));
+ const hunts=(day?.hunts||[]).filter(h=>inDay(h.startedAt,timeZone)).map(h=>({id:h.id,found:!!h.foundAt,...(h.found!=null?{count:h.found}:{}),...(h.ms!=null?{minutes:Math.round(h.ms/6e4)}:{})}));
  const fork=beats.find(b=>b.kind==='fork'),item=fork?.choice&&pages.flatMap(p=>p.beat?.kind==='fork'?p.beat.options:[]).find(o=>o.id===fork.choice)?.item;
  const scored=beats.filter(b=>b.kind!=='fork');
  return {title:chapter?.title||null,opened:!!day?.opens,reached:day?Math.min(pages.length||Infinity,(day.page||0)+1):0,pages:pages.length,finished:!!day?.finished,
@@ -44,7 +47,7 @@ export function bookMarkdown(kids){
 }
 export async function mergeRecap({paths=bookPaths(),date,recapDir=paths.recap}={}){
  const file=join(recapDir,date+'.json'),r=await readJSON(file);if(!r)return {date,merged:false,reason:'no recap for that date'};
- for(const k of r.kids||[]){const prog=paths.data.hub?await readJSON(join(paths.data.hub,'book-progress',k.player+'.json'),null):null,ch=await readJSON(join(paths.book,k.player,date+'.json'),null);k.book=bookDay(prog,ch,date);}
+ for(const k of r.kids||[]){const prog=paths.data.hub?await readJSON(join(paths.data.hub,'book-progress',k.player+'.json'),null):null,ch=await readJSON(join(paths.book,k.player,date+'.json'),null);k.book=bookDay(prog,ch,date,{timeZone:paths.timeZone});}
  await atomic(file,JSON.stringify(r,null,1));
  const section=bookMarkdown(r.kids||[]),mdFile=join(recapDir,date+'.md');let md=await readFile(mdFile,'utf8').catch(()=>'');
  md=md.replace(/\n?<!-- book -->[\s\S]*?<!-- \/book -->\n?/,'\n').trimEnd()+'\n\n'+section+'\n';await atomic(mdFile,md);

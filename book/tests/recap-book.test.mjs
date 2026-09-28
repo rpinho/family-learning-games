@@ -15,3 +15,9 @@ test('Book recap: per-beat tries, first-try right, fast taps, time per page, for
  const md=bookMarkdown([{name:'Leo',book:b}]);assert.match(md,/right on the first try 1\/2, 1 fast tap/);assert.match(md,/chose a glowing crystal/);assert.match(md,/nines \(3 tries, hint\)/);assert.match(md,/F-sound-2026-09-28 found 4 in 6 min/);
  assert.equal(bookDay({days:{}},null,'2026-09-28'),null);
 });
+
+test('Book recap counts only the kids\' day (06:00-20:00 local)', ()=>{
+ const progress={days:{'2026-09-28':{opens:1,page:1,results:[{page:0,kind:'signs',at:'2026-09-28T14:00:00Z',attempts:1,correct:true},{page:1,kind:'puzzle',at:'2026-09-29T01:30:00Z',attempts:2,correct:true}],hunts:[{id:'a',startedAt:'2026-09-28T15:00:00Z'},{id:'b',startedAt:'2026-09-29T02:00:00Z'}]}}};
+ const b=bookDay(progress,{pages:[{},{}]},'2026-09-28',{timeZone:'America/New_York'});
+ assert.equal(b.beats.length,1);assert.deepEqual(b.hunts.map(h=>h.id),['a']);
+});
