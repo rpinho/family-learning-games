@@ -240,3 +240,7 @@
 @keyframes bk-keyslide{from{transform:translate(-120px,-60px) rotate(-200deg) scale(1.8);opacity:0}to{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){.bk-keyring b.new{animation:none}}
 .bk-glyph.traced{animation:bk-settle .35s ease-out 1}
+
+/* Traced: visibly accepted at once (gold-green with a tick), whatever the sound is doing */
+.bk-glyph.traced{color:#b8f27a;-webkit-text-stroke-color:#2f6b16}
+.bk-glyph.traced::after{content:"✓";position:absolute;right:-.15em;top:-.1em;font-size:.35em;color:#2f9a2a;-webkit-text-stroke:3px #fff;paint-order:stroke}

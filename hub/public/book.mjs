@@ -68,7 +68,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
    if(!line.clip&&!await renderClip(line))return silent('no-clip');
    if(done)return;
    audio.onended=fin;audio.onerror=()=>silent('load');
-   audio.src='/book-voice/'+line.clip;
+   audio.src=clipURL(line.clip);
    let p;try{p=audio.play();}catch(e){p=Promise.reject(e);}
    // Interrupted by the next line (AbortError) just ends this one; a refusal shows the words, silently.
    Promise.resolve(p).then(()=>audit.push({clip:line.clip,page,turn:my,ok:true,at:Date.now()}),e=>{const err=String(e?.name||e);if(done)return;if(err==='AbortError'){audit.push({clip:line.clip,page,turn:my,ok:false,err});fin();}else silent(err);});
@@ -76,8 +76,19 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  }
  // A short breath between lines, like a person reading aloud.
  async function speakAll(lines,my,opts={}){let first=true;for(const l of lines||[]){if(!alive||my!==turn)return false;if(!first)await new Promise(r=>later(r,LINE_GAP_MS));first=false;if(!alive||my!==turn)return false;await speak(l,opts);}return alive&&my===turn;}
- function preload(i){const p=ch.pages[i];if(!p)return;const files=new Set();const walk=v=>{if(!v||typeof v!=='object')return;if(Array.isArray(v))return v.forEach(walk);if(v.clip)files.add(v.clip);for(const x of Object.values(v))if(x&&typeof x==='object')walk(x);};walk(p);
-  for(const f of files)fetch('/book-voice/'+f).catch(()=>{});const b=art.backgrounds[p.scene?.bg];if(b){const im=new Image();im.src=b.url;}}
+ // The short interface lines (well done, say it, try again, numbers) are needed at once when they come: fetched
+ // once when the book opens, so the praise after a trace or a tap is not waiting for the network.
+ // Clips are held IN MEMORY once fetched (a blob URL): on a phone over a slow link the audio element re-requests
+ // a file even when it was preloaded, so the praise after a trace waited ~1 s for the network (2026-09-28).
+ const blobs=new Map(),MAX_BLOBS=80;
+ function holdClip(f){if(!f||blobs.has(f))return;blobs.set(f,null);
+  fetch('/book-voice/'+f).then(r=>r.ok?r.blob():null).then(b=>{if(!b||!alive){blobs.delete(f);return;}blobs.set(f,URL.createObjectURL(b));
+   while(blobs.size>MAX_BLOBS){const [k,u]=blobs.entries().next().value;if(ui.has(k))break;blobs.delete(k);if(u)URL.revokeObjectURL(u);}}).catch(()=>blobs.delete(f));}
+ const clipURL=f=>blobs.get(f)||'/book-voice/'+f;
+ const ui=new Set();let uiLoaded=false;function preloadUi(){if(uiLoaded)return;uiLoaded=true;const w=v=>{if(!v||typeof v!=='object')return;if(Array.isArray(v))return v.forEach(w);if(v.clip)ui.add(v.clip);for(const x of Object.values(v))if(x&&typeof x==='object')w(x);};w(ch.ui);w(ch.keysLine);
+  for(const f of ui)holdClip(f);}
+ function preload(i){preloadUi();const p=ch.pages[i];if(!p)return;const files=new Set();const walk=v=>{if(!v||typeof v!=='object')return;if(Array.isArray(v))return v.forEach(walk);if(v.clip)files.add(v.clip);for(const x of Object.values(v))if(x&&typeof x==='object')walk(x);};walk(p);
+  for(const f of files)holdClip(f);const b=art.backgrounds[p.scene?.bg];if(b){const im=new Image();im.src=b.url;}}
  function talking(who){view.querySelectorAll('.bk-actor').forEach(a=>a.classList.toggle('talking',!!who&&a.dataset.id===who));}
  // ---- pictures ----
  function actorsHTML(scene,{ground=0.93,scale=1,maxHeight=1,avoid=null}={}){
@@ -223,7 +234,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   if(!preview&&page>=0&&page!==n)void post(player,{type:'dwell',date,page,ms:Date.now()-pageShownAt});pageShownAt=Date.now();tele=null;
   page=Math.max(0,n);if(!preview&&!back)void post(player,{type:'page',date,page});
   renderDots();shownAt=Date.now();const my=++turn;intro=false;beatPrompt=null;poseNow={};laidOut=`${root.clientWidth}x${root.clientHeight}`;audit.push({page,shown:shownAt});
-  const p=page_();preload(page+1);
+  const p=page_();preload(page);preload(page+1);
   if(p.kind==='beat')return void runBeat(p,my);
   const el=pageFrame(p);
   (async()=>{
@@ -312,10 +323,12 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   const finish=()=>{if(done)return;done=true;cv.remove();res();};
   const at=e=>{const b=cv.getBoundingClientRect();return {x:(e.clientX-b.left)*W/b.width,y:(e.clientY-b.top)*H/b.height};};
   cv.onpointerdown=e=>{if(my!==turn)return finish();down=true;moved=0;cv.setPointerCapture?.(e.pointerId);if(tele&&tele.firstTap==null)tele.firstTap=Date.now()-tele.shownAt;};
+  const t0=performance.now();let strokes=0;
+  const accept=()=>{if(done)return;teleTap('trace',true);if(tele)tele.trace={ms:Math.round(performance.now()-t0),strokes:Math.max(1,strokes)};g.classList.remove('bk-nudge');g.classList.add('traced');g.dataset.tracedAt=String(performance.now());burst('sparkles');void speak(ch.ui.traced);finish();};
   cv.onpointermove=e=>{if(!down||done)return;const p=at(e);c.beginPath();c.arc(p.x,p.y,step*.55,0,Math.PI*2);c.fill();moved++;
    for(const k of cells)if(!k.hit&&Math.hypot(k.x-p.x,k.y-p.y)<step*1.1){k.hit=true;n++;}
-   if(cells.length&&n/cells.length>=.6){teleTap('trace',true);g.classList.remove('bk-nudge');g.classList.add('traced');g.dataset.tracedAt=String(performance.now());burst('sparkles');void speak(ch.ui.traced);finish();}};
-  cv.onpointerup=()=>{down=false;if(moved<3&&++taps>=3){teleTap('trace-tap',false);finish();}};
+   if(cells.length&&n/cells.length>=.6)accept();};
+  cv.onpointerup=()=>{down=false;if(moved>=3)strokes++;if(cells.length&&n/cells.length>=.6)return accept();if(moved<3&&++taps>=3){teleTap('trace-tap',false);finish();}};
   void speak(ch.ui.traceIt);let reps=0;const nudge=()=>later(()=>{if(done||my!==turn)return finish();if(reps++>=IDLE_REPEATS){teleHint(1);return finish();}void speak(ch.ui.traceIt);nudge();},IDLE_REPEAT_MS);nudge();
   if(!cells.length)finish();
  });}
@@ -387,7 +400,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   });
  }
  function finishBeat(p,my,result){
-  if(!preview){const detail=teleOut();void post(player,{type:'result',date,page,result:{kind:p.beat.kind,beat:p.beat.id||null,misses:result.misses||0,ms:result.ms||0,...(result.via?{via:result.via}:{}),...(result.earned?{earned:result.earned}:{}),...(result.choice?{choice:result.choice}:{}),...teleSummary(detail),detail}});event('book_beat',`${p.beat.kind}:${result.misses||0}`);}
+  if(!preview){const tr=tele?.trace;const detail=teleOut();void post(player,{type:'result',date,page,result:{kind:p.beat.kind,beat:p.beat.id||null,misses:result.misses||0,ms:result.ms||0,...(result.via?{via:result.via}:{}),...(result.earned?{earned:result.earned}:{}),...(result.choice?{choice:result.choice}:{}),...(tr?{trace:tr}:{}),...teleSummary(detail),detail}});event('book_beat',`${p.beat.kind}:${result.misses||0}`);}
   setNext(true);later(()=>{if(my===turn&&canNext)go(page+1);},1600);
  }
  // Buttons with the usual rules: wrong wiggles and says try again; two misses glow the right one.
@@ -602,7 +615,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   if(hb)hb.onclick=async()=>{const h=q.hints[hint++];if(!h)return;el.querySelector('.bk-hint').innerHTML=`<span class="pic">${esc(h.emoji)}</span><b>${esc(h.word)}</b>`;if(hint>=q.hints.length)hb.remove();if(!preview)event('book_hint',`${date}:${hint}`);await speak(h.line);};
   if(ch.quest)await speak(ch.quest);if(my===turn)await speak(ch.ui.nextTime);
  }
- function stop(){alive=false;clearTimers();stopSound();removeEventListener('deviceorientation',tilt);removeEventListener('resize',onResize);removeEventListener('orientationchange',onResize);globalThis.visualViewport?.removeEventListener('resize',onResize);try{audio.removeAttribute('src');audio.load();}catch{}}
+ function stop(){alive=false;clearTimers();stopSound();for(const u of blobs.values())if(u)URL.revokeObjectURL(u);blobs.clear();removeEventListener('deviceorientation',tilt);removeEventListener('resize',onResize);removeEventListener('orientationchange',onResize);globalThis.visualViewport?.removeEventListener('resize',onResize);try{audio.removeAttribute('src');audio.load();}catch{}}
  if(!preview)void post(player,{type:'open',date,page});
  // Grown-ups' preview only: checks and dad can jump to a page.
  if(preview)globalThis.__bookGo=n=>go(n);
