@@ -1,7 +1,7 @@
 // One audio element retains gesture permission across subsequent coach clips.
 export function createCoachAudio({createAudio=()=>new Audio(),event=()=>{},talking=()=>{},fetchAudio=(source,options)=>fetch(source,options),urls=URL}={}){
  const audio=createAudio();audio.preload='auto';
- let generation=0,active=false,unlocked=false;
+ let generation=0,active=false,unlocked=false,startTimer=null;
  const cached=new Map(),warming=new Map(),controllers=new Set();let disposed=false;
  async function warm(sources){
   const pending=[...new Set(sources)].filter(source=>source&&!cached.has(source)&&!warming.has(source));
@@ -22,6 +22,7 @@ export function createCoachAudio({createAudio=()=>new Audio(),event=()=>{},talki
   }));
  }
  function stop(){
+  clearTimeout(startTimer);startTimer=null;
   generation++;active=false;
   audio.onplaying=audio.onended=audio.onerror=null;
   audio.pause();talking(false);
@@ -35,18 +36,20 @@ export function createCoachAudio({createAudio=()=>new Audio(),event=()=>{},talki
    unlocked=true;if(token===generation)audio.pause();
   },()=>{});}catch{}
  }
- function play(source){
+ function play(source,{maxStartDelayMs=0}={}){
   stop();const token=generation;active=true;let reported=false;
   const current=()=>token===generation;
   const fail=(error)=>{
    if(!current()||reported)return;
+   clearTimeout(startTimer);startTimer=null;
    reported=true;active=false;talking(false);
    event('chess_voice_unavailable',JSON.stringify({name:error?.name||'MediaError',message:error?.message||'Clip playback failed',code:audio.error?.code||0,source}));
   };
   audio.src=cached.get(source)||source;
-  audio.onplaying=()=>{if(current()){unlocked=true;talking(true);event('chess_voice_play',source);}};
-  audio.onended=()=>{if(current()){active=false;talking(false);event('chess_voice_end',source);}};
+  audio.onplaying=()=>{if(current()){clearTimeout(startTimer);startTimer=null;unlocked=true;talking(true);event('chess_voice_play',source);}};
+  audio.onended=()=>{if(current()){clearTimeout(startTimer);startTimer=null;active=false;talking(false);event('chess_voice_end',source);}};
   audio.onerror=()=>fail(audio.error);
+  if(maxStartDelayMs>0)startTimer=setTimeout(()=>{if(current()){stop();event('chess_voice_skip','reaction missed its moment');}},maxStartDelayMs);
   try{Promise.resolve(audio.play()).catch(fail);}catch(error){fail(error);}
  }
  function dispose(){disposed=true;stop();for(const controller of controllers)controller.abort();for(const blob of cached.values())urls.revokeObjectURL(blob);cached.clear();}

@@ -90,6 +90,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   async function playLine(text, { force = false, automatic = false, priority = false } = {}) {
+    const requestedAt=Date.now();
     if ((!profile?.settings.sound && !force) || !text) return false;
     if(automatic&&!priority&&(Date.now()-lastReactionSpeech<5000||voice.isPlaying()))return false;
     if(automatic)lastReactionSpeech=Date.now();
@@ -97,9 +98,10 @@ export function mountChess(root, { player, name, event = () => {} }) {
     const generation = speechGeneration;
     if (!manifestReady) await voiceReady;
     if (!alive || generation !== speechGeneration) return false;
+    if(automatic&&Date.now()-requestedAt>1200)return false;
     const source = voiceManifest[text];
     if (!source) { event("chess_voice_unavailable", "missing original clip"); return false; }
-    voice.play(source);
+    voice.play(source,{maxStartDelayMs:automatic?1200:0});
     performanceLine = text;
     return true;
   }
