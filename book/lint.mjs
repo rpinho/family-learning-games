@@ -77,7 +77,7 @@ export const sayOf=p=>(Array.isArray(p?.say)?p.say:[]).map(l=>Array.isArray(l)?{
 const pageText=p=>[...sayOf(p).map(l=>l.text),...(p?.magic?.after?sayOf({say:p.magic.after}).map(l=>l.text):[]),...(p?.after?sayOf({say:p.after}).map(l=>l.text):[])].join(' ');
 // A word said twice in a row ("try to say it, try to say it", "[[bə]], [[bə]]", "go, go, go") sounds like a glitch or
 // like worry to a child: every word and every sound once. Letter sounds count as words.
-export function repeatedWords(text){const w=(String(text).match(/\[\[[^\]]*\]\]|[A-Za-z']+/g)||[]).map(x=>x.toLowerCase());const out=[];
+export function repeatedWords(text){const w=(String(text).match(/\[\[[^\]]*\]\]|[A-Za-z']+|\d+/g)||[]).map(x=>x.toLowerCase());const out=[];
  for(let i=1;i<w.length;i++)if(w[i]===w[i-1])out.push(w[i]);
  // A phrase of two or more words said again straight away ("try again, try again").
  for(let n=2;n<=4;n++)for(let i=0;i+2*n<=w.length;i++)if(w.slice(i,i+n).join(' ')===w.slice(i+n,i+2*n).join(' '))out.push(w.slice(i,i+n).join(' '));
