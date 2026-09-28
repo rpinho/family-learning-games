@@ -75,3 +75,31 @@ test('The Letter Hunt opens on the day\'s book letter (a started hunt of another
  assert.equal((await call(svc,'POST','/api/book?player=kid',{type:'hunt',date,id:'F-sound',stage:'start'})).status,200);
  r=await call(svc,'GET','/api/book/hunt?player=kid');assert.equal(r.body.hunt.letter,'B','even with an F hunt started');
 });
+test('Changing a companion resolves archived dialogue and nested responses without rewriting the chapter',async()=>{
+ const {svc,book,rendered}=await setup(),date='2026-01-01';await mkdir(join(book,'kid'));
+ const line={who:'pirate-friend',text:'Ahoy!',voice:'bm_fable',speed:1.05,clip:'old.wav'};
+ const ch={schema:'family-book-chapter-2',player:'kid',pages:[{say:[line,{who:'narrator',text:'Listen.',voice:'bm_fable',speed:1,clip:'narrator.wav'}],action:{after:[{...line,text:'Treasure!'}]}}]};
+ const file=join(book,'kid',date+'.json'),original=JSON.stringify(ch);await writeFile(file,original);
+ await writeFile(join(book,'cast.json'),JSON.stringify({cast:[{id:'pirate-friend',refreshVoice:true,voice:'@pirate',speed:1}],voices:{pirate:'local:pirate-test-v1'}}));
+ let r=await call(svc,'GET',`/api/book/preview?player=kid&date=${date}`);
+ assert.equal(r.body.chapter.pages[0].say[0].voice,'local:pirate-test-v1');assert.equal(r.body.chapter.pages[0].say[0].clip,undefined,'the old immutable clip is discarded');
+ assert.equal(r.body.chapter.pages[0].action.after[0].speed,1);assert.equal(r.body.chapter.pages[0].say[1].clip,'narrator.wav');
+ assert.equal((await call(svc,'POST','/api/book/voice',{player:'kid',date,text:'Ahoy!',voice:'bm_fable',speed:1.05})).status,404);
+ r=await call(svc,'POST','/api/book/voice',{player:'kid',date,text:'Ahoy!',voice:'local:pirate-test-v1',speed:1});assert.equal(r.status,200);assert.equal(rendered[0].voice,'local:pirate-test-v1');
+ assert.equal((await call(svc,'GET',`/api/book/preview?player=kid&date=${date}`)).body.chapter.pages[0].say[0].clip,r.body.clip);
+ await writeFile(join(book,'cast.json'),JSON.stringify({cast:[{id:'pirate-friend',refreshVoice:true,voice:'bm_fable',speed:1.05}]}));
+ assert.equal((await call(svc,'GET',`/api/book/preview?player=kid&date=${date}`)).body.chapter.pages[0].say[0].clip,'old.wav');assert.equal(await readFile(file,'utf8'),original);
+});
+test('The hunt uses its current friend voice, the gate requires it, and only real current hunt lines can render',async()=>{
+ const {svc,book,rendered}=await setup(),date=new Date().toISOString().slice(0,10);
+ const line={text:'Find [[b]]!',voice:'bm_fable',speed:1.05,clip:'old.wav'},h={players:{kid:{friend:{id:'pirate-friend'},hunts:[{id:'b-sound',letter:'B',intro:line,goal:{line:{...line,text:'Look for a ball.'}}}],tomorrow:{...line,text:'See you, shipmate!'}}}};
+ const file=join(book,'hunts.json'),original=JSON.stringify(h);await writeFile(file,original);await writeFile(join(book,'voice','old.wav'),'RIFF');
+ await writeFile(join(book,'cast.json'),JSON.stringify({cast:[{id:'pirate-friend',refreshVoice:true,voice:'local:pirate-test-v1',speed:1}]}));
+ let r=await call(svc,'GET','/api/book/hunt?player=kid');assert.equal(r.body.hunt.intro.voice,'local:pirate-test-v1');assert.equal(r.body.hunt.intro.clip,undefined);assert.equal(r.body.tomorrow.voice,'local:pirate-test-v1');
+ assert.equal((await missingClips(book,{today:date})).filter(x=>x.where==='hunt:kid').length,3,'old stock files cannot satisfy the new voice gate');
+ r=await call(svc,'POST','/api/book/voice',{player:'kid',date,text:line.text,voice:'local:pirate-test-v1',speed:1});assert.equal(r.status,200);assert.equal(rendered[0].text,'Find [[b]]!','recorded phoneme tags reach the worker intact');
+ assert.equal((await call(svc,'GET','/api/book/hunt?player=kid')).body.hunt.intro.clip,r.body.clip);
+ assert.equal((await call(svc,'POST','/api/book/voice',{player:'kid',date,text:'Invent a pirate line.',voice:'local:pirate-test-v1',speed:1})).status,404);
+ assert.equal((await call(svc,'POST','/api/book/voice',{player:'kid',date:'2026-01-01',text:line.text,voice:'local:pirate-test-v1',speed:1})).status,404);
+ assert.equal(await readFile(file,'utf8'),original,'saved hunts are read-only');
+});

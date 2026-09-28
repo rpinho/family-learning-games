@@ -13,12 +13,15 @@ import {bareSound,repeatedWords} from '../../book/lint.mjs';
 import {bookPaths,soundSource} from '../../book/paths.mjs';
 import {phonemize,rawNames} from '../public/pronounce.mjs';
 import {clipName} from '../book-service.mjs';
+import {setCharacterVoices} from '../../book/assemble.mjs';
 const here=dirname(fileURLToPath(import.meta.url));
 const args=process.argv.slice(2),arg=(k,d=null)=>{const i=args.indexOf(k);return i>=0?args[i+1]:d;},flag=k=>args.includes(k);
 export async function voiceHunts(book,{check=false,f:given=null,paths=bookPaths()}={}){
  const file=join(book,'hunts.json');
-let pronounce={};try{pronounce=JSON.parse(await readFile(join(book,'cast.json'),'utf8')).pronounce||{};}catch{}
+let cast={};try{cast=JSON.parse(await readFile(join(book,'cast.json'),'utf8'));}catch{}
+const pronounce=cast.pronounce||{};
 const f=given||JSON.parse(await readFile(file,'utf8'));const lines=[];
+for(const cfg of Object.values(f.players||{}))setCharacterVoices(cfg,cast,cfg.friend?.id);
 const walk=(v,p)=>{if(!v||typeof v!=='object')return;if(Array.isArray(v))return v.forEach((x,i)=>walk(x,`${p}[${i}]`));if(typeof v.text==='string'&&v.voice)lines.push([p,v]);for(const [k,x] of Object.entries(v))if(x&&typeof x==='object')walk(x,`${p}.${k}`);};
 walk(f.players,'players');
 const issues=[];

@@ -3,6 +3,7 @@
 import {sayOf} from './lint.mjs';
 import {normalizeScene,artFor,MAX_ACTORS} from '../hub/public/book-scene.mjs';
 import {phonemize} from '../hub/public/pronounce.mjs';
+import {resolveVoice} from './paths.mjs';
 export const CHAPTER_SCHEMA='family-book-chapter-2';
 // Fixed lines the player speaks (content prompts always speak).
 export const UI_LINES={goal:'Goal!',saved:'Ooh, saved! Try again!',go:'Toot! Off we go!',fetch:'Fetch!',yes:'Yes!',tryAgain:'Try again.',great:'Great job!',noPrompt:'What do you say?',readIt:'Can you read it?',nextTime:'See you in the next chapter!',tapToGo:'Tap to turn the page.',
@@ -13,7 +14,7 @@ export const DEFAULT_VOICES={narrator:{voice:'af_heart',speed:0.95},dad:{voice:'
 const FRIEND_VOICES=[{voice:'am_puck',speed:1},{voice:'af_bella',speed:1},{voice:'bm_fable',speed:1},{voice:'af_nova',speed:1.05}];
 export function voicesFor(plan,{narrator,named={}}={}){
  const v={narrator:{...DEFAULT_VOICES.narrator,...(narrator||{})},dad:{...DEFAULT_VOICES.dad,voiceRole:'rook',...(named.rook?{voice:named.rook}:{})},mom:{...DEFAULT_VOICES.mom}};
- (plan.cast||[]).forEach((c,i)=>{v[c.id]=c.voice?{voice:c.voice,speed:Number(c.speed)||1}:FRIEND_VOICES[i%FRIEND_VOICES.length];});
+ (plan.cast||[]).forEach((c,i)=>{v[c.id]={...resolveVoice(c.voice?{voice:c.voice,speed:Number(c.speed)||1}:FRIEND_VOICES[i%FRIEND_VOICES.length],named),voiceRole:c.id};});
  return v;
 }
 const clean=t=>String(t||'').trim().replace(/\s*[—–]\s*/g,', ').replace(/\s+/g,' ');
@@ -108,6 +109,18 @@ export function setRookVoice(ch,voice='am_michael'){
  const changed=[];
  const walk=v=>{if(!v||typeof v!=='object')return;if(Array.isArray(v))return v.forEach(walk);
   if(v.text&&v.voice&&(v.voiceRole==='rook'||(['dad','rook'].includes(v.who)&&(v.voice==='am_michael'||v.voice.startsWith('local:rook-'))))&&v.voice!==voice){v.voice=voice;delete v.clip;changed.push(v);}
+  for(const x of Object.values(v))if(x&&typeof x==='object')walk(x);};
+ walk(ch);return changed;
+}
+// The cast is the voice source of truth for old chapters as well as new ones.
+// Resolve only configured actors; keep the narrator and unrelated roles intact.
+// A hunt's friend can supply the role for legacy lines that have no `who` field.
+export function setCharacterVoices(ch,cast={},fallbackRole=null){
+ const changed=setRookVoice(ch,cast.voices?.rook||'am_michael');
+ const byId=new Map((cast.cast||[]).filter(c=>c.id&&c.voice&&c.refreshVoice===true).map(c=>[c.id,resolveVoice({voice:c.voice,speed:Number(c.speed)||1},cast.voices||{})]));
+ const walk=v=>{if(!v||typeof v!=='object')return;if(Array.isArray(v))return v.forEach(walk);
+  if(typeof v.text==='string'&&v.voice){const role=v.voiceRole||v.who||fallbackRole,desired=byId.get(role);
+   if(desired&&(v.voice!==desired.voice||Number(v.speed)!==desired.speed)){v.voice=desired.voice;v.speed=desired.speed;delete v.clip;changed.push(v);}}
   for(const x of Object.values(v))if(x&&typeof x==='object')walk(x);};
  walk(ch);return changed;
 }

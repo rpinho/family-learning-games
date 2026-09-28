@@ -8,7 +8,7 @@ import {execFile} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {tmpdir} from 'node:os';
 import {bookPaths,resolveVoices,soundSource} from '../book/paths.mjs';
-import {setRookVoice} from '../book/assemble.mjs';
+import {setCharacterVoices} from '../book/assemble.mjs';
 import {artFor} from './public/book-scene.mjs';
 import {join,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -56,11 +56,11 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
  const today=()=>localDate(now(),timeZone);
  async function chapter(player,date){if(!DATE.test(date))return null;const c=await readJSON(join(bookDir,player,date+'.json'),null);
   if(!c||c.player!==player||c.schema!==CHAPTER_SCHEMA||!Array.isArray(c.pages))return null;
-  const named=(await readJSON(join(bookDir,'cast.json'),{}))?.voices||{};
-  for(const l of setRookVoice(c,named.rook||'am_michael')){const file=clipName(l);try{await access(join(bookDir,'voice',file));l.clip=file;}catch{}}
+  const cast=await readJSON(join(bookDir,'cast.json'),{});
+  for(const l of setCharacterVoices(c,cast)){const file=clipName(l);try{await access(join(bookDir,'voice',file));l.clip=file;}catch{}}
   // Pictures come from TODAY's art library, not the one the chapter was written with: an older chapter gets the
   // current drawings and layouts too (a train that carries its riders instead of covering them, redrawn friends).
-  // Only the pictures change; the story, its lines and their voices stay exactly as written.
+  // The story stays exactly as written; selected cast voices and pictures refresh on read.
   const lib=await readJSON(join(bookDir,'art','lib','library.json'),null);
   if(lib?.actors){const fresh=artFor(c.pages,lib),old=c.art||{};c.art={backgrounds:{...old.backgrounds,...fresh.backgrounds},actors:{...old.actors,...fresh.actors},props:{...old.props,...fresh.props}};}
   return c;}
@@ -131,6 +131,8 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
    if(u.pathname==='/api/book/hunt'&&req.method==='GET'){
     const player=u.searchParams.get('player');if(!kids.some(k=>k.id===player))return send(res,400,{error:'Choose a child.'});
     const cfg0=(await readJSON(join(bookDir,'hunts.json'),{players:{}})).players?.[player];if(!cfg0?.hunts?.length)return send(res,200,{available:false});
+    const cast=await readJSON(join(bookDir,'cast.json'),{});
+    for(const l of setCharacterVoices(cfg0,cast,cfg0.friend?.id)){const file=clipName(l);try{await access(join(bookDir,'voice',file));l.clip=file;}catch{}}
     // Two kinds of hunt: a LETTER (its sound or its shape) or a WORD. The mode is remembered per child on this
     // computer (not in one browser); a hunt without a mode is a letter hunt. Letter is the default.
     const modeOf=h=>h.mode==='word'?'word':'letter',modes=[...new Set(cfg0.hunts.map(modeOf))].sort();
@@ -172,7 +174,8 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
     if(b.story){const f=await readJSON(join(bookDir,'living','stories.json'),{stories:{}});const st=Object.hasOwn(f.stories||{},b.story)?f.stories[b.story]:null;const l=st?.lines?.[b.key];
      const voices=resolveVoices(st?.voices,(await readJSON(join(bookDir,'cast.json'),{}))?.voices||{});
      if(l){const v=voices[l[0]]||voices.narrator;if(v)line={text:l[1],voice:v.voice,speed:v.speed};}}
-    else if(kids.some(k=>k.id===b.player)&&DATE.test(String(b.date||''))){const ch=await chapter(b.player,b.date);const want={text:String(b.text||''),voice:String(b.voice||''),speed:Number(b.speed)};if(ch&&want.text&&lineIn(ch,want))line=want;}
+    else if(kids.some(k=>k.id===b.player)&&DATE.test(String(b.date||''))){const ch=await chapter(b.player,b.date);const want={text:String(b.text||''),voice:String(b.voice||''),speed:Number(b.speed)};if(ch&&want.text&&lineIn(ch,want))line=want;
+     else if(b.date===today()){const h=(await readJSON(join(bookDir,'hunts.json'),{}))?.players?.[b.player];if(h){setCharacterVoices(h,await readJSON(join(bookDir,'cast.json'),{}),h.friend?.id);if(want.text&&lineIn(h,want))line=want;}}}
     if(!line||!line.text||line.text.length>400)return send(res,404,{error:'No such line.'});
     try{return send(res,200,{clip:await renderLine(line)});}catch(e){await log({type:'book_voice_error',detail:String(e.message).slice(0,160)});return send(res,503,{error:'Could not render the line.'});}}
    // The household's 3D toys (GLB models made privately in Blender) and the list of which exist.
