@@ -93,6 +93,9 @@ async function main(){
      if(b.kind==='signs'){await until(`!!document.querySelector('${ans(b.target)}')`,90000);await tap(ans(b.target));}
      if(b.kind==='spell'){await until(`document.querySelectorAll('.bk-play .bk-btn.word').length>0`,90000);for(const w of b.answer){await js(`(()=>{const t=[...document.querySelectorAll('.bk-play .bk-btn.word')].find(x=>x.textContent===${JSON.stringify(w)}&&!x.classList.contains('used'));t&&t.click()})()`);await sleep(250);}}
      if(b.kind==='share'){await until(`!!document.querySelector('.bk-pizza')`,90000);for(let k=0;k<Math.ceil(b.total/b.groups);k++){await click('.bk-pizza');await sleep(120);}await until(`!!document.querySelector('${ans(b.answer)}')`,60000);await tap(ans(b.answer));}
+     if(b.kind==='puzzle'){await until(`!!document.querySelector('${ans(b.answer)}')`,90000);await tap(ans(b.answer));}
+     if(b.kind==='remainder'){await until(`!!document.querySelector('.bk-box')`,90000);for(let k=0;k<Math.floor(b.total/b.groups);k++){await click('.bk-box');await sleep(150);}await until(`!!document.querySelector('${ans(b.answer)}')`,60000);await tap(ans(b.answer));}
+     if(b.kind==='fork'){await until(`!!document.querySelector('.bk-btn.fork')`,90000);await tap('.bk-btn.fork');}
      if(b.kind==='score'){await until(`!!document.querySelector('${ans(b.answer)}')`,90000);await tap(ans(b.answer));}
      if(b.kind==='no'){await until(`!!document.querySelector('.bk-btn.no')`,90000);await tap('.bk-btn.no');await until(`!!document.querySelector('${ans(b.right)}')`,90000);await tap(ans(b.right));}
     }
