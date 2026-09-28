@@ -46,3 +46,10 @@ test('Every module the pages import is served by the hub (a missing one blanks t
  for(const f of (await readdir(dir)).filter(f=>f.endsWith('.mjs'))){const src=await readFile(new URL(f,dir),'utf8');
   for(const m of src.matchAll(/from ['"]\.\/([a-z0-9/_-]+\.mjs)['"]/g))assert.ok(server.includes(`'${m[1]}'`),`${f} imports ${m[1]}, which the hub must serve`);}
 });
+test('A letter is heard leniently: its sound, its name, the usual mishearings, a word that starts with it',()=>{
+ const B={kind:'letter',letter:'B',names:['Birdie']},ok=t=>matchUtterance(t,B).match;
+ for(const t of ['B','B.','b?','Bee!','be','bi','buh','Bə','P','pee','ball','Birdie','Bye.'])assert.ok(ok(t),t);
+ for(const t of ['M','sun','Dee','kay'])assert.ok(!ok(t),t);
+ assert.equal(decide({text:'Me.',alts:['Be.'],speech:.9},B).match,false,'alternative readings are not used (they accepted every wrong sound)');
+ assert.equal(decide({text:'',alts:['B'],speech:.05},B).match,false,'silence stays silence');
+});

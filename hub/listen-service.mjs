@@ -1,8 +1,9 @@
 // Listening in the hub: a child's short utterance (a word he reads, a letter sound, a friend's name) is recognised
 // ON THIS MACHINE by a local model and matched, child-tolerantly, against what the page expects.
 // Privacy: the audio arrives in memory, goes to the recogniser process over a pipe, and is dropped after the
-// answer. Nothing is written to disk; the log keeps only the match result (kind, matched, how, time), never audio
-// and never the transcript. Only the grown-ups' preview gets the transcript back, to try it out.
+// answer. Nothing is written to disk; the log keeps the match result (kind, matched, how, time), never audio; for a
+// single LETTER it also keeps the few characters heard, never for words or names.
+// Only the grown-ups' preview gets the transcript back, to try it out.
 // Settings: FAMILY_LISTEN_PYTHON (a Python with faster-whisper) and FAMILY_LISTEN_MODEL (default "small"), or a
 // private listen.json next to the deployment ({python, model, threads}). Without them, listening is off and the
 // book keeps its tap-only play.
@@ -76,7 +77,10 @@ export function listenService({settings,players,log=()=>{},recog=settings?recogn
   const m=decide(r,target);
   const ms=Date.now()-t0;
   // The log keeps the result only: never the audio, never what he said.
-  if(!preview)log({type:'listen',player,kind,target:target.kind,match:m.match,how:m.how,attempt,ms,decodeMs:r.ms});
+  // For a LETTER (a one-sound answer) the log keeps what was heard (a few characters),
+  // so a miss can be understood (2026-09-28: "he said B and was told to try again"). Words and names: result only.
+  const heardLog=target.kind==='letter'?{heard:String(m.heard||'').slice(0,24)}:{};
+  if(!preview)log({type:'listen',player,kind,target:target.kind,match:m.match,how:m.how,attempt,ms,decodeMs:r.ms,...heardLog});
   return send(res,200,{match:m.match,how:m.how,ms,decodeMs:r.ms,...(preview?{heard:m.heard}:{})});
  }
  return {handle,available:!!recog};

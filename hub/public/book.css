@@ -1,3 +1,6 @@
+/* Centring uses the `translate` property, never `transform`: an animation on `transform` (a hop, a nudge, a
+   wiggle, a settle) REPLACES a transform-based centring, so the element jumped half its width sideways and back
+   for every cycle (2026-09-28: "the letters bounced" after tracing). `translate` composes with them. */
 /* The Book: a full-screen, narrated picture book. Scenes are composed from a picture library. */
 .bk{position:fixed;inset:0;z-index:50;background:#1b2433;overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none;font-family:"Nunito","Trebuchet MS",system-ui,sans-serif;color:#fff}
 .bk-page{position:absolute;inset:0;animation:bk-in .55s ease both}
@@ -33,19 +36,19 @@
 @keyframes bk-twinkle{0%,100%{opacity:0;transform:scale(.4)}50%{opacity:1;transform:scale(1)}}
 .bk-fx.burst i{animation:bk-burst 1.3s ease-out forwards}
 @keyframes bk-burst{0%{opacity:1;transform:translate(0,0) scale(.3)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1.2)}}
-.bk-caption{position:absolute;left:50%;top:max(14px,env(safe-area-inset-top));transform:translateX(-50%);background:rgba(255,250,236,.93);color:#2b2118;border-radius:22px;padding:.2em .7em;font-weight:900;font-size:clamp(26px,6.5vmin,56px);box-shadow:0 6px 18px rgba(0,0,0,.25);max-width:88vw;text-align:center;cursor:pointer;border:0}
+.bk-caption{position:absolute;left:50%;top:max(14px,env(safe-area-inset-top));translate:-50% 0;background:rgba(255,250,236,.93);color:#2b2118;border-radius:22px;padding:.2em .7em;font-weight:900;font-size:clamp(26px,6.5vmin,56px);box-shadow:0 6px 18px rgba(0,0,0,.25);max-width:88vw;text-align:center;cursor:pointer;border:0}
 .bk-early .bk-caption{font-size:clamp(56px,16vmin,140px);padding:.05em .45em;line-height:1.1}
 .bk-chrome{position:absolute;inset:0;pointer-events:none}
 .bk-chrome button{pointer-events:auto}
 .bk-exit,.bk-hear{position:absolute;top:max(10px,env(safe-area-inset-top));width:48px;height:48px;border-radius:50%;border:0;background:rgba(0,0,0,.35);color:#fff;font-size:22px;cursor:pointer}
 .bk-exit{left:10px}.bk-hear{right:10px}
-.bk-dots{position:absolute;left:50%;bottom:max(8px,env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:6px;pointer-events:none}
+.bk-dots{position:absolute;left:50%;bottom:max(8px,env(safe-area-inset-bottom));translate:-50% 0;display:flex;gap:6px;pointer-events:none}
 .bk-dots i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.45)}.bk-dots i.done{background:#ffd54a}.bk-dots i.now{background:#fff;transform:scale(1.35)}
 .bk-keys{position:absolute;top:max(12px,env(safe-area-inset-top));right:66px;display:flex;gap:4px;pointer-events:none}
 .bk-keys b{background:linear-gradient(#ffe27a,#e0a92a);color:#5a3a00;border-radius:10px;padding:2px 7px;font-size:18px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
-.bk-tapnext{position:absolute;right:16px;bottom:34px;font-size:40px;opacity:0;transition:opacity .4s;pointer-events:none;animation:bk-nudge 1.2s ease-in-out infinite}
+.bk-tapnext{position:absolute;right:16px;bottom:34px;font-size:40px;opacity:0;transition:opacity .4s;pointer-events:none;animation:bk-tapnext-nudge 1.2s ease-in-out infinite}
 .bk-tapnext.on{opacity:.9}
-@keyframes bk-nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(8px)}}
+@keyframes bk-tapnext-nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(8px)}}
 /* cover */
 .bk-cover{position:absolute;inset:0;display:grid;place-items:center;text-align:center;background:radial-gradient(ellipse at 50% 40%,rgba(0,0,0,.05),rgba(0,0,0,.45))}
 .bk-cover .card{background:rgba(255,250,236,.94);color:#2b2118;border-radius:28px;padding:18px 26px 22px;max-width:min(90vw,640px);box-shadow:0 12px 40px rgba(0,0,0,.35)}
@@ -71,32 +74,35 @@
 @keyframes bk-wiggle{20%{transform:rotate(-8deg)}40%{transform:rotate(7deg)}60%{transform:rotate(-5deg)}80%{transform:rotate(3deg)}}
 .bk-btn.no{background:linear-gradient(#ff6b5b,#d8322b);color:#fff;font-size:clamp(48px,13vmin,110px);padding:.05em .5em;animation:bk-bob 1.2s ease-in-out infinite}
 .bk-btn.ok{font-size:clamp(18px,4vmin,28px);min-height:auto;min-width:auto;padding:.4em .8em;background:rgba(255,250,240,.85)}
-.bk-board{position:absolute;left:50%;top:12%;transform:translateX(-50%);background:#1f3b2b;border:8px solid #8a5a2b;border-radius:16px;color:#fffbe6;font-weight:900;font-size:clamp(34px,9vmin,84px);padding:.1em .5em;display:flex;gap:.3em;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,.35);white-space:nowrap}
+.bk-board{position:absolute;left:50%;top:12%;translate:-50% 0;background:#1f3b2b;border:8px solid #8a5a2b;border-radius:16px;color:#fffbe6;font-weight:900;font-size:clamp(34px,9vmin,84px);padding:.1em .5em;display:flex;gap:.3em;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,.35);white-space:nowrap}
 .bk-board.buzz{animation:bk-wiggle .5s ease 2}
 .bk-board .pic{font-size:.9em}
 .bk-board button{all:unset;cursor:pointer;padding:0 .1em;border-radius:10px}
-.bk-glyph{position:absolute;left:50%;top:10%;transform:translateX(-50%);font-weight:900;font-size:clamp(120px,34vmin,300px);line-height:1;color:#ffe27a;-webkit-text-stroke:6px #7a4a00;paint-order:stroke;text-shadow:0 10px 30px rgba(0,0,0,.35);cursor:pointer;background:none;border:0;font-family:inherit;animation:bk-pop .7s cubic-bezier(.3,1.6,.5,1) both}
-.bk-glyph.tapped{animation:bk-hop .5s ease 2}
-.bk-magic{position:absolute;left:50%;top:14%;transform:translateX(-50%);border:0;cursor:pointer;font-family:inherit;font-weight:900;font-size:clamp(40px,11vmin,96px);padding:.1em .6em;border-radius:18px;background:linear-gradient(#fff6d6,#ffe07a);color:#3a2200;box-shadow:0 0 0 0 rgba(255,215,90,.9),0 10px 30px rgba(0,0,0,.35);animation:bk-glow 1.3s ease-in-out infinite}
+.bk-glyph{position:absolute;left:50%;top:10%;translate:-50% 0;font-weight:900;font-size:clamp(120px,34vmin,300px);line-height:1;color:#ffe27a;-webkit-text-stroke:6px #7a4a00;paint-order:stroke;text-shadow:0 10px 30px rgba(0,0,0,.35);cursor:pointer;background:none;border:0;font-family:inherit;animation:bk-pop .7s cubic-bezier(.3,1.6,.5,1) both}
+.bk-glyph.tapped{animation:bk-settle .35s ease-out 1}
+/* 2026-09-28: success is one short settle, once (see the centring note at the top). */
+@keyframes bk-settle{0%{transform:scale(1.1)}100%{transform:scale(1)}}
+.bk-glyph.tapped.bk-nudge,.bk-glyph.listening.bk-nudge{animation:none}
+.bk-magic{position:absolute;left:50%;top:14%;translate:-50% 0;border:0;cursor:pointer;font-family:inherit;font-weight:900;font-size:clamp(40px,11vmin,96px);padding:.1em .6em;border-radius:18px;background:linear-gradient(#fff6d6,#ffe07a);color:#3a2200;box-shadow:0 0 0 0 rgba(255,215,90,.9),0 10px 30px rgba(0,0,0,.35);animation:bk-glow 1.3s ease-in-out infinite}
 .bk-magic small{display:block;font-size:.28em;letter-spacing:.14em;text-transform:uppercase;color:#9a5a00}
 .bk-magic.read{animation:bk-hop .5s ease 2;background:linear-gradient(#fffbe6,#ffd54a)}
 .bk-things{position:absolute;left:5%;right:5%;top:18%;height:42%}
-.bk-thing{position:absolute;border:0;background:none;cursor:pointer;padding:0;transform:translate(-50%,-50%)}
+.bk-thing{position:absolute;border:0;background:none;cursor:pointer;padding:0;translate:-50% -50%}
 .bk-thing img,.bk-thing span{display:block;width:100%;height:100%;object-fit:contain;font-size:inherit;filter:drop-shadow(0 4px 4px rgba(0,0,0,.25))}
 .bk-thing b{position:absolute;right:-8%;top:-8%;background:#ffd54a;color:#4a2c00;border-radius:50%;width:1.4em;height:1.4em;display:grid;place-items:center;font-size:clamp(18px,4vmin,30px);box-shadow:0 2px 6px rgba(0,0,0,.3)}
 .bk-thing.counted{animation:bk-hop .4s ease}
 .bk-plates{position:absolute;left:4%;right:4%;top:40%;display:flex;justify-content:center;gap:3vmin}
 .bk-plate{width:clamp(70px,16vmin,140px);height:clamp(70px,16vmin,140px);border-radius:50%;background:radial-gradient(#fff,#e9e2d4);box-shadow:0 6px 16px rgba(0,0,0,.3);display:flex;flex-wrap:wrap;align-content:center;justify-content:center;font-size:clamp(16px,4vmin,30px)}
-.bk-pizza{position:absolute;left:50%;top:10%;transform:translateX(-50%);width:clamp(110px,26vmin,230px);border:0;background:none;cursor:pointer}
+.bk-pizza{position:absolute;left:50%;top:10%;translate:-50% 0;width:clamp(110px,26vmin,230px);border:0;background:none;cursor:pointer}
 .bk-pizza img{width:100%}.bk-pizza b{position:absolute;inset:auto 0 -10px 0;text-align:center;font-size:clamp(20px,5vmin,34px);text-shadow:0 2px 4px #000}
-.bk-slots{position:absolute;left:50%;top:10%;transform:translateX(-50%);display:flex;gap:.3em;flex-wrap:wrap;justify-content:center;background:rgba(255,248,225,.95);color:#3a2200;border-radius:16px;padding:.25em .5em;font-weight:900;font-size:clamp(22px,5.5vmin,44px);max-width:92vw;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.bk-slots{position:absolute;left:50%;top:10%;translate:-50% 0;display:flex;gap:.3em;flex-wrap:wrap;justify-content:center;background:rgba(255,248,225,.95);color:#3a2200;border-radius:16px;padding:.25em .5em;font-weight:900;font-size:clamp(22px,5.5vmin,44px);max-width:92vw;box-shadow:0 8px 24px rgba(0,0,0,.3)}
 .bk-slots span{min-width:2.2em;border-bottom:4px solid #c9a24a;text-align:center}
-.bk-quest{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(255,250,236,.96);color:#2b2118;border-radius:26px;padding:20px 24px;max-width:min(90vw,560px);text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.4);animation:bk-pop .6s ease both}
+.bk-quest{position:absolute;left:50%;top:50%;translate:-50% -50%;background:rgba(255,250,236,.96);color:#2b2118;border-radius:26px;padding:20px 24px;max-width:min(90vw,560px);text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.4);animation:bk-pop .6s ease both}
 .bk-quest h2{margin:.1em 0 .3em;font-size:clamp(24px,5vmin,40px)}.bk-quest p{font-size:clamp(18px,3.6vmin,26px);margin:.3em 0 .8em}
 .bk-quest .bk-btn{font-size:clamp(22px,4.5vmin,34px);padding:.3em .9em;min-height:auto}
 .bk-key-fly{position:absolute;left:50%;top:45%;font-size:clamp(60px,14vmin,120px);animation:bk-keyfly 1.6s ease-in forwards;pointer-events:none}
-@keyframes bk-keyfly{0%{transform:translate(-50%,-50%) scale(.3)}40%{transform:translate(-50%,-50%) scale(1.3)}100%{transform:translate(30vw,-45vh) scale(.3);opacity:.2}}
-.bk-preview-bar{position:absolute;left:50%;top:max(10px,env(safe-area-inset-top));transform:translateX(-50%);background:rgba(0,0,0,.45);border-radius:14px;padding:4px 12px;font:700 13px system-ui;letter-spacing:.08em;pointer-events:none}
+@keyframes bk-keyfly{0%{translate:-50% -50% scale(.3)}40%{translate:-50% -50% scale(1.3)}100%{transform:translate(30vw,-45vh) scale(.3);opacity:.2}}
+.bk-preview-bar{position:absolute;left:50%;top:max(10px,env(safe-area-inset-top));translate:-50% 0;background:rgba(0,0,0,.45);border-radius:14px;padding:4px 12px;font:700 13px system-ui;letter-spacing:.08em;pointer-events:none}
 @media (prefers-reduced-motion:reduce){.bk *,.bk *::before{animation:none!important;transition:none!important}.bk-fx{display:none}}
 /* v2.1: he plays (kick, throw, drive), more motion, parallax */
 .bk-bg{translate:calc(var(--px,0)*-18px) calc(var(--py,0)*-10px);transition:translate .4s ease-out}
@@ -119,8 +125,8 @@
 .bk-goal{position:absolute;border:6px solid #fff;border-bottom:0;border-radius:4px 4px 0 0;background:repeating-linear-gradient(45deg,rgba(255,255,255,.35) 0 2px,transparent 2px 12px),repeating-linear-gradient(-45deg,rgba(255,255,255,.35) 0 2px,transparent 2px 12px);box-shadow:0 6px 12px rgba(0,0,0,.15)}
 .bk-net{position:absolute;border-radius:6px;background:radial-gradient(circle,rgba(255,255,255,.7),transparent 70%);animation:bk-net .8s ease-out both;pointer-events:none}
 @keyframes bk-net{0%{transform:scale(.6);opacity:1}100%{transform:scale(1.4);opacity:0}}
-.bk-goaltext{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);font-weight:900;font-size:clamp(56px,18vmin,160px);color:#ffe27a;-webkit-text-stroke:5px #7a4a00;paint-order:stroke;text-shadow:0 10px 30px rgba(0,0,0,.35);animation:bk-goalpop 1.6s cubic-bezier(.3,1.6,.5,1) both;pointer-events:none}
-@keyframes bk-goalpop{0%{transform:translate(-50%,-50%) scale(.2)}30%{transform:translate(-50%,-50%) scale(1.15)}80%{opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:0}}
+.bk-goaltext{position:absolute;left:50%;top:38%;translate:-50% -50%;font-weight:900;font-size:clamp(56px,18vmin,160px);color:#ffe27a;-webkit-text-stroke:5px #7a4a00;paint-order:stroke;text-shadow:0 10px 30px rgba(0,0,0,.35);animation:bk-goalpop 1.6s cubic-bezier(.3,1.6,.5,1) both;pointer-events:none}
+@keyframes bk-goalpop{0%{translate:-50% -50% scale(.2)}30%{translate:-50% -50% scale(1.15)}80%{opacity:1}100%{translate:-50% -50% scale(1);opacity:0}}
 .bk-btn.go{font-size:clamp(34px,9vmin,72px);padding:.15em .6em;background:linear-gradient(#7be07b,#2e9e3e);color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.3);animation:bk-ballpulse 1.1s ease-in-out infinite}
 .bk-puffs{position:absolute;left:20%;bottom:40%;pointer-events:none}
 .bk-puffs i{position:absolute;width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.85);animation:bk-puff 1.4s ease-out infinite}
@@ -143,7 +149,7 @@
 @keyframes bk-think{from{transform:scale(.8);opacity:.5}to{transform:scale(1.1);opacity:1}}
 .soft-miss{animation:bk-softmiss .5s ease}
 @keyframes bk-softmiss{0%,100%{translate:0}30%{translate:-6px}60%{translate:6px}}
-.bk-heard{position:absolute;left:50%;top:4%;transform:translateX(-50%);background:rgba(0,0,0,.6);color:#fff;border-radius:12px;padding:4px 12px;font:700 15px system-ui;pointer-events:none;z-index:6}
+.bk-heard{position:absolute;left:50%;top:4%;translate:-50% 0;background:rgba(0,0,0,.6);color:#fff;border-radius:12px;padding:4px 12px;font:700 15px system-ui;pointer-events:none;z-index:6}
 .bk-card{position:absolute;inset:0;background:rgba(20,26,40,.72);display:grid;place-items:center;z-index:8;padding:16px}
 .bk-card-in{background:#fffaf0;color:#2b2118;border-radius:24px;max-width:min(560px,92vw);padding:18px 20px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.4)}
 .bk-card-mic{font-size:clamp(48px,12vmin,90px);position:relative;display:inline-block}
@@ -164,7 +170,7 @@
 .bk-trace{position:absolute;z-index:6;touch-action:none;cursor:crosshair}
 
 /* The words of a line that could not be heard (no clip, or sound refused): shown, never read by a device voice. */
-.bk-words{position:absolute;left:50%;top:max(12px,env(safe-area-inset-top));transform:translateX(-50%);max-width:min(720px,calc(100% - 120px));background:rgba(20,16,30,.84);color:#fff7dc;font:800 clamp(18px,3.6vmin,28px)/1.3 inherit;padding:8px 16px;border-radius:14px;text-align:center;z-index:9;pointer-events:none}
+.bk-words{position:absolute;left:50%;top:max(12px,env(safe-area-inset-top));translate:-50% 0;max-width:min(720px,calc(100% - 120px));background:rgba(20,16,30,.84);color:#fff7dc;font:800 clamp(18px,3.6vmin,28px)/1.3 inherit;padding:8px 16px;border-radius:14px;text-align:center;z-index:9;pointer-events:none}
 
 /* A reminder without words: the things to tap pulse once (a line is never said twice on a page). */
 .bk-nudge{animation:bk-nudge .9s ease-in-out 2}
@@ -221,7 +227,7 @@
 .bk-end-btns .bk-done{font-size:clamp(18px,3.8vmin,26px)}
 /* The closing card is centred without transform (its pop-in animation also sets transform, which undid the
    translate(-50%,-50%) and pushed the card to the bottom right, over the picture: 2026-09-28). */
-.bk-quest{left:0;right:0;top:0;bottom:0;margin:auto;width:fit-content;height:fit-content;max-height:92vh;overflow:auto;transform:none}
+.bk-quest{left:0;right:0;top:0;bottom:0;margin:auto;width:fit-content;height:fit-content;max-height:92vh;overflow:auto;transform:none;translate:none}
 
 /* The key ring: his golden keys out of the goal (e.g. 2 of 7); today's key slides on at the end */
 .bk-keyring{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px;margin:.2em auto .4em;padding:4px 10px;border-radius:999px;background:rgba(255,236,170,.55);box-shadow:inset 0 0 0 2px #e0b53a;max-width:100%}
@@ -233,3 +239,4 @@
 .bk-keyring em{flex-basis:100%;text-align:center;font-style:normal;font-weight:900;font-size:clamp(14px,3vmin,18px);color:#6a4a10}
 @keyframes bk-keyslide{from{transform:translate(-120px,-60px) rotate(-200deg) scale(1.8);opacity:0}to{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){.bk-keyring b.new{animation:none}}
+.bk-glyph.traced{animation:bk-settle .35s ease-out 1}

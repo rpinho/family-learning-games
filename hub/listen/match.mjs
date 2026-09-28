@@ -3,7 +3,7 @@
 // (a letter: its sound, its name, a word that starts with that sound, or a friend's name).
 // Close is good enough: a child's vowel, a voiced/unvoiced slip (b/p, d/t, g/k) or a recogniser's spelling
 // ("Matt" for "mat") still counts. A different word (a guess from the first letter) does not.
-const LETTER_NAMES={a:['a','ay','eh','ah'],b:['b','be','bee'],c:['c','see','sea','si'],d:['d','dee','de'],e:['e','ee'],f:['f','ef','eff'],g:['g','gee','ji'],h:['h','aitch','haitch'],i:['i','eye','aye'],j:['j','jay'],k:['k','kay'],l:['l','el','ell','elle'],m:['m','em'],n:['n','en'],o:['o','oh','owe'],p:['p','pee','pea'],q:['q','queue','cue'],r:['r','are','ar'],s:['s','es','ess'],t:['t','tee','tea'],u:['u','you','yu'],v:['v','vee'],w:['w'],x:['x','ex'],y:['y','why'],z:['z','zee','zed']};
+const LETTER_NAMES={a:['a','ay','eh','ah'],b:['b','be','bee','bi','bea'],c:['c','see','sea','si'],d:['d','dee','de'],e:['e','ee'],f:['f','ef','eff'],g:['g','gee','ji'],h:['h','aitch','haitch'],i:['i','eye','aye'],j:['j','jay'],k:['k','kay'],l:['l','el','ell','elle'],m:['m','em'],n:['n','en'],o:['o','oh','owe'],p:['p','pee','pea'],q:['q','queue','cue'],r:['r','are','ar'],s:['s','es','ess'],t:['t','tee','tea'],u:['u','you','yu'],v:['v','vee'],w:['w'],x:['x','ex'],y:['y','why'],z:['z','zee','zed']};
 // Sound classes: a child (or the recogniser) may slip between these.
 const CLASS={b:'B',p:'B',d:'D',t:'D',g:'K',k:'K',c:'K',q:'K',v:'F',f:'F',s:'S',z:'S',m:'M',n:'N',l:'L',r:'R',w:'W',j:'J',h:'H',x:'KS',y:'Y'};
 const VOWEL=/[aeiou]/;
@@ -86,6 +86,8 @@ export function rankFor(target,text=''){
 export function decide(r,target){
  if(!r||r.error)return {match:false,how:'error',heard:''};
  const m=matchUtterance(r.speech<0.2?'':r.text,target);
+ // (Not used: the recogniser's other readings. Measured 2026-09-28 with 5 beam hypotheses: every wrong letter sound
+ // was accepted (48/48) and decoding took 3.6 s instead of ~1.3 s; a lone letter's alternatives include anything.)
  if(!m.match&&m.how!=='silence'&&r.rank?.best==='target')return {...m,match:true,how:'ranked'};
  return m;
 }

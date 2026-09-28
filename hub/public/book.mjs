@@ -51,7 +51,8 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  // sounds anxious). A reminder that would repeat becomes a gentle pulse on the things to tap instead. Only an
  // explicit replay (the hear-again button, a tap on the caption) or the model answer after two misses says a line again.
  let saidTurn=-1;const said=new Set();
- function pulse(){const t=view.querySelector('.bk-page:last-child')?.querySelectorAll('.bk-play .bk-btn,.bk-glyph,.bk-magic,.bk-ball,.bk-thing,.bk-pizza,.bk-trace');t?.forEach(x=>{x.classList.remove('bk-nudge');void x.offsetWidth;x.classList.add('bk-nudge');});}
+ // (never on something already done or listening: a letter he has traced or said does not move again)
+ function pulse(){const t=view.querySelector('.bk-page:last-child')?.querySelectorAll('.bk-play .bk-btn:not(.right):not(.used),.bk-glyph:not(.tapped):not(.listening):not(.thinking):not(.traced),.bk-magic:not(.listening),.bk-ball,.bk-thing,.bk-pizza,.bk-trace');t?.forEach(x=>{x.classList.remove('bk-nudge');void x.offsetWidth;x.classList.add('bk-nudge');});}
  let lastLine=null;
  function speak(line,{again=false}={}){
   return new Promise(async resolve=>{
@@ -313,14 +314,14 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   cv.onpointerdown=e=>{if(my!==turn)return finish();down=true;moved=0;cv.setPointerCapture?.(e.pointerId);if(tele&&tele.firstTap==null)tele.firstTap=Date.now()-tele.shownAt;};
   cv.onpointermove=e=>{if(!down||done)return;const p=at(e);c.beginPath();c.arc(p.x,p.y,step*.55,0,Math.PI*2);c.fill();moved++;
    for(const k of cells)if(!k.hit&&Math.hypot(k.x-p.x,k.y-p.y)<step*1.1){k.hit=true;n++;}
-   if(cells.length&&n/cells.length>=.6){teleTap('trace',true);burst('sparkles');void speak(ch.ui.traced);finish();}};
+   if(cells.length&&n/cells.length>=.6){teleTap('trace',true);g.classList.remove('bk-nudge');g.classList.add('traced');g.dataset.tracedAt=String(performance.now());burst('sparkles');void speak(ch.ui.traced);finish();}};
   cv.onpointerup=()=>{down=false;if(moved<3&&++taps>=3){teleTap('trace-tap',false);finish();}};
   void speak(ch.ui.traceIt);let reps=0;const nudge=()=>later(()=>{if(done||my!==turn)return finish();if(reps++>=IDLE_REPEATS){teleHint(1);return finish();}void speak(ch.ui.traceIt);nudge();},IDLE_REPEAT_MS);nudge();
   if(!cells.length)finish();
  });}
  // ---- say it aloud (push-to-talk) ----
- // Tap the word (or the letter), say it, and the world responds. One miss: "so close, once more". Two misses: the
- // word glows and the narrator says it; then whatever he says counts (he is echoing her). Never a scolding.
+ // Tap the word (or the letter), say it, and the world responds. One miss: the word glows and the narrator says it
+ // (warm help, once); then whatever he says counts (he is echoing her). Never a scolding, never three tries.
  // No recogniser, or the microphone blocked: the tap itself counts (and a blocked microphone shows a card once).
  const micUsable=()=>canListen&&!micState().blocked;let cardShown=false;
  function micCard(why){
@@ -333,9 +334,10 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   return new Promise(res=>c.querySelectorAll('button').forEach(b=>b.onclick=e=>{e.stopPropagation();c.remove();res(b.dataset.a);}));
  }
  function sayIt(btn,{target,kind,my,help=[],onDone}){
-  let attempts=0,misses=0,busy=false,done=false;
+  let attempts=0,misses=0,busy=false,done=false,quiet=0;
   const badge=document.createElement('span');badge.className='bk-mic-badge';badge.setAttribute('aria-hidden','true');btn.append(badge);
-  const paint=()=>{badge.textContent=micUsable()?'🎤':'';};paint();const paintTimer=setInterval(()=>{if(!alive||done)clearInterval(paintTimer);else paint();},1000);
+  // With a microphone: 🎤. Without one (or when it cannot be used): 👆, tapping the letter is the way on.
+  const paint=()=>{badge.textContent=micUsable()?'🎤':'👆';};paint();const paintTimer=setInterval(()=>{if(!alive||done)clearInterval(paintTimer);else paint();},1000);
   const finish=via=>{done=true;clearInterval(paintTimer);badge.remove();btn.classList.remove('listening','thinking');onDone({via,misses,attempts});};
   btn.onclick=e=>{e?.stopPropagation?.();if(done||busy||my!==turn)return;
    if(!micUsable()){
@@ -345,7 +347,8 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
    // Called inside the tap: this is when the browser shows its permission prompt the first time.
    listenOnce({onLevel:v=>btn.style.setProperty('--lvl',v.toFixed(2))}).then(async({pcm,speech})=>{
     btn.classList.remove('listening');if(my!==turn||done)return void(busy=false);
-    if(!speech){busy=false;await speak(ch.ui.listenNothing);return;}
+    // Nothing heard twice: the microphone is not working well here; the tap counts.
+    if(!speech){busy=false;if(++quiet>=2)return finish('tap');await speak(ch.ui.listenNothing);return;}
     btn.classList.add('thinking');let r=null;try{r=await recognise({player,target,kind,attempt:attempts,preview,pcm});}catch{}
     btn.classList.remove('thinking');busy=false;if(my!==turn||done)return;
     if(preview&&r){el_heard(btn,r);}
@@ -353,10 +356,10 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
     if(tele)tele.mic.push([r?(r.match?1:0):-1,String(r?.how||'').slice(0,10),r?.ms||0]);
     if(!r)return finish('tap');
     if(r.match)return finish('voice');
-    if(misses>=2)return finish('echo');
+    // One miss: warm help (it glows, the narrator says it), then whatever he says next counts. Never three tries.
+    if(misses>=1)return finish('echo');
     misses++;btn.classList.remove('soft-miss');void btn.offsetWidth;btn.classList.add('soft-miss');
-    if(misses===1)await speak(ch.ui.listenAgain);
-    else{btn.classList.add('glow');await speakAll(help,turn,{again:true});if(my===turn)await speak(ch.ui.listenEcho);}
+    btn.classList.add('glow');await speakAll(help,turn,{again:true});if(my===turn)await speak(ch.ui.listenEcho);
    },async err=>{btn.classList.remove('listening');busy=false;paint();if(my!==turn||done)return;
     const a=await micCard(micState().why||(err?.name==='NotFoundError'?'no-mic':'denied'));paint();if(a==='tap'&&my===turn)finish('tap');});
   };

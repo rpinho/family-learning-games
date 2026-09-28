@@ -28,8 +28,10 @@ export function bookPaths(env=process.env){
   timeZone:env.FAMILY_TZ||Intl.DateTimeFormat().resolvedOptions().timeZone,
   // Letter sounds: the family's shared recordings, processed and checked by word-arcade's scripts (soundout.py and
   // letter_sound_check.py) from the same channel's installed word-arcade (live unless FAMILY_CHANNEL says staging).
-  letterSounds:resolve(exp(env.FAMILY_LETTER_SOUNDS||join(root,'letter-sounds'))),
-  soundout:[env.FAMILY_SOUNDOUT&&exp(env.FAMILY_SOUNDOUT),join(root,env.FAMILY_CHANNEL==='staging'?'staging':'live','word-arcade','scripts'),join(homedir(),'dev','word-arcade','scripts')].find(d=>d&&existsSync(join(d,'soundout.py')))||null};
+  // Candidate letter sounds under review live ONLY in staging: staging-data/letter-sounds (sounds, and the scripts that
+  // process and check them) is used when FAMILY_CHANNEL is staging and that folder exists; live never sees it.
+  letterSounds:resolve(exp(env.FAMILY_LETTER_SOUNDS||(env.FAMILY_CHANNEL==='staging'&&existsSync(join(root,'staging-data','letter-sounds','letter-sounds.json'))?join(root,'staging-data','letter-sounds'):join(root,'letter-sounds')))),
+  soundout:[env.FAMILY_SOUNDOUT&&exp(env.FAMILY_SOUNDOUT),env.FAMILY_CHANNEL==='staging'&&join(root,'staging-data','letter-sounds','scripts'),join(root,env.FAMILY_CHANNEL==='staging'?'staging':'live','word-arcade','scripts'),join(homedir(),'dev','word-arcade','scripts')].find(d=>d&&existsSync(join(d,'soundout.py')))||null};
 }
 export function readProfiles(paths){try{return JSON.parse(readFileSync(paths.profiles,'utf8'));}catch{return {};}}
 // The shared cast (a family's real toys), private: {cast:[{id,name,kind,emoji}], children:{player:{fixed,rotate,perChapter,weights?}}, allowNames:[]}
