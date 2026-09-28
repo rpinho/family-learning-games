@@ -19,7 +19,7 @@ function early(plan,lib){
   {beat:'b4',scene:bg(lib,'castle-forest','castle','meadow'),actors:A(H,noWho.id),say:[['narrator',`${noWho.name} has a very cheeky idea.`]]},
   ...(b5?[{beat:'b5',scene:bg(lib,'train-valley','meadow'),actors:A(H,owner.id,others[0]?.id),say:[['narrator','Everyone wants a turn on the train.'],['narrator','Let us line up the tickets, one to five.']]}]:[]),
   {scene:bg(lib,'pizza-party','meadow'),actors:A(pose(lib,H,'cheer'),pose(lib,D,'cheer'),noWho.id,owner.id),fx:'confetti',say:[['narrator',`${noWho.name} laughs and laughs. What a silly idea that was!`],['dad',`${name}, you are a great helper.`],['narrator','Everyone shares a big warm pizza.']]},
-  {scene:bg(lib,'night-hill','castle-moon-hill','night'),actors:A(H,D,owner.id),fx:'stars',say:[['narrator',`The moon comes up. ${name} holds the ${b1.letter} key tight.`],['narrator','Far away, another door is waiting. Who has the next key?']]}
+  {scene:bg(lib,'night-hill','castle-moon-hill','night'),actors:A(H,D,owner.id,(plan.grownups||[]).find(g=>g.id!==(plan.lead||{id:'dad'}).id&&lib.actors[g.id])?.id),fx:'stars',say:[['narrator',`The moon comes up. ${name} holds the ${b1.letter} key tight.`],['narrator','Far away, another door is waiting. Who has the next key?']]}
  ],summary:`${name} got the ${b1.letter} key from ${owner.name}, crossed the river on the ${b1.letter} stones and counted with his friends.`,hook:'Another locked door is waiting for the next key.'};
 }
 function reader(plan,lib){
@@ -36,7 +36,7 @@ function reader(plan,lib){
   {beat:'b3',scene:bg(lib,'pizza-party','soccer-pitch','meadow'),actors:A(H,c.id,d.id,D),say:[['narrator','Time for a snack before the big game!'],['narrator','Everyone must get the same. That is the rule.']]},
   {beat:'b4',scene:bg(lib,'soccer-pitch','pitch','meadow'),actors:A(H,noWho.id),props:['ball'],say:[['narrator',`After the game, ${noWho.name} runs to the scoreboard with a big grin.`]]},
   {scene:bg(lib,'soccer-pitch','pitch','meadow'),actors:A(H,D,noWho.id),action:'kick',say:[['narrator',`${noWho.name} giggles. You were right, ${name}!`],['dad','Now the real match. Your turn. Shoot!']],after:[['narrator','Goal! The crowd of birds goes wild!'],['dad','Great thinking, champ, and a great kick.']]},
-  {scene:bg(lib,'night-hill','castle-moon-hill','night'),actors:A(H,D,c.id,d.id),fx:'stars',say:[['narrator',`The map has one more stop. ${name} rolls it up carefully.`],['narrator','A word shines on the map, under the moon.']],...magic(3,'the map','The map glows. Tomorrow, the train goes somewhere new!')}
+  {scene:bg(lib,'night-hill','castle-moon-hill','night'),actors:A(H,D,c.id,(plan.grownups||[]).find(g=>g.id!==(plan.lead||{id:'dad'}).id&&lib.actors[g.id])?.id||d.id),fx:'stars',say:[['narrator',`The map has one more stop. ${name} rolls it up carefully.`],['narrator','A word shines on the map, under the moon.']],...magic(3,'the map','The map glows. Tomorrow, the train goes somewhere new!')}
  ],summary:`${name} followed the lost map by train with ${list(cast.map(x=>x.name))} and Dad, reading signs and fixing a spell.`,hook:'The map has one more stop.'};
 }
 // A quest-style reader chapter (beats: signs, puzzle, spell, fork, puzzle, no): same reading, game-like middle.

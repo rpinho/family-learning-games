@@ -152,3 +152,21 @@ test('Quest-style chapters: game beats in order, template passes the lint, puzzl
  const y=planChapter(young,{date:'2026-09-28',profile:{keyStyle:'golden',details:[{id:'michaelmas',window:['09-26','10-02'],seed:'Michaelmas dragon'},{id:'pancakes',count:['pancake','pancakes','🥞'],seed:'pancakes'}]}});
  assert.notEqual(y.style,'quest');assert.equal(y.details[0].id,'michaelmas');assert.ok(y.beats[0].what.includes('golden'));
 });
+
+test('A household cast without a grown-ups list still has Mom and Dad, and a chapter without Mom fails the lint', async()=>{
+ const {older}=await import('./fixtures.mjs');
+ const cast={cast:[{id:'gizmo',name:'Gizmo',kind:'a robot pup',emoji:'🤖'}],children:{older:{fixed:['gizmo'],rotate:[],perChapter:0}}};
+ const p=planChapter(older,{date:'2026-03-10',profile:{},cast});assert.deepEqual(p.grownups.map(g=>g.id),['dad','mom']);
+ const lib={...library,actors:{...library.actors,mom:{name:'Mom',h:.6,poses:{idle:{file:'actors/mom.webp',ar:.4}}}}};
+ const ids=actorIdsFor(p,lib);p.actorIds=ids;const o={actors:ids.all,dadId:ids.dad};
+ const ch=templateChapter(p,lib);const noMom={...ch,pages:ch.pages.map(x=>({...x,actors:(x.actors||[]).filter(a=>!String(a).startsWith('mom'))}))};
+ assert.ok(lintChapter(noMom,p,o).some(i=>i.includes('Mom must be in the picture')));
+});
+
+test('Fallback chapters put Mom in the picture for every book style', async()=>{
+ const {older,young}=await import('./fixtures.mjs');
+ const lib={...library,actors:{...library.actors,mom:{name:'Mom',h:.6,poses:{idle:{file:'actors/mom.webp',ar:.4}}}}};
+ const mk=(model,profile)=>{const cast={cast:[{id:'gizmo',name:'Gizmo',kind:'a robot pup',emoji:'🤖',letter:'G'}],children:{[model.player]:{fixed:['gizmo'],rotate:[],perChapter:0}}};return planChapter(model,{date:'2026-03-10',profile,cast});};
+ for(const p of [mk(young,{}),mk(older,{}),mk(older,{bookStyle:'quest'})]){const ids=actorIdsFor(p,lib);p.actorIds=ids;
+  const issues=lintChapter(templateChapter(p,lib),p,{actors:ids.all,dadId:ids.dad});assert.ok(!issues.some(i=>i.includes('Mom')),`${p.player} ${p.style}: ${issues.join(' | ')}`);}
+});

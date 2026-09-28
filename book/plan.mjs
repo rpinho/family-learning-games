@@ -173,7 +173,9 @@ export function planChapter(model,{date,profile={},cast=null,collection={},life=
  // The letter owners for a young reader: everyone in his cast (not only today's), so keys can be collected over weeks.
  const everyone=early&&cast?.children?.[model.player]?[...(cast.children[model.player].fixed||[]),...(cast.children[model.player].rotate||[])].map(id=>cast.cast.find(c=>c.id===id)).filter(Boolean):members;
  const things=pick(COUNT_THINGS,r);
- const gl=(cast?.grownups?.length?cast.grownups:[{id:'dad',name:'Dad'}]),leadName=gl[(Number(String(date).replace(/-/g,''))||0)%gl.length].name;
+ // The grown-ups: the household's list; a household cast without one still has Mom and Dad (both are in every book).
+ const GROWNUPS=cast?.grownups?.length?cast.grownups:cast?[{id:'dad',name:'Dad'},{id:'mom',name:'Mom',alsoCalled:['Mommy']}]:[{id:'dad',name:'Dad'}];
+ const gl=GROWNUPS,leadName=gl[(Number(String(date).replace(/-/g,''))||0)%gl.length].name;
  let base;
  if(early){
   // Today's letter owner must be in today's chapter.
@@ -202,7 +204,7 @@ export function planChapter(model,{date,profile={},cast=null,collection={},life=
   if(food&&cb){const [one,many,emoji]=food.count;cb.thing=one;cb.things=many;cb.emoji=emoji;cb.spoken=`Tap each one to count the ${many}.`;cb.ask=`How many ${many}?`;cb.what=`count the ${many} (${food.seed})`;}}
  const interests=shuffle(model.interests||[],r).slice(0,3);
  // The grown-ups take turns leading the adventure (balanced by date); the other may appear too.
- const grownups=(cast?.grownups?.length?cast.grownups:[{id:'dad',name:'Dad'}]).map(g=>({id:g.id,name:g.name,...(g.alsoCalled?{alsoCalled:g.alsoCalled}:{}),...(g.note?{note:g.note}:{})}));
+ const grownups=GROWNUPS.map(g=>({id:g.id,name:g.name,...(g.alsoCalled?{alsoCalled:g.alsoCalled}:{}),...(g.note?{note:g.note}:{})}));
  const lead=grownups[(Number(String(date).replace(/-/g,''))||0)%grownups.length];
  return {grownups,lead,player:model.player,name:model.name,date,level:early?'early':'reader',sibling:profile.sibling||null,companion,cast:members,props:chooseProps(model,cast),interests,
   arc:profile.arc||null,compass:profile.compass||[],themes:chooseThemes(life,r),collection:{keys:collection?.keys||[],words:collection?.words||[]},
