@@ -51,7 +51,8 @@ export function lockBeat(id,r){
 const ROUTES=[['blue','🟦'],['green','🟩'],['red','🟥']];
 export function routeBeat(id,r,{flavor=null}={}){
  const football=flavor==='american football';
- const parts=()=>Array.from({length:2+Math.floor(r()*2)},()=>(football?5:1)*(1+Math.floor(r()*(football?4:6))));
+ // No two equal steps in a row ("15 plus 15 plus" says the same thing twice).
+ const parts=()=>{let a;do{a=Array.from({length:2+Math.floor(r()*2)},()=>(football?5:1)*(1+Math.floor(r()*(football?4:6))));}while(a.some((x,i)=>i&&x===a[i-1]));return a;};
  let routes;do{routes=ROUTES.map(([c,e])=>({c,e,steps:parts()}));routes.forEach(x=>x.sum=x.steps.reduce((a,b)=>a+b,0));}
  while(new Set(routes.map(x=>x.sum)).size<3);
  const best=routes.reduce((a,b)=>football?(b.sum>a.sum?b:a):(b.sum<a.sum?b:a));

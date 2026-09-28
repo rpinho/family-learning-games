@@ -193,12 +193,35 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   };
   preload(0);
  }
+ // ---- turning the phone (or resizing the window): the current page is laid out again in place ----
+ // The scene (background, friends, props, the train) is rebuilt for the new shape with everyone's current pose; the
+ // pieces placed in pixels (the goal, the keeper, the balls) are moved to the same spots in the new shape; a page
+ // still sliding out is dropped. What is being said and where he is in the game stay exactly as they were.
+ let poseNow={},laidOut=`${root.clientWidth}x${root.clientHeight}`,relayoutTimer=null;
+ function relayout(){const size=`${root.clientWidth}x${root.clientHeight}`;if(!alive||size===laidOut)return;laidOut=size;
+  view.querySelectorAll('.bk-page.out').forEach(x=>x.remove());
+  if(page<0||finished)return;
+  const p=page_(),el=view.querySelector('.bk-page:last-child');if(!p||!el)return;
+  const st=stage(p,p.kind==='beat'),layer=el.querySelector('.bk-layer');
+  if(layer){const talkingId=el.querySelector('.bk-actor.talking')?.dataset.id;
+   layer.innerHTML=propsHTML(p.scene,{ground:st.ground,play:!!p.action||p.beat?.kind==='kick-letter'})+actorsHTML(p.scene,st);
+   layer.querySelectorAll('.bk-actor,.bk-prop').forEach(a=>{a.style.animation='none';});
+   for(const [id,pose] of Object.entries(poseNow))setPose(el,id,pose);if(talkingId)talking(talkingId);}
+  const W=root.clientWidth,H=root.clientHeight;
+  for(const b of el.querySelectorAll('.bk-ball')){const size=Number(b.dataset.fs)*Math.min(W,H),x=Number(b.dataset.fx)*W,y=Number(b.dataset.fy)*H;if(!Number.isFinite(size))continue;
+   b.style.left=`${x-size/2}px`;b.style.top=`${y-size/2}px`;b.style.width=b.style.height=`${size}px`;b.style.setProperty('--s',`${size}px`);}
+  // (a picture with its own goal drawn in has no goal frame, but its keeper still stands in that goal)
+  if(p.action?.kind==='kick'||p.beat?.kind==='kick-letter'){const g=goalRect(p);for(const n of el.querySelectorAll('.bk-goal,.bk-net'))Object.assign(n.style,{left:`${g.x}px`,top:`${g.y}px`,width:`${g.w}px`,height:`${g.h}px`});
+   if(!el.querySelector('.bk-actor.keeper'))placeKeeper(el,p,g);}
+ }
+ const onResize=()=>{clearTimeout(relayoutTimer);relayoutTimer=setTimeout(relayout,160);};
+ addEventListener('resize',onResize);addEventListener('orientationchange',onResize);globalThis.visualViewport?.addEventListener('resize',onResize);
  function go(n,{back=false}={}){
   if(!alive)return;clearTimers();stopSound();setNext(false);
   if(n>=ch.pages.length)return void ending();
   if(!preview&&page>=0&&page!==n)void post(player,{type:'dwell',date,page,ms:Date.now()-pageShownAt});pageShownAt=Date.now();tele=null;
   page=Math.max(0,n);if(!preview&&!back)void post(player,{type:'page',date,page});
-  renderDots();shownAt=Date.now();const my=++turn;intro=false;beatPrompt=null;audit.push({page,shown:shownAt});
+  renderDots();shownAt=Date.now();const my=++turn;intro=false;beatPrompt=null;poseNow={};laidOut=`${root.clientWidth}x${root.clientHeight}`;audit.push({page,shown:shownAt});
   const p=page_();preload(page+1);
   if(p.kind==='beat')return void runBeat(p,my);
   const el=pageFrame(p);
@@ -211,14 +234,14 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   })();
  }
  // ---- he plays: actions that move the story; the narration reacts only after he acts ----
- function setPose(el,id,pose){const a=el.querySelector(`.bk-actor[data-id="${CSS.escape(id)}"]`),P=art.actors[id]?.poses[pose];if(a&&P){a.querySelector('img').src=P.url;a.dataset.pose=pose;}return a;}
+ function setPose(el,id,pose){const a=el.querySelector(`.bk-actor[data-id="${CSS.escape(id)}"]`),P=art.actors[id]?.poses[pose];if(a&&P){a.querySelector('img').src=P.url;a.dataset.pose=pose;poseNow[id]=pose;}return a;}
  function rectOf(node){const r=node.getBoundingClientRect(),R=root.getBoundingClientRect();return {x:r.left-R.left,y:r.top-R.top,w:r.width,h:r.height};}
  // Where the goal is on screen: the picture's own goal (fractions of the image, which is drawn "cover").
  function goalRect(p){const g=art.backgrounds[p.scene.bg]?.goal||[0.38,0.3,0.24,0.17];const img=view.querySelector('.bk-page:last-child .bk-bg');
   const W=root.clientWidth,H=root.clientHeight,nw=img?.naturalWidth||1600,nh=img?.naturalHeight||1067,k=Math.max(W/nw,H/nh),dw=nw*k,dh=nh*k,ox=(W-dw)/2,oy=(H-dh)/2;
   return {x:ox+g[0]*dw,y:oy+g[1]*dh,w:g[2]*dw,h:g[3]*dh,drawn:!!art.backgrounds[p.scene.bg]?.goal};}
  function ballEl(el,{x,y,size,label}){const B=art.props.ball;const b=document.createElement('button');b.type='button';b.className='bk-ball';b.style.cssText=`left:${x-size/2}px;top:${y-size/2}px;width:${size}px;height:${size}px;--s:${size}px`;
-  b.innerHTML=`${B?`<img src="${esc(B.url)}" alt="">`:'<span>⚽</span>'}${label?`<b>${esc(label)}</b>`:''}`;el.append(b);return b;}
+  b.innerHTML=`${B?`<img src="${esc(B.url)}" alt="">`:'<span>⚽</span>'}${label?`<b>${esc(label)}</b>`:''}`;b.dataset.fx=x/(root.clientWidth||1);b.dataset.fy=y/(root.clientHeight||1);b.dataset.fs=size/Math.max(1,Math.min(root.clientWidth,root.clientHeight));el.append(b);return b;}
  function flyTo(node,to,{ms=700,spin=720,scale=0.4,arc=0}={}){const f=rectOf(node),dx=to.x-(f.x+f.w/2),dy=to.y-(f.y+f.h/2);
   const anim=node.animate([{transform:'translate(0,0) rotate(0) scale(1)'},{transform:`translate(${dx/2}px,${dy/2-arc}px) rotate(${spin/2}deg) scale(${(1+scale)/2})`,offset:.5},{transform:`translate(${dx}px,${dy}px) rotate(${spin}deg) scale(${scale})`}],{duration:matchMedia('(prefers-reduced-motion: reduce)').matches?1:ms,easing:'cubic-bezier(.2,.7,.3,1)',fill:'forwards'});return anim.finished.catch(()=>{});}
  // Swipe or tap: resolves with the point he aimed at (a tap on the ball aims at the middle of the goal).
@@ -576,7 +599,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   if(hb)hb.onclick=async()=>{const h=q.hints[hint++];if(!h)return;el.querySelector('.bk-hint').innerHTML=`<span class="pic">${esc(h.emoji)}</span><b>${esc(h.word)}</b>`;if(hint>=q.hints.length)hb.remove();if(!preview)event('book_hint',`${date}:${hint}`);await speak(h.line);};
   if(ch.quest)await speak(ch.quest);if(my===turn)await speak(ch.ui.nextTime);
  }
- function stop(){alive=false;clearTimers();stopSound();removeEventListener('deviceorientation',tilt);try{audio.removeAttribute('src');audio.load();}catch{}}
+ function stop(){alive=false;clearTimers();stopSound();removeEventListener('deviceorientation',tilt);removeEventListener('resize',onResize);removeEventListener('orientationchange',onResize);globalThis.visualViewport?.removeEventListener('resize',onResize);try{audio.removeAttribute('src');audio.load();}catch{}}
  if(!preview)void post(player,{type:'open',date,page});
  // Grown-ups' preview only: checks and dad can jump to a page.
  if(preview)globalThis.__bookGo=n=>go(n);

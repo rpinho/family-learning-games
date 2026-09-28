@@ -17,3 +17,8 @@ test('the checker refuses nonsense and unsaid boards',()=>{
  assert.ok(checkBeat({id:'q',kind:'no',pv:{n:45,digit:4,claimed:4},right:'4',claim:'The 4 in 45 is worth 4!'}).length);
  assert.ok(spokenNumbers('forty-five and twenty-something').has(45));
 });
+test('route and play-card questions never say a step twice in a row', async()=>{
+ const {repeatedWords}=await import('../lint.mjs');const {routeBeat}=await import('../quest-beats.mjs');
+ let seed=3;const r=()=>((seed=(seed*48271)%2147483647)/2147483647);
+ for(let k=0;k<300;k++)for(const flavor of [null,'american football']){const b=routeBeat('q',r,{flavor});assert.deepEqual(repeatedWords(b.spoken),[],b.spoken);}
+});
