@@ -54,7 +54,7 @@ def render_external(lines, req, out):
             request = folder / 'request.json'
             request.write_text(json.dumps({**req, 'out': str(folder), 'lines': [{'id': k, **l} for k, l in batch.items()]}))
             result = subprocess.run([*command, str(request)], capture_output=True, text=True,
-                                    timeout=min(900, max(1, int(setting.get('timeout', 600)))))
+                                    timeout=min(900, max(1, int(setting.get('timeout', 600))), max(1, int(req.get('renderer_timeout', 900)))))
             if result.returncode:
                 raise RuntimeError('external narration failed: ' + result.stderr[-2000:])
             clips = json.loads(result.stdout.strip().splitlines()[-1]).get('clips', {})

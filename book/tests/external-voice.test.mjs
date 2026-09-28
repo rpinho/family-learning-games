@@ -51,3 +51,8 @@ test('Rook role follows named selection in both newly generated and legacy chapt
  assert.equal(setRookVoice(ch,'am_michael').length,2);
  const paths=bookPaths({FAMILY_DEPLOY_ROOT:'/tmp/synthetic-household'});assert.equal(soundSource(paths).voice_renderers,join(paths.book,'voice-renderers.json'));
 });
+test('An on-demand time limit stops a stalled renderer without publishing clips',async()=>{
+ const f=await fixture([{voice:'local:rook-test-v1',speed:1,text:'Go!'}],{renderer_timeout:1});
+ await writeFile(f.py,'import time\ntime.sleep(3)\n');assert.throws(f.run,/TimeoutExpired/);
+ assert.ok(!(await readdir(f.out)).some(n=>/^[a-f0-9]{16}\.wav$/.test(n)));
+});

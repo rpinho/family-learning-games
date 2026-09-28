@@ -39,7 +39,7 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
  // a chapter can be rendered. narrate(lines) -> {clips} can be replaced in tests.
  let voiceQueue=Promise.resolve();
  const narrate=voiceEngine||(async lines=>{const p=bookPaths();const dir=await mkdtemp(join(tmpdir(),'book-voice-'));const req=join(dir,'req.json');
-  await writeFile(req,JSON.stringify({lines,out:join(bookDir,'voice'),models:p.voiceModels,...soundSource({...p,voiceRenderers:join(bookDir,'voice-renderers.json')})}));
+  await writeFile(req,JSON.stringify({lines,out:join(bookDir,'voice'),models:p.voiceModels,renderer_timeout:65,...soundSource({...p,voiceRenderers:join(bookDir,'voice-renderers.json')})}));
   try{const out=await new Promise((ok,no)=>execFile('nice',['-n','19','taskpolicy','-b',p.python,join(here,'..','book','narrate.py'),req],{timeout:90000,maxBuffer:1<<22,env:{...process.env,BOOK_VOICE_THREADS:'2'}},(e,so)=>e?no(e):ok(so)));
    return JSON.parse(String(out).trim().split('\n').at(-1));}finally{await rm(dir,{recursive:true,force:true}).catch(()=>{});}});
  async function renderLine(line){const file=clipName(line),at=join(bookDir,'voice',file);
