@@ -87,7 +87,7 @@ test("Checkmate wins and losses finish the game, move the rating and alternate c
   const r = await move(p, "d1h5", { engine: fakeEngine(), settings: strong });
   assert.equal(r.result, "win");
   const g = p.match.game;
-  assert.deepEqual([g.result.kind, g.result.reason, g.result.ratingBefore, g.result.ratingAfter], ["win", "checkmate", 700, 740]);
+  assert.deepEqual([g.result.kind, g.result.reason, g.result.ratingBefore, g.result.ratingAfter], ["win", "checkmate", 700, 775], "a quick checkmate climbs faster");
   assert.equal(g.react.kind, "youWin");
   assert.ok(g.recap?.moment, "a moment to replay");
   await assert.rejects(move(p, "a2a3", { engine: fakeEngine(), settings: strong }), /Start a game/);
@@ -101,7 +101,7 @@ test("Checkmate wins and losses finish the game, move the rating and alternate c
   const lost = await move(p, "g7g5", { engine: fakeEngine(["d1h5"]), settings: strong });
   assert.equal(lost.result, "loss");
   assert.equal(p.match.game.react.kind, "meWin");
-  assert.equal(p.match.rating, 680, "a loss drops faster than a win climbs");
+  assert.equal(p.match.rating, 715, "a loss after a win: 775 - 60");
   await act(p, "match-ack");
   await act(p, "match-start", {}, { engine: fakeEngine(), settings: strong });
   assert.equal(p.match.game.side, "w", "colours alternate every game");
@@ -238,11 +238,13 @@ test("The coach's move choice: gentle ratings slip more, strong ratings play the
 });
 
 test("Rating goes up after a win and down after a loss, so wins settle near half", () => {
-  assert.equal(nextRating(600, 1, [], 0), 640);
+  assert.equal(nextRating(600, 1, [], 0), 660);
   assert.equal(nextRating(600, 0, [], 0), 540);
   assert.equal(nextRating(600, 0, [], 9), 565);
   assert.equal(nextRating(600, 0.5, [], 9), 600);
-  assert.equal(nextRating(600, 1, [1, 1], 9), 638, "streaks move faster");
+  assert.equal(nextRating(600, 1, [1, 1], 9), 660, "streaks move faster");
+  assert.equal(nextRating(600, 1, [1, 1, 1], 9), 680, "three wins in a row: twice as fast");
+  assert.equal(nextRating(600, 1, [], 9, 20), 650, "a quick mate");
   assert.equal(nextRating(RATING_MIN, 0, [], 9), RATING_MIN);
   assert.equal(nextRating(RATING_MAX, 1, [], 9), RATING_MAX);
   // A child of fixed strength against the staircase: the rating finds him and he wins about half.
@@ -256,7 +258,8 @@ test("Rating goes up after a win and down after a loss, so wins settle near half
       rating = nextRating(rating, win, history, gno);
       history.push(win);
     }
-    assert.ok(wins / 300 > 0.5 && wins / 300 < 0.7, `skill ${skill}: won ${wins}/300`);
+    // Wins climb faster than losses fall (2026-09-28), so a steady child now wins a little under half to a little over.
+    assert.ok(wins / 300 > 0.4 && wins / 300 < 0.65, `skill ${skill}: won ${wins}/300`);
   }
 });
 
@@ -330,4 +333,13 @@ test("Friendly practice plays like the adaptive coach, and a Friendly full game 
   await act(p, "game-start", { side: "w" }, { engine: fakeEngine(), settings });
   assert.equal(p.match.rating, 240);
   assert.equal(p.match.history.at(-1).reason, "abandoned");
+});
+
+test("Too easy is answered at once: a winning streak steps the coach up, practice plays a step above, no rookie trap from 800", async () => {
+  const { coachRating, practiceRating } = await import("../chess-match.mjs");
+  const h = (k, n) => Array.from({ length: n }, () => ({ kind: k }));
+  assert.equal(coachRating({ match: { rating: 620, history: h("win", 6) } }), 1020, "six wins in a row: +400");
+  assert.equal(coachRating({ match: { rating: 620, history: [...h("win", 5), { kind: "loss" }] } }), 620, "a loss ends the streak");
+  assert.equal(practiceRating({ match: { rating: 620, history: [] } }), 770);
+  assert.equal(coachStyle(800).trapFall, 0);assert.ok(coachStyle(300).trapFall > 0.5);
 });

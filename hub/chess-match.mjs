@@ -47,7 +47,8 @@ export function coachStyle(rating) {
     random: curve([[50, 0.3], [300, 0.12], [500, 0.03], [700, 0]], r),
     takeMate: curve([[50, 0.45], [600, 0.8], [1200, 0.97], [1800, 1]], r),
     // Chance of not noticing a mate-in-one threat (the Scholar's Mate and other rookie traps).
-    trapFall: curve([[50, 0.9], [300, 0.8], [600, 0.5], [900, 0.25], [1200, 0.08], [1500, 0]], r),
+    // (the gentlest levels only: from about 800 the coach no longer falls for the Scholar's Mate)
+    trapFall: curve([[50, 0.9], [300, 0.7], [600, 0.3], [800, 0]], r),
     multipv: r < 1000 ? 20 : 10,
     ms: r < 600 ? 200 : r < 1200 ? 280 : 350,
   };
@@ -94,11 +95,14 @@ export function chooseCoachMove(pvs, rating, legal, rng = Math.random) {
 }
 // Up after a win, down faster after a loss (faster still at first and on streaks), so the child
 // wins a little more than half: 60% while calibrating, about 58% after.
-export function nextRating(rating, outcome, previous = [], games = 0) {
+// Wins climb faster than losses fall back (2026-09-28: six wins in a row felt "too easy, lemon squeezy"):
+// +60 a win (+40 after six games), x1.5 after two wins in a row, x2 after three or more, x1.25 for a quick mate.
+export function nextRating(rating, outcome, previous = [], games = 0, plies = null) {
   if (outcome === 0.5) return rating;
-  let delta = outcome === 1 ? (games < 6 ? 40 : 25) : -(games < 6 ? 60 : 35);
-  const last = previous.slice(-2);
-  if (last.length === 2 && last.every((x) => x === outcome)) delta *= 1.5;
+  let delta = outcome === 1 ? (games < 6 ? 60 : 40) : -(games < 6 ? 60 : 35);
+  let run = 0; for (let i = previous.length - 1; i >= 0 && previous[i] === outcome; i--) run++;
+  if (run >= 3 && outcome === 1) delta *= 2; else if (run >= 2) delta *= 1.5;
+  if (outcome === 1 && plies != null && plies <= 30) delta *= 1.25;
   return clamp(Math.round(rating + delta), RATING_MIN, RATING_MAX);
 }
 export function matchBoard(g) {
@@ -239,7 +243,7 @@ function finish(m, g, result, now) {
   const outcome = result.kind === "win" ? 1 : result.kind === "loss" ? 0 : 0.5;
   const before = m.rating;
   const previous = m.history.map((h) => (h.kind === "win" ? 1 : h.kind === "loss" ? 0 : 0.5));
-  m.rating = nextRating(before, outcome, previous, m.games);
+  m.rating = nextRating(before, outcome, previous, m.games, (g.moves || []).length);
   m.games++;
   m.record[result.kind]++;
   g.result = { ...result, ratingBefore: before, ratingAfter: m.rating };
@@ -262,7 +266,15 @@ export function recordAbandoned(p, settings = {}, { id, side, plies }, now = Dat
   m.history.push({ id, at: now, side, kind: "loss", reason: "abandoned", plies, ratingBefore: before, ratingAfter: m.rating });
   m.history = m.history.slice(-60);
 }
-export const coachRating = (p, settings = {}) => p.match?.rating ?? matchSettings(settings).startRating;
+// The coach's strength: the child's rating, plus a step for a current winning streak (+100 per win beyond two in a
+// row), so a run of easy wins is answered at once without rewriting the child's saved rating.
+export function coachRating(p, settings = {}) {
+  const r = p.match?.rating ?? matchSettings(settings).startRating, h = p.match?.history || [];
+  let run = 0; for (let i = h.length - 1; i >= 0 && h[i].kind === "win"; i--) run++;
+  return clamp(r + Math.max(0, run - 2) * 100, RATING_MIN, RATING_MAX);
+}
+// Friendly practice plays a step above the full-game coach (practice is where he stretches).
+export const practiceRating = (p, settings = {}) => clamp(coachRating(p, settings) + 150, RATING_MIN, RATING_MAX);
 const publicHint = (h) => h && { stage: h.stage, idea: h.idea, text: h.voice, voice: h.voice, from: h.from, to: h.to };
 export function publicMatch(p, settings = {}) {
   const s = matchSettings(settings), m = p.match || freshMatch(settings), g = m.game;
@@ -291,7 +303,7 @@ export async function actMatch(p, input, { engine, settings = {}, now = Date.now
       hintedTurns: 0, slips: 0, startedAt: now, result: null, react: null, lastMoves: [] };
     const b = new Chess(START);
     if (side === "b") {
-      const r = await coachMove(g, b, m.rating, engine, rng);
+      const r = await coachMove(g, b, coachRating({ match: m }), engine, rng);
       g.lastMoves = [uciOf(r.move)];
     }
     g.fen = b.fen();
@@ -324,7 +336,7 @@ export async function actMatch(p, input, { engine, settings = {}, now = Date.now
     g.coach = null;
     let reply = null, result = resultOf(b, g.side, g.moves.length);
     if (!result) {
-      const r = await coachMove(g, b, m.rating, engine, rng);
+      const r = await coachMove(g, b, coachRating({ match: m }), engine, rng);
       reply = r.move;
       if (r.bestScore != null) rec.after = -r.bestScore;
       result = resultOf(b, g.side, g.moves.length);
