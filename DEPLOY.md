@@ -78,3 +78,7 @@ installed app opens that child's profile.
     node scripts/deploy/cli.mjs rollback <game> [--now]   # --now only for a broken live game
 
 After changing the tooling itself, run `node scripts/deploy/cli.mjs install` so the promoter uses the new copy.
+
+
+## Quiet windows (2026-09-27)
+The children's day runs 06:00-20:00 local (on Saturdays it ends about 19:30; treat it as 20:00). Promotions go live after 15 idle minutes at any time, or inside a quiet window after a short idle: **every night 20:00-06:00** (2 min), and **weekdays 07:30-15:00** while they are at school (5 min idle, a guard for sick days and holidays). Configure with `quietWindows` in the private deploy.json.
