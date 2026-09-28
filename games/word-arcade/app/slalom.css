@@ -57,3 +57,25 @@
 .slalom-boot-hill span{animation:slalom-bob 1.4s ease-in-out infinite alternate}.slalom-boot-hill span+span{animation-delay:.7s}
 @media(max-height:500px){.slalom-boot{inset:42px 0 0 0}}
 @media(prefers-reduced-motion:reduce){.slalom-boot-hill span{animation:none}}
+/* letters / words choice (start screen; not shown to a letters-only player) */
+.slalom-modes{display:flex;gap:10px;padding:6px;border-radius:24px;background:#ffffff99}
+.slalom-mode{position:relative;min-width:150px;min-height:62px;border-radius:18px;border:4px solid transparent;background:transparent;color:#15304d;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;font:inherit}
+.slalom-mode span{font-size:28px;font-weight:900;letter-spacing:.02em}.slalom-mode strong{font-size:20px}
+.slalom-mode.chosen{background:#fffdf8;border-color:#ffb020;box-shadow:0 4px 14px #0a1f3a26}
+.slalom-ready{position:absolute;top:-12px;right:-8px;font-style:normal;font-size:26px;animation:slalom-star 1.6s ease-in-out infinite}
+@keyframes slalom-star{50%{transform:scale(1.25) rotate(12deg)}}
+@media(prefers-reduced-motion:reduce){.slalom-ready{animation:none}}
+/* warm-up before a words run, and the words recap: picture + the word whose letters light up with the sound-out */
+.slalom-warmup{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#0c2a4d55;color:#fff;text-align:center;padding:20px;z-index:3}
+.slalom-warmup h2{margin:0;font-size:clamp(26px,4vw,40px);text-shadow:0 3px 12px #0a1f3a88}
+.slalom-warm-row{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;max-width:960px}
+.slalom-warm-word{min-width:132px;padding:12px 18px 10px;border-radius:24px;background:#fffdf8;color:#15304d;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;border:5px solid #cfe0ef;box-shadow:0 6px 0 #b9cde0;transition:transform .25s,opacity .25s,border-color .25s}
+.slalom-warm-word.now{opacity:1;transform:translateY(-8px) scale(1.1);border-color:#ffd35c;box-shadow:0 10px 0 #e8b634}
+.slalom-warm-word i{font-style:normal;font-size:clamp(40px,6vw,64px);line-height:1.1;height:1.1em}.slalom-warm-word i.blank{visibility:hidden}
+.slalom-warm-word:not(.now) b{color:#3d5a78}
+.slalom-warm-word b{font-size:clamp(36px,5.6vw,58px);font-weight:900;letter-spacing:.06em}
+.slalom-warm-word b span{display:inline-block;transition:color .15s,transform .15s}
+.slalom-warm-word.now b span{color:#9fb3c6}.slalom-warm-word.now b span.was{color:#15304d}
+.slalom-warm-word.now b span.on{color:#e0562b;transform:translateY(-6px) scale(1.2)}.slalom-warm-word b span.whole{color:#15304d}
+.slalom-recap .slalom-warm-row{margin-bottom:4px}
+@media(max-height:500px){.slalom-start h1{display:none}.slalom-mode{min-height:50px;min-width:130px}.slalom-warm-word{min-width:104px;padding:6px 12px}.slalom-warm-word i{font-size:36px}.slalom-warm-word b{font-size:32px}.slalom-warmup{gap:8px}}

@@ -332,7 +332,9 @@ export function createSlalomScene(container,opts){
   if(st.finished)return Math.max(0,(stopD-st.d)*0.55);
   // shared model (lib/slalom-timing.mjs): glide until the question has been heard, ~2 s to look, go faster only after it
   const row=rows[st.next],p=st.prompt[st.next];
-  return speedFor({dist:row?row.d-st.d:undefined,promptEnded:p?.ended===undefined?undefined:st.time-p.ended,boost:st.boost});
+  // support rows (two misses in a row): a calmer cruise for the longer sound-out question, and no go-faster
+  const support=!!row?.gate?.support;
+  return speedFor({dist:row?row.d-st.d:undefined,promptEnded:p?.ended===undefined?undefined:st.time-p.ended,boost:st.boost&&!support,...(support?{base:COURSE.supportSpeed}:{})});
  }
  function step(dt){
   st.time+=dt;
@@ -458,7 +460,7 @@ export function createSlalomScene(container,opts){
   go(){st.go=true;},
   passes(){return passLog.slice();},
   boost(on){st.boostKey=!!on;},
-  canBoost(){const row=rows[st.next];return st.go&&!st.finished&&(!row||st.prompt[st.next]?.ended!==undefined);},
+  canBoost(){const row=rows[st.next];return st.go&&!st.finished&&(!row||(st.prompt[st.next]?.ended!==undefined&&!row.gate?.support));},
   setPaused(v){st.paused=!!v;clock.last=performance.now();if(swish)updateSwish(0);},
   promptStarted(i){st.prompt[i]={...st.prompt[i],started:st.time};},
   promptEnded(i){st.prompt[i]={...st.prompt[i],ended:st.time};},
