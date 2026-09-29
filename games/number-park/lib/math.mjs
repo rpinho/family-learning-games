@@ -13,7 +13,7 @@ import {readingAction} from './reading.mjs';
 import {validBuild,buildFeedback,buildValue} from './place-build.mjs';
 import {artAction} from './art.mjs';
 import {planningAction} from './planning.mjs';
-export const VERSION='number-park-2026-09-27-digit-worth-public';
+export const VERSION='number-park-2026-09-28-number-names-public';
 
 export const GAMES=[
  {id:'mix',icon:'🎲',title:'Little sums',description:'A mix just like the first unit.'},
@@ -158,7 +158,7 @@ export function action(p,input,now=Date.now(),services={}){
  }else if(input.kind==='place-check'){
   const s=p.session,q=s?.question;if(!s||s.finished||s.result||q.kind!=='place'||q.placeMode!=='build'||input.questionId!==q.id)fail('Open a block-building round first.');
   if(!validBuild(input.counts))fail('Build the number with the blocks first.');
-  const feedback=buildFeedback(q.target,input.counts,s.placeChecks||0);
+  const feedback=buildFeedback(q.target,input.counts,s.placeChecks||0,q);
   if(feedback.ok){
    const helped=s.helped||!!s.placeChecks,xp=helped?4:10;
    s.result={ok:true,answer:q.total,xp,helped};s.correct++;s.independent+=Number(!helped);p.xp+=xp;
