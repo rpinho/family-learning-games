@@ -10,6 +10,7 @@ import {FOUNDATION_WORDS} from './foundation.mjs';
 import {recapVoiceLines} from './recap.mjs';
 import {boStoryVoiceLines} from './bo-story.mjs';
 import {REST_LINE,REST_COACH} from './rest.mjs';
+import {RESCUE_LINES,PUZZLE_LINES} from './rescue.mjs';
 
 export const ROOK_CHEERS = [
   'My hat just did a victory lap!',
@@ -170,5 +171,7 @@ export function allVoiceLines(){
   lines.push(...wordBreakLines());
   lines.push(...wordBreakLines());
 
+  // Automatic narration shortens rescue cues; replay still needs their full versions.
+  lines.push(...Object.values(RESCUE_LINES),...Object.values(PUZZLE_LINES));
   return [...new Set([...lines,...lines.map(briefLine)])];
 }
