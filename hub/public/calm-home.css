@@ -1,0 +1,22 @@
+/* Review-only quiet bookshelf. The game routes and embedded play retain their own styles. */
+body:has(.calm-home){background:radial-gradient(ellipse at 30% 0,#fcf9ed,#e9dfc8);color:#304637}
+body:has(.calm-home) .top{background:#f9f3e5;color:#304637;border-bottom:1px solid #b6a57b}
+body:has(.calm-home) .top button{color:#304637;border-color:#c4b68f;background:transparent}
+body:has(.calm-home) .identity small{color:#6a725b}
+.calm-home{max-width:1050px;padding:28px 26px}.calm-home h1{font:500 clamp(2rem,4vw,3rem)/1.2 Georgia,serif;letter-spacing:-.02em;text-align:center;color:#344b3b}
+.calm-home>p{text-align:center;color:#6c735e;margin:12px 0 25px;font-weight:400}
+.catalog.calm-home .cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;min-height:270px;align-items:stretch}
+.catalog.calm-home .card{background:#faf6e9;border:1px solid #b9ab82;border-radius:100px 100px 12px 12px;padding:20px 10px 18px;box-shadow:0 8px 20px #57411d0a;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;transition:background .3s}
+.catalog.calm-home .card:hover{transform:none;background:#eef0dd}.catalog.calm-home .card:active{transform:none}
+.catalog.calm-home .card .game-logo{width:min(100%,148px);height:auto;aspect-ratio:1;object-fit:contain;border-radius:50%;background:#eee6ce;border:1px solid #c7b98e;padding:12px;box-shadow:inset 0 0 0 5px #f9f4e6;margin:0 0 14px}
+.catalog.calm-home .card h2{font:500 1.25rem/1.3 Georgia,serif;letter-spacing:0;margin:0;color:#304637}
+.catalog.calm-home .card p{display:none}.calm-home .shelf-navigation{display:flex;align-items:center;justify-content:center;gap:20px;margin:24px auto 12px}
+.calm-home button{background:#faf5e7;border:1px solid #b9ab82;color:#3c5340;box-shadow:none;border-radius:10px;min-height:46px}
+.calm-home .shelf-navigation span{font:400 .85rem Georgia,serif;color:#69725d;min-width:70px;text-align:center}
+.calm-home footer{border-top:1px solid #c7b98e;padding-top:14px;color:#67715d;font-size:.8rem;font-weight:400}
+.calm-home .book-watch-home{margin:10px 0 20px}.calm-home .book-watch-home h2{font-family:Georgia,serif}
+@media(max-width:700px){.calm-home{padding:20px 16px}.catalog.calm-home .cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;min-height:380px}.catalog.calm-home .card{padding:14px 8px}.catalog.calm-home .card .game-logo{width:102px;margin-bottom:10px}.catalog.calm-home .card h2{font-size:1.08rem}.calm-home h1{font-size:1.9rem}.calm-home>p{font-size:.9rem;margin:10px 0 20px}.calm-home .shelf-navigation{margin-top:20px;gap:12px}.calm-home .shelf-navigation button{padding:10px 15px}.calm-home footer{gap:8px}}
+@media(orientation:landscape) and (max-height:600px){.calm-home{padding:14px 24px}.catalog.calm-home .cards{grid-template-columns:repeat(4,minmax(0,1fr));min-height:0}.catalog.calm-home .card .game-logo{width:86px}.catalog.calm-home .card{padding:10px 6px}.calm-home h1{font-size:1.6rem}.calm-home>p{margin:6px 0 14px}.calm-home .shelf-navigation{margin:12px}.calm-home footer{padding-top:8px}}
+@media(prefers-reduced-motion:reduce){.calm-home *{transition:none!important}}
+
+html:has(.calm-home),body:has(.calm-home){min-height:100%;background-color:#eee5d2}.calm-home{font-family:"Avenir Next",system-ui,sans-serif}.calm-home .book-watch-btn{background:#ece8d2;color:#40563f;border:1px solid #c3b58e;font-weight:500;font-size:.85rem}.calm-home .card:focus-visible{outline:3px solid #91691f;outline-offset:3px}

@@ -1,3 +1,4 @@
+import {shelfPage} from './calm-shelf.mjs';
 import {createMenuCache} from './menu-cache.mjs';
 import {fetchJSON} from './save-request.mjs';
 import { mountSoccer } from "./soccer-mode.mjs";
@@ -23,6 +24,7 @@ let config,
 let storage;try{storage=localStorage;}catch{}
 const menuOrders = createMenuCache({storage});
 let leaveCheck=null;
+const shelfPositions=new Map();
 // The Book opens by itself once per page load (and at most a few times a day, server-side), before any game.
 const bookChecked=new Set();let renderSeq=0;
 const games = CATALOG.map((g) => [g.id, g.name, g.description, g.color]);
@@ -201,9 +203,20 @@ async function render() {
   // The main menu always shows the illustrated logos (the children pick by them); a game's own menu keeps its
   // screenshots. There is no per-device choice any more, so there is nothing to reset.
   const style = "logos";
+  if(player!=="admin")orderedGames.unshift({id:"my-book",name:"My Book",icon:"/my-book.svg",description:"Today’s chapter, any time.",color:"#f0a52c"});
+  const shelf=shelfPage(orderedGames,shelfPositions.get(player)||0);
   const kids = config.players.filter((k) => k.id !== "admin");
   const watchCards = player === "admin" ? `<div class="book-watch-home"><h2>📖 The Book</h2>${kids.map((k) => `<a class="book-watch-btn" href="#book/${esc(k.id)}">Watch ${esc(k.name)}'s book →</a>`).join("")}</div>` : "";
-  main.innerHTML = `<section class="catalog menu-${style}"><h1>What shall we play?</h1><p>Your games. Your next adventure.</p>${watchCards}<div class="cards">${player !== "admin" ? `<a class="card book-card" href="#my-book" data-game="my-book" style="--tint:#f0a52c"><img class="game-logo" src="/my-book.svg" alt="" width="192" height="192"><h2>📖 My Book</h2><p>Today’s chapter, any time.</p></a>` : ""}${orderedGames.map(item => { const art = gameArtwork(item, style); return `<a class="card" href="#${item.id}" data-game="${item.id}" style="--tint:${item.color}"><img class="${art.className}" src="${art.src}" alt="" width="${style === "logos" ? 192 : 640}" height="${style === "logos" ? 192 : 400}"><h2>${item.name}</h2><p>${item.description}</p></a>`; }).join("")}</div><footer><span>One app · Your progress stays with you.</span><button id="grown-ups">Grown-ups</button></footer></section>`;
+  main.innerHTML = `<section class="catalog calm-home menu-${style}"><h1>A place to explore.</h1><p>Choose a little adventure. Take your time.</p>${watchCards}<div class="cards">${shelf.items.map(item => { const art = gameArtwork(item, style); return `<a class="card" href="#${item.id}" data-game="${item.id}" style="--tint:${item.color}"><img class="${art.className}" src="${art.src}" alt="" width="${style === "logos" ? 192 : 640}" height="${style === "logos" ? 192 : 400}"><h2>${item.name}</h2><p>${item.description}</p></a>`; }).join("")}</div><nav class="shelf-navigation" aria-label="Game shelves"><button id="shelf-prev" ${shelf.index===0?"disabled":""}>← Back</button><span aria-live="polite">${shelf.index+1} of ${shelf.count}</span><button id="shelf-next" ${shelf.index===shelf.count-1?"disabled":""}>More games →</button></nav><footer><span>Your place is kept.</span><button id="grown-ups">Grown-ups</button></footer></section>`;
+  const shelfCards=main.querySelector('.cards');
+  function turnShelf(delta){
+    const next=shelfPage(orderedGames,(shelfPositions.get(player)||0)+delta);shelfPositions.set(player,next.index);
+    shelfCards.innerHTML=next.items.map(item=>{const art=gameArtwork(item,style);return `<a class="card" href="#${item.id}" data-game="${item.id}" style="--tint:${item.color}"><img class="${art.className}" src="${art.src}" alt="" width="192" height="192"><h2>${item.name}</h2><p>${item.description}</p></a>`;}).join('');
+    $('#shelf-prev').disabled=next.index===0;$('#shelf-next').disabled=next.index===next.count-1;
+    main.querySelector('.shelf-navigation span').textContent=`${next.index+1} of ${next.count}`;
+    shelfCards.querySelector('a')?.focus({preventScroll:true});
+  }
+  $('#shelf-prev').onclick=()=>turnShelf(-1);$('#shelf-next').onclick=()=>turnShelf(1);
   $("#grown-ups").onclick = () => {
     gateAttempts = 0;
     newParentChallenge();
