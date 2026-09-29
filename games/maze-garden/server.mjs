@@ -21,7 +21,7 @@ const file=p=>resolve(data,p+'.json');
 function save(p){const tmp=file(p.player)+'.tmp';writeFileSync(tmp,JSON.stringify(p),{mode:0o600});renameSync(tmp,file(p.player));}
 function load(player){return existsSync(file(player))?JSON.parse(readFileSync(file(player),'utf8')):newProfile(player);}
 function send(res,status,value){res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(value));}
-const types={'.html':'text/html; charset=utf-8','.css':'text/css','.mjs':'text/javascript','.js':'text/javascript','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json'};
+const types={'.m4a':'audio/mp4','.html':'text/html; charset=utf-8','.css':'text/css','.mjs':'text/javascript','.js':'text/javascript','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json'};
 const server=http.createServer(async(req,res)=>{res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self'; connect-src 'self'; frame-ancestors 'none'");
  try{const url=new URL(req.url,`http://${req.headers.host}`);if(!allowedHosts().has(url.hostname.toLowerCase()))return send(res,403,{error:'Local access only'});
  if(req.headers.origin&&req.headers.origin!==url.origin)return send(res,403,{error:'Origin mismatch'});
