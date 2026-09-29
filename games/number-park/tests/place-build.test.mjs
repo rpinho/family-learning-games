@@ -57,7 +57,8 @@ test('level 3 mixes three-digit builds with the old tens/ones decoding; history 
  const p=freshProfile('explorer');
  for(let i=0;i<6;i++)p.history.push({ok:true,helped:false,question:{track:EXPLORER_TRACK,skill:'place'}});
  assert.equal(challengeLevel(p,'place'),3);
- let builds=0,decodes=0,worth=0;
- for(let i=0;i<300;i++){p.revision=i;const q=makeQuestion(p,'place',i%6);if(q.skill==='worth'){worth++;assert.equal(q.level,2);}else if(q.placeMode==='build'){builds++;assert.ok(q.total>=100);}else{decodes++;assert.ok(['tens','ones'].includes(q.placeMode));}}
- assert.ok(builds>80&&decodes>25&&worth>90&&worth<150,`${builds}/${decodes}/${worth}`);
+ let builds=0,decodes=0,worth=0,listening=0;
+ for(let i=0;i<300;i++){p.revision=i;const q=makeQuestion(p,'place',i%6);if(q.skill==='number-name'){listening++;assert.ok(q.total<100);assert.equal(q.show,'heard');}else if(q.skill==='worth'){worth++;assert.equal(q.level,2);}else if(q.placeMode==='build'){builds++;assert.ok(q.total>=100);}else{decodes++;assert.ok(['tens','ones'].includes(q.placeMode));}}
+ assert.equal(listening,50);
+ assert.ok(builds>70&&decodes>25&&worth>70&&worth<140,`${builds}/${decodes}/${worth}`);
 });
