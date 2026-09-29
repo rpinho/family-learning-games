@@ -34,17 +34,24 @@ const fam={props:{ball:{h:.1,ar:1},pizza:{h:.12,ar:1.6}},actors:{dad:{h:.64,pose
 const famScene={actors:A(['diogo','mom','dad','monkey']),props:[{id:'pizza'},{id:'ball'}]};
 for(const [W,H] of [[412,915],[915,412],[1366,768]])test(`Composition at ${W}x${H}: one ground, no overlaps, Dad > Mom > Diogo > toy`,()=>{
  const L=composeScene(famScene,fam,{width:W,height:H,ground:0.93,maxHeight:0.88});
- const all=[...L.actors,...L.props].sort((a,b)=>a.left-b.left);
+ const all=[...L.actors.filter(a=>!a.depth),...L.props].sort((a,b)=>a.left-b.left);
  for(let i=1;i<all.length;i++)assert.ok(all[i].left>=all[i-1].left+all[i-1].width,`${all[i-1].id} overlaps ${all[i].id}`);
  for(const r of all){assert.ok(Math.abs(r.bottom-0.07)<1e-9,'feet on the ground');assert.ok(r.left>=0&&r.left+r.width<=1,'on screen');}
- const h=id=>L.actors.find(a=>a.id===id).height;
+ const h=id=>{const a=L.actors.find(a=>a.id===id);return a.height/(a.depth?0.92:1);};
  assert.ok(h('dad')>h('mom')&&h('mom')>h('diogo')&&h('diogo')>h('monkey'));
  for(const p of L.props)assert.ok(p.height<h('diogo')*0.5,`${p.id} smaller than half a boy`);
- assert.ok(L.sky>=0&&L.sky<1-0.07-h('dad')+1e-9);
+ assert.ok(L.sky>=0&&L.sky<1-0.07-L.actors.find(a=>a.id==='dad').height+1e-9);
 });
-test('Composition: portrait and landscape use the same unit (the smaller side)',()=>{
- const a=composeScene(famScene,fam,{width:412,height:915,ground:0.93,maxHeight:0.88}),b=composeScene(famScene,fam,{width:915,height:412,ground:0.93,maxHeight:0.88});
- assert.ok(Math.abs(a.unit-b.unit)<1);assert.equal(PEOPLE.dad,1);
+test('Composition: Diogo is at least 18% of a tall screen and 28% of a wide one; Dad about 1.35x Diogo',()=>{
+ const sc={actors:A(['diogo','dad','monkey'])};
+ for(const [W,H,min] of [[412,915,0.18],[915,412,0.28],[1366,768,0.28]]){const L=composeScene(sc,fam,{width:W,height:H,ground:0.93,maxHeight:0.88}),h=id=>L.actors.find(a=>a.id===id).height;
+  assert.ok(h('diogo')>=min,`${W}x${H}: Diogo ${h('diogo')}`);assert.ok(Math.abs(h('dad')/h('diogo')-1.35)<0.03);}
+ assert.equal(PEOPLE.dad,1);
+});
+test('Composition: a row too wide for a phone puts the grown-ups a step back instead of shrinking everyone',()=>{
+ const L=composeScene({actors:A(['diogo','mom','dad','monkey'])},fam,{width:360,height:780,ground:0.93,maxHeight:0.88});
+ const d=L.actors.find(a=>a.id==='diogo');assert.ok(d.height>=0.18,'Diogo keeps his size');
+ assert.deepEqual(L.actors.filter(a=>a.depth).map(a=>a.id).sort(),['dad','mom']);
 });
 test('Composition: a crowded row drops props before shrinking people',()=>{
  const L=composeScene({actors:A(['dad','mom','diogo','monkey','dad']),props:[{id:'pizza'},{id:'ball'}]},fam,{width:412,height:915});

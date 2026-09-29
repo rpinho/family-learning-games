@@ -99,16 +99,16 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  // People and props: one row on one ground line, sized from one unit (book-scene.mjs composeScene). The sky above
  // them is remembered for the effects.
  let sky=0.3,trainBand=null;
- function actorsHTML(scene,{ground=0.93,scale=1,maxHeight=1,avoid=null,reserve=0,beat=false,play=false,keeper=null}={}){
+ function actorsHTML(scene,{ground=0.93,scale=1,maxHeight=1,avoid=null,beat=false,play=false,keeper=null}={}){
   const W=root.clientWidth||innerWidth,H=root.clientHeight||innerHeight;
   // A train in the picture always carries the friends (all aboard!).
   if((scene.ride||scene.props.some(p=>p.id==='train'))&&(art.props.train?.seats||art.props.train?.cars)){
    // (other props stand beside the train, never in front of it)
    const train=trainHTML(scene,W,H,{ground,maxHeight,beat}),L=composeScene({actors:[],props:scene.props},art,{width:W,height:H,ground,maxHeight,beat,playBall:play,avoid:trainBand});
    return train+propHTML(L.props);}
-  const L=composeScene(scene,art,{width:W,height:H,ground,maxHeight,avoid,reserve,beat,playBall:play,aside:keeper});sky=L.sky;
+  const L=composeScene(scene,art,{width:W,height:H,ground,maxHeight,avoid,beat,playBall:play,aside:keeper});sky=L.sky;
   return propHTML(L.props)+L.actors.map((a,i)=>{const P=art.actors[a.id].poses[a.pose]||art.actors[a.id].poses.idle;
-   return `<div class="bk-actor${P.fly||a.pose==='fly'?' fly':''}" data-id="${esc(a.id)}" data-pose="${esc(a.pose)}" style="left:${(a.left*100).toFixed(2)}%;width:${(a.width*100).toFixed(2)}%;height:${(a.height*100).toFixed(2)}%;bottom:${(a.bottom*100).toFixed(2)}%;--from:${a.left+a.width/2<0.5?-40:40}vw;animation-delay:${i*0.15}s"><div style="animation-delay:${-i*0.7}s;animation-duration:${(2.2+i*0.37).toFixed(2)}s"><img src="${esc(P.url)}" alt="${esc(art.actors[a.id].name)}"></div></div>`;}).join('');
+   return `<div class="bk-actor${P.fly||a.pose==='fly'?' fly':''}${a.depth?' back':''}" data-id="${esc(a.id)}" data-pose="${esc(a.pose)}"${a.depth?` data-depth="${a.depth}"`:''} style="left:${(a.left*100).toFixed(2)}%;width:${(a.width*100).toFixed(2)}%;height:${(a.height*100).toFixed(2)}%;bottom:${(a.bottom*100).toFixed(2)}%;--from:${a.left+a.width/2<0.5?-40:40}vw;animation-delay:${i*0.15}s"><div style="animation-delay:${-i*0.7}s;animation-duration:${(2.2+i*0.37).toFixed(2)}s"><img src="${esc(P.url)}" alt="${esc(art.actors[a.id].name)}"></div></div>`;}).join('');
  }
  function propHTML(list){return list.map(r=>{const P=art.props[r.id];return P?`<div class="bk-prop" data-id="${esc(r.id)}" style="left:${(r.left*100).toFixed(2)}%;width:${(r.width*100).toFixed(2)}%;height:${(r.height*100).toFixed(2)}%;bottom:${(r.bottom*100).toFixed(2)}%"><img src="${esc(P.url)}" alt=""></div>`:'';}).join('');}
  function trainHTML(scene,W,H,{ground=0.93,maxHeight=1,beat=false}={}){
@@ -169,25 +169,33 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  // Where the characters may stand on this page so the page's words, buttons and play things never cover them.
  function stage(p,beat){
   const W=root.clientWidth||innerWidth,H=root.clientHeight||innerHeight,wide=W>H*1.05,kind=p.beat?.kind;
-  const ground=beat?0.64:0.93,scale=beat?0.72:1;
-  // The top band belongs to the page's words: a beat's board, letter or pizza (30%), a magic word (34%), a caption (14%).
-  const maxHeight=ground-(beat?0.30:p.magic?0.34:p.caption?0.15:0.05);
+  // A game page: the friends stand above the answers (on a wide screen the answers sit lower, so the friends can be as
+  // big as on a story page: the play band's buttons start near 68% of the height).
+  const ground=beat?(wide?0.66:0.64):0.93,scale=beat?0.72:1;
+  // The top band belongs to the page's words: a beat's board, letter or pizza (28-30%), a magic word (34%), a caption (14%).
+  const maxHeight=ground-(beat?(wide?0.25:0.30):p.magic?0.34:p.caption?0.15:0.05);
   // Bands the characters step out of: the goal (keeper) and the ball's column, the things he counts or shares,
   // the big letter a friend teaches, and the spot where he holds the ball to throw.
   const ball=actionBall(W,H)/W,mid=(a,b)=>[a,b],S=Math.min(W,H);let avoid=null;
-  // What the row gives up, the same in both orientations (so the people are the same size turned either way).
-  const reserve=kind==='kick-letter'?Math.max(ball*W*1.5,(GOAL_W+0.06)*S):['kick','throw'].includes(p.action?.kind)?ball*W*1.5:0;
+
   if(p.action?.kind==='kick'||kind==='kick-letter'){if(wide){const g=art.backgrounds[p.scene.bg]?.goal||[0.38,0.3,0.24,0.17];const [a,b]=coverBand(g,{width:W,height:H});avoid=[Math.min(a,0.5-ball)-0.04,Math.max(b,0.5+ball)+0.04];}else{
    // Tall screen: the ball's column; on a kick-letter page whose goal stands on the friends' ground line (the painted
    // goal is cropped away, see goalRect), the goal's band too. A kick page's goal is up in the field, above everyone.
    const g=art.backgrounds[p.scene.bg]?.goal||[0.38,0.3,0.24,0.17],vis=(W/H)/(1600/1067),cropped=g[0]<0.5-vis/2||g[0]+g[2]>0.5+vis/2;
-   const half=kind==='kick-letter'&&cropped?Math.max(ball*0.75,GOAL_W/2+0.03):ball*0.75;avoid=mid(0.5-half,0.5+half);}}
-  else if(p.action?.kind==='throw')avoid=[THROW_X-ball*0.6,THROW_X+ball*0.6];
+   // (the keeper in a painted goal stands in the middle too: his column stays clear)
+   const kp=keeperFor(null,p),KA=kp&&art.actors[kp],KP=KA&&(KA.poses.idle||Object.values(KA.poses)[0]),kw=KP?relHeight(kp,KA)*sceneUnit({width:W,height:H,maxHeight:0.9})*KP.ar/W:0;
+   // (a stand-in goal on a kick-letter page stands up in the field, above everyone: nothing to keep clear)
+   const half=kind==='kick-letter'&&cropped?0:Math.max(ball*0.75,kw/2+0.03);avoid=half?mid(0.5-half,0.5+half):null;}}
+  // (on a tall screen the ball waits just above everyone's heads, so the row keeps its whole width)
+  else if(p.action?.kind==='throw'&&wide)avoid=[THROW_X-ball*0.6,THROW_X+ball*0.6];
   else if(wide&&['count','share'].includes(kind))avoid=[0.26,0.74];
   else if(wide&&kind==='teach-letter')avoid=[0.5-Math.min(W,H)*0.13/W,0.5+Math.min(W,H)*0.13/W];
-  return {ground,scale,maxHeight,avoid,reserve,beat,play:!!p.action||kind==='kick-letter',keeper:p.action?.kind==='kick'||kind==='kick-letter'?keeperFor(null,p):null};
+  // the game's own buttons or board, measured once they are on screen (clearOfUI): the friends step aside
+  if(uiAvoid&&uiPage===page)avoid=avoid?[Math.min(avoid[0],uiAvoid[0]),Math.max(avoid[1],uiAvoid[1])]:uiAvoid;
+  return {ground,scale,maxHeight,avoid,beat,play:!!p.action||kind==='kick-letter',keeper:p.action?.kind==='kick'||kind==='kick-letter'?keeperFor(null,p):null};
  }
  function pageFrame(p,{beat=false}={}){
+  uiAvoid=null;
   const b=art.backgrounds[p.scene.bg];
   const st=stage(p,beat),{ground,scale}=st;
   const cap=p.caption&&!p.magic&&!(p.beat&&['teach-letter'].includes(p.beat.kind))?`<button class="bk-caption" type="button">${esc(p.caption)}</button>`:'';
@@ -227,7 +235,27 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  // pieces placed in pixels (the goal, the keeper, the balls) are moved to the same spots in the new shape; a page
  // still sliding out is dropped. What is being said and where he is in the game stay exactly as they were.
  let poseNow={},laidOut=`${root.clientWidth}x${root.clientHeight}`,relayoutTimer=null;
+ // The game's buttons, board and things must never cover a friend. They appear while the beat runs, so they are
+ // measured once on screen; if one covers a friend, the friends step aside (left and right of the game) and glide
+ // there (the same elements move: poses and the talking friend are kept).
+ let uiAvoid=null,uiPage=-1;
+ function clearOfUI(){if(!alive||page<0||finished)return;const p=page_(),el=view.querySelector('.bk-page:last-child'),layer=el?.querySelector('.bk-layer');if(!p||!layer)return;
+  const R=root.getBoundingClientRect(),W=R.width,H=R.height,box=e=>e.getBoundingClientRect();
+  const people=[...layer.querySelectorAll('.bk-actor:not(.keeper-ready)')].map(box);if(!people.length)return;
+  const pad=H*0.015,ui=[...el.querySelectorAll('.bk-play > *, .bk-board, .bk-slots, .bk-thing')].map(box).filter(u=>u.width&&u.height&&people.some(q=>u.left<q.right&&q.left<u.right&&u.top<q.bottom+pad&&q.top<u.bottom+pad));
+  if(!ui.length)return;
+  const x0=(Math.min(...ui.map(u=>u.left))-R.left)/W-0.02,x1=(Math.max(...ui.map(u=>u.right))-R.left)/W+0.02;
+  const next=uiAvoid&&uiPage===page?[Math.min(uiAvoid[0],x0),Math.max(uiAvoid[1],x1)]:[x0,x1];
+  if(uiAvoid&&uiPage===page&&Math.abs(next[0]-uiAvoid[0])<0.01&&Math.abs(next[1]-uiAvoid[1])<0.01)return;
+  uiAvoid=next;uiPage=page;
+  const t=document.createElement('div');t.innerHTML=actorsHTML(p.scene,stage(p,p.kind==='beat'));
+  for(const n of t.children){const o=layer.querySelector(`${n.classList.contains('bk-actor')?'.bk-actor':'.bk-prop'}[data-id="${CSS.escape(n.dataset.id||'')}"]:not(.keeper-ready)`);if(!o)continue;
+   o.style.transition='left .35s ease,bottom .35s ease,width .35s ease,height .35s ease';for(const k of ['left','width','height','bottom'])o.style[k]=n.style[k];}
+  const fx=el.querySelector('.bk-fx:not(.burst)');if(fx&&p.scene.fx)fx.outerHTML=fxHTML(p.scene.fx);}
+ let uiTimer=0;const uiWatch=new MutationObserver(recs=>{if(recs.every(r=>r.target.closest?.('.bk-layer')))return;clearTimeout(uiTimer);uiTimer=setTimeout(clearOfUI,150);});
+ uiWatch.observe(view,{childList:true,subtree:true});
  function relayout(){const size=`${root.clientWidth}x${root.clientHeight}`;if(!alive||size===laidOut)return;laidOut=size;
+  uiAvoid=null;setTimeout(clearOfUI,120);
   view.querySelectorAll('.bk-page.out').forEach(x=>x.remove());
   if(page<0||finished)return;
   const p=page_(),el=view.querySelector('.bk-page:last-child');if(!p||!el)return;
@@ -239,7 +267,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   // the sky moved with the people: the stars move with it
   const fx=el.querySelector('.bk-fx:not(.burst)');if(fx&&p.scene.fx)fx.outerHTML=fxHTML(p.scene.fx);
   const W=root.clientWidth,H=root.clientHeight;
-  for(const b of el.querySelectorAll('.bk-ball')){const size=Number(b.dataset.fs)*Math.min(W,H),x=Number(b.dataset.fx)*W,y=Number(b.dataset.fy)*H;if(!Number.isFinite(size))continue;
+  for(const b of el.querySelectorAll('.bk-ball')){const size=Number(b.dataset.fs)*Math.min(W,H),x=Number(b.dataset.fx)*W,y=b.dataset.throw&&b.classList.contains('pulse')?throwY(W,H,size):Number(b.dataset.fy)*H;if(!Number.isFinite(size))continue;
    b.style.left=`${x-size/2}px`;b.style.top=`${y-size/2}px`;b.style.width=b.style.height=`${size}px`;b.style.setProperty('--s',`${size}px`);}
   // (a picture with its own goal drawn in has no goal frame, but its keeper still stands in that goal)
   if(p.action?.kind==='kick'||p.beat?.kind==='kick-letter'){const g=goalRect(p);
@@ -275,8 +303,8 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   const W=root.clientWidth,H=root.clientHeight,nw=img?.naturalWidth||1600,nh=img?.naturalHeight||1067,k=Math.max(W/nw,H/nh),dw=nw*k,dh=nh*k,ox=(W-dw)/2,oy=(H-dh)/2;
   const r={x:ox+g[0]*dw,y:oy+g[1]*dh,w:g[2]*dw,h:g[3]*dh,drawn:!!art.backgrounds[p.scene.bg]?.goal};
   // A goal painted into the picture can fall outside a tall phone's crop: then a goal frame stands in the middle,
-  // its posts on the ground line (the friends step out of its band, see stage()).
-  if(r.x<0||r.x+r.w>W){const w=GOAL_W*W,h=Math.min(w*0.6,H*0.2),gy=(p.kind==='beat'?stage(p,true).ground:0.55)*H;return {x:(W-w)/2,y:gy-h,w,h,drawn:false};}
+  // up in the field, above the friends' heads.
+  if(r.x<0||r.x+r.w>W){const w=GOAL_W*W,h=Math.min(w*0.6,H*0.2),gy=(p.kind==='beat'?0.36:0.55)*H;return {x:(W-w)/2,y:gy-h,w,h,drawn:false};}
   return r;}
  function ballEl(el,{x,y,size,label}){const B=art.props.ball;const b=document.createElement('button');b.type='button';b.className='bk-ball';b.style.cssText=`left:${x-size/2}px;top:${y-size/2}px;width:${size}px;height:${size}px;--s:${size}px`;
   b.innerHTML=`${B?`<img src="${esc(B.url)}" alt="">`:'<span>⚽</span>'}${label?`<b>${esc(label)}</b>`:''}`;b.dataset.fx=x/(root.clientWidth||1);b.dataset.fy=y/(root.clientHeight||1);b.dataset.fs=size/Math.max(1,Math.min(root.clientWidth,root.clientHeight));el.append(b);return b;}
@@ -305,6 +333,8 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   burst('confetti');setPose(el,player,'cheer');for(const a of p.scene.actors)if(a.id!==keeperId)setPose(el,a.id,art.actors[a.id]?.poses.cheer?'cheer':art.actors[a.id]?.poses.happy?'happy':a.pose);
   await speak(ch.ui.goal);
  }
+ // where the ball waits to be thrown: a tall screen, just above everyone's heads (the row keeps its width)
+ function throwY(W,H,s){return H>W*1.05?Math.min(H*0.74,sky*H-s*0.72):H*0.74;}
  async function act(el,p,my){
   const a=p.action,W=root.clientWidth,H=root.clientHeight,size=actionBall(W,H),started=Date.now();
   if(a.kind==='kick'){
@@ -314,7 +344,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
    await shoot(el,p,my,ball,aim);
   }else if(a.kind==='throw'){
    const fetcher=a.fetcher||p.scene.actors.map(x=>x.id).find(id=>id!==player&&id!=='dad');const f=fetcher&&el.querySelector(`.bk-actor[data-id="${CSS.escape(fetcher)}"]`);
-   const ball=ballEl(el,{x:W*THROW_X,y:H*0.74,size:size*0.7});ball.classList.add('pulse');
+   const ball=ballEl(el,{x:W*THROW_X,y:throwY(W,H,size*0.7),size:size*0.7});ball.dataset.throw='1';ball.classList.add('pulse');
    const aim=await flick(ball,my);if(my!==turn)return;ball.classList.remove('pulse');setPose(el,player,'throw');void speak(ch.ui.fetch);
    const to={x:Math.min(W*0.9,Math.max(W*0.55,W*0.75+aim.dx*0.3)),y:H*0.8};await flyTo(ball,to,{ms:900,scale:0.6,arc:H*0.35,spin:540});if(my!==turn)return;
    if(f){setPose(el,fetcher,'run');const fr=rectOf(f);await f.animate([{transform:'translateX(0)'},{transform:`translateX(${to.x-(fr.x+fr.w/2)}px)`}],{duration:900,easing:'ease-in-out',fill:'forwards'}).finished.catch(()=>{});
@@ -649,7 +679,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   const closing=huntL&&!preview&&!early&&book.hunt?.intro?.clip?book.hunt.intro:ch.quest;
   if(closing)await speak(closing);if(my===turn)await speak(ch.ui.nextTime);
  }
- function stop(){alive=false;clearTimers();stopSound();for(const u of blobs.values())if(u)URL.revokeObjectURL(u);blobs.clear();removeEventListener('deviceorientation',tilt);removeEventListener('resize',onResize);removeEventListener('orientationchange',onResize);globalThis.visualViewport?.removeEventListener('resize',onResize);try{audio.removeAttribute('src');audio.load();}catch{}}
+ function stop(){alive=false;clearTimers();uiWatch.disconnect();clearTimeout(uiTimer);stopSound();for(const u of blobs.values())if(u)URL.revokeObjectURL(u);blobs.clear();removeEventListener('deviceorientation',tilt);removeEventListener('resize',onResize);removeEventListener('orientationchange',onResize);globalThis.visualViewport?.removeEventListener('resize',onResize);try{audio.removeAttribute('src');audio.load();}catch{}}
  if(!preview)void post(player,{type:'open',date,page});
  // Grown-ups' preview only: checks and dad can jump to a page.
  if(preview)globalThis.__bookGo=n=>go(n);
