@@ -56,7 +56,7 @@ test('Hub persists only the chosen profile, rejects replay/foreign origins, and 
   assert.equal((await(await fetch(base+'/manifest.webmanifest?player=nobody')).json()).id,'/');
   assert.match(await(await fetch(base+'/?player=beginner')).text(),/href="\/manifest\.webmanifest\?player=beginner"/);
   assert.match(await(await fetch(base+'/?player=%3Cx%3E')).text(),/href="\/manifest\.webmanifest"/);
-  for(const path of ['/dribble-live.mjs','/live-pitch.mjs','/dribble-ui.mjs','/chess/tokens.mjs'])assert.equal((await fetch(base+path)).status,200);
+  for(const path of ['/dribble-live.mjs','/live-pitch.mjs','/dribble-ui.mjs','/chess/tokens.mjs','/chess/feedback.mjs'])assert.equal((await fetch(base+path)).status,200);
   const live=await(await request({type:'live-start',liveRules:1,revision:escaped.profile.revision})).json();
   assert.equal(live.profile.live.level,1);assert.equal(live.profile.dribbles,1);
   const checkpoint=await(await request({type:'live-checkpoint',liveRules:1,revision:live.profile.revision,roundId:live.profile.live.round.id,inputs:'iwee'})).json();

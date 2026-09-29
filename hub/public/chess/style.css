@@ -1716,3 +1716,77 @@ body:has(.chess-lesson) > .top .home {
 .match-more {
   margin: 18px 0 0;
 }
+/* A quiet wooden table: presentation only, shared by every chess course. */
+.academy {
+  --ink: #393e31; --muted: #686956; --paper: #f4ecda;
+  --line: #d9c9a9; --green: #526b50; --shadow: #354d39;
+  background: radial-gradient(ellipse at 50% 22%, #fff9ea 0, #f4ecda 65%, #e9dfc7 100%);
+}
+body:has(.academy), body:has(.academy) > .top { background: #f4ecda; color: #393e31; }
+body:has(.academy) > .top { border-bottom: 1px solid #d9c9a9; }
+body:has(.academy) > .top .identity small { color: #6b705b; }
+body:has(.academy) > .top button { background: #fbf5e7; border-color: #cdbb99; color: #495640; box-shadow: none; }
+.academy h1, .academy h2, .academy h3 { font-family: Georgia, 'Times New Roman', serif; font-weight: 600; }
+.academy .ac-button { border: 1px solid #cdbb99; border-radius: 12px; background: #fbf6e9; box-shadow: 0 2px 0 #d7c6a4; font-weight: 700; transition: background .3s ease; }
+.academy .ac-button:hover, .academy .ac-button:active { transform: none; background: #eee2c8; }
+.academy .ac-button.primary, .academy .ac-button.tab.match-tab, .academy .ac-button.tab.match-tab.active { background: #526b50; border-color: #425a41; color: #fff9e9; box-shadow: 0 2px 0 #354d39; }
+.academy .ac-button.primary:hover { background: #425c43; }
+.academy .ac-button.text, .academy .ac-button.sound { background: transparent; box-shadow: none; }
+.academy-nav { background: #f7efde; border-color: #d9c9a9; }
+.academy .ac-button.tab { color: #58604a; }
+.academy .ac-button.tab.active { color: #344c38; background: #e6e7d3; border-color: #b4be9e; }
+.academy .ac-content { background: transparent; }
+.academy .unit-heading { background: #e7dfc9; color: #3c4936; border: 1px solid #c6b58d; border-radius: 14px; }
+.academy .unit-heading .ac-button { color: #495640; }
+.academy .path-track path { stroke: #d4c19b; }
+.academy .path-node { background: #f8f0db; border-color: #bda77b; color: #5a644b; box-shadow: 0 4px 0 #bbaa87; }
+.academy .path-node.current { background: #526b50; border-color: #3e5740; color: #fff4d3; box-shadow: 0 4px 0 #354d39; animation: none; }
+.academy .path-node.complete { background: #e0e5cd; border-color: #a7b195; color: #41583e; box-shadow: 0 3px 0 #adb995; }
+.academy .path-node.locked { background: #ebe3d1; color: #8a806c; border-color: #d6cab1; box-shadow: none; }
+.academy .node-label .next-ready { color: #526b50; }
+.academy .academy-sidebar, .academy .practice-cards article, .academy .notebook-unit { background: #fbf5e7; border-color: #d9c9a9; box-shadow: none; }
+.academy .chess-lesson .arena-prompt h1, .academy .solved .arena-prompt h1 { color: #42543b; font-weight: 600; }
+.academy .board-coordinates {
+  background: #846141;
+  border: 6px solid #846141;
+  border-radius: 13px;
+  box-shadow: 0 3px 0 #5a422e, 0 9px 22px #4b392324;
+}
+.academy .chess-board { border-radius: 6px; }
+.academy .sq.light { background: #f2dfb9; }
+.academy .sq.dark { background: #b18c61; }
+.academy .sq.last.light { background: #e6dcad; }
+.academy .sq.last.dark { background: #a2aa7a; }
+.academy .sq.selected.light, .academy .sq.hint-piece.light { background: #f2d287; }
+.academy .sq.selected.dark, .academy .sq.hint-piece.dark { background: #ddbb70; }
+.academy .sq.drop-target { background: #cad298; }
+.academy .sq .move-dot { background: #3f59468c; box-shadow: none; }
+.academy .sq.legal.capture .move-dot { border-color: #fff3c6; }
+.academy .sq.selected .chess-piece { animation: none; transform: translateY(-3%); }
+.academy .sq.move-arriving::after, .academy .move-spark { display: none; }
+.academy .move-success { color: #fff8e7; background: #526b50; border-color: #f9f0d9; box-shadow: none; }
+.academy .solved .board-coordinates { border-color: #846141; box-shadow: 0 3px 0 #5a422e, 0 9px 22px #4b392324; }
+.academy .lesson-progress { display: flex; justify-content: center; gap: 10px; height: auto; background: none; overflow: visible; }
+.academy .lesson-bead { width: 13px; height: 13px; border: 1px solid #a69773; border-radius: 50%; background: #eee3cc; box-shadow: inset 0 1px 2px #765b2220; }
+.academy .lesson-bead.done { background: #647958; border-color: #52694a; }
+.academy .hint-dots i { background: #d0c2a4; }
+.academy .hint-dots i.on { background: #526b50; }
+.academy .summary-stars { color: #647958; font-size: 26px; letter-spacing: 6px; }
+.academy .match-lobby { padding: 24px; border: 1px solid #ccb994; border-radius: 24px; background: #fcf6e7; box-shadow: 0 8px 26px #4b39230c; }
+.academy .match-hero { padding-bottom: 16px; border-bottom: 1px solid #dfd2b7; }
+.academy .match-play { margin: 24px 0; }
+.academy .table-notebook { text-align: left; margin: 16px 0; color: #62644f; border-top: 1px solid #e0d4ba; padding-top: 12px; }
+.academy .table-notebook summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: 8px; }
+.academy .table-notebook summary::before { content: '+'; font-size: 22px; }
+.academy .table-notebook[open] summary::before { content: '−'; }
+.academy .match-stats > div { background: #f2ead6; border: 0; }
+.academy .match-stats > div:first-child strong { color: #526b50; }
+.academy .match-result, .academy .game-title { color: #63664f; }
+.academy .board-more > div { background: #fff9eb; border-color: #cdbb99; }
+.academy .rook-puppet.react-celebrate .rook-arm { animation-iteration-count: 1; }
+@media(max-width:700px) {
+  .academy .match-lobby { padding: 18px 14px; }
+  .academy-nav > div { flex-wrap: wrap; }
+  .academy .board-coordinates { border-width: 4px; }
+}
+@media(prefers-reduced-motion:reduce) { .academy .sq.selected .chess-piece { transform: none; } }
