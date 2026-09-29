@@ -26,7 +26,7 @@ const send=(res,status,body)=>{res.writeHead(status,{'Content-Type':'application
 // other names this machine answers to, such as a VPN DNS name.
 const BASE_HOSTS=['localhost','127.0.0.1'];let hostCache=null,hostCacheAt=0;
 function allowedHosts(){if(hostCache&&Date.now()-hostCacheAt<5000)return hostCache;const me=hostname().toLowerCase(),short=me.replace(/\.local$/,'');hostCacheAt=Date.now();return hostCache=new Set([...BASE_HOSTS.map(h=>String(h).toLowerCase()),me,short,short+'.local',...(process.env.FAMILY_EXTRA_HOSTS||'').split(/[\s,]+/).filter(Boolean).map(h=>h.toLowerCase()),...Object.values(networkInterfaces()).flat().filter(Boolean).map(i=>i.family==='IPv6'||i.family===6?'['+i.address.toLowerCase()+']':i.address)]);}
-const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.rsc':'text/x-component','.txt':'text/plain','.svg':'image/svg+xml','.png':'image/png','.ico':'image/x-icon','.wav':'audio/wav','.webmanifest':'application/manifest+json','.woff2':'font/woff2'};
+const mime={'.m4a':'audio/mp4','.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.rsc':'text/x-component','.txt':'text/plain','.svg':'image/svg+xml','.png':'image/png','.ico':'image/x-icon','.wav':'audio/wav','.webmanifest':'application/manifest+json','.woff2':'font/woff2'};
 const server=http.createServer(async(req,res)=>{
  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','same-origin');
  const began=Date.now();let url;
