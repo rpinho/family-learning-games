@@ -452,7 +452,8 @@ function forwardOnly(name, version, allowRollback = false) {
 // preview survives a reboot. approve prints the merge step (then the usual stage -> idle-gated promote); reject and
 // close stop it and move its release and data to previews-archive/ (nothing is deleted).
 const PREVIEWS = join(ROOT, 'previews.json'), PREVIEW_DIR = join(ROOT, 'previews'), PREVIEW_ARCHIVE = join(ROOT, 'previews-archive');
-const MAX_PREVIEWS = 3, PREVIEW_PORT0 = 5400, PREVIEW_NAME = /^[a-z0-9][a-z0-9-]{1,30}$/;
+// (deploy.json maxPreviews: how many may run at once; 3 unless set. Each preview is a node server plus its data clone.)
+const MAX_PREVIEWS = Number.isInteger(cfg.maxPreviews) && cfg.maxPreviews > 0 ? cfg.maxPreviews : 3, PREVIEW_PORT0 = 5400, PREVIEW_NAME = /^[a-z0-9][a-z0-9-]{1,30}$/;
 const previewLabel = name => `com.ricardo.family-games-preview.${name}`;
 const previewUrl = (name, game) => `https://${cfg.previewHost || 'ricardos-mac-mini.tail5a4676.ts.net:8443'}/preview/${name}/?player=${game === 'hub' ? 'diogo' : 'admin'}`;
 function readPreviews() {return readJSON(PREVIEWS, {previews: {}});}

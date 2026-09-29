@@ -109,7 +109,7 @@ promoted without Ricardo's review:
   "PREVIEW · <name> · exit" banner shows; `/preview/exit` leaves it.
 - **Data:** each preview has its OWN data dir under `previews/<name>/`, a copy-on-write clone of the live saves (a hub
   preview also clones the book, and uses the STAGING games). It never writes to live or staging data.
-- **Limits:** at most 3 previews run at once (16 GB Mini); a fourth is refused. Ports 5400+ on 127.0.0.1.
+- **Limits:** at most `maxPreviews` (deploy.json; 3 if unset, 5 on the Mini since 2026-09-28) previews run at once; one more is refused. Ports 5400+ on 127.0.0.1.
 - **Restarts:** one launchd job per preview (`com.ricardo.family-games-preview.<name>`, background priority), so previews
   come back after a reboot. Creating a preview builds and checks under `nice`/`taskpolicy` like `stage`; it never
   touches live services, so it is allowed any time. Registry: `previews.json`.
