@@ -17,6 +17,7 @@ import {assemble} from '../../book/assemble.mjs';
 import {actorIdsFor} from '../../book/generate.mjs';
 import {young,older} from '../../book/tests/fixtures.mjs';
 import {NO_DEVICE_VOICE} from './no-device-voice.mjs';
+import {guardChrome} from './headless-guard.mjs';
 
 const here=dirname(fileURLToPath(import.meta.url));
 const args0=process.argv.slice(2),pubArg=args0.indexOf('--public');
@@ -56,7 +57,7 @@ await new Promise(r=>server.listen(0,'127.0.0.1',r));const base=`http://127.0.0.
 
 // One headless Chrome for the whole run.
 const profile=await mkdtemp(join(tmpdir(),'beats-'));
-const chrome=spawn(process.env.CHROME||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',['--headless=new','--remote-debugging-port=0',`--user-data-dir=${profile}`,'--mute-audio','--no-first-run','--autoplay-policy=no-user-gesture-required','--window-size=412,915','about:blank'],{stdio:'ignore'});
+const chrome=spawn(process.env.CHROME||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',['--headless=new','--remote-debugging-port=0',`--user-data-dir=${profile}`,'--mute-audio','--no-first-run','--autoplay-policy=no-user-gesture-required','--window-size=412,915','about:blank'],{stdio:'ignore'});guardChrome(chrome);
 let port;for(let i=0;i<100&&!port;i++){await sleep(100);try{port=Number((await readFile(join(profile,'DevToolsActivePort'),'utf8')).split('\n')[0]);}catch{}}
 const target=(await(await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find(t=>t.type==='page');const ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise(r=>ws.onopen=r);
 let seq=0;const waiting=new Map();ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id&&waiting.has(m.id)){waiting.get(m.id)(m);waiting.delete(m.id);}};

@@ -13,6 +13,7 @@ import {spawn,execFileSync} from 'node:child_process';
 import {mkdtemp,readFile,writeFile,rm} from 'node:fs/promises';
 import {tmpdir,homedir} from 'node:os';
 import {join} from 'node:path';
+import {guardChrome} from './headless-guard.mjs';
 const args=process.argv.slice(2),arg=(k,d=null)=>{const i=args.indexOf(k);return i>=0?args[i+1]:d;},flag=k=>args.includes(k);
 const base=arg('--base','http://127.0.0.1:4810'),player=arg('--player'),storyId=arg('--story'),[W,H]=arg('--size','412x915').split('x').map(Number),dpr=Number(arg('--dpr','2.6'));
 const mixOut=arg('--mix'),label=arg('--label',`${W}x${H}`),timeout=Number(arg('--timeout','600'))*1000;
@@ -51,7 +52,7 @@ export function analyse(log,{idleMs=6500,prompts=new Set()}={}){
 }
 async function main(){
  const profile=await mkdtemp(join(tmpdir(),'voice-check-'));
- const proc=spawn(chrome,['--headless=new','--remote-debugging-port=0',`--user-data-dir=${profile}`,'--no-first-run','--no-default-browser-check','--autoplay-policy=document-user-activation-required','--mute-audio','--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream','--enable-unsafe-swiftshader',`--window-size=${W},${H}`,'about:blank'],{stdio:'ignore'});
+ const proc=spawn(chrome,['--headless=new','--remote-debugging-port=0',`--user-data-dir=${profile}`,'--no-first-run','--no-default-browser-check','--autoplay-policy=document-user-activation-required','--mute-audio','--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream','--enable-unsafe-swiftshader',`--window-size=${W},${H}`,'about:blank'],{stdio:'ignore'});guardChrome(proc);
  const result={what:player?`book:${player}`:`living:${storyId}`,label,size:`${W}x${H}`,dpr,issues:[],errors:[]};
  try{
   let port=null;for(let i=0;i<100&&!port;i++){await sleep(100);try{port=Number((await readFile(join(profile,'DevToolsActivePort'),'utf8')).split('\n')[0]);}catch{}}

@@ -11,13 +11,14 @@ import {mkdtemp,readFile,writeFile,mkdir} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {NO_DEVICE_VOICE} from './no-device-voice.mjs';
+import {guardChrome} from './headless-guard.mjs';
 const args=process.argv.slice(2),arg=(k,d=null)=>{const i=args.indexOf(k);return i>=0?args[i+1]:d;},flag=k=>args.includes(k);
 const base=arg('--base','http://127.0.0.1:4810'),player=arg('--player'),[W,H]=arg('--size','1366x768').split('x').map(Number),mobile=flag('--mobile');
 const shots=arg('--shots'),shotPages=new Set((arg('--shot-pages','')||'').split(',').filter(Boolean).map(Number)),label=arg('--label',`${W}x${H}`);
 const chrome=arg('--chrome',process.env.CHROME||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const profile=await mkdtemp(join(tmpdir(),'book-check-chrome-'));
-const proc=spawn(chrome,['--headless=new','--remote-debugging-port=0',`--user-data-dir=${profile}`,'--no-first-run','--no-default-browser-check','--autoplay-policy=document-user-activation-required','--mute-audio','--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream',`--window-size=${W},${H}`,'about:blank'],{stdio:'ignore'});
+const proc=spawn(chrome,['--headless=new','--remote-debugging-port=0',`--user-data-dir=${profile}`,'--no-first-run','--no-default-browser-check','--autoplay-policy=document-user-activation-required','--mute-audio','--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream',`--window-size=${W},${H}`,'about:blank'],{stdio:'ignore'});guardChrome(proc);
 let port=null;for(let i=0;i<100&&!port;i++){await sleep(100);try{port=Number((await readFile(join(profile,'DevToolsActivePort'),'utf8')).split('\n')[0]);}catch{}}
 if(!port){proc.kill();throw Error('Chrome did not start');}
 const target=(await(await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find(t=>t.type==='page');

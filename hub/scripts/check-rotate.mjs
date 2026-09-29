@@ -10,6 +10,7 @@ import {mkdtemp,readFile,writeFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {NO_DEVICE_VOICE} from './no-device-voice.mjs';
+import {guardChrome} from './headless-guard.mjs';
 const args=process.argv.slice(2),arg=(k,d=null)=>{const i=args.indexOf(k);return i>=0?args[i+1]:d;};
 const base=arg('--base','http://127.0.0.1:5325'),player=arg('--player','diogo'),shots=arg('--shots');
 const [A,B]=arg('--sizes','412x915,915x412').split(',').map(s=>s.split('x').map(Number));
@@ -18,7 +19,7 @@ const ch=(await(await fetch(`${base}/api/book/preview?player=${encodeURIComponen
 // Pages: the first page, a page with a game, a kick page if any (or the one given).
 const pick=arg('--pages')?arg('--pages').split(',').map(Number):[1,ch.pages.findIndex(p=>p.beat&&p.beat.kind!=='teach-letter')+1,ch.pages.findIndex(p=>p.action?.kind==='kick'||p.beat?.kind==='kick-letter')+1].filter((x,i,a)=>x>0&&a.indexOf(x)===i);
 const profile=await mkdtemp(join(tmpdir(),'rotate-'));
-const chrome=spawn(process.env.CHROME||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',['--headless=new','--remote-debugging-port=0',`--user-data-dir=${profile}`,'--mute-audio','--no-first-run','--autoplay-policy=no-user-gesture-required','about:blank'],{stdio:'ignore'});
+const chrome=spawn(process.env.CHROME||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',['--headless=new','--remote-debugging-port=0',`--user-data-dir=${profile}`,'--mute-audio','--no-first-run','--autoplay-policy=no-user-gesture-required','about:blank'],{stdio:'ignore'});guardChrome(chrome);
 let port;for(let i=0;i<100&&!port;i++){await sleep(100);try{port=Number((await readFile(join(profile,'DevToolsActivePort'),'utf8')).split('\n')[0]);}catch{}}
 const t=(await(await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find(t=>t.type==='page');const ws=new WebSocket(t.webSocketDebuggerUrl);await new Promise(r=>ws.onopen=r);
 let seq=0;const w=new Map();ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id&&w.has(m.id)){w.get(m.id)(m);w.delete(m.id);}};

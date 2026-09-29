@@ -17,6 +17,7 @@ import {mkdtemp,readFile,writeFile,mkdir,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {INSTRUMENT} from './check-voice.mjs';
+import {guardChrome} from './headless-guard.mjs';
 const args=process.argv.slice(2),arg=(k,d=null)=>{const i=args.indexOf(k);return i>=0?args[i+1]:d;},flag=k=>args.includes(k);
 const base=arg('--base','http://127.0.0.1:4810'),hero=arg('--story','night-train'),shots=arg('--shots'),timeout=Number(arg('--timeout','900'))*1000,dpr=Number(arg('--dpr','2.6'));
 const sizes=String(arg('--sizes','412x915m,915x412m,1366x768')).split(',').map(s=>{const m=s.match(/^(\d+)x(\d+)(m?)$/);const W=+m[1],H=+m[2];return {W,H,mobile:!!m[3],label:m[3]?(H>W?'phone-portrait':'phone-landscape'):'chromebook'};});
@@ -27,7 +28,7 @@ async function run(size){
  const {W,H,mobile,label}=size;
  const profile=await mkdtemp(join(tmpdir(),'living-chrome-'));
  const gpu=flag('--gpu')?['--enable-gpu','--use-angle=metal','--ignore-gpu-blocklist']:['--enable-unsafe-swiftshader'];
- const proc=spawn(chrome,['--headless=new','--remote-debugging-port=0',`--user-data-dir=${profile}`,'--no-first-run','--no-default-browser-check','--mute-audio','--autoplay-policy=document-user-activation-required','--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream',...gpu,`--window-size=${W},${H}`,'about:blank'],{stdio:'ignore'});
+ const proc=spawn(chrome,['--headless=new','--remote-debugging-port=0',`--user-data-dir=${profile}`,'--no-first-run','--no-default-browser-check','--mute-audio','--autoplay-policy=document-user-activation-required','--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream',...gpu,`--window-size=${W},${H}`,'about:blank'],{stdio:'ignore'});guardChrome(proc);
  const R={story:hero,label,size:`${W}x${H}`,dpr:mobile?dpr:1,checkpoints:[],beats:[],errors:[],failures:[],shots:[],mic:null,steer:{holds:0,stoppedOnRelease:0,maxLag:0}};
  try{
   let port=null;for(let i=0;i<100&&!port;i++){await sleep(100);try{port=Number((await readFile(join(profile,'DevToolsActivePort'),'utf8')).split('\n')[0]);}catch{}}

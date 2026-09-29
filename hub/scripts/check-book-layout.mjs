@@ -21,6 +21,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 export const RULES={standing:0.9,rider:0.9,riderHead:0.95};
 import {nameForms,mentions} from '../../book/assemble.mjs';
 import {unphonemize} from '../public/pronounce.mjs';
+import {guardChrome} from './headless-guard.mjs';
 // Runs in the page: what share of each character on the current page can be seen.
 const MEASURE=`(async()=>{
  const page=[...document.querySelectorAll('.bk-page')].at(-1),W=innerWidth,H=innerHeight;if(!page)return null;
@@ -47,7 +48,7 @@ const MEASURE=`(async()=>{
 const report={ok:true,checked:0,failures:[],pages:[]};
 for(const size of sizes){
  const profile=await mkdtemp(join(tmpdir(),'book-layout-chrome-'));
- const proc=spawn(chrome,['--headless=new','--remote-debugging-port=0',`--user-data-dir=${profile}`,'--no-first-run','--no-default-browser-check','--mute-audio',`--window-size=${size.W},${size.H}`,'about:blank'],{stdio:'ignore'});
+ const proc=spawn(chrome,['--headless=new','--remote-debugging-port=0',`--user-data-dir=${profile}`,'--no-first-run','--no-default-browser-check','--mute-audio',`--window-size=${size.W},${size.H}`,'about:blank'],{stdio:'ignore'});guardChrome(proc);
  try{
   let port=null;for(let i=0;i<100&&!port;i++){await sleep(100);try{port=Number((await readFile(join(profile,'DevToolsActivePort'),'utf8')).split('\n')[0]);}catch{}}
   if(!port)throw Error('Chrome did not start');
