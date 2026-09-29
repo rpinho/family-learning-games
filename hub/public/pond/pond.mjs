@@ -27,7 +27,7 @@ export function mountPond(root,{mode='count',speak=async()=>{},stopSpeech=()=>{}
    if(state.counted.length)objects.insertAdjacentHTML('beforeend',`<span class="raft-count" aria-label="${state.counted.length} leaves on the raft">${state.counted.length}</span>`);
   }else{
    root.querySelector('.pond-current path').setAttribute('d',`M550 195L${state.gates[0]?'560 340':'320 310'}${state.gates[0]?(state.gates[1]?'Q690 365 790 475':'Q460 385 265 470'):''}`);
-   objects.insertAdjacentHTML('beforeend',state.gates.map((open,id)=>`<button class="pond-gate gate-${id}" data-gate="${id}" aria-label="Turn ${id===0?'upper':'lower'} gate" aria-pressed="${open}" ${crossing||done?'disabled':''} style="left:${id?56:55}%;top:${id?48:28}%;--gate-angle:${open?35:-35}deg"></button>`).join('')+'<span class="pond-obstacle stones">● ●</span><span class="pond-obstacle reeds">≋</span>');
+   objects.insertAdjacentHTML('beforeend',state.gates.map((open,id)=>`<button class="pond-gate gate-${id}" data-gate="${id}" aria-label="Turn ${id===0?'upper':'lower'} gate" aria-pressed="${open}" ${crossing||done?'disabled':''} style="left:${id?56:70}%;top:${id?48:28}%;--gate-angle:${open?35:-35}deg"></button>`).join('')+'<span class="pond-obstacle stones">● ●</span><span class="pond-obstacle reeds">≋</span>');
   }
  }
  function dispatch(action){state=pondAction(state,action);render();onResult(pondResult(state));}
