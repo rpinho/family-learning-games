@@ -9,3 +9,5 @@ body:has(>div[role=note]) .review-ribbon{visibility:hidden;height:24px;padding:0
 .bk .bk-pond{overflow:auto;background:#eae4d3;padding-top:38px}.bk-pond .pond-book{margin:8px auto;max-width:1100px}.bk-pond .pond-world{min-height:250px}.bk-pond .pond-heading h1{color:#203f3b}.bk-pond .pond-copy{color:#203f3b}
 @media(max-width:600px){.pond-raft{width:98px;height:54px}.raft-leaf{width:48px}.pond-friend{width:48px;height:64px;left:22px;bottom:19px}.boat-hull{width:92px}.bk-pond .pond-book{margin:4px 8px}.bk-pond .pond-heading{padding:12px 16px}.bk-pond .pond-heading h1{font-size:24px}.bk-pond .pond-copy{padding:14px;min-height:150px}.bk-pond .pond-world{aspect-ratio:1.2}.bk-pond .pond-actions{margin-top:10px}}
 @media(min-width:900px){.bk-pond .pond-world{height:min(61vh,500px)}.bk-pond .pond-book{grid-template-columns:minmax(0,1fr) 295px}}
+/* The dedicated preview already names the channel; keep its banner clear of Book controls. */
+body:has(#pond) .bk-preview-bar{display:none}body:has(#pond) .bk-exit,body:has(#pond) .bk-hear{top:32px}body:has(#pond) .bk-pond{padding-top:72px}
