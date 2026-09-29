@@ -69,6 +69,7 @@ function judge(s,p){
  for(const a of bodies.filter(a=>!a.keeper)){for(const b of s.balls)if(hit(a,b))issues.push(`${a.id} over a ball`);for(const g of s.goal)if(hit(a,g))issues.push(`${a.id} in the goal`);}
  // the game's buttons, board and things never cover anybody
  for(const u of s.ui)for(const a of bodies)if(hit(u,a))issues.push(`${u.cls} covers ${a.id}`);
+ for(const u of s.ui)for(const tr of s.props.filter(x=>x.train))if(hit(u,tr)){issues.push(`${u.cls} covers the train`);break;}
  // relative heights (true sizes: a back-row grown-up is drawn a little smaller); the keeper may be smaller (his goal)
  const sized=bodies.filter(a=>!a.keeper),hOf=id=>{const a=sized.find(a=>a.id===id);return a&&a.h/scale(a);},order=[['dad','mom'],['mom','diogo'],['mom','francisco'],['dad','diogo'],['francisco','diogo']];
  for(const [a,b] of order)if(hOf(a)&&hOf(b)&&!(hOf(a)>hOf(b)))issues.push(`${a} (${Math.round(hOf(a))}px) not taller than ${b} (${Math.round(hOf(b))}px)`);

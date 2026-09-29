@@ -126,11 +126,15 @@ export function composeScene(scene,art,{width=16,height=9,ground=0.93,maxHeight=
    const r={id:i.id,left:x/width,width:wd/width,height:h/height,bottom:(1-ground)+lift/height};if(i.kind==='actor')out.actors.push({...r,pose:i.pose});else out.props.push(r);x+=wd+gg;}});
  // back row: a little smaller and higher, drawn first, each where he is least hidden (in the gaps between the
  // children, sampled along the bands; never over another back-row friend)
+ // (a back-row friend wider than a band may reach past its edge, but pays dearly for standing in the kept-clear
+ // column: the goal, the ball, the game)
+ const keep=avoid&&avoid[1]>avoid[0]?[avoid[0]*width,avoid[1]*width]:null;
  for(const i of back){const h=i.rel*U*BACK_SCALE,wd=h*i.ar;let best=null;
-  for(const [a,b] of bands)for(let cx=a*width+wd/2;cx<=b*width-wd/2+1e-6;cx+=Math.max(2,width*0.01)){const l=cx-wd/2,r=cx+wd/2;
+  for(let cx=margin*width+wd/2;cx<=(1-margin)*width-wd/2+1e-6;cx+=Math.max(2,width*0.01)){const l=cx-wd/2,r=cx+wd/2;
    const fl=cx-wd*0.3,fr=cx+wd*0.3,ov=(f,a,b)=>Math.max(0,Math.min(b,(f.left+f.width)*width)-Math.max(a,f.left*width));
    const cover=[...out.actors,...out.props].reduce((s,f)=>s+ov(f,l,r)+4*ov(f,fl,fr),0)+backRow.reduce((s,f)=>s+10*ov(f,l,r),0);
-   if(!best||cover<best.cover-1e-6)best={cover,l};}
+   const inKeep=keep?Math.max(0,Math.min(r,keep[1])-Math.max(l,keep[0])):0;const c=cover+20*inKeep;
+   if(!best||c<best.cover-1e-6)best={cover:c,l};}
   const r={id:i.id,pose:i.pose,left:(best?best.l:(width-wd)/2)/width,width:wd/width,height:h/height,bottom:(1-ground)+BACK_LIFT,depth:1};backRow.push(r);}
  out.actors.unshift(...backRow);
  // a friend flying in front of the back row flies no higher than a grown-up's shoulders (never over a face)
