@@ -2,6 +2,7 @@
 // blocks. Pattern borrowed from Sage Teacher's place-value builder: coloured
 // hundreds/tens/ones blocks and a check that is itemised per column
 // ("hundreds are right, too few tens"), not a bare right/wrong.
+import {numberNameLine,numberNameVoiceLines} from './number-names.mjs';
 export const PLACES=[
  {key:'hundreds',value:100,one:'hundred',many:'hundreds',color:'red'},
  {key:'tens',value:10,one:'ten',many:'tens',color:'blue'},
@@ -40,10 +41,12 @@ export function validBuild(counts){
 }
 // First wrong check: which columns are right, and too many / too few for the
 // rest. From the second wrong check on, also say how many each column needs.
-export function buildFeedback(target,counts,checks=0){
+export function buildFeedback(target,counts,checks=0,question=null){
  const parts=PLACES.map((place,i)=>({key:place.key,have:counts[i],need:target[i],ok:counts[i]===target[i]}));
  const ok=parts.every(p=>p.ok);
- const lines=ok?[]:parts.filter(p=>p.need>0||p.have>0).map((p,i)=>{
+ const lines=ok?[]:question?.skill==='number-name'&&buildValue(counts)===question.contrast
+ ?[numberNameLine(question.total),numberNameLine(question.contrast)]
+ :parts.filter(p=>p.need>0||p.have>0).map((p,i)=>{
   const index=PLACES.findIndex(place=>place.key===p.key),label=PLACES[index].many;
   if(p.ok)return `${label[0].toUpperCase()+label.slice(1)} are right.`;
   if(checks>=1)return `The number needs ${p.need} ${placeName(index,p.need)}.`;
@@ -52,7 +55,7 @@ export function buildFeedback(target,counts,checks=0){
  return {ok,parts,lines,message:lines.join(' ')};
 }
 export function placeVoiceLines(){
- const lines=new Set([BUILD_PROMPT_WORDS,BUILD_PROMPT_NUMBER,BUILD_PROMPT_HEARD,...LEGACY_BUILD_PROMPTS,...Object.values(BUILD_HINTS)]);
+ const lines=new Set([BUILD_PROMPT_WORDS,BUILD_PROMPT_NUMBER,BUILD_PROMPT_HEARD,...LEGACY_BUILD_PROMPTS,...Object.values(BUILD_HINTS),...numberNameVoiceLines()]);
  PLACES.forEach((place,i)=>{
   lines.add(`${place.many[0].toUpperCase()+place.many.slice(1)} are right.`);
   lines.add(`Too many ${place.many}.`);lines.add(`Too few ${place.many}.`);
