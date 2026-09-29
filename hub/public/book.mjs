@@ -5,6 +5,8 @@
 // Learning happens inside the story ("beats"): letter keys, stepping-stones, counting, magic words he
 // reads to make things happen, spells, sharing, and the NO! beat where a friend wants to do something wrong.
 import {layoutActors,layoutTrain,coverBand,composeScene,relHeight,sceneUnit} from './book-scene.mjs';
+import {mountPond} from './pond/pond.mjs';
+import {pondNarrator} from './pond/narration.mjs';
 const GOAL_W=0.4;
 // The ball he kicks or throws: small next to the people (about a boy's knee height), still an easy flick.
 const actionBall=(W,H)=>Math.max(48,Math.min(W,H)*0.12);   // a stand-in goal frame's width (share of the screen) when the painted goal is cropped away
@@ -32,6 +34,8 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  const items=[...(book.collection?.items||[])];
  let page=preview?0:Math.min(Math.max(0,book.progress?.page||0),ch.pages.length-1),alive=true,finished=false,turn=0,timers=[],shownAt=0,canNext=false,autoTimer=null;
  const later=(fn,ms)=>{const t=setTimeout(()=>{if(alive)fn();},ms);timers.push(t);return t;};
+ let pondPage=null,pondVoice=null;
+ const clearPond=()=>{pondPage?.destroy();pondPage=null;pondVoice?.stop();pondVoice=null;};
  const clearTimers=()=>{timers.forEach(clearTimeout);timers=[];};
  const root=document.createElement('section');root.className=`bk bk-${ch.level}${ch.theme?` bk-theme-${ch.theme}`:''}${ch.keyStyle?` bk-keys-${ch.keyStyle}`:''}`;root.setAttribute('aria-label',`${ch.name}'s book`);
  root.innerHTML=`<div class="bk-view"></div><div class="bk-chrome"><button class="bk-exit" type="button" aria-label="Back to the games">✕</button><button class="bk-hear" type="button" aria-label="Hear it again">🔊</button>${early?'<div class="bk-keys" aria-hidden="true"></div>':''}<div class="bk-dots" aria-hidden="true"></div><div class="bk-tapnext" aria-hidden="true">👉</div>${preview?'<div class="bk-preview-bar">PREVIEW · nothing is saved</div>':''}</div>`;
@@ -85,11 +89,11 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  // a file even when it was preloaded, so the praise after a trace waited ~1 s for the network (2026-09-28).
  const blobs=new Map(),MAX_BLOBS=80;
  function holdClip(f){if(!f||blobs.has(f))return;blobs.set(f,null);
-  fetch('/book-voice/'+f+vq).then(r=>r.ok?r.blob():null).then(b=>{if(!b||!alive){blobs.delete(f);return;}blobs.set(f,URL.createObjectURL(b));
+  fetch(clipURL(f)).then(r=>r.ok?r.blob():null).then(b=>{if(!b||!alive){blobs.delete(f);return;}blobs.set(f,URL.createObjectURL(b));
    while(blobs.size>MAX_BLOBS){const [k,u]=blobs.entries().next().value;if(ui.has(k))break;blobs.delete(k);if(u)URL.revokeObjectURL(u);}}).catch(()=>blobs.delete(f));}
  // (?r= the newest letter-sound re-render: a re-made clip keeps its name, so the URL changes instead)
  const vq=book.voiceRev?'?r='+encodeURIComponent(book.voiceRev):'';
- const clipURL=f=>blobs.get(f)||'/book-voice/'+f+vq;
+ const clipURL=f=>blobs.get(f)||(/^\/chess-voice\/[a-f0-9]{16}\.wav$/.test(f)?f:'/book-voice/'+f+vq);
  const ui=new Set();let uiLoaded=false;function preloadUi(){if(uiLoaded)return;uiLoaded=true;const w=v=>{if(!v||typeof v!=='object')return;if(Array.isArray(v))return v.forEach(w);if(v.clip)ui.add(v.clip);for(const x of Object.values(v))if(x&&typeof x==='object')w(x);};w(ch.ui);w(ch.keysLine);
   for(const f of ui)holdClip(f);}
  function preload(i){preloadUi();const p=ch.pages[i];if(!p)return;const files=new Set();const walk=v=>{if(!v||typeof v!=='object')return;if(Array.isArray(v))return v.forEach(walk);if(v.clip)files.add(v.clip);for(const x of Object.values(v))if(x&&typeof x==='object')walk(x);};walk(p);
@@ -279,7 +283,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  const onResize=()=>{clearTimeout(relayoutTimer);relayoutTimer=setTimeout(relayout,160);};
  addEventListener('resize',onResize);addEventListener('orientationchange',onResize);globalThis.visualViewport?.addEventListener('resize',onResize);
  function go(n,{back=false}={}){
-  if(!alive)return;clearTimers();stopSound();setNext(false);
+  if(!alive)return;clearPond();clearTimers();stopSound();setNext(false);
   if(n>=ch.pages.length)return void ending();
   if(!preview&&page>=0&&page!==n)void post(player,{type:'dwell',date,page,ms:Date.now()-pageShownAt});pageShownAt=Date.now();tele=null;
   page=Math.max(0,n);if(!preview&&!back)void post(player,{type:'page',date,page});
@@ -479,6 +483,13 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
    play.append(b);}
  }
  async function runBeat(p,my){
+  if(p.beat.kind==='pond'){
+   const el=pageFrame(p,{beat:true});el.classList.add('bk-pond');
+   if(!document.querySelector('link[data-pond]')){const css=document.createElement('link');css.rel='stylesheet';css.href='/pond/pond.css';css.dataset.pond='true';document.head.append(css);}
+   pondVoice=pondNarrator();
+   pondPage=mountPond(el,{mode:p.beat.mode,companion:p.beat.companion,speak:t=>pondVoice?.speak(t),stopSpeech:()=>pondVoice?.stop(),onContinue:r=>{if(my!==turn)return;if(!preview)void post(player,{type:'result',date,page,result:{kind:'pond',...r}});go(page+1);}});
+   globalThis.__pondReview=pondPage;void pondPage.start();return;
+  }
   const el=pageFrame(p,{beat:true}),b=p.beat,play=el.querySelector('.bk-play'),started=Date.now();
   teleStart(b.kind,{target:b.answer??b.letter??b.target??b.right??(b.kind==='order'?'1-5':null),options:b.options||b.balls||b.stones||b.tiles||null});
   intro=true;beatPrompt=null;const ok=await speakAll(p.say,my);if(my===turn)intro=false;if(!ok)return;
@@ -679,7 +690,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   const closing=huntL&&!preview&&!early&&book.hunt?.intro?.clip?book.hunt.intro:ch.quest;
   if(closing)await speak(closing);if(my===turn)await speak(ch.ui.nextTime);
  }
- function stop(){alive=false;clearTimers();uiWatch.disconnect();clearTimeout(uiTimer);stopSound();for(const u of blobs.values())if(u)URL.revokeObjectURL(u);blobs.clear();removeEventListener('deviceorientation',tilt);removeEventListener('resize',onResize);removeEventListener('orientationchange',onResize);globalThis.visualViewport?.removeEventListener('resize',onResize);try{audio.removeAttribute('src');audio.load();}catch{}}
+ function stop(){clearPond();alive=false;clearTimers();uiWatch.disconnect();clearTimeout(uiTimer);stopSound();for(const u of blobs.values())if(u)URL.revokeObjectURL(u);blobs.clear();removeEventListener('deviceorientation',tilt);removeEventListener('resize',onResize);removeEventListener('orientationchange',onResize);globalThis.visualViewport?.removeEventListener('resize',onResize);try{audio.removeAttribute('src');audio.load();}catch{}}
  if(!preview)void post(player,{type:'open',date,page});
  // Grown-ups' preview only: checks and dad can jump to a page.
  if(preview)globalThis.__bookGo=n=>go(n);

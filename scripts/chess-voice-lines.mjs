@@ -9,7 +9,9 @@ import {FOUNDATION_UNITS,FOUNDATION_VOICE} from '../hub/public/chess/foundations
 import {matchVoiceLines} from '../hub/public/chess/match-voice.mjs';
 import {banterLines} from '../hub/public/chess/banter.mjs';
 import {wordBreakLines} from '../hub/public/word-break.mjs';
+import {LINES as POND_LINES} from '../hub/public/pond/model.mjs';
 const lines = [
+ ...POND_LINES,
  ...FOUNDATION_UNITS.flatMap(u=>[u.idea,u.cue,...u.hints]),...Object.values(FOUNDATION_VOICE),
   ...STEP_UNITS.flatMap(u=>[u.idea,u.cue,...u.hints]),...Object.values(STEP_VOICE),
   ...UNITS.flatMap((u) => [u.idea, u.question, u.cue, ...u.hints]),
