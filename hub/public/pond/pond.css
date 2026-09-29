@@ -12,4 +12,4 @@ body:has(>div[role=note]) .review-ribbon{visibility:hidden;height:24px;padding:0
 /* The dedicated preview already names the channel; keep its banner clear of Book controls. */
 body:has(#pond) .bk-preview-bar{display:none}body:has(#pond) .bk-exit,body:has(#pond) .bk-hear{top:32px}body:has(#pond) .bk-pond{padding-top:72px}
 /* The spoken destination is a picture first, with one compact caption below it. */
-body:has(#pond) .bk-caption{inset:auto 5% 12%;width:90%;max-width:700px;margin:auto;padding:16px 20px;font:400 clamp(20px,2.5vw,28px)/1.4 Georgia,serif;transform:none;color:#294e42;background:#fbf4dfed;border:1px solid #cbbc91;border-radius:16px}body:has(#pond) .bk-bg{object-fit:contain;background:#c4d0b4}
+body:has(#pond) .bk-caption{inset:auto 5% 12%;width:90%;max-width:700px;margin:auto;translate:none;padding:16px 20px;font:400 clamp(20px,2.5vw,28px)/1.4 Georgia,serif;transform:none;color:#294e42;background:#fbf4dfed;border:1px solid #cbbc91;border-radius:16px}body:has(#pond) .bk-bg{object-fit:contain;background:#c4d0b4}
