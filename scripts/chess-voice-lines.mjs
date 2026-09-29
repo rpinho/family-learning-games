@@ -8,7 +8,8 @@ import {STEP_UNITS,STEP_VOICE} from '../hub/public/chess/steps-curriculum.mjs';
 import {FOUNDATION_UNITS,FOUNDATION_VOICE} from '../hub/public/chess/foundations-curriculum.mjs';
 import {matchVoiceLines} from '../hub/public/chess/match-voice.mjs';
 import {wordBreakLines} from '../hub/public/word-break.mjs';
-const lines = [
+import {LINES as STUDY_LINES} from '../hub/public/study/activity.mjs';
+const lines = [...STUDY_LINES,
  ...FOUNDATION_UNITS.flatMap(u=>[u.idea,u.cue,...u.hints]),...Object.values(FOUNDATION_VOICE),
   ...STEP_UNITS.flatMap(u=>[u.idea,u.cue,...u.hints]),...Object.values(STEP_VOICE),
   ...UNITS.flatMap((u) => [u.idea, u.question, u.cue, ...u.hints]),
