@@ -1789,4 +1789,7 @@ body:has(.academy) > .top button { background: #fbf5e7; border-color: #cdbb99; c
   .academy-nav > div { flex-wrap: wrap; }
   .academy .board-coordinates { border-width: 4px; }
 }
+@media(min-width:701px) and (min-height:561px) {
+  .academy .chess-lesson .play-table { width: min(560px, calc(100dvh - 310px)); }
+}
 @media(prefers-reduced-motion:reduce) { .academy .sq.selected .chess-piece { transform: none; } }
