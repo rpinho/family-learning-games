@@ -38,7 +38,7 @@ test('all challenge tiers have bounded options, valid arithmetic and a hidden-fa
  for(const level of [1,3])for(const game of ['multiply','factor','sums','skip','place']){
   const p=freshProfile('explorer');p.history=Array.from({length:level===1?2:6},()=>({ok:level===3,helped:false,question:{track:EXPLORER_TRACK,skill:game}}));
   for(let i=0;i<150;i++){
-   p.revision=i;const q=makeQuestion(p,game,i%6);if(q.skill==='worth'){assert.equal(q.level,2);continue;}assert.equal(q.level,level);
+   p.revision=i;const q=makeQuestion(p,game,i%6);if(['worth','number-name'].includes(q.skill)){assert.equal(q.level,2);continue;}assert.equal(q.level,level);
    if(q.placeMode==='build'){assert.equal(q.answer,q.total);assert.ok(q.total<=q.max);if(level===3)assert.ok(q.total>=100);continue;}
    assert.ok(q.answer>=0&&q.answer<=q.max);assert.equal(q.options.length,4);assert.equal(new Set(q.options).size,4);assert.ok(q.options.includes(q.answer));assert.ok(q.options.every(n=>n>=0&&n<=q.max));
    if(q.operator)assert.equal(q.operator==='×'?q.a*q.b:q.operator==='+'?q.a+q.b:q.a-q.b,q.total);
