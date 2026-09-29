@@ -249,8 +249,16 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   if(uiAvoid&&uiPage===page&&Math.abs(next[0]-uiAvoid[0])<0.01&&Math.abs(next[1]-uiAvoid[1])<0.01)return;
   uiAvoid=next;uiPage=page;
   const t=document.createElement('div');t.innerHTML=actorsHTML(p.scene,stage(p,p.kind==='beat'));
-  for(const n of t.children){const o=layer.querySelector(`${n.classList.contains('bk-actor')?'.bk-actor':'.bk-prop'}[data-id="${CSS.escape(n.dataset.id||'')}"]:not(.keeper-ready)`);if(!o)continue;
+  // Same rows (who stands in front, who a step back)? The friends glide to their new places. A friend changing
+  // rows needs the new drawing order: the layer is redrawn (poses and the talking friend are kept).
+  const kid=p.action?.kind==='kick'||p.beat?.kind==='kick-letter'?keeperFor(null,p):null;
+  const olds=[...layer.children].filter(o=>o.dataset.id!==kid),news=[...t.children].filter(n=>n.dataset.id!==kid);
+  const same=news.length===olds.length&&news.every((n,i)=>(olds[i].dataset.id||'')===(n.dataset.id||'')&&(olds[i].dataset.depth||'')===(n.dataset.depth||''));
+  if(same)for(const n of news){const o=layer.querySelector(`${n.classList.contains('bk-actor')?'.bk-actor':'.bk-prop'}[data-id="${CSS.escape(n.dataset.id||'')}"]:not(.keeper-ready)`);if(!o)continue;
    o.style.transition='left .35s ease,bottom .35s ease,width .35s ease,height .35s ease';for(const k of ['left','width','height','bottom'])o.style[k]=n.style[k];}
+  else{const talkingId=el.querySelector('.bk-actor.talking')?.dataset.id;layer.innerHTML=t.innerHTML;layer.querySelectorAll('.bk-actor,.bk-prop').forEach(a=>{a.style.animation='none';});
+   for(const [id,pose] of Object.entries(poseNow))setPose(el,id,pose);if(talkingId)talking(talkingId);
+   if(p.action?.kind==='kick'||p.beat?.kind==='kick-letter')placeKeeper(el,p,goalRect(p));}
   const fx=el.querySelector('.bk-fx:not(.burst)');if(fx&&p.scene.fx)fx.outerHTML=fxHTML(p.scene.fx);}
  let uiTimer=0;const uiWatch=new MutationObserver(recs=>{if(recs.every(r=>r.target.closest?.('.bk-layer')))return;clearTimeout(uiTimer);uiTimer=setTimeout(clearOfUI,150);});
  uiWatch.observe(view,{childList:true,subtree:true});
@@ -539,9 +547,12 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
    case 'count':{
     await speak(b.spoken);if(my!==turn)return;
     const box=document.createElement('div');box.className='bk-things';el.append(box);const P=art.props[b.thing];
+    // on a wide screen the things to count float in one row across the sky, above everyone (never over the train)
+    const wideCount=root.clientWidth>root.clientHeight*1.05;
+    if(wideCount){Object.assign(box.style,{top:'9%',height:`${Math.max(16,Math.min(40,sky*100-12))}%`,left:'9%',right:'14%'});}
     const spots=shuffle(Array.from({length:b.n},(_,i)=>i));let counted=0;
     for(let i=0;i<b.n;i++){const t=document.createElement('button');t.type='button';t.className='bk-thing';const k=spots[i];
-     const cols=Math.ceil(Math.sqrt(b.n*1.6)),x=(k%cols+0.5)/cols*100+(Math.random()-.5)*6,y=(Math.floor(k/cols)+0.5)/Math.ceil(b.n/cols)*100+(Math.random()-.5)*8;
+     const cols=wideCount?(b.n<=10?b.n:Math.ceil(b.n/2)):Math.ceil(Math.sqrt(b.n*1.6)),x=(k%cols+0.5)/cols*100+(Math.random()-.5)*6,y=(Math.floor(k/cols)+0.5)/Math.ceil(b.n/cols)*100+(Math.random()-.5)*8;
      t.style.cssText=`left:${x}%;top:${y}%;width:clamp(56px,13vmin,120px);height:clamp(56px,13vmin,120px);font-size:clamp(44px,10vmin,96px)`;
      t.innerHTML=P?`<img src="${esc(P.url)}" alt="">`:`<span>${esc(b.emoji)}</span>`;
      t.onclick=async()=>{if(t.dataset.n||my!==turn)return;counted++;teleTap('thing',true);t.dataset.n=counted;t.insertAdjacentHTML('beforeend',`<b>${counted}</b>`);t.classList.add('counted');await speak(ch.ui.numbers[String(counted)]);
