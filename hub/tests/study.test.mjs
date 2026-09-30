@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {DEPTH,behindTower,crossesRiver,place,ordered,swap} from '../public/study/model.mjs';
+test('Only the bridge gives the walking path across the river',()=>{assert.equal(crossesRiver('bridge'),true);for(const id of ['river','tower','tree','mill'])assert.equal(crossesRiver(id),false);});
+test('Depth can be revised without duplicating landmarks or losing earlier choices',()=>{let order=[];for(const id of [...DEPTH].reverse())order=place(order,id);assert.equal(ordered(order),false);const copy=[...order];order=swap(order,0,2);assert.equal(ordered(order),true);assert.deepEqual(copy,[...DEPTH].reverse());assert.equal(place(order,'tree'),order);assert.equal(swap(order,-1,1),order);assert.equal(behindTower,'mill');});
+
+test('Study source never posts progress or uses device speech',async()=>{const {readFile}=await import('node:fs/promises');for(const file of ['activity.mjs','review.mjs','shared.mjs']){const s=await readFile(new URL('../public/study/'+file,import.meta.url),'utf8');assert.doesNotMatch(s,/speechSynthesis|method:\s*['"]POST/);}});
