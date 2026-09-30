@@ -1,14 +1,51 @@
 # Word Arcade
 
+## September 28 (morning): Letter Slalom teaches words before testing them
+
+- **Letters or words** on the start screen (not for a letters-only player), remembered in the save. The words reader starts on letters until two word runs are read over 70% on their own (no glow); then words is the default and a star offers it.
+- **One word family per run** (at, an, ig, op, ug, in): 3-4 target words, introduced first in a ~15-20 s warm-up (picture where one is clear, a slow sound-out with the letters lighting up, the whole word). Gate look-alikes still share the first letter.
+- **Adapts inside the run:** after two misses in a row every row left is a pair, its question is the sound-out, and the rider cruises slower with no go-faster (a support case in the timing budget). Over 40% of the last 8 word rows missed: the next run starts easier (same family, 3 words, four pairs).
+- **After the run:** the recap replays only the missed words, each sounded out once; the word break after the finish stays in the run's family. Per-word tallies go to `drills['slalom:words'].skills` (`{hits, errors}`) for any learner model to read.
+
+## September 28 (night): Letter Slalom's own light page
+
+`/?play=slalom` serves `slalom.html` (`slalom-main.tsx`, `app/SlalomApp.jsx`): a snowy "Letter Slalom" loading screen and only the slalom's code, never the Arcade shell. The 3D code and the voice list load while the child picks skis or snowboard. The voice list is fetched when idle after load (or on the first spoken line) instead of at start. No module preloads (behind a proxy that disables caching they were fetched twice).
+
+## September 28: Letter Slalom on the Games home screen
+
+The hub has its own Letter Slalom card (deep link `?play=slalom`); the card inside Word Arcade is gone. Finish-line friends use page-relative URLs (standees load inside the hub) and stand in a line across the finish camera's view. The letter-sound check catches a click right at the edge of silence (`letter_sound_check.py selftest`).
+
+## September 27 (late): short feedback within a timing budget; go faster on the rider; rarer hint; reviewed pictures
+
+- After a gate only the word or letter ("mat!", "F!") or "It's mat." on a miss; sound-outs move to the end-of-run recap. `lib/slalom-timing.mjs` (the speed model the scene uses) with `scripts/check-slalom-timing.mjs` and `tests/slalom-timing.test.mjs` check from clip lengths that the feedback takes at most 25% of the time to the next row and the next question ends with >= 2.2 s to spare, at base and go-faster speed, for both tracks.
+- Go faster: press and hold on the rider, or drag up (release or drag down to ease off); Up/Space for grown-ups; only after the row's question.
+- Hint only in the final 12 m while heading for a wrong gate, never on the first row, later after a hinted row.
+- Optional finish-line friends are preloaded during the run and all shown at the finish; an entry may be a camera-facing standee picture.
+- Shared `word-break.mjs` v6: a reviewed `PICTURE_NAMES` allowlist; a picture is only paired with the name a young child would give it (ambiguous ones such as a peanut for "nut" were removed); tests fail on other pairings.
+
+## September 27 (evening): bigger gates, a hint glow, snowboard, go faster, deep link
+
+- **Gates 1.75x bigger** (on taller frames), fading as the camera passes under them.
+- **Hint glow** near a row, only after the question has been heard and only while the skier heads for a wrong gate: words track in the last 14 m (it corrects rather than gives the answer away), letters track from 26 m. Hinted passes are recorded apart from unaided ones.
+- **Skis or snowboard** on the start screen (two picture buttons, remembered in the player's save); the snowboarder rides sideways with a stance angle, leans the board into carves and leaves one wide track.
+- **Go faster:** hold the button (or Up/Space) once a row's question has been heard.
+- **Deep link:** `/?player=<id>&play=slalom` (or `#slalom`) opens the slalom start screen directly; leaving it returns to the hub.
+- **Sound-outs** (private edition with a pre-rendered voice): recorded letter sounds with natural attack and release, then the word. `scripts/letter_sound_check.py` checks letter-sound and sound-out clips (duration per sound, rise/fall times, silent gaps, clicks, loudness).
+
+## September 27: word breaks for an early reader use CVC words
+
+Shared `word-break.mjs` v5 (identical in every game): the words track uses only CVC words (at/an/ig/op/ug/in families), with two look-alikes that start with the same letter and differ in the vowel or the last letter (mat / map / man). No sentences until Letter Quest shows sentences built independently; a device's own history no longer unlocks them. The letters track is unchanged.
+
 ## September 27: Letter Slalom (3D)
 
 A calm downhill ski run in the Arcade tab. The child steers a skier (finger or mouse: the skier goes where the finger is; optional tilt; arrow keys) through eight gate rows of two or three gates, each carrying a letter or a word. The question is spoken as each row approaches, and the skier glides slowly until it has been said.
 
 - **Letters track (`beginner`):** "Find the letter F." among look-alikes, or "Which letter does fox start with?" with a picture; letters come from Letter Quest (read-only). Pairs first, then triplets.
-- **Words track (`explorer`):** "Find the word ship." among look-alikes (ship/shop/chip), or the next word of a spoken sentence (the start of the sentence is shown). Starter sentences until Letter Quest shows sentences built independently.
+- **Words track (`explorer`), CVC words only:** "Find the word mat." among look-alikes that start with the same letter and differ only in the vowel or the last letter (mat / map / man), from the at/an/ig/op/ug/in families, so guessing by the first letter never works. After each gate the word is sounded out (with a pre-rendered voice the private install renders each sound, then the word; device speech says the word). The next word of a spoken sentence appears only once Letter Quest shows sentences built independently.
 - **No score, no streaks, no fail state.** A missed gate names the answer and the run continues; the next triplet becomes a pair. About 75–90 seconds, then a spoken recap, the shared word break and a calm finish card.
-- **Calm wind-down (`lib/rest.mjs`):** after 20 minutes of continuous play, the mission or run that is finishing is the last one for an hour; grown-ups can hold the button on the calm screen to keep playing.
-- **3D:** three.js, loaded only when a run starts; everything procedural (valley, pines, ridges, clouds, skier, ski tracks, spray, sun shadows). Three quality tiers; the game measures its own frame times and steps down automatically (`?slalomQuality=low|medium|high` forces one). Without WebGL a simple 2D version with the same gates is shown.
+- **No play-time limit:** there is no wind-down or lockout; `play` fields left in older saves are ignored.
+- **3D, kept light for low-end Chromebooks and phones:** three.js, loaded only when a run starts; everything procedural (valley, instanced pines, one merged ridge mesh, clouds, gate rows with one small atlas texture and two draw calls each, skier, ski tracks, spray, sun shadows); no post-processing. Tiers: low (no shadows, fewer trees, 0.72x resolution, ~62 draw calls), medium (1024 shadow map, ~77), high (2048 shadows, ~77). Touch devices and 4 GB machines start on low and step up once only when their own frames are fast; any device lowers resolution and then tier when frames average slower than ~48 fps. Rendering stops while paused or hidden and winds down after the finish. `?slalomQuality=low|medium|high` forces a tier. Without WebGL a simple 2D version with the same gates is shown.
+- **Optional finish-line friends:** a household can put small rigged GLB models (with a `cheer` animation) in `FAMILY_ASSETS3D` and list them per player in `companions.json`; two wait at the bottom and cheer. They load only after the finish line; nothing is served unless listed.
 - **Check:** `node scripts/check-slalom-browser.mjs --base http://localhost:4319 --player beginner [--mobile --size 390x844] [--miss 2] [--shots dir] [--record]` skis a full run in headless Chrome (muted), steering with real pointer or touch input.
 
 ## September 26: word breaks and Sentence Express without position cues

@@ -11,6 +11,23 @@ const letterData=process.env.LETTER_QUEST_DATA||join(homedir(),'.local/share/fam
 // Read-only look at Letter Quest progress so word breaks match each child.
 async function literacy(id){let save=null;try{save=JSON.parse(await readFile(join(letterData,id+'.json'),'utf8'));}catch{}return literacyFrom(save,DEFAULT_TRACK[id]||'mixed');}
 const data=process.env.WORD_ARCADE_DATA||join(homedir(),'.local/share/family-learning-games/word-arcade'),port=Number(process.env.PORT||4319);
+// Optional Letter Slalom finish-line friends: small rigged GLB models kept outside the repository, listed per player in
+// FAMILY_ASSETS3D/companions.json ({"beginner":["model-id",{"id":"paper","standee":"standees/paper.png","fallback":"model-id"}]}).
+// Nothing is served unless listed there and present.
+const assets3d=process.env.FAMILY_ASSETS3D||join(homedir(),'.local/share/family-learning-games/assets3d');
+async function companionMap(){try{const m=JSON.parse(await readFile(join(assets3d,'companions.json'),'utf8'));return m&&typeof m==='object'?m:{};}catch{return {};}}
+// An entry is a model id ("toy" -> toy.glb) or {"id","standee":"standees/<name>.png","fallback":"<model id>"}:
+// a paper-cut standee shown as a camera-facing picture when the file exists, else the fallback model.
+const okId=x=>typeof x==='string'&&/^[a-z0-9-]{1,40}$/.test(x),okStandee=x=>typeof x==='string'&&/^standees\/[a-z0-9-]{1,40}\.png$/.test(x);
+const exists=async f=>{try{await stat(f);return true;}catch{return false;}};
+async function resolveEntry(x){
+ if(okId(x))return await exists(join(assets3d,x+'.glb'))?{id:x,kind:'model',file:join(assets3d,x+'.glb'),url:`companion/${x}.glb`}:null;
+ if(x&&typeof x==='object'&&okId(x.id)){if(okStandee(x.standee)&&await exists(join(assets3d,x.standee)))return {id:x.id,kind:'standee',file:join(assets3d,x.standee),url:`companion/${x.id}.png`};
+  if(okId(x.fallback))return resolveEntry(x.fallback);}
+ return null;
+}
+async function companions(id){const list=(await companionMap())[id];if(!Array.isArray(list))return [];const out=[];for(const x of list){const r=await resolveEntry(x);if(r&&!out.some(o=>o.id===r.id))out.push(r);}return out;}
+async function companionFile(name,ext){for(const list of Object.values(await companionMap()))if(Array.isArray(list))for(const x of list){const r=await resolveEntry(x);if(r&&r.url===`companion/${name}.${ext}`)return r.file;}return null;}
 const staticRoot=fileURLToPath(new URL('./dist/client/',import.meta.url));
 await mkdir(join(data,'logs'),{recursive:true,mode:0o700});await mkdir(join(data,'voice'),{recursive:true,mode:0o700});
 let queue=Promise.resolve(),logError=null;
@@ -43,6 +60,11 @@ const server=http.createServer(async(req,res)=>{
    const name=url.pathname==='/favicon.ico'?'icons/favicon-v1.ico':url.pathname.slice(1),bytes=await readFile(new URL('./public/'+name,import.meta.url));
    res.writeHead(200,{'Content-Type':name.endsWith('.webmanifest')?'application/manifest+json':name.endsWith('.ico')?'image/x-icon':'image/png','Content-Length':bytes.length,'Cache-Control':'no-cache'});res.end(req.method==='HEAD'?undefined:bytes);return;
   }
+  const buddyMatch=url.pathname.match(/^\/api\/(explorer|beginner|admin)\/companions$/);
+  if(buddyMatch){if(req.method!=='GET')return send(res,405,{error:'Read only'});return send(res,200,{friends:(await companions(buddyMatch[1])).map(({id,kind,url})=>({id,kind,url}))});}
+  const modelMatch=url.pathname.match(/^\/companion\/([a-z0-9-]{1,40})\.(glb|png)$/);
+  if(modelMatch){if(!['GET','HEAD'].includes(req.method))return send(res,405,{error:'Read only'});const file=await companionFile(modelMatch[1],modelMatch[2]);if(!file)return send(res,404,{error:'Not found'});
+   const {size}=await stat(file);res.writeHead(200,{'Content-Type':modelMatch[2]==='png'?'image/png':'model/gltf-binary','Content-Length':size,'Cache-Control':'public, max-age=3600'});if(req.method==='HEAD')res.end();else createReadStream(file).pipe(res);return;}
   const breakMatch=url.pathname.match(/^\/api\/(explorer|beginner|admin)\/word-break$/);
   if(breakMatch){if(req.method!=='GET')return send(res,405,{error:'Read only'});return send(res,200,await literacy(breakMatch[1]));}
   if(url.pathname.startsWith('/voice/')){if(req.method!=='GET')return send(res,405,{error:'GET only'});const name=url.pathname.slice(7);if(name!=='manifest.json'&&!/^[a-f0-9]{16}\.wav$/.test(name))return send(res,404,{});const file=join(data,'voice',name);await stat(file);res.writeHead(200,{'Content-Type':name.endsWith('wav')?'audio/wav':'application/json','Cache-Control':name==='manifest.json'?'no-store':'public, max-age=31536000, immutable'});createReadStream(file).pipe(res);return;}
@@ -50,12 +72,14 @@ const server=http.createServer(async(req,res)=>{
   if(match){const [,id,op]=match;if(req.method==='GET'&&!op)return send(res,200,{profile:await profile(id),version:VERSION});if(req.method!=='POST'||!op)return send(res,405,{error:'Unsupported method'});
    if(!req.headers['content-type']?.startsWith('application/json'))return send(res,415,{error:'JSON required'});let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>100000)return send(res,413,{error:'Request too large'});}let input;try{input=JSON.parse(raw);}catch{return send(res,400,{error:'Invalid JSON'});}
    if(op==='events'){const allowed=['open','button','error','voice','audio','visibility','pause','gameplay','word-break'];const events=Array.isArray(input.events)?input.events.slice(0,25):[];for(const e of events)if(allowed.includes(e.kind))await log({type:'client',player:id,event:{kind:e.kind,name:String(e.name||'').slice(0,150),game:String(e.game||'').slice(0,25),detail:String(e.detail||'').slice(0,300)}});return send(res,200,{ok:true});}
-   queue=queue.catch(()=>{}).then(async()=>{const p=await profile(id);if(input.revision!==p.revision)return send(res,409,{error:'Your game changed in another tab. Refresh to continue.',profile:p});try{const before=structuredClone(p.session),beforeLowercase=structuredClone(p.lowercase||null),beforeFoundation=structuredClone(p.foundation||null),beforeBuilder=structuredClone(p.builder||null),beforeDrills=structuredClone(p.drills||null),beforeVariety=structuredClone(p.variety||null),ctx={now:Date.now(),...(input.kind==='start'&&input.game==='slalom'?{literacy:await literacy(id)}:{})},result=act(p,input,ctx);const file=join(data,id+'.json');await writeFile(file+'.tmp',JSON.stringify(p),{mode:0o600});await rename(file+'.tmp',file);const {kind,game,focus,level,mode,deck,questionId,answer,draft,pixels,durationMs,revision}=input;await log({type:'action',player:id,input:{kind,game,focus,level,mode,deck,questionId,answer,draft,pixels,durationMs,revision},before,result,after:p.session,...(p.lowercase?{lowercase:{before:beforeLowercase,after:p.lowercase}}:{}),...(p.foundation?{foundation:{before:beforeFoundation,after:p.foundation}}:{}),...(p.variety?{variety:{before:beforeVariety,after:p.variety}}:{}),...(p.drills?{drills:{before:beforeDrills,after:p.drills}}:{}),...(p.builder?{builder:{before:beforeBuilder,after:p.builder}}:{})});send(res,200,{profile:p,result});}catch(e){await log({type:'rejected',player:id,error:e.message});send(res,400,{error:e.message});}});return;
+   queue=queue.catch(()=>{}).then(async()=>{const p=await profile(id);if(input.revision!==p.revision)return send(res,409,{error:'Your game changed in another tab. Refresh to continue.',profile:p});try{const before=structuredClone(p.session),beforeLowercase=structuredClone(p.lowercase||null),beforeFoundation=structuredClone(p.foundation||null),beforeBuilder=structuredClone(p.builder||null),beforeDrills=structuredClone(p.drills||null),beforeVariety=structuredClone(p.variety||null),ctx={...(input.kind==='start'&&input.game==='slalom'?{literacy:await literacy(id)}:{})},result=act(p,input,ctx);const file=join(data,id+'.json');await writeFile(file+'.tmp',JSON.stringify(p),{mode:0o600});await rename(file+'.tmp',file);const {kind,game,focus,level,mode,deck,questionId,answer,draft,pixels,durationMs,revision,hinted,ride,track}=input;await log({type:"action",player:id,input:{kind,game,focus,level,mode,deck,questionId,answer,draft,pixels,durationMs,revision,hinted,ride,track},before,result,after:p.session,...(p.lowercase?{lowercase:{before:beforeLowercase,after:p.lowercase}}:{}),...(p.foundation?{foundation:{before:beforeFoundation,after:p.foundation}}:{}),...(p.variety?{variety:{before:beforeVariety,after:p.variety}}:{}),...(p.drills?{drills:{before:beforeDrills,after:p.drills}}:{}),...(p.builder?{builder:{before:beforeBuilder,after:p.builder}}:{})});send(res,200,{profile:p,result});}catch(e){await log({type:'rejected',player:id,error:e.message});send(res,400,{error:e.message});}});return;
   }
   if(url.pathname.startsWith('/api/'))return send(res,404,{error:'Unknown route'});
   if(!['GET','HEAD'].includes(req.method))return send(res,405,{error:'Read only'});
   if(url.pathname!=='/'&&url.pathname!=='/og.png'&&!/^\/assets\/[a-zA-Z0-9_./-]+$/.test(url.pathname))return send(res,404,{error:'Not found'});
-  const file=resolve(staticRoot,'.'+(url.pathname==='/'?'/index.html':decodeURIComponent(url.pathname)));if(!file.startsWith(staticRoot))return send(res,404,{error:'Not found'});
+  // The hub's Letter Slalom card opens /?play=slalom: the slalom's own light page, never the Arcade shell.
+  const page=url.pathname==='/'?(url.searchParams.get('play')==='slalom'?'/slalom.html':'/index.html'):decodeURIComponent(url.pathname);
+  const file=resolve(staticRoot,'.'+page);if(!file.startsWith(staticRoot))return send(res,404,{error:'Not found'});
   const body=await readFile(file);const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp'};res.writeHead(200,{'Content-Type':mime[extname(file)]||'application/octet-stream','Cache-Control':'no-cache'});res.end(req.method==='HEAD'?undefined:body);
  }catch(e){if(e.code==='ENOENT')return send(res,404,{error:'Not found'});await log({type:'error',error:e.message});send(res,500,{error:'Could not save or load. Please keep this page open and retry.'});}
 });

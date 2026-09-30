@@ -23,11 +23,14 @@ const here=dirname(fileURLToPath(import.meta.url));
 
 function run(cmd,args,{input='',env=process.env,timeoutMs=240000,cwd=tmpdir()}={}){
  return new Promise(resolve=>{
-  let out='',err='',done=false;const child=spawn(cmd,args,{env,cwd,stdio:['pipe','pipe','pipe']});
+  let out='',err='',done=false,inputError=false;const child=spawn(cmd,args,{env,cwd,stdio:['pipe','pipe','pipe']});
   const timer=setTimeout(()=>{if(!done){try{child.kill('SIGTERM');}catch{}setTimeout(()=>{try{child.kill('SIGKILL');}catch{}},3000);}},timeoutMs);
   child.stdout.on('data',b=>out+=b);child.stderr.on('data',b=>err=(err+b).slice(-4000));
   child.on('error',e=>{done=true;clearTimeout(timer);resolve({code:-1,out,err:String(e.message)});});
-  child.on('close',code=>{done=true;clearTimeout(timer);resolve({code,out,err});});
+  // A worker can refuse the job before reading its input. Report that failure through the
+  // normal fallback/preservation path, rather than letting the pipe error crash generation.
+  child.stdin.on('error',e=>{inputError=true;err=(err+'\n'+e.message).slice(-4000);});
+  child.on('close',code=>{done=true;clearTimeout(timer);resolve({code:code===0&&inputError?-1:code,out,err});});
   child.stdin.end(input);
  });
 }
