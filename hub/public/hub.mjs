@@ -4,7 +4,11 @@ import { mountSoccer } from "./soccer-mode.mjs";
 import { CATALOG, FAMILIES, destination, movedRoute } from "./catalog.mjs";
 import { mountChess } from "./chess/app.mjs";
 import { parentChallenge, parentAnswerMatches, menuStyle, gameArtwork } from "./menu-options.mjs";
-import { loadBook, mountBook, lastPlace, rememberPlace } from "./book.mjs";
+import { loadBook as readBook, mountBook, lastPlace, rememberPlace } from "./book.mjs";
+import {createReleaseLoader} from './release-loader.mjs';
+const clientRelease = document.querySelector('meta[name="family-release"]')?.content || '';
+const bookCode = createReleaseLoader({loadedRelease:clientRelease,readRelease:async()=> (await fetchJSON('/__deploy/version',{},5000)).hub,reload:()=>location.reload(),load:async()=>readBook});
+const loadBook = async (...a) => (await bookCode())?.(...a);
 import { mountHunt } from "./hunt.mjs";
 const $ = (s) => document.querySelector(s),
   main = $("#main");
@@ -29,7 +33,6 @@ const esc = (s) =>
         c
       ],
   );
-const clientRelease = document.querySelector('meta[name="family-release"]')?.content || '';
 export function event(kind, detail = "", stack = "") {
   if (player)
     fetch("/api/events?player=" + player, {
