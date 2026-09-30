@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {identify,plan,isCoastRoute} from '../public/study/model.mjs';
+test('Land, water and shore form a finite sequence; a miss never consumes a step',()=>{let i=0;for(const target of ['land','water','shore']){assert.equal(identify(i,'wrong').next,i);const r=identify(i,target);assert.equal(r.right,true);i=r.next;}assert.equal(i,3);});
+test('Coast route contrasts the inland detour and preserves a reversible plan',()=>{const first=plan([],'harbor');assert.deepEqual(first,['harbor']);assert.equal(isCoastRoute(plan(first,'forest')),false);const route=plan(first,'lighthouse');assert.equal(isCoastRoute(route),true);assert.equal(plan(route,'forest'),route);assert.deepEqual(first,['harbor']);assert.equal(isCoastRoute(['lighthouse','harbor']),false);});
+
+test('Study source never posts progress or uses device speech',async()=>{const {readFile}=await import('node:fs/promises');for(const file of ['activity.mjs','review.mjs','shared.mjs']){const s=await readFile(new URL('../public/study/'+file,import.meta.url),'utf8');assert.doesNotMatch(s,/speechSynthesis|method:\s*['"]POST/);}});
