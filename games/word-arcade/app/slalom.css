@@ -30,12 +30,52 @@
 .slalom-flat{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;background:linear-gradient(#5d9be0,#eef4fb 55%,#fff);color:#15304d;text-align:center;padding:90px 20px 20px;font-weight:700}
 .slalom-flat-gates{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
 .slalom-flat-gates button{min-width:130px;min-height:110px;font-size:48px;font-weight:850;border-radius:22px;border:6px solid #e5484d;background:#fffdf8;color:#15304d}
-.slalom-finish.complete{max-width:none;margin:0}.slalom-finish.over{position:absolute;inset:auto 0 0 0;min-height:0;background:linear-gradient(#0c2a4d00,#0c2a4dcc 38%);padding:70px 20px 26px}.slalom-finish.over .medal{display:none}
+.slalom-finish.complete{max-width:none;margin:0}.slalom-finish.over{position:absolute;inset:auto 0 0 0;min-height:0;background:linear-gradient(#0c2a4d00,#0c2a4dcc 38%);padding:60px 20px 22px;gap:10px}.slalom-finish.over .medal{display:none}.slalom-finish.over .slalom-card{min-width:62px;min-height:62px;font-size:clamp(24px,3.4vw,34px);padding:4px 12px}.slalom-finish.over .slalom-finish-actions{flex-direction:row;flex-wrap:wrap;justify-content:center}.slalom-finish.over p{font-size:17px}
 .slalom-finish{position:fixed;inset:52px 0 0 0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(ellipse at 50% 20%,#8cc0f0,#2c6cb4 70%);color:#fff;text-align:center;padding:24px}
 .slalom-finish h2{margin:0;font-size:clamp(30px,4.5vw,48px)}.slalom-finish p{margin:0;font-size:20px;color:#e8f2ff}
 .slalom-finish .medal{font-size:78px;line-height:1}
 .slalom-finish button{min-width:220px;min-height:54px;font-size:20px}
-.slalom-rest-hold{margin-top:24px;opacity:.75;font-size:15px!important;min-height:40px!important;min-width:0!important}
-@media(max-height:500px){.slalom-root,.slalom-finish:not(.over){inset:42px 0 0 0}.slalom-finish.over{padding-top:30px;gap:8px}.slalom-prompt{min-height:52px;font-size:20px}.slalom-hear{width:46px;height:46px;font-size:22px}.slalom-picture{font-size:36px}.slalom-btn{min-width:46px;min-height:46px}.slalom-card{min-width:60px;min-height:60px;font-size:26px}.slalom-finish .medal{font-size:54px}}
+.slalom-finish-actions{display:flex;flex-direction:column;align-items:center;gap:10px}
+@media(max-height:500px){.slalom-root,.slalom-finish:not(.over){inset:42px 0 0 0}.slalom-finish.over{padding-top:30px;gap:8px}.slalom-finish p{display:none}.slalom-finish h2{font-size:26px}.slalom-finish-actions{flex-direction:row}.slalom-finish button{min-width:170px;min-height:46px;font-size:17px}.slalom-prompt{min-height:52px;font-size:20px}.slalom-hear{width:46px;height:46px;font-size:22px}.slalom-picture{font-size:36px}.slalom-btn{min-width:46px;min-height:46px}.slalom-card{min-width:60px;min-height:60px;font-size:26px}.slalom-finish .medal{font-size:54px}}
 @media(max-width:600px){.slalom-top{grid-template-columns:auto auto 1fr;}.slalom-dots{grid-column:1/-1;justify-self:center;order:3}.slalom-prompt{grid-column:3;justify-self:stretch;padding-right:12px}.slalom-hint{font-size:16px}}
 @media(prefers-reduced-motion:reduce){.slalom-loading span,.slalom-hint{animation:none}}
+/* start screen: skis or snowboard */
+.slalom-start{position:fixed;inset:52px 0 0 0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:linear-gradient(#4f93dc,#cfe3f6 60%,#fff);color:#15304d;text-align:center;padding:20px}
+.slalom-start h1{margin:0;font-size:clamp(32px,5vw,52px)}.slalom-start p{margin:0;font-size:22px;font-weight:800}
+.slalom-rides{display:flex;gap:22px;flex-wrap:wrap;justify-content:center}
+.slalom-ride{width:min(40vw,230px);height:min(40vw,230px);border-radius:32px;border:6px solid #ffffffee;background:#fffdf8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;box-shadow:0 10px 30px #0a1f3a33;cursor:pointer;color:#15304d}
+.slalom-ride span{font-size:min(20vw,120px);line-height:1}.slalom-ride strong{font-size:24px}
+.slalom-ride.chosen{border-color:#ffb020;box-shadow:0 0 0 6px #ffb02066,0 10px 30px #0a1f3a33}
+.slalom-start-back{min-height:48px;font-size:18px}
+@media(max-height:500px){.slalom-start{inset:42px 0 0 0;gap:8px}.slalom-ride{width:170px;height:150px}.slalom-ride span{font-size:72px}}
+/* Letter Slalom's own entry: snowy loading screen (rendered on the server, before any script) */
+.slalom-app{min-height:100dvh;background:#dfe9f4}
+.slalom-boot{position:fixed;inset:52px 0 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#15304d;text-align:center;
+ background:radial-gradient(ellipse at 50% 110%,#fff 0 38%,transparent 39%),linear-gradient(#3f86d8,#9cc6ef 45%,#eaf3fb 70%,#fff)}
+.slalom-boot h1{margin:0;font-size:clamp(34px,6vw,56px)}.slalom-boot p{margin:0;font-size:22px;font-weight:800}
+.slalom-boot-hill{display:flex;gap:26px;font-size:clamp(64px,12vw,110px);line-height:1}
+.slalom-boot-hill span{animation:slalom-bob 1.4s ease-in-out infinite alternate}.slalom-boot-hill span+span{animation-delay:.7s}
+@media(max-height:500px){.slalom-boot{inset:42px 0 0 0}}
+@media(prefers-reduced-motion:reduce){.slalom-boot-hill span{animation:none}}
+/* letters / words choice (start screen; not shown to a letters-only player) */
+.slalom-modes{display:flex;gap:10px;padding:6px;border-radius:24px;background:#ffffff99}
+.slalom-mode{position:relative;min-width:150px;min-height:62px;border-radius:18px;border:4px solid transparent;background:transparent;color:#15304d;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;font:inherit}
+.slalom-mode span{font-size:28px;font-weight:900;letter-spacing:.02em}.slalom-mode strong{font-size:20px}
+.slalom-mode.chosen{background:#fffdf8;border-color:#ffb020;box-shadow:0 4px 14px #0a1f3a26}
+.slalom-ready{position:absolute;top:-12px;right:-8px;font-style:normal;font-size:26px;animation:slalom-star 1.6s ease-in-out infinite}
+@keyframes slalom-star{50%{transform:scale(1.25) rotate(12deg)}}
+@media(prefers-reduced-motion:reduce){.slalom-ready{animation:none}}
+/* warm-up before a words run, and the words recap: picture + the word whose letters light up with the sound-out */
+.slalom-warmup{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#0c2a4d55;color:#fff;text-align:center;padding:20px;z-index:3}
+.slalom-warmup h2{margin:0;font-size:clamp(26px,4vw,40px);text-shadow:0 3px 12px #0a1f3a88}
+.slalom-warm-row{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;max-width:960px}
+.slalom-warm-word{min-width:132px;padding:12px 18px 10px;border-radius:24px;background:#fffdf8;color:#15304d;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;border:5px solid #cfe0ef;box-shadow:0 6px 0 #b9cde0;transition:transform .25s,opacity .25s,border-color .25s}
+.slalom-warm-word.now{opacity:1;transform:translateY(-8px) scale(1.1);border-color:#ffd35c;box-shadow:0 10px 0 #e8b634}
+.slalom-warm-word i{font-style:normal;font-size:clamp(40px,6vw,64px);line-height:1.1;height:1.1em}.slalom-warm-word i.blank{visibility:hidden}
+.slalom-warm-word:not(.now) b{color:#3d5a78}
+.slalom-warm-word b{font-size:clamp(36px,5.6vw,58px);font-weight:900;letter-spacing:.06em}
+.slalom-warm-word b span{display:inline-block;transition:color .15s,transform .15s}
+.slalom-warm-word.now b span{color:#9fb3c6}.slalom-warm-word.now b span.was{color:#15304d}
+.slalom-warm-word.now b span.on{color:#e0562b;transform:translateY(-6px) scale(1.2)}.slalom-warm-word b span.whole{color:#15304d}
+.slalom-recap .slalom-warm-row{margin-bottom:4px}
+@media(max-height:500px){.slalom-start h1{display:none}.slalom-mode{min-height:50px;min-width:130px}.slalom-warm-word{min-width:104px;padding:6px 12px}.slalom-warm-word i{font-size:36px}.slalom-warm-word b{font-size:32px}.slalom-warmup{gap:8px}}

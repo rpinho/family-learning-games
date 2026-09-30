@@ -1,6 +1,7 @@
 import {COOKIE_GAME,cookieQuestion,COOKIE_MAX_LEVEL,FADE,STAGE_WINS,MASTERY_RUN} from './cookie-division.mjs';
 import {buildQuestion} from './place-build.mjs';
 import {worthQuestion} from './place-worth.mjs';
+import {numberNameReview} from './number-names.mjs';
 export const EXPLORER_TRACK='explorer-math-1';
 export const EXPLORER_GAMES=[
  {id:'mix',icon:'🚀',title:'Math mission',description:'Multiplication, sums and number puzzles.'},
@@ -69,6 +70,17 @@ export function challengeQuestion(p,game,round,r){
  const skills=['multiply','sums','factor','skip','place','multiply'];
  const skill=game==='mix'?skills[round%6]:({line:'sums',missing:'factor',count:'skip',addobjects:'multiply',subtract:'sums',pattern:'skip'}[game]||game);
  const level=challengeLevel(p,skill),roll=n=>Math.floor(r()*n);let q;
+ // One listening item per six-question Tens & ones session. Its evidence is
+ // separate from block-building and digit worth. After two clean checks of
+ // every target, revisit only every third session.
+ if(game==='place'&&round%6===2){
+  const review=numberNameReview((p.history||[]).filter(h=>h.question?.track===EXPLORER_TRACK),r);
+  if(!review.mastered||(p.completed?.place||0)%3===0){
+   q={...review.question,track:EXPLORER_TRACK};
+   q.fingerprint=JSON.stringify([q.track,q.skill,q.total]);
+   q.id=`${p.revision}:${p.history.length}:${round}:f1`;return q;
+  }
+ }
  if(skill==='cookies'){
   const {fade}=cookieProgress(p);
   for(let trial=0;trial<40;trial++){

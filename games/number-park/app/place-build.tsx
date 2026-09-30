@@ -4,7 +4,7 @@ import {Button} from '@/components/ui/button';
 import {PLACES,BUILD_MAX_PER_PLACE,placeName,buildValue} from '@/lib/place-build.mjs';
 
 type Part={key:string;have:number;need:number;ok:boolean};
-type Props={q:any;disabled:boolean;result:any;message?:string;parts?:Part[];check:(counts:number[])=>void;report:(name:string,detail:string)=>void};
+type Props={q:any;disabled:boolean;result:any;message?:string;parts?:Part[];check:(counts:number[])=>void;hear:()=>void;report:(name:string,detail:string)=>void};
 
 export function Block({place}:{place:string}){
  if(place==='thousands')return <span className="pb-cube" aria-hidden="true"><b>1000</b></span>;
@@ -13,7 +13,7 @@ export function Block({place}:{place:string}){
  return <span className="pb-unit" aria-hidden="true"/>;
 }
 
-export function PlaceBuild({q,disabled,result,message,parts,check,report}:Props){
+export function PlaceBuild({q,disabled,result,message,parts,check,hear,report}:Props){
  const [counts,setCounts]=useState<number[]>(()=>result?.ok?[...q.target]:[0,0,0]);
  const [edited,setEdited]=useState(false);
  useEffect(()=>setEdited(false),[parts]);
@@ -27,8 +27,8 @@ export function PlaceBuild({q,disabled,result,message,parts,check,report}:Props)
  };
  const status=(key:string)=>result||edited?null:parts?.find(p=>p.key===key);
  return <section className="place-build" aria-label="Build the number with blocks">
-  <div className="pb-target" aria-label={q.show==='words'?'Build '+q.target.map((n:number,i:number)=>n?`${n} ${placeName(i,n)}`:'').filter(Boolean).join(' '):'Build the number '+q.total}>
-   {q.show==='words'?PLACES.map((place,i)=>q.target[i]>0&&<span key={place.key} className={'pb-chip pb-'+place.key}><strong>{q.target[i]}</strong> {placeName(i,q.target[i])}</span>):<span className="pb-numeral">{q.total}</span>}
+  <div className="pb-target" aria-label={q.show==='heard'&&!result?.ok?'Listen to the number and build it with blocks':q.show==='words'?'Build '+q.target.map((n:number,i:number)=>n?`${n} ${placeName(i,n)}`:'').filter(Boolean).join(' '):'Build the number '+q.total}>
+   {q.show==='heard'&&!result?.ok?<button type="button" className="pb-hear" disabled={disabled} onClick={hear} aria-label="Hear the number again"><span aria-hidden="true">🔊</span> Hear the number again</button>:q.show==='words'?PLACES.map((place,i)=>q.target[i]>0&&<span key={place.key} className={'pb-chip pb-'+place.key}><strong>{q.target[i]}</strong> {placeName(i,q.target[i])}</span>):<span className="pb-numeral">{q.total}</span>}
   </div>
   <div className="pb-mat">
    {used.map((place,j)=>{const i=j+offset,st=status(place.key);return <div key={place.key} className={'pb-col pb-'+place.key+(st?st.ok?' pb-col-ok':' pb-col-off':'')}>
