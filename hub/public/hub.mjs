@@ -29,12 +29,13 @@ const esc = (s) =>
         c
       ],
   );
-export function event(kind, detail = "") {
+const clientRelease = document.querySelector('meta[name="family-release"]')?.content || '';
+export function event(kind, detail = "", stack = "") {
   if (player)
     fetch("/api/events?player=" + player, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ kind, detail }),
+      body: JSON.stringify({ kind, detail, clientRelease, ...(kind === 'error' ? {stack: String(stack).slice(0,1500)} : {}) }),
     }).catch(() => {});
 }
 function safeLeave(){
@@ -322,9 +323,9 @@ window.addEventListener("message", (e) => {
   if (e.data?.type === "family-player-locked")
     alert("Change player using Grown-ups on the Games home screen.");
 });
-window.addEventListener("error", (e) => event("error", e.message));
+window.addEventListener("error", (e) => event("error", e.message, e.error?.stack || `${e.filename || ''}:${e.lineno || 0}:${e.colno || 0}`));
 window.addEventListener("unhandledrejection", (e) =>
-  event("error", String(e.reason)),
+  event("error", String(e.reason), e.reason?.stack || ''),
 );
 try {
   config = await fetchJSON('/api/config',{},8000);

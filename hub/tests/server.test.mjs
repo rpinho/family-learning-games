@@ -16,6 +16,15 @@ test('Hub persists only the chosen profile, rejects replay/foreign origins, and 
   const request=(a)=>fetch(base+'/api/dribble?player=admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rulesVersion:RULES,...a})});
   assert.equal((await fetch(base+'/health',{headers:{Origin:'https://untrusted.example'}})).status,403);
   assert.equal((await fetch(base+'/config.json')).status,404);
+  const page=await(await fetch(base+'/')).text();
+  assert.match(page,/<meta name="family-release" content="development">/);
+  const diagnostic=await fetch(base+'/api/events?player=admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'error',detail:'A synthetic late callback',clientRelease:'release-old<script>',stack:'TypeError: synthetic\n    at callback (http://localhost/book.mjs:12:3)\n'+'x'.repeat(2000),secret:'discard me'})});
+  assert.equal(diagnostic.status,200);
+  const logFile=(await readdir(join(data,'logs'))).find(f=>f.endsWith('.jsonl'));
+  const row=(await readFile(join(data,'logs',logFile),'utf8')).trim().split('\n').map(JSON.parse).find(r=>r.type==='client');
+  assert.equal(row.clientRelease,'release-oldscript');assert.equal(row.servedRelease,'development');
+  assert.equal(row.stack.length,1500);assert.match(row.stack,/book\.mjs:12:3/);assert.equal(row.secret,undefined);
+  assert.equal((await fetch(base+'/api/events?player=admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'home',detail:'legacy client'})})).status,200);
   assert.equal((await fetch(base+'/api/dribble?player=unknown')).status,400);
   const first=await(await request({type:'start',revision:0})).json();
   assert.equal(first.profile.revision,1);
