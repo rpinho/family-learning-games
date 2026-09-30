@@ -1,0 +1,4 @@
+export const POINTS={start:[120,415],buoy:[280,320],cove:[560,150],pier:[700,380],rock:[500,300]};export const ROUTES={early:['buoy','cove'],reader:['buoy','cove','pier']};
+export function nearRock(a,b){const [x,y]=POINTS.rock,dx=b[0]-a[0],dy=b[1]-a[1],t=Math.max(0,Math.min(1,((x-a[0])*dx+(y-a[1])*dy)/(dx*dx+dy*dy||1)));return Math.hypot(a[0]+t*dx-x,a[1]+t*dy-y)<85;}
+export function plan(path,id,mode){if(!POINTS[id]||id==='start'||path.length>=ROUTES[mode].length)return path;return [...path,id];}
+export function inspect(path,mode){const points=[POINTS.start,...path.map(id=>POINTS[id])];if(points.some(p=>!p))return {safe:false,reason:'unknown'};if(points.some((p,i)=>i>0&&nearRock(points[i-1],p)))return {safe:false,reason:'rock'};const right=path.length===ROUTES[mode].length&&path.every((id,i)=>id===ROUTES[mode][i]);return {safe:true,right,reason:right?'ready':'order'};}
