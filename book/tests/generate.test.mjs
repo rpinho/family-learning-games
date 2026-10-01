@@ -72,3 +72,17 @@ test('The generic picture library ships with the repository and resolves',()=>{
  const lib=readLibrary(bookPaths({FAMILY_DEPLOY_ROOT:'/nonexistent'}));
  assert.equal(lib.private,false);assert.ok(lib.actors.hero&&lib.actors['grown-up']&&lib.backgrounds.meadow);
 });
+
+test('A private picture library still preserves its own actors, props and backgrounds',async()=>{
+ const {root,env}=await deployment(),paths=bookPaths(env);await mkdir(join(paths.book,'art','lib'),{recursive:true});
+ const privateLibrary={backgrounds:{own:{file:'own.svg'}},actors:{custom:{name:'Guide'}},props:{basket:{file:'basket.svg'}}};
+ await writeFile(join(paths.book,'art','lib','library.json'),JSON.stringify(privateLibrary));
+ const lib=readLibrary(paths);assert.deepEqual(lib.backgrounds,privateLibrary.backgrounds);assert.deepEqual(lib.actors,privateLibrary.actors);assert.deepEqual(lib.props,privateLibrary.props);assert.equal(lib.private,true);
+});
+
+test('Release picture additions augment the private library without overwriting or mutating it',async()=>{
+ const {mergeLibraryAdditions}=await import('../generate.mjs');
+ const own={backgrounds:{room:{file:'private-room.webp'}},actors:{guide:{name:'Guide'}},props:{basket:{file:'basket.svg'}}};
+ const additions={backgrounds:{room:{file:'default-room.webp'},park:{file:'park.webp'}}};const before=JSON.stringify(own);
+ const out=mergeLibraryAdditions(own,additions);assert.equal(out.backgrounds.park.file,'park.webp');assert.equal(out.backgrounds.room.file,'private-room.webp');assert.deepEqual(out.actors,own.actors);assert.deepEqual(out.props,own.props);assert.equal(JSON.stringify(own),before);
+});
