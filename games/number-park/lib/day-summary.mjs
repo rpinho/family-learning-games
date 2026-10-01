@@ -7,9 +7,10 @@ import {gamesFor} from './math.mjs';
 const GAP_MS=10*60*1000;
 export const localDate=(at,timeZone)=>new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(at));
 const clock=(ms,timeZone)=>new Intl.DateTimeFormat('en-US',{timeZone,hour:'numeric',minute:'2-digit'}).format(new Date(ms));
-// Stretches of play: activity separated by less than ten minutes.
+// Stretches of play: activity separated by less than ten minutes. Round timers
+// survive leaving the game; a long elapsed interval cannot establish active time.
 export function stretches(rows,timeZone){
- const spans=rows.map(r=>{const end=Date.parse(r.at),d=Math.min(Math.max(0,r.durationMs||0),10*60*1000);return [end-d,end];}).filter(([a,b])=>Number.isFinite(a)&&Number.isFinite(b)).sort((x,y)=>x[0]-y[0]);
+ const spans=rows.map(r=>{const end=Date.parse(r.at),elapsed=Math.max(0,Number(r.durationMs)||0),d=elapsed<=GAP_MS?elapsed:0;return [end-d,end];}).filter(([a,b])=>Number.isFinite(a)&&Number.isFinite(b)).sort((x,y)=>x[0]-y[0]);
  const out=[];
  for(const [a,b] of spans){const last=out.at(-1);if(last&&a-last[1]<=GAP_MS)last[1]=Math.max(last[1],b);else out.push([a,b]);}
  return out.map(([a,b])=>({start:clock(a,timeZone),end:clock(b,timeZone),minutes:Math.max(1,Math.round((b-a)/60000))}));
@@ -35,7 +36,7 @@ function stuckReason(h){
  if(h.predicted!==undefined&&h.predicted!==h.answer)r.push(`guessed ${h.predicted}`);
  if(h.placeChecks)r.push(`${h.placeChecks} build check${h.placeChecks>1?'s':''}`);
  if(h.helped&&!r.length)r.push('pressed Help');
- if((h.durationMs||0)>=120000)r.push(`${Math.round(h.durationMs/1000)} s`);
+ if(h.durationMs>=120000&&h.durationMs<=GAP_MS)r.push(`${Math.round(h.durationMs/1000)} s elapsed`);
  return r;
 }
 export function daySummary(p,date,timeZone){
