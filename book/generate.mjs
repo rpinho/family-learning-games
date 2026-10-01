@@ -86,8 +86,15 @@ export async function narrate(lines,{paths,env=process.env}){
 }
 async function chapterNumber(dir,date){let n=[];try{n=(await readdir(dir)).filter(f=>/^\d{4}-\d{2}-\d{2}\.json$/.test(f)&&f.slice(0,10)<date);}catch{}return n.length+1;}
 // The picture library: the household's own (private, next to its chapters) or the generic one shipped here.
+export function mergeLibraryAdditions(base,additions={}){return Object.fromEntries(['backgrounds','actors','props'].map(k=>[k,{...additions[k],...base[k]}]));}
 export function readLibrary(paths){
- for(const f of [join(paths.book,'art','lib','library.json'),join(here,'..','hub','public','book-art','library.json')]){try{const l=JSON.parse(readFileSync(f,'utf8'));if(l.backgrounds&&l.actors)return {...l,private:!f.startsWith(join(here,'..'))};}catch{}}
+ let additions={};try{additions=JSON.parse(readFileSync(join(here,'..','hub','book-art-additions.json'),'utf8'));}catch{}
+ for(const f of [join(paths.book,'art','lib','library.json'),join(here,'..','hub','public','book-art','library.json')]){
+  try{const l=JSON.parse(readFileSync(f,'utf8'));if(!l.backgrounds||!l.actors)continue;
+   const merged=mergeLibraryAdditions(l,additions);
+   return {...l,...merged,private:!f.startsWith(join(here,'..'))};
+  }catch{}
+ }
  throw Error('no picture library');
 }
 // Who can be drawn: the hero, Dad, his brother, and today's friends (by the library's actor ids).
