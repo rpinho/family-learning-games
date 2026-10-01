@@ -1,0 +1,5 @@
+# lantern-repair review study
+
+Original authored art and finite touch/keyboard interaction. Review only; no saved chapters, identity, progress or preferences are read or written. Early and reader modes are review choices, not new child navigation. Prompts use original stock narration baked by the release against a cloned clip store; no device speech. Input waits for the complete instruction; replay is explicit. Reduced motion gives the same final scene. Art is generated offline by scripts/bake-study-art.mjs; WebP is the only runtime raster dependency. No third-party scene, model or character assets. Parent approval precedes integration or promotion.
+
+Regenerate assets with Node and Sharp available: `STUDY_SHARP=<module path> node hub/scripts/bake-study-art.mjs` from this checkout. Seeded original brushwork is baked into a 1200×750 WebP; the 2048×256 atlas contains eight orthographic faces of an original code-defined boat. No GPU/physics runtime or external asset fetch. Generated images carry no identifying metadata.
