@@ -171,6 +171,8 @@ function buildVoice(name, rel) {
     for (const l of g.voice.links || []) symlinkSync(join(g.data, l), join(work, l));
     console.log(`${name}: voice script (only missing clips are synthesized)`);
     heavy(PYTHON, [g.voice.script], {cwd: rel, env: {...process.env, PATH: PATH_ENV, [g.dataEnv]: work}});
+    // Optional original preview narration is built only against this cloned clip store.
+    if (existsSync(join(rel, 'hub/scripts/build-study-voice.py'))) heavy(PYTHON, ['hub/scripts/build-study-voice.py'], {cwd:rel, env:{...process.env, PATH:PATH_ENV, [g.dataEnv]:work}});
     const out = {dirs: {}};
     for (const d of g.voice.dirs) {
       const store = join(rel, '.release', 'voice', d); mkdirSync(store, {recursive: true});
@@ -264,7 +266,8 @@ async function waitPortFree(port, sec = 25) {const d = Date.now() + sec * 1000; 
 // Start a release on the check ports with a copy-on-write clone of the live data; then stop it.
 async function check(name, version) {
   const g = game(name), rel = releaseDir(name, version), work = join(ROOT, 'tmp', `check-${name}-${process.pid}`);
-  const port = g.port + cfg.checkPortOffset, uiPort = g.uiPort && g.uiPort + cfg.checkPortOffset;
+  const port = process.env.FAMILY_CHECK_PORT ? Number(process.env.FAMILY_CHECK_PORT) : g.port + cfg.checkPortOffset, uiPort = g.uiPort && g.uiPort + cfg.checkPortOffset;
+  if (!Number.isInteger(port) || port < 1024 || port > 65535 || Object.values(cfg.games).some(x=>port===x.port||port===x.port+cfg.channels.staging.portOffset)) throw new Error('Unsafe check port');
   if (listenerPid(port) || (uiPort && listenerPid(uiPort))) throw new Error(`check port ${port} busy`);
   rmSync(work, {recursive: true, force: true}); mkdirSync(work, {recursive: true});
   const data = join(work, 'data');
