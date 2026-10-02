@@ -22,8 +22,9 @@ test('all levels keep drag sharing and every prompt is spoken',()=>{
   assert.equal(q.prompt,cookiePrompt(q.total,q.plates,q.mode,q.baked,q.eaten));
   assert.equal(q.leftover,0);assert.equal(q.eaten,0);
  }
- assert.equal(gamesFor(freshProfile('beginner')).some(g=>g.id==='cookies'),false);
- assert.throws(()=>act(freshProfile('beginner'),{kind:'start',game:'cookies'}));
+ // Beginner's Cookie Monster is the kindergarten sharing track, never this division track.
+ const d=freshProfile('beginner');act(d,{kind:'start',game:'cookies'});
+ assert.equal(d.session.question.track,'kinder-cookies-1');assert.notEqual(d.session.question.track,EXPLORER_TRACK);
 });
 
 test('cookie sharing saves each move, rejects shortcuts and gives a non-revealing hint',()=>{

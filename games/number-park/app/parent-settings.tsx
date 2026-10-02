@@ -4,7 +4,7 @@ import {Button} from '@/components/ui/button';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from '@/components/ui/dialog';
 import {NativeSelect,NativeSelectOption} from '@/components/ui/native-select';
 import './parent-settings.css';
-const names:Record<string,string>={beginner:'Beginner',explorer:'Explorer',admin:'Admin · Admin'};
+const names:Record<string,string>={beginner:'Beginner',explorer:'Explorer',admin:'Admin'};
 const STAGES:Record<string,string>={show:'counts shown',hide:'counts hidden (Help shows them)',own:'says the answer first'};
 // Today's summary for the grown-ups: read-only, from this child's own saves.
 function Today({player,open}:{player:string,open:boolean}){
@@ -18,6 +18,7 @@ function Today({player,open}:{player:string,open:boolean}){
   {s.games.length>0&&<ul>{s.games.map((g:any)=><li key={g.id}>{g.title}: {g.correct}/{g.questions}{g.helped?`, ${g.helped} with help`:''}</li>)}</ul>}
   {(s.other.reading||s.other.planning||s.other.drawing)?<p>Also: {[s.other.reading&&`${s.other.reading} reading answers`,s.other.planning&&`${s.other.planning} Plan & Play goals`,s.other.drawing&&`${s.other.drawing} drawing moments`].filter(Boolean).join(' · ')}</p>:null}
   {c&&<p>Cookie division: level {c.level}, {STAGES[c.stage]||c.stage}{c.toMastery!==undefined?` · ${c.toMastery} more clean in a row to move up`:''}</p>}
+  {s.levels?.kinderCookies&&<p>Cookie Monster sharing: level {s.levels.kinderCookies.level} of 5</p>}
   {s.stuck.length>0&&<><p><strong>Worth a look</strong></p><ul>{s.stuck.map((x:string,i:number)=><li key={i}>{x}</li>)}</ul></>}
   {s.story.length>0&&<><p><strong>Story so far today</strong></p><ul>{s.story.map((x:string,i:number)=><li key={i}>{x}</li>)}</ul></>}
  </div>;
