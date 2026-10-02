@@ -1,4 +1,14 @@
 // Projection of a still painted panorama and an optional extension of its empty foreground.
+// Variants carry their own painted coordinates; ids and written chapters stay stable.
+export function selectBackground(entry,{width,height}={}){
+ const v=width<height?entry?.variants?.portrait:null;
+ return v?{...entry,...v,variants:entry.variants}:entry;
+}
+export const MIN_PAINTED_TAP=64;
+export function paintedTapRect(r,{width,height,min=MIN_PAINTED_TAP}={}){
+ const w=Math.max(min,r.w),h=Math.max(min,r.h);
+ return {x:Math.max(0,Math.min(width-w,r.x+r.w/2-w/2)),y:Math.max(0,Math.min(height-h,r.y+r.h/2-h/2)),w,h};
+}
 export function backgroundRect(entry,{width,height,nw=1536,nh=1024,top=false}={}){
  if(entry?.size?.every(n=>Number.isFinite(n)&&n>0)){[nw,nh]=entry.size;}
  const portrait=width<height&&entry?.portraitHeight>0&&entry.portraitHeight<=1,frameH=portrait?height*entry.portraitHeight:height;
