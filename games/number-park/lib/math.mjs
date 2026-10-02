@@ -4,8 +4,9 @@ import {checkCopy} from './copy-practice.mjs';
 import {FREE_DRAWING_SPACE,validFreeInk} from './drawing-space.mjs';
 import {countingQuestion,countingOptions} from './counting.mjs';
 import {patternQuestion} from './play-practice.mjs';
-import {advanced,EXPLORER_GAMES,challengeQuestion,cookieProgress} from './explorer.mjs';
+import {advanced,EXPLORER_GAMES,challengeQuestion,cookieProgress,EXPLORER_TRACK,CHALLENGE_SKILLS,CHALLENGE_MAX,challengeLevel,clampChallenge} from './explorer.mjs';
 import {validCookieDraft,cookieCounts,isDragCookie,initialCookieDraft,askOptions,bagsValid,unevenMessage,askRetryMessage,slotsFor,MONSTER_TOO_MANY,PREDICT_RIGHT} from './cookie-division.mjs';
+import {KINDER_COOKIE_GAME,isKinder,nextKinderQuestion,kinderQuestion,kinderProgress,clampLevel,KINDER_UNEVEN} from './cookie-kinder.mjs';
 import {roundRecap} from './recap.mjs';
 import {addStoryBeat,tellsStory} from './story.mjs';
 import {trackPlay,windDownDue,REST_MS,resting} from './rest.mjs';
@@ -13,8 +14,7 @@ import {readingAction} from './reading.mjs';
 import {validBuild,buildFeedback,buildValue} from './place-build.mjs';
 import {artAction} from './art.mjs';
 import {planningAction} from './planning.mjs';
-export const VERSION='number-park-2026-09-28-number-names-public';
-
+export const VERSION='number-park-2026-10-01-kinder-cookies';
 export const GAMES=[
  {id:'mix',icon:'🎲',title:'Little sums',description:'A mix just like the first unit.'},
  {id:'line',icon:'📏',title:'Number hop',description:'Slide to the missing number.'},
@@ -25,7 +25,9 @@ export const GAMES=[
  {id:'pattern',icon:'🔷',title:'Pattern parade',description:'What comes next in the parade?'}
 ];
 export const additionOnly=p=>p.id!=='explorer';
-export const gamesFor=p=>advanced(p)?EXPLORER_GAMES:GAMES;
+// Beginner/Admin: the seven small-number games plus Cookie sharing's kindergarten sharing.
+export const KINDER_GAMES=[...GAMES,KINDER_COOKIE_GAME];
+export const gamesFor=p=>advanced(p)?EXPLORER_GAMES:KINDER_GAMES;
 // Upgrade only the active prompt in memory. Existing scores, history, drawings
 // and completed questions remain untouched; ordinary next writes persist it.
 export function prepareProfile(p){
@@ -54,6 +56,7 @@ const shuffle=(a,r)=>a.map(v=>[r(),v]).sort((a,b)=>a[0]-b[0]).map(v=>v[1]);
 export function makeQuestion(p,game,round=0){
  const r=random((p.revision+1)*7919+(p.history.length+1)*101+round*37),max=13;
  if(advanced(p))return challengeQuestion(p,game,round,r);
+ if(game==='cookies'){const q=nextKinderQuestion(p,r);q.id=`${p.revision}:${p.history.length}:${round}:k1`;return q;}
  const roll=n=>Math.floor(r()*n);let q;
  for(let trial=0;trial<120;trial++){
   let kind=game==='mix'?['choice','line','missing','choice','line','missing'][round%6]:game;
@@ -71,7 +74,14 @@ export function makeQuestion(p,game,round=0){
  if(['count','addobjects'].includes(q.kind))q.options=countingOptions(q.answer,r);
  q.id=`${p.revision}:${p.history.length}:${round}`;return q;
 }
-export function publicState(p,now=Date.now()){const state=structuredClone(p);if(state.session?.question&&(!state.session.helped||state.session.question.kind==='cookies')&&!state.session.result){delete state.session.question.answer;if(state.session.question.kind==='cookies')delete state.session.question.leftover;if(state.session.question.skill==='worth'){delete state.session.question.explain;if(state.session.question.placeMode==='which'){delete state.session.question.lit;delete state.session.question.place;delete state.session.question.digit;}}}state.resting=resting(p,now);return state;}
+export function publicState(p,now=Date.now()){const state=structuredClone(p);if(state.session?.question&&(!state.session.helped||state.session.question.kind==='cookies')&&!state.session.result){delete state.session.question.answer;if(state.session.question.kind==='cookies')delete state.session.question.leftover;if(state.session.question.skill==='worth'){delete state.session.question.explain;if(state.session.question.placeMode==='which'){delete state.session.question.lit;delete state.session.question.place;delete state.session.question.digit;}}}
+ const q=state.session?.question;
+ if(q?.kind==='balance'&&!state.session.result){
+  delete q.answer;delete q.fingerprint;
+  delete q.left.kg;delete q.right.kg;delete q.left.value;delete q.right.value;
+  if(q.mode==='complete')delete q.right.b;
+ }
+ state.resting=resting(p,now);return state;}
 // A fresh cookie round: the tray/plates, and in the 'own' stage the "how many
 // each?" question comes first (a prediction; the sharing then checks it).
 function openCookieRound(s){
@@ -129,7 +139,9 @@ export function action(p,input,now=Date.now(),services={}){
     if(!used.every(n=>n===q.bagSize)){s.cookieChecks=(s.cookieChecks||0)+1;s.cookieMessage='A bag is not full yet. Fill it before you start a new one.';}
     else{s.cookieAsk={options:askOptions(q),tries:0};s.cookieMessage='';}
    }
-   else if(!counts.every(n=>n===counts[0])){s.cookieChecks=(s.cookieChecks||0)+1;s.cookieMessage=unevenMessage(q);}
+   else if(!counts.every(n=>n===counts[0])){s.cookieChecks=(s.cookieChecks||0)+1;s.cookieMessage=isKinder(q)?KINDER_UNEVEN:unevenMessage(q);}
+   // Kindergarten sharing has no question step: fair plates are the answer.
+   else if(isKinder(q))winCookie(p,s,q,now,{});
    else if(q.mode==='leftover'&&s.cookieDraft.filter(v=>v===q.plates).length>=q.plates){s.cookieChecks=(s.cookieChecks||0)+1;s.cookieMessage=MONSTER_TOO_MANY;}
    else if(s.cookiePredict!==undefined){
     // 'own' stage: the fair plates check his prediction.
@@ -155,6 +167,29 @@ export function action(p,input,now=Date.now(),services={}){
   if(s.cookieAsk.predict){s.cookiePredict=input.value;delete s.cookieAsk;s.cookieMessage='';}
   else if(input.value!==q.answer){s.cookieAsk.tries++;s.cookieChecks=(s.cookieChecks||0)+1;s.cookieMessage=askRetryMessage(q);}
   else winCookie(p,s,q,now,{askTries:s.cookieAsk.tries});
+ }else if(input.kind==='cookie-level'){
+  // Easier/Harder for kindergarten sharing applies at once: the current
+  // unanswered round is replaced at the chosen level; earned progress stays.
+  if(advanced(p)||![1,-1].includes(input.delta))fail('Choose easier or harder.');
+  const from=kinderProgress(p).level,level=clampLevel(from+input.delta);
+  const rows=(p.history||[]).filter(h=>isKinder(h.question)).length;
+  p.kinderCookies={...(p.kinderCookies||{}),manual:{level,after:rows,at:new Date(now).toISOString()},changes:[...(p.kinderCookies?.changes||[]),{at:new Date(now).toISOString(),from,to:level}].slice(-50)};
+  const s=p.session;
+  if(s&&s.game==='cookies'&&!s.finished&&!s.result&&isKinder(s.question)){
+   const r=random((p.revision+1)*7919+rows*101+s.round*37+level);
+   s.question={...kinderQuestion(level,r),id:`${p.revision}:${p.history.length}:${s.round}:k1:${level}`};
+   s.helped=false;s.started=now;delete s.cookieChecks;delete s.cookieMessage;openCookieRound(s);
+  }
+ }else if(input.kind==='challenge-level'){
+  // Explorer's Easier/Harder (2026-10-01, mirrors the kindergarten cookie control): applies at once to
+  // the current unanswered question; later rounds adapt from the chosen level. Earned history stays.
+  const s=p.session,q=s?.question;
+  if(!advanced(p)||![1,-1].includes(input.delta)||!s||s.finished||s.result||q?.track!==EXPLORER_TRACK||!CHALLENGE_SKILLS.includes(q.skill))fail('Choose easier or harder.');
+  const from=challengeLevel(p,q.skill),level=clampChallenge(from+input.delta);
+  const rows=(p.history||[]).filter(h=>h.question?.track===EXPLORER_TRACK&&h.question.skill===q.skill).length;
+  p.challengeManual={...(p.challengeManual||{}),[q.skill]:{level,after:rows,at:new Date(now).toISOString()}};
+  p.challengeChanges=[...(p.challengeChanges||[]),{at:new Date(now).toISOString(),skill:q.skill,from,to:level}].slice(-50);
+  s.question=makeQuestion(p,s.game,s.round);s.helped=false;s.started=now;
  }else if(input.kind==='place-check'){
   const s=p.session,q=s?.question;if(!s||s.finished||s.result||q.kind!=='place'||q.placeMode!=='build'||input.questionId!==q.id)fail('Open a block-building round first.');
   if(!validBuild(input.counts))fail('Build the number with the blocks first.');
@@ -169,8 +204,9 @@ export function action(p,input,now=Date.now(),services={}){
   const s=p.session;if(!s||s.finished||s.result||input.questionId!==s.question.id)fail('This question is already finished.');
   const q=s.question;if(q.kind==='cookies')fail('Share the cookies on the plates first.');if(q.placeMode==='build')fail('Build the number with the blocks first.');if(q.kind==='pattern'?!q.options.includes(input.answer):!Number.isInteger(input.answer)||input.answer<0||input.answer>q.max)fail('Choose a valid answer.');
   if(q.kind==='subtract'&&input.removedIndices!==undefined&&(!Array.isArray(input.removedIndices)||input.removedIndices.length>q.total||new Set(input.removedIndices).size!==input.removedIndices.length||!input.removedIndices.every(i=>Number.isInteger(i)&&i>=0&&i<q.total)))fail('Invalid removed objects.');
+  if(q.kind==='balance'&&!q.options.includes(input.answer))fail('Choose one of the answers.');
   const ok=input.answer===q.answer,independent=ok&&!s.helped,xp=ok?(independent?10:4):0;
-  s.result={ok,answer:q.answer,xp,helped:s.helped,...(q.placeMode==='which'?{picked:input.answer}:{})};p.xp+=xp;s.correct+=Number(ok);s.independent+=Number(independent);
+  s.result={ok,answer:q.answer,xp,helped:s.helped,...(q.placeMode==='which'||q.kind==='balance'?{picked:input.answer}:{})};p.xp+=xp;s.correct+=Number(ok);s.independent+=Number(independent);
   p.history.push({at:new Date(now).toISOString(),game:s.game,question:q,answer:input.answer,ok,helped:s.helped,durationMs:Math.max(0,Math.min(86400000,now-s.started))});p.history=p.history.slice(-2000);
   if(q.kind==='subtract'&&input.removedIndices!==undefined)p.history.at(-1).removedIndices=[...input.removedIndices];
   p.recent=[...p.recent,q.fingerprint].slice(-12);

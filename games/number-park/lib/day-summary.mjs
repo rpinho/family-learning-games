@@ -4,6 +4,7 @@
 // and collected each evening into the family recap file for the digest.
 import {advanced,cookieProgress,challengeLevel} from './explorer.mjs';
 import {gamesFor} from './math.mjs';
+import {isKinder,kinderProgress} from './cookie-kinder.mjs';
 const GAP_MS=10*60*1000;
 export const localDate=(at,timeZone)=>new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(at));
 const clock=(ms,timeZone)=>new Intl.DateTimeFormat('en-US',{timeZone,hour:'numeric',minute:'2-digit'}).format(new Date(ms));
@@ -17,6 +18,7 @@ export function stretches(rows,timeZone){
 }
 function describe(q){
  if(!q)return 'a question';
+ if(q.kind==='cookies'&&isKinder(q))return `cookies ${q.total} shared by ${q.plates} (kindergarten level ${q.level})`;
  if(q.kind==='cookies'){const d=q.mode==='bags'?q.bagSize:q.plates,mode={share:'sharing',fix:'fix the plates',mixed:'hidden counts',bags:'bags',rows:'rows',leftover:'remainders'}[q.mode]||'sharing';return `cookies ${q.total} ÷ ${d} (${mode}, level ${q.level}${q.fade?', '+q.fade:''})`;}
  if(q.placeMode==='build')return `build ${q.total??(q.target||[]).reduce((n,v)=>n*10+v,0)} from blocks (level ${q.level})`;
  if(q.skill==='worth')return q.placeMode==='which'?`which digit is in the ${['ones','tens','hundreds','thousands'][q.place]} place of ${q.total}`:`what the ${q.digit} in ${q.total} is worth`;
@@ -50,7 +52,7 @@ export function daySummary(p,date,timeZone){
  if(advanced(p)){
   const c=cookieProgress(p);levels.cookies={level:c.level,stage:c.fade,...(c.toMastery!==null?{toMastery:c.toMastery}:{})};
   for(const skill of ['multiply','factor','sums','skip','place','worth'])levels[skill]=challengeLevel(p,skill);
- }
+ }else if((p.history||[]).some(h=>isKinder(h.question))||p.kinderCookies)levels.kinderCookies={level:kinderProgress(p).level};
  const time=stretches([...rows,...reading,...planning.map(r=>({...r,durationMs:r.durationMs||0})),...art.map(r=>({at:r.at,durationMs:0}))],timeZone);
  const story=(p.story?.beats||[]).filter(today).map(b=>b.line);
  const questions=rows.length,correct=rows.filter(h=>h.ok).length,independent=rows.filter(h=>h.ok&&!h.helped).length;
