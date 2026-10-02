@@ -20,6 +20,14 @@ export function standingGround(entry,{width,height,ground=.93,backLift=.05}={}){
  const r=backgroundRect(entry,{width,height});
  return Math.min(.97,Math.max(ground,(r.y+entry.groundStart*r.h)/height+backLift+.02));
 }
+// A broad painted object may fill a portrait crop. Keep heads and hops below it
+// instead of letting the layout discard its keep-out zone to preserve larger figures.
+export function standingClearance(zones,{ground,maxHeight,height,backLift=.05}={}){
+ for(const z of zones||[]){const visible=Math.min(1,z.x1)-Math.max(0,z.x0);
+  if(visible>.5&&z.y1<ground-backLift-.03)maxHeight=Math.min(maxHeight,(ground-z.y1-backLift-12/height)/1.15);
+ }
+ return Math.max(.03,maxHeight);
+}
 // Optional release metadata corrects existing art without changing a library or a written chapter.
 export function applyBackgroundLayouts(library,layouts={}){
  return {...library,backgrounds:Object.fromEntries(Object.entries(library.backgrounds||{}).map(([id,b])=>[id,layouts[id]?{...b,...layouts[id]}:b]))};

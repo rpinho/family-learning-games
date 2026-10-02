@@ -1,7 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {standingGround,backgroundRect,applyBackgroundLayouts} from '../public/book-painted-layout.mjs';
+import {standingGround,standingClearance,backgroundRect,applyBackgroundLayouts} from '../public/book-painted-layout.mjs';
 const sizes=[[320,640],[390,844],[844,390],[768,1024],[1366,768]];
+test('a broad painted object retains clearance for heads, hops and the rear standing row',()=>{
+ const z={x0:-.1,x1:1.1,y0:.2,y1:.5},ground=.73,height=844,backLift=.05;
+ const h=standingClearance([z],{ground,maxHeight:.4,height,backLift});
+ assert.ok(ground-backLift-h*1.15>=z.y1+12/height-1e-9);
+ assert.equal(standingClearance([{...z,x0:.48,x1:.52}],{ground,maxHeight:.4,height}),.4,'a thin pole keeps its side bands');
+});
 test('activity and back-row feet stay below the painted standing plane across cover crops',()=>{
  const b={fit:'cover',size:[1536,1024],focal:[.5,.5],groundStart:.72};
  for(const [width,height] of sizes){const r=backgroundRect(b,{width,height}),floor=(r.y+b.groundStart*r.h)/height;
