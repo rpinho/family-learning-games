@@ -7,6 +7,7 @@ const WORDS=['Zero','One','Two','Three','Four','Five','Six'];
 const plural=(n,one,many=one+'s')=>`${n} ${n===1?one:many}`;
 // Main sentence per game. Explorer (older) games first, then the little games.
 const MAIN={
+ balance:n=>`You solved ${plural(n,'balance puzzle')}.`,
  multiply:n=>`You solved ${plural(n,'times-table fact')}.`,
  factor:n=>`You found ${plural(n,'missing factor')}.`,
  sums:n=>`You solved ${plural(n,'sum')}.`,
@@ -30,9 +31,9 @@ export const RECAP_ALL_OWN='All on your own!';
 export const LEVEL_UP='Five in a row. New cookie level!';
 // Calm wind-down after a long stretch of play (see rest.mjs).
 export const WIND_DOWN_LINE='All done for today. See you next time!';
-// A friendly bear who only ever gains: every correct answer is one berry.
-export const FEEDER={name:'Bo',icon:'🐻',treat:'🍓'};
-export const feedLine=n=>`${FEEDER.name} ate ${plural(n,'berry','berries')}!`;
+// Loona the puppy (Bo the bear before 2026-09-27) only ever gains: every correct answer is one treat.
+export const FEEDER={name:'Loona',icon:'🐶',treat:'🦴'};
+export const feedLine=n=>`${FEEDER.name} ate ${plural(n,'treat','treats')}!`;
 export const feeds=player=>player!=='explorer';
 const hasZero=q=>Array.isArray(q?.target)&&q.target.some((n,i)=>n===0&&q.target.slice(0,i).some(v=>v>0));
 // entries: this round's history rows (one per finished question).

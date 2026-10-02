@@ -1,11 +1,13 @@
-// Sound rule.
+// Keep challenge control independent from rushed taps.
 // CONTENT: the question itself, or the specific number/letter/word/shape to find. Always plays, even with the
 // sound button off, and repeats once if the child is idle.
 // INSTRUCTIONS: how to play ("Tap and count.", "Drag a picture into the gap."). Once per session per line, and
 // only with sound on. Repeated instructions are what made the kids turn sound off.
 // Narration and praise (recap, story, chimes) obey the sound button.
+import {balanceVoiceLines} from './balance.mjs';
+const balanceContent=new Set(balanceVoiceLines());
 export const sentences=t=>String(t).match(/[^.?!]+[.?!]+|[^.?!]+$/g)?.map(x=>x.trim()).filter(Boolean)||[];
-export const isContent=s=>/\?$/.test(s)||/\d/.test(s)||/^(Count only the |Trace a |Reading (sound|word) |Find the (letter|little letter|word) |Which letter )/.test(s);
+export const isContent=s=>balanceContent.has(s)||/\?$/.test(s)||/\d/.test(s)||/^(Count only the |Trace a |Reading (sound|word) |Find the (letter|little letter|word) |Which letter )/.test(s);
 export function splitSpeech(lines){
  const content=[],instructions=[];
  for(const line of lines){const parts=sentences(line);
