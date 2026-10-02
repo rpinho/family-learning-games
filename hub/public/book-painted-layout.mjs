@@ -13,3 +13,14 @@ export function portraitTerrace(entry,{width,height}={}){
  const r=backgroundRect(entry,{width,height}),top=r.y+entry.foreground*r.h,h=height-top;
  return {top,height:h,left:r.x,width:r.w,imageHeight:h/(1-entry.foreground),ground:entry.portraitGround};
 }
+// A standing plane belongs to the image, so its screen height changes with the crop.
+// Leave space for a second row rather than putting its feet above the painted ground.
+export function standingGround(entry,{width,height,ground=.93,backLift=.05}={}){
+ if(!(entry?.groundStart>0&&entry.groundStart<1))return ground;
+ const r=backgroundRect(entry,{width,height});
+ return Math.min(.97,Math.max(ground,(r.y+entry.groundStart*r.h)/height+backLift+.02));
+}
+// Optional release metadata corrects existing art without changing a library or a written chapter.
+export function applyBackgroundLayouts(library,layouts={}){
+ return {...library,backgrounds:Object.fromEntries(Object.entries(library.backgrounds||{}).map(([id,b])=>[id,layouts[id]?{...b,...layouts[id]}:b]))};
+}
