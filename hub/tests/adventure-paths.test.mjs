@@ -1,0 +1,6 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {routePages,pathOptions,pageLines,reachedChoices} from '../public/book-adventure.mjs';
+const ch={pages:[{node:'start',choice:{options:[{id:'a',label:'Field'},{id:'b',label:'Woods'}]}},{node:'field'},{node:'woods'},{node:'end',say:[{text:'Together again.'}],consequences:{a:[{text:'The rope helps.'}],b:[{text:'The lamp helps.'}]}}],meta:{graph:{start:'start',nodes:[{id:'start',choice:{options:[{id:'a',next:'field'},{id:'b',next:'woods'}]}},{id:'field',next:['end']},{id:'woods',next:['end']},{id:'end',next:[]}]}}};
+test('a saved route resumes only its own branch; an unchosen fork stops navigation',()=>{assert.deepEqual(routePages(ch,{start:'b'}),[0,2,3]);assert.deepEqual(routePages(ch,{}),[0]);assert.deepEqual(reachedChoices(ch,{start:'b',invented:'a'}),{start:'b'});});
+test('review enumerates complete labelled paths; only selected consequences are read',()=>{assert.equal(pathOptions(ch).length,2);assert.equal(pathOptions(ch)[1].label,'Woods');assert.deepEqual(pageLines(ch.pages[3],{start:'b'}).map(l=>l.text),['Together again.','The lamp helps.']);assert.deepEqual(routePages({...ch,meta:{}},{}),[0,1,2,3]);});
