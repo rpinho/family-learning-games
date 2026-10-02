@@ -1,4 +1,7 @@
-// Writer brief for a graph whose places and learning challenges are fixed by code.
+// The adventure brief (2026-10-02): the writer fills in the code's graph; it never invents the shape.
+// Same voice and limits as the linear brief (the linear lint runs on every path), plus: where each node happens, how
+// the family travels between places (told on the page, the map's own words), what each choice sets, and tomorrow's
+// payoff from the ledger. Choices are DIFFERENT, never wrong; there is no fail state; the chooser alternates.
 import {travel} from './graph.mjs';
 
 export function adventureBrief({sk,kit,plan,beatLine=b=>`${b.id}: ${b.kind}`,payoff=null,chooser=null}){
@@ -24,10 +27,10 @@ Write the text for each node of this map. The code has fixed the shape, the plac
 ${nodeLines}
 
 RULES
-- Every node is 1-2 pages in the linear format (scene, actors, say). Pages stay in their node's place; moving between places is always told ("down the zigzag path…"), never a jump.
+- Every node has only its planned story and beat pages in the linear format (scene, actors, say). Pages stay in their node's place; moving between places is always told ("down the zigzag path…"), never a jump.
 - A choice is a real turning point: two different ways, both good; never a right and a wrong one; no fail state. The narrator asks ${chooser?`${chooser}`:'him'} to choose in one short line.
-- What each option sets: {"id","kind":"item"|"ally"|"knowledge","label"} (at most two in the chapter). The gate and the ending must use what he chose so that the two ways feel different.
-${payoff?`- From an earlier chapter he still carries ${payoff.label} (${payoff.kind}): it must matter once in today's story.\n`:''}- Each path read on its own must be a whole story and keep every limit of the linear brief.
+- What each option sets: {"id","kind":"item"|"ally"|"knowledge","label"} (at most two in the chapter). On BOTH gate AND ending, EACH fork-1 option gets a conditional say object {"who":"dad","text":"The ribbon ties the hill gate open.","if":"<sets.id>"}. Use the item's own words to change what happens, with a concrete action, never generic praise.
+${payoff?`- From an earlier chapter he still carries ${payoff.label} (${payoff.kind}, flag id "${payoff.id}"): one conditional say object with if:"${payoff.id}" must visibly change what happens once in today's story.\n`:''}- Each path read on its own must be a whole story and keep every limit of the linear brief.
 
 REPLY with ONLY JSON: {"title":"...","summary":"...","hook":"...","nodes":{"<node id>":{"pages":[{"scene":"...","actors":[...],"say":[["narrator","..."]]}],"choice":{"prompt":"...","options":[{"id":"a","label":"short label","reply":"one short line","sets":{"id":"...","kind":"item","label":"..."}}]}}}}
 (only fork nodes have "choice").`;

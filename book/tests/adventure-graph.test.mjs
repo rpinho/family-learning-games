@@ -7,7 +7,8 @@ const beats=[{id:'b1',kind:'teach-letter'},{id:'b2',kind:'count',n:10},{id:'b3',
 const pg=(text,scene)=>({scene,say:[['narrator',text]]});
 function story(sk,{sets=true,payoffWord='lantern'}={}){const nodes={};for(const n of sk.nodes)nodes[n.id]={pages:[pg(`At the ${n.place}.`,n.place)]};
  nodes.fork1.choice={prompt:'Which way?',options:[{id:'a',label:'the zigzag path',...(sets?{sets:{id:'rope',kind:'item',label:'a rope'}}:{})},{id:'b',label:'the dark tunnel',...(sets?{sets:{id:'lantern',kind:'item',label:'a glowing lantern'}}:{})}]};
- nodes.gate.pages.push(pg(`The ${payoffWord} helps them, and so does the rope.`,sk.nodes.find(n=>n.id==='gate').place));return {title:'T',nodes};}
+ nodes.gate.pages.push({...pg('The gate waits.',sk.nodes.find(n=>n.id==='gate').place),say:[{who:'dad',text:'The rope holds the gate open.',if:'rope'},{who:'dad',text:`The ${payoffWord} lights the gate.`,if:'lantern'}]});
+ nodes.ending.pages[0].say.push({who:'dad',text:'The rope ties a bridge for tomorrow.',if:'rope'},{who:'dad',text:'The lantern lights the next path.',if:'lantern'});return {title:'T',nodes};}
 test('a kit needs 3+ places, known backgrounds and a way to travel each edge',()=>{
  assert.deepEqual(kitIssues(kit),[]);
  assert.match(kitIssues(kit,{backgrounds:new Set(['volcano-rim'])}).join('|'),/unknown background lava-river/);
@@ -28,7 +29,7 @@ test('graph checks: unwritten nodes, moves off the map, a choice that changes no
  const s=story(sk);delete s.nodes.ending;assert.match(graphIssues(s,sk,kit).join('|'),/node ending has no pages/);
  assert.match(graphIssues(story(sk),{...sk,nodes:sk.nodes.map(n=>n.id==='gate'?{...n,place:'rim'}:n)},kit).join('|'),/not on the map/);
  assert.match(graphIssues(story(sk,{sets:false}),sk,kit).join('|'),/first choice must change something/);
- assert.match(graphIssues(story(sk,{payoffWord:'banana'}),sk,kit).join('|'),/"a glowing lantern" is set but never comes back/);
+ assert.match(graphIssues(story(sk,{payoffWord:'banana'}),sk,kit).join('|'),/flag "a glowing lantern" needs an if/);
 });
 test('the linear lint runs on every path, labelled by the choices',()=>{
  const sk=skeleton(kit,beats,{rand:()=>0.5});const s=story(sk);s.nodes.branchB.pages[0].say.push(['narrator','A scary ghost!']);
@@ -44,7 +45,7 @@ test('the ledger: a choice sets a flag once, tomorrow pays off the oldest unpaid
 test('the brief names every node, its place and scene, how they travel, the mirrored challenge, the choices and the payoff',async()=>{
  const {adventureBrief}=await import('../adventure/brief.mjs');
  const sk=skeleton(kit,beats,{rand:()=>0.5});
- const t=adventureBrief({sk,kit,plan:{beats},payoff:{label:'a glowing lantern',kind:'item'},chooser:'Alex'});
+ const t=adventureBrief({sk,kit,plan:{beats},payoff:{label:'a glowing lantern',kind:'item'},chooser:'Ada'});
  for(const n of sk.nodes)assert.match(t,new RegExp(`"${n.id}"`));
  assert.match(t,/they arrive (down the zigzag path|through the cool dark tunnel)/);assert.match(t,/same kind of challenge in a different skin/);
  assert.match(t,/ends with a CHOICE/);assert.match(t,/a glowing lantern/);assert.match(t,/never a right and a wrong one/);

@@ -1,4 +1,4 @@
-// Reusable bounded story graphs: world maps, fixed skeletons, complete path lint and consequence ledgers.
+// Reusable bounded story graphs: maps, path lint, conditional payoffs and consequence ledgers.
 // ---------- kit ----------
 // {id, title, places:[{id, bg, name}], edges:[[a,b,"how you get there"]]}
 export function kitIssues(kit,{backgrounds=null}={}){
@@ -42,20 +42,38 @@ export function paths(sk){const byId=new Map(sk.nodes.map(n=>[n.id,n])),out=[];
   if(!n.next.length){out.push({nodes:t,picks});return;}for(const x of n.next)walk(x,t,picks);};
  walk(sk.start,[],[]);return out;}
 // One route through the model's story, as a linear chapter: the pages of each node in order.
-export function flatten(story,path){return {...story,pages:path.nodes.flatMap(id=>story.nodes?.[id]?.pages||[])};}
+export function flatten(story,path,{carried=[]}={}){
+ const flags=new Set(carried.map(f=>f.id));
+ for(const id of path.nodes)for(const o of story.nodes?.[id]?.choice?.options||[])if(path.picks.includes(o.id)&&o.sets?.id)flags.add(o.sets.id);
+ const lines=ls=>(ls||[]).filter(l=>!l?.if||flags.has(l.if));
+ return {...story,pages:path.nodes.flatMap(id=>(story.nodes?.[id]?.pages||[]).map(p=>({...p,say:lines(p.say),...(p.after?{after:lines(p.after)}:{}),...(p.magic?{magic:{...p.magic,after:lines(p.magic.after)}}:{})})))};
+}
+export const lineText=l=>String(Array.isArray(l)?l[1]:l?.shown||l?.text||'');
+export function usesFlag(line,flag){
+ const words=String(flag?.label||'').toLowerCase().match(/[a-z]{3,}/g)?.filter(w=>!['the','with','from','and','glowing','little'].includes(w))||[],key=words.at(-1);
+ return !!key&&new RegExp(`\\b${key}\\b`,'i').test(lineText(line));
+}
+// A carried object must do something; merely keeping it or praising the choice is not a payoff.
+export const changesStory=l=>/\b(?:tie[sd]?|binds?|holds?|opens?|unlocks?|lift[sd]?|lights?|reveals?|shows?|points?|guides?|leads?|skips?|rings?|calls?|wakes?|turns?|bridges?|mends?|fix(?:es)?|frees?|press(?:es)?|catches?|shields?|keeps? .+ (?:open|dry|safe)|marks?|reminds?|helps? .+ (?:find|open|cross)|finds?|carries?|saves?|signals?|tells?|teaches?|traces?|glows?|follows?|hears?|seals?|fastens?|clips?|wraps?|covers?|stops?|brings?|uses?)\b/i.test(lineText(l));
+export const conditionalPayoffs=(story,node,flag)=>(story.nodes?.[node]?.pages||[]).flatMap(p=>p.say||[]).filter(l=>l?.if===flag?.id&&usesFlag(l,flag)&&changesStory(l));
 
 // Graph checks the linear lint can't see: every node written and reachable, moves only along map edges, every flag
 // set is read later, choices that differ (a different place and at least one flag), at most two flags a chapter.
 export function graphIssues(story,sk,kit){
- const out=[],byId=new Map(sk.nodes.map(n=>[n.id,n])),place=id=>byId.get(id)?.place;
+ const out_pre=[];
+ // Mirrored branches need distinct narration.
+ {const text=id=>new Set((story.nodes?.[id]?.pages||[]).flatMap(pg=>(pg.say||[]).map(l=>String(Array.isArray(l)?l[1]:l?.text||'').trim().toLowerCase())).filter(Boolean));
+  const branches=sk.nodes.filter(n=>n.role==='branch').map(n=>n.id);
+  for(let a=0;a<branches.length;a++)for(let b=a+1;b<branches.length;b++){const A=text(branches[a]);for(const t of text(branches[b]))if(A.has(t))out_pre.push(`${branches[a]} and ${branches[b]} both say "${t.slice(0,50)}": give each branch its own version for its place`);}}
+ const out=out_pre,byId=new Map(sk.nodes.map(n=>[n.id,n])),place=id=>byId.get(id)?.place;
  for(const n of sk.nodes)if(!story.nodes?.[n.id]?.pages?.length)out.push(`node ${n.id} has no pages`);
  const reached=new Set(paths(sk).flatMap(p=>p.nodes));for(const n of sk.nodes)if(!reached.has(n.id))out.push(`node ${n.id} can't be reached`);
  for(const p of paths(sk))for(let i=1;i<p.nodes.length;i++){const a=place(p.nodes[i-1]),b=place(p.nodes[i]);if(!legalMove(kit,a,b))out.push(`path ${p.picks.join('')}: ${a} to ${b} is not on the map`);}
  const flags=[];for(const n of sk.nodes)for(const o of story.nodes?.[n.id]?.choice?.options||[])if(o.sets)flags.push(o.sets);
  if(new Set(flags.map(f=>f.id)).size>2)out.push(`a chapter sets at most 2 flags (found ${new Set(flags.map(f=>f.id)).size})`);
- const later=sk.nodes.filter(n=>n.reads).flatMap(n=>(story.nodes?.[n.id]?.pages||[]).flatMap(pg=>[...(pg.say||[]),...Object.values(pg.consequences||{}).flat()].map(l=>Array.isArray(l)?l[1]:l.text||''))).join(' ').toLowerCase();
- for(const f of flags)if(f.label&&!later.includes(String(f.label).toLowerCase().split(' ').pop()))out.push(`flag "${f.label}" is set but never comes back later in the chapter`);
- const f1=story.nodes?.fork1?.choice?.options||[];if(f1.length===2&&!f1.some(o=>o.sets))out.push('the first choice must change something he carries (set a flag on at least one option)');
+ const f1=story.nodes?.fork1?.choice?.options||[];
+ for(const o of f1){if(!o.sets)out.push(`the first choice must change something: option ${o.id} needs a flag`);
+  else for(const node of ['gate','ending'])if(!conditionalPayoffs(story,node,o.sets).length)out.push(`node ${node}: flag "${o.sets.label}" needs an if:"${o.sets.id}" line using its own words to change what happens`);}
  return out;}
 
 // The existing linear lint on every path, plus the graph checks. lint(ch) -> issues.
