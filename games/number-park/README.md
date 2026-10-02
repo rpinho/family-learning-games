@@ -24,3 +24,8 @@ Set `PORT` to change the port, `HOST` to change the listening interface, or `NUM
 ### Picture guesses: people, faces and bare trees
 
 The local picture model now includes original authored person/face prototypes and bare-branched trees alongside the existing public Quick, Draw! examples. A bounded trunk-and-branches check corroborates tree guesses without treating letters, combs or ladders as trees. No learner artwork trains the model or leaves the installation. Recognition remains fallible: ambiguous pictures stay uncertain, and free art never loses points. Guesses show picture icons; corrections open picture choices first. New person/face questions use the existing recorded stock voice.
+
+
+The Explorer math track now offers five challenge tiers with Easier/Harder controls, plus a six-question Balance scale lesson: compare animal pictures, compare arithmetic weights and fill the number that makes both sides equal. The result stays hidden until an answer. Feedback explicitly connects lighter to up and heavier to down. Beginner Cookie sharing deals up to ten cookies fairly onto two or three plates, with its own adjustment and progress. Existing saves remain separate and are preserved.
+
+Math narration can use a recorded cache; a fresh install without one uses browser speech and waits for each complete line. Browser speech availability varies by device. No ambient audio is generated automatically.
