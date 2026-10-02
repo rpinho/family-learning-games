@@ -4,11 +4,11 @@ import {backgroundRect} from './book-painted-layout.mjs';
 // retaining continuous painted texture rather than adding a flat filler floor.
 export const STORY_MIN_HEIGHT=.35;
 const protectedObjects=entry=>[...(entry.keepOut||[]),...(entry.goal?[{name:'painted goal',r:entry.goal}]:[])];
-export const foregroundTop=({width,height})=>width>=height?.52:.265;
+export const foregroundTop=({width,height},entry={})=>width>=height?.52:entry.foregroundBeat?.58:.265;
 const cache=new WeakMap();
 export function foregroundProjection(entry,{width,height,nw=1536,nh=1024}={}){
  const key=`${width}:${height}:${nw}:${nh}`,cached=cache.get(entry);if(cached?.key===key)return cached.value;
- const floor=foregroundTop({width,height}),r=backgroundRect(entry,{width,height,nw,nh}),sourceH=entry.size?.[1]||nh;
+ const floor=foregroundTop({width,height},entry),r=backgroundRect(entry,{width,height,nw,nh}),sourceH=entry.size?.[1]||nh;
  const band=entry.standBand||[0,1],sampleWidth=(band[1]-band[0])*.65,centre=Math.max(band[0]+sampleWidth/2,Math.min(band[1]-sampleWidth/2,.5));
  const ends=protectedObjects(entry).map(z=>z.r||z).filter(([x,,w])=>x<centre+sampleWidth/2&&x+w>centre-sampleWidth/2).map(([,y,,h])=>y+h);
  const cut=Math.max(.1,Math.min(.95,Math.max(entry.groundStart||entry.foreground||.72,...ends)));
