@@ -28,6 +28,20 @@ export function standingClearance(zones,{ground,maxHeight,height,backLift=.05}={
  }
  return Math.max(.03,maxHeight);
 }
+// When answers fill a painted path, keep the row below them. Blocking the whole
+// path horizontally would make the compositor fall back to the screen edges.
+export function standingWithUI(entry,{width,height,ground,maxHeight,avoid=null,ui=null}={}){
+ const cols=Array.isArray(avoid?.[0])?[...avoid]:avoid?[avoid]:[];
+ if(!entry?.standBand)return {maxHeight,avoid:ui?cols.length?[Math.min(ui.x0,...cols.map(c=>c[0])),Math.max(ui.x1,...cols.map(c=>c[1]))]:[ui.x0,ui.x1]:avoid};
+ const r=backgroundRect(entry,{width,height}),[a,b]=entry.standBand;
+ const lo=Math.max(.03,(r.x+a*r.w)/width),hi=Math.min(.97,(r.x+b*r.w)/width);
+ if(ui){
+  const room=Math.max(Math.min(hi,ui.x0)-lo,hi-Math.max(lo,ui.x1));
+  if(room<=.08)maxHeight=Math.min(maxHeight,Math.max(.03,(ground-ui.y1-12/height)/1.15));
+  else cols.push([ui.x0,ui.x1]);
+ }
+ return {maxHeight,avoid:[...cols,[-1,lo],[hi,2]]};
+}
 // Optional release metadata corrects existing art without changing a library or a written chapter.
 export function applyBackgroundLayouts(library,layouts={}){
  return {...library,backgrounds:Object.fromEntries(Object.entries(library.backgrounds||{}).map(([id,b])=>[id,layouts[id]?{...b,...layouts[id]}:b]))};

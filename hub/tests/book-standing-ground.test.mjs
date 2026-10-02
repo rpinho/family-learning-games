@@ -1,7 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {standingGround,standingClearance,backgroundRect,applyBackgroundLayouts} from '../public/book-painted-layout.mjs';
+import {standingGround,standingClearance,standingWithUI,backgroundRect,applyBackgroundLayouts} from '../public/book-painted-layout.mjs';
 const sizes=[[320,640],[390,844],[844,390],[768,1024],[1366,768]];
+test('controls filling a painted standing band reserve space below them instead of blocking the whole path',()=>{
+ const entry={size:[1000,1000],fit:'cover',standBand:[.3,.7]},opts={width:900,height:600,ground:.93,maxHeight:.4};
+ const ui={x0:.2,x1:.8,y1:.78},o=standingWithUI(entry,{...opts,ui});
+ assert.deepEqual(o.avoid,[[-1,.3],[.7,2]]);
+ assert.ok(opts.ground-o.maxHeight*1.15>=ui.y1+12/opts.height-1e-9);
+ const avoid=[[.05,.1]],before=structuredClone(avoid);
+ const side=standingWithUI(entry,{...opts,avoid,ui:{x0:.28,x1:.4,y1:.78}});
+ assert.equal(side.maxHeight,.4);assert.deepEqual(side.avoid[1],[.28,.4]);assert.deepEqual(avoid,before);
+ assert.deepEqual(standingWithUI({}, {...opts,avoid:[.1,.2],ui:{x0:.4,x1:.5,y1:.8}}),{maxHeight:.4,avoid:[.1,.5]});
+});
 test('a broad painted object retains clearance for heads, hops and the rear standing row',()=>{
  const z={x0:-.1,x1:1.1,y0:.2,y1:.5},ground=.73,height=844,backLift=.05;
  const h=standingClearance([z],{ground,maxHeight:.4,height,backLift});
