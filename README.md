@@ -2,13 +2,17 @@
 
 ![Family Learning Games — gameplay previews from the collection](docs/media/social-preview.png)
 
-**One app. Nine ways to play.** A single game-picker home screen brings together nine destinations for reading, numbers, free drawing, mazes, chess, strategy, and soccer. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, not a public online classroom or hosted play service.
+**One app. Ten games and The Book.** A single home screen brings together reading, numbers, free drawing, mazes, chess, strategy, soccer, and an illustrated story with little games inside it. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, not a public online classroom or hosted play service.
 
 After setup, open **http://localhost:4810/**. Choose a player once; their name stays large at the top and their progress stays separate. Use **Games** to return home, **Refresh** to reload, and **Grown-ups** to change the device's player or switch the main menu between gameplay screenshots and illustrated logos. The artwork choice is saved for that player on that device; activity-variant menus retain their gameplay previews. Main-menu order adapts per player from recent local play sessions, including older activities that now belong to Maze Garden or Soccer Club. The menu opens immediately using its last known order (or the default), updates preferences in the background for the next visit, and stays still while choosing.
 
-[Install in one command](#one-command-first-run) · [Let an agent install it](#let-a-coding-agent-install-it) · [Explore the games](#nine-games-nine-different-adventures) · [Privacy](PRIVACY.md)
+[Install in one command](#one-command-first-run) · [Let an agent install it](#let-a-coding-agent-install-it) · [Explore the games and Book](#ten-games-and-the-book) · [Privacy](PRIVACY.md)
 
-## Nine games. Nine different adventures.
+[![Watch the games and The Book in action — silent animated highlights](docs/media/highlights.gif)](docs/media/highlights.mp4)
+
+[Watch the full 40-second highlight video](docs/media/highlights.mp4) · Silent · Generic Admin demo
+
+## Ten games and The Book
 
 **[Rook Academy](hub/CHESS.md)** offers 36 First moves lessons, 189 Small steps lessons that grow from sparse boards into full positions, and a 72-lesson advanced continuation in two difficulty bands, with an original speaking coach, hints, review and local practice games. **Maze Garden** gathers four activities: tracing mazes, Make a Maze, letter labyrinths and obstacle rescues. **Soccer Club** gathers three soccer variants. Choose any version; existing progress is preserved.
 
@@ -29,7 +33,7 @@ Spaceship challenges, word building, rhyme hunts, sorting, and flashcards. Pract
 </tr>
 <tr>
 <td width="50%" valign="top">
-<a href="games/number-park"><img src="docs/media/number-park.png" alt="Number Park: draggable groups of five and four stars for a hands-on addition activity" width="100%"></a>
+<a href="games/number-park"><img src="docs/media/number-park.png" alt="Number Park: draggable groups of three and six apples for a hands-on addition activity" width="100%"></a>
 <strong>Number Park — math you can move.</strong><br>
 Count objects, combine groups, take away, continue patterns, trace numbers and shapes, and explore reading or harder math.
 </td>
@@ -63,18 +67,37 @@ Short tactical positions, a winding lesson path, a graduated short-lesson course
 Choose live dribbling, feint puzzles, or word penalties. Existing saves stay separate.
 </td>
 </tr>
+<tr>
+<td width="50%" valign="top">
+<a href="games/number-park"><img src="docs/media/drawing-studio.png" alt="Guess My Drawing: a freshly drawn generic house on the wide canvas" width="100%"></a>
+<strong>Guess My Drawing — a canvas of its own.</strong><br>
+Draw freely, ask the local picture model to guess, choose another idea, and correct a guess without losing points.
+</td>
+<td width="50%" valign="top">
+<a href="games/target-trail"><img src="docs/media/sling.png" alt="Sling Shot: a slingshot and letter targets in a generic Admin round" width="100%"></a>
+<strong>Sling Shot — pull back and let go.</strong><br>
+Aim for the spoken letter, number, pattern, times-table answer or next spelling letter.
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top">
+<a href="book/SCHEMA.md"><img src="docs/media/book-story.png" alt="The Book: the fictional hero, grown-up, Bo and Pip begin a star adventure" width="32%"> <img src="docs/media/book-count.png" alt="The Book: tap four illustrated stars to count and open the forest gate" width="32%"> <img src="docs/media/book-choice.png" alt="The Book: help Pip choose by spotting a silly mistake" width="32%"></a><br>
+<strong>The Book — play inside the story.</strong><br>
+The optional nightly writing pipeline creates an illustrated chapter. Turn the page, count objects, kick a letter into the goal, read a magic word aloud, and help a friend put the story right. Grown-ups can preview a chapter without changing progress.
+</td>
+</tr>
 </table>
 
-**Guess My Drawing — a canvas of its own.** Draw across a wide canvas, ask the local picture model to guess, choose another idea, and correct a guess without losing points. Number Park keeps number and shape tracing while drawings continue using the same saved profile.
+The Book uses generic characters and scenery in this edition. Its nightly generation and optional local narration need separate setup; <code>npm run play</code> starts the games and chapter player, without automatically writing chapters. See the <a href="book/SCHEMA.md">chapter and picture-library guide</a>. Painted-object counting and choices that change the ending have reusable helpers in this repository, but are not yet connected to public playback; these captures show the current player.
 
-*Actual gameplay from an isolated, generic Admin demo. Click a card for its game guide. No children's profiles or drawings are shown; screenshots are not evidence of learning outcomes.*
+*Actual gameplay from an isolated, generic Admin demo. Click a card for its game guide. No children's profiles or drawings are shown; the house doodle is newly scripted; screenshots are not evidence of learning outcomes.*
 
 ### Made for playing together
 
 - **Touch-friendly:** drag objects, trace paths, steer a spaceship, and aim with a finger.
 - **Choose the challenge:** separate Beginner and Explorer presets; adjustable or adaptive challenges vary by game.
 - **Keep progress local:** saved rounds and diagnostics live on your own server. No ads or game-owned analytics.
-- **One icon:** one installed home screen for all nine destinations; no separate installs needed.
+- **One icon:** one installed home screen for all ten games and the Book; no separate installs needed.
 - **Easy to start:** one setup command for the whole collection. No AI API key required.
 
 ## Pick a game
@@ -91,6 +114,7 @@ Choose live dribbling, feint puzzles, or word penalties. Existing saves stay sep
 | [Sling Shot](games/target-trail) | Pull back and let go: hit the spoken letter, number, pattern, times-table answer or next spelling letter | http://localhost:4810/#sling |
 | [Rook Academy](hub/CHESS.md) | 270 lessons across beginner and advanced paths, review and local practice games | http://localhost:4810/#chess |
 | [Soccer Club](hub/README.md#dribble-duel) | Live dribbling, feint puzzles and word penalties | http://localhost:4810/#dribble-duel |
+| [The Book](book/SCHEMA.md) | Illustrated chapters, counting, letter kicks and magic words; separate chapter setup | Grown-ups → Watch; Admin can preview chapters |
 
 ## Run on your computer
 
@@ -110,7 +134,7 @@ If you download the repository ZIP instead, unzip it, open a terminal in its fol
 
 Give your agent this request:
 
-> Install and run https://github.com/rpinho/family-learning-games locally. Read its AGENTS.md and README first. Check Node/npm, use a new folder, run npm run play, verify all nine destinations through the hub, and give me the single home-screen link. Keep it private and preserve any existing saves.
+> Install and run https://github.com/rpinho/family-learning-games locally. Read its AGENTS.md and README first. Check Node/npm, use a new folder, run npm run play, verify all ten games through the hub and the optional Book preview, and give me the single home-screen link. Keep it private and preserve any existing saves.
 
 [AGENTS.md](AGENTS.md) contains the installation, verification, data-preservation and privacy instructions. No API key or paid AI service is needed to run the games.
 
