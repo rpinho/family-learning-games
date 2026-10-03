@@ -16,7 +16,12 @@ const games=[
  ['three-in-a-row','Three in a Row','One move. New possibilities.','Play Rook, choose X or O, and explore tactical clues.','#d6c5ff','TIC-TAC-TOE · CHOICES · STRATEGY'],
  ['target-trail','Target Trail','Listen. Aim. Let it fly.','Find spoken letters and words. Choose your challenge.','#ffd19b','AIMING · LETTERS · WORDS'],
  ['chess','Rook Academy','Your next good move.','Short chess lessons, a speaking coach and room to think.','#d5cef5','CHESS · CALCULATION · STRATEGY'],
- ['dribble-duel','Soccer Club','Draw a lunge. Find the goal.','Change direction, carry the ball past, then earn a letter reward.','#b7e9ce','LIVE SOCCER · TIMING · LETTER REWARDS']
+ ['dribble-duel','Soccer Club','Draw a lunge. Find the goal.','Change direction, carry the ball past, then earn a letter reward.','#b7e9ce','LIVE SOCCER · TIMING · LETTER REWARDS'],
+ ['drawing-studio','Guess My Drawing','Make something your own.','A wide canvas, a fresh idea and a local picture guess.','#ffdda8','FREE DRAWING · LOCAL RECOGNITION'],
+ ['sling','Sling Shot','Pull back. Let go.','Send a stone towards the matching letter or number.','#d3e9a7','LETTERS · NUMBERS · AIMING'],
+ ['book-story','The Book','An adventure on every page.','An illustrated chapter, with little games inside the story.','#f5dfb8','THE BOOK · STORIES · DISCOVERY'],
+ ['book-count','The Book','Count your way through.','Tap the stars. Find how many. Open the forest gate.','#f5dfb8','THE BOOK · COUNTING · LETTER KICKS'],
+ ['book-choice','The Book','Help Pip choose.','Spot a silly mistake and put the story right.','#f5dfb8','THE BOOK · MAGIC WORDS · CHOICES']
 ];
 const images=await Promise.all(games.map(async([id])=>'data:image/png;base64,'+(await readFile(new URL(`screenshots/${id}.png`,root))).toString('base64')));
 const {chromium}=htmlOnly?{}:await import(process.env.PLAYWRIGHT_MODULE||'playwright');
@@ -26,13 +31,16 @@ const css=`*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,san
 for(let i=0;i<games.length;i++){
  const [id,name,headline,sub,color,tag]=games[i];
  const card=`<!doctype html><meta charset="utf-8"><style>${css}</style><article class="card" style="--color:${color}"><div class="eyebrow">${tag}</div><div class="game-label">${name}</div><h1>${headline}</h1><p>${sub}</p><div class="frame"><img src="${images[i]}"></div><div class="foot"><span>FAMILY LEARNING GAMES</span><span>Actual gameplay · Generic Admin demo</span></div></article>`;
- if(htmlOnly){await writeFile(`${htmlDir}/${id}.html`,card);continue;}
- await page.setContent(card);
+ if(htmlOnly){await writeFile(`${htmlDir}/${id}.html`,card+(id.startsWith('book-')?'<style>.card{zoom:0.888888889}</style>':''));continue;}
+ const isBook=id.startsWith('book-');
+ await page.setViewportSize({width:isBook?1280:1440,height:isBook?1210:1360});
+ await page.setContent(card+(isBook?'<style>.card{zoom:0.888888889}</style>':''));
  await page.locator('img').evaluateAll(xs=>Promise.all(xs.map(x=>x.decode())));
  await page.screenshot({path:fileURLToPath(new URL(`${id}.png`,out))});
 }
 if(!htmlOnly)await page.setViewportSize({width:1280,height:640});
-const hero=`<!doctype html><meta charset="utf-8"><style>${css}</style><article class="hero"><section><div class="eyebrow">EIGHT GAMES. ONE PLACE TO PLAY.</div><h1>Family<br>Learning<br><span>Games.</span></h1><p>Read. Count. Trace. Explore.<br>Little games. Big adventures.</p><div class="pills"><span>Touch-friendly</span><span>Adjustable challenges</span><span>Run locally</span></div><div class="command">npm run play</div><div class="repo">github.com/rpinho/family-learning-games</div></section><section class="tiles">${games.map(([id,name,,,color],i)=>`<div class="tile" style="--color:${color}"><img src="${images[i]}"><strong>${name}</strong></div>`).join('')}</section></article>`;
+const heroGames=games.filter(([id])=>!['book-count','book-choice'].includes(id));
+const hero=`<!doctype html><meta charset="utf-8"><style>${css}.hero{grid-template-columns:395px 1fr;gap:28px;padding:36px}.hero h1{font-size:64px}.hero p{font-size:21px}.tiles{grid-template-columns:repeat(3,1fr);gap:12px}.tile{height:128px}.tile img{height:100px}.tile.book{grid-column:span 2}.tile.book img{object-fit:contain;background:#b7dff4}.pills span{font-size:12px;padding:10px}.repo{font-size:12px}</style><article class="hero"><section><div class="eyebrow">TEN GAMES + THE BOOK.</div><h1>Family<br>Learning<br><span>Games.</span></h1><p>Read. Count. Draw. Think ahead.<br>Play inside an illustrated story.</p><div class="pills"><span>Touch-friendly</span><span>Adjustable challenges</span><span>Run locally</span></div><div class="command">npm run play</div><div class="repo">github.com/rpinho/family-learning-games</div></section><section class="tiles">${heroGames.map(([id,name,,,color])=>`<div class="tile ${id==='book-story'?'book':''}" style="--color:${color}"><img src="${images[games.findIndex(g=>g[0]===id)]}"><strong>${name}</strong></div>`).join('')}</section></article>`;
 if(htmlOnly){await writeFile(`${htmlDir}/social-preview.html`,hero);}else{
 await page.setContent(hero);
 await page.locator('img').evaluateAll(xs=>Promise.all(xs.map(x=>x.decode())));
