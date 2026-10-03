@@ -10,7 +10,7 @@ After setup, open **http://localhost:4810/**. Choose a player once; their name s
 
 [![Watch the games and The Book in action — silent animated highlights](docs/media/highlights.gif)](docs/media/highlights.mp4)
 
-[Watch the full 40-second highlight video](docs/media/highlights.mp4) · Silent · Generic Admin demo
+[Watch the full 38-second highlight video](docs/media/highlights.mp4) · Silent · Fictional Admin demo
 
 ## Ten games and The Book
 
@@ -19,6 +19,13 @@ After setup, open **http://localhost:4810/**. Choose a player once; their name s
 Drag, trace, steer, aim, and think ahead. Pick an activity and a manageable challenge, then play together.
 
 <table>
+<tr>
+<td colspan="2" valign="top">
+<a href="book/SCHEMA.md"><img src="docs/media/book-story.png" alt="The Book: painted castle doors open onto a treasure chest with an original fictional cast" width="100%"><br> <img src="docs/media/book-count.png" alt="The Book: tap twelve painted stepping stones inside a volcanic crater" width="49%"> <img src="docs/media/book-choice.png" alt="The Book: help an original plush fox correct a sum in a painted treehouse town" width="49%"></a><br>
+<strong>The Book — play inside the story.</strong><br>
+The optional nightly writing pipeline creates an illustrated chapter. Explore painted worlds with the fictional cast. Tap the volcano’s stones, watch keys open the castle doors, and help a friend put the story right. Letter kicks and magic words are also supported. Grown-ups can preview a chapter without changing progress.
+</td>
+</tr>
 <tr>
 <td width="50%" valign="top">
 <a href="games/letter-quest"><img src="docs/media/letter-quest.png" alt="Letter Quest: reading missions with word building, sentence activities and an original coach" width="100%"></a>
@@ -33,7 +40,7 @@ Spaceship challenges, word building, rhyme hunts, sorting, and flashcards. Pract
 </tr>
 <tr>
 <td width="50%" valign="top">
-<a href="games/number-park"><img src="docs/media/number-park.png" alt="Number Park: draggable groups of three and six apples for a hands-on addition activity" width="100%"></a>
+<a href="games/number-park"><img src="docs/media/number-park.png" alt="Number Park: draggable groups of five and four stars for a hands-on addition activity" width="100%"></a>
 <strong>Number Park — math you can move.</strong><br>
 Count objects, combine groups, take away, continue patterns, trace numbers and shapes, and explore reading or harder math.
 </td>
@@ -79,16 +86,10 @@ Draw freely, ask the local picture model to guess, choose another idea, and corr
 Aim for the spoken letter, number, pattern, times-table answer or next spelling letter.
 </td>
 </tr>
-<tr>
-<td colspan="2" valign="top">
-<a href="book/SCHEMA.md"><img src="docs/media/book-story.png" alt="The Book: the fictional hero, grown-up, Bo and Pip begin a star adventure" width="32%"> <img src="docs/media/book-count.png" alt="The Book: tap four illustrated stars to count and open the forest gate" width="32%"> <img src="docs/media/book-choice.png" alt="The Book: help Pip choose by spotting a silly mistake" width="32%"></a><br>
-<strong>The Book — play inside the story.</strong><br>
-The optional nightly writing pipeline creates an illustrated chapter. Turn the page, count objects, kick a letter into the goal, read a magic word aloud, and help a friend put the story right. Grown-ups can preview a chapter without changing progress.
-</td>
-</tr>
+
 </table>
 
-The Book uses generic characters and scenery in this edition. Its nightly generation and optional local narration need separate setup; <code>npm run play</code> starts the games and chapter player, without automatically writing chapters. See the <a href="book/SCHEMA.md">chapter and picture-library guide</a>. Painted-object counting and choices that change the ending have reusable helpers in this repository, but are not yet connected to public playback; these captures show the current player.
+The Book uses original painted scenes and a fictional boy, older sister, guide and plush fox in this edition. Its nightly generation and optional local narration need separate setup; <code>npm run play</code> starts the games and chapter player, without automatically writing chapters. See the <a href="book/SCHEMA.md">chapter and picture-library guide</a>. The public player supports tapping painted objects and keys flying into opening castle doors, with a treasure chest reveal. Branching-ending helpers remain separate from public playback. These captures show this public build; <a href="docs/showcase/README.md#edition-differences--october-3-2026">edition differences</a> are documented.
 
 *Actual gameplay from an isolated, generic Admin demo. Click a card for its game guide. No children's profiles or drawings are shown; the house doodle is newly scripted; screenshots are not evidence of learning outcomes.*
 

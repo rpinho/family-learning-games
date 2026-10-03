@@ -1,4 +1,20 @@
 /* The Book: a full-screen, narrated picture book. Scenes are composed from a picture library. */
+.bk-painted-things{position:absolute;inset:0;pointer-events:none}
+.bk-painted-thing{position:absolute;border:0;border-radius:50%;background:transparent;cursor:pointer;pointer-events:auto;color:white}
+.bk-painted-thing:hover,.bk-painted-thing:focus-visible{outline:3px solid #ffe687;box-shadow:0 0 20px #ffe687}
+.bk-painted-thing.counted{background:#ffd76e35;box-shadow:inset 0 0 0 3px #ffd76e}
+.bk-painted-thing b{font:700 24px system-ui;text-shadow:0 2px 4px #000;background:#633b1cdd;border-radius:50%;padding:3px 8px}
+.bk-gate{position:absolute;z-index:1;perspective:1200px;pointer-events:none;overflow:hidden;border-radius:50% 50% 0 0/22% 22% 0 0}
+.bk-gate-in{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 75%,#fffbe0,#ffd76e 38%,#704214);opacity:0;transition:opacity 1s ease}
+.bk-gate.open .bk-gate-in{opacity:1}
+.bk-gate-reveal{position:absolute;left:50%;bottom:5%;width:80%;height:65%;object-fit:contain;translate:-50% 30%;opacity:0;transition:translate 1s ease .7s,opacity 1s ease .7s}
+.bk-gate.open .bk-gate-reveal{translate:-50% 0;opacity:1}
+.bk-door{position:absolute;top:0;width:50%;height:100%;transition:transform 1.6s ease;backface-visibility:hidden}
+.bk-door.l{left:0;transform-origin:0 50%}.bk-door.r{right:0;transform-origin:100% 50%}
+.bk-gate.open .bk-door.l{transform:rotateY(78deg)}.bk-gate.open .bk-door.r{transform:rotateY(-78deg)}
+.bk-gate-key{position:absolute;z-index:7;font-size:44px;transition:transform .7s ease,opacity .4s;pointer-events:none;filter:drop-shadow(0 0 8px #ffd34d)}
+.bk-gate-key.gone{opacity:0}
+.bk-gate.still *{transition:none}
 .bk{position:fixed;inset:0;z-index:50;background:#1b2433;overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none;font-family:"Nunito","Trebuchet MS",system-ui,sans-serif;color:#fff}
 .bk-page{position:absolute;inset:0;animation:bk-in .55s ease both}
 .bk-page.out{animation:bk-out .35s ease both}

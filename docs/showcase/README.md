@@ -1,32 +1,37 @@
 # Gameplay showcase
 
-These images show actual gameplay from the public edition, using the isolated **Admin** test preset. No household profiles, names, drawings or logs were used. Scores are demonstration state, not children's performance or evidence of educational effectiveness.
+The showcase uses actual **1280 × 720**, native-scale gameplay from a freshly built public edition and an isolated **Admin** installation. Screenshots are in `screenshots/`; feature cards preserve the full screenshot in a 1280 × 860 layout. Scores and the scripted house doodle are invented demonstration state, not children's performance.
 
-The current 1280-wide browser captures are in `screenshots/`. They cover ten games and the Book's cover, story, counting, letter kick, magic word and Pip choice. The feature cards in `../media/` add framing and descriptions; they do not replace gameplay with illustrated mockups. Book cards are 1280 × 1210; other cards retain the earlier 1440 × 1360 layout. The 1280 × 640 `social-preview.png` includes all ten games and the Book and is ready for GitHub's repository Settings → Social preview. Committing this file does not change that separate repository setting.
+The **1280 × 640** social preview makes the painted Book the hero, with four larger game tiles: Letter Quest, Word Arcade, Number Park and Rook Academy. The four social tiles crop into the captured activity for a clearer preview; full screenshots and feature cards preserve the complete frame. The exact copy is “Family Learning Games — ten games and a story Book that plays”. This file is ready for review; committing it does not change GitHub's separate Social preview setting.
 
-To re-render the layouts, install Playwright as optional documentation tooling, then run `node docs/showcase/render.mjs`. Install its Chromium browser first, or set `CHROME_PATH` to a local Chrome executable. `PLAYWRIGHT_MODULE` can point to a separately installed Playwright module. These are not game-runtime dependencies.
+## Painted Book
 
-For rendering through a connected browser instead, run `SHOWCASE_HTML_DIR=/tmp/family-showcase-render node docs/showcase/render.mjs --html-only`, serve that directory locally, and capture each standalone page.
+`demo-chapter.mjs` supplies an authored fictional chapter to the existing read-only Admin preview. Its curious boy, older sister, guide and plush fox are newly generated fictional cutouts, each with idle and cheer poses. Seven original painted scenes have landscape and portrait variants. The demo shows three keys flying into the painted castle doors, an opening onto a generic treasure chest, counting the volcano's twelve painted stones, and helping the fox correct a sum. No household chapters, notes, profiles, photos, voices, toys or other personal objects are used. [Art provenance and generation prompts](../../hub/public/book-art/ART.md).
 
-When recapturing, use a separate local installation and the Admin preset. Open each activity before taking the screenshot: Letter Quest's letter maze, Word Arcade's Letter Blaster, Number Park's Put together, Maze Garden's tracing board, a Three in a Row match after a move, Target Trail's Letters & words round, and Dribble Duel's live pitch. Review every screenshot and its metadata before publishing. Do not use a live child's session or upload private screenshots to issues.
+Painted counting and the `gate-open` effect are connected to this public player. The fox page is a right/wrong learning choice; it does not demonstrate branching endings. Nightly generation and optional narration still require separate setup. The capture driver skips device speech waits and produces silent footage; it does not synthesize or copy voices.
 
+## Build and capture
 
-The chess/reading cards and social preview can also be rebuilt without opening a browser: install the optional `@resvg/resvg-js` renderer in your documentation environment, then run `node docs/showcase/render-static.mjs`. `RESVG_MODULE` can point to that module in a separate environment. This uses the already-captured screenshots and preserves their content; it needs no browser or network access. The generated path-world illustration has separate provenance in `hub/public/chess/ART.md`.
+Use a separate local installation with fresh `.data` and free ports. Build with `npm run setup`, then start it with `BASE_PORT=5611 HUB_PORT=5610 npm start`. Never use a household installation or child preset. Five embedded apps are captured through their isolated Admin proxy URL to use the entire frame at native scale. Three in a Row retains the hub frame and its compact layout; hub games and the Book keep their own UI. Target Trail is scrolled to its active range; Three in a Row and Soccer Club are scrolled to keep the board and pitch visible. No browser zoom, colour wash, gameplay replacement or private-live screenshot is used.
 
-## Silent highlight video
-
-`capture.mjs` uses headless test Chrome through Playwright and screenshot sequences at 1280 × 720, ten unique frames per second. All gameplay writes go to a fresh isolated Admin installation. `demo-chapter.mjs` supplies an invented chapter to the read-only Admin Book preview: hero, grown-up, Bo and Pip, with only the repository's generic SVG library. It neither reads private art nor generates voices. The capture driver skips device speech waits; the resulting video has no audio. Browser zoom fits the game controls, while Book scenes use their native full-screen layout. The house doodle is freshly scripted and never loaded from a child's drawing.
-
-With optional Playwright and ffmpeg installed separately, point these tools at your isolated demo:
+With optional Playwright and ffmpeg installed separately:
 
 ```sh
-DEMO_URL=http://localhost:4810 CAPTURE_DIR=/tmp/family-highlight-frames CHROME_PATH=/path/to/test-chrome node docs/showcase/capture.mjs
+DEMO_URL=http://localhost:5610 CAPTURE_DIR=/path/to/private-frames CHROME_PATH=/path/to/test-chrome node docs/showcase/capture.mjs
 CHROME_PATH=/path/to/test-chrome node docs/showcase/render.mjs
-CAPTURE_DIR=/tmp/family-highlight-frames node docs/showcase/encode.mjs
+CAPTURE_DIR=/path/to/private-frames FFMPEG=/path/to/ffmpeg node docs/showcase/encode.mjs
 ```
 
-`PLAYWRIGHT_MODULE` may point to the external module's `index.mjs`; `FFMPEG` may select an existing executable. Capture starts from fresh Admin game state; subsequent runs should use another isolated installation. The 40-second `highlights.mp4` is H.264/yuv420p, 1280 × 720 at 30 fps (repeated source frames), with fast-start playback and no audio. The complete 480-wide, 6 fps `highlights.gif` provides an inline README preview linked to the MP4. Limits: MP4 ≤10 MB, GIF ≤8 MB. Review every unique frame before publishing; PNG image chunks and video metadata are stripped by `encode.mjs`.
+`PLAYWRIGHT_MODULE` can select a separately installed Playwright `index.mjs`. On a machine with a configured test Chrome, use its executable; always close the browser. The renderer closes Chrome even on failure. `SHOWCASE_HTML_DIR=/path/to/render-pages node docs/showcase/render.mjs --html-only` writes standalone layouts without launching it. Optional tooling is not a game-runtime dependency.
 
-**GitHub rendering verified:** the GitHub Markdown API removes `<video>` and renders a bare relative MP4 path as text. The README therefore uses a normal GIF image inside a relative MP4 link. Both resolve against the current repository branch; no external video host or attachment upload is needed. The MP4 is linked for viewing/downloading rather than promised as an inline README player.
+Open activities before taking their screenshots, and wait for start overlays and entrance animations to settle. The capture driver records the Book first, then all ten games: Word transformer, Letter Blaster, Put together, a new drawing, a tracing maze, an active tic-tac-toe match, live arrow and sling ranges, a chess lesson, and live dribbling. All interaction writes belong to isolated Admin data. Book preview makes no progress writes. Supplemental painted letter-kick and magic-word stills are recaptured after the video sequence.
 
-**Book scope:** the public player supports ordinary object counting, letter kicks, magic words and Pip's right/wrong choice. Painted-object counting and branching endings have standalone helpers but are not connected to this player. The showcase does not claim to demonstrate those unconnected features or an automatically configured nightly generator.
+## Edition differences — October 3, 2026
+
+The game source matches public main at `271282a`, which includes the current calm layouts. Both React apps were rebuilt for these captures. Public Number Park's **Balance** layout still has the earlier 660-pixel stage and emoji cards; the household release has a larger stage and later visual polish. This showcase captures public **Put together**, without substituting private Balance footage. Letter Quest's visual stylesheet matches the current release apart from a sanitized comment; Word Arcade, Maze Garden, Three in a Row and Target Trail's visual sources match the current releases. Household identity/configuration and optional prerecorded speech differ. This cache-free Letter Quest demo can display the existing “Rook’s voice is not ready” notice after a letter tap; no narration cache was fabricated or copied to hide it. This is a visual showcase, not a claim of audio equivalence or full household feature parity.
+
+## Silent highlights and review
+
+The **38-second** video starts with the painted Book and includes all ten games. Capture uses ten distinct JPEG frames per second. `highlights.mp4` is silent H.264/yuv420p, 1280 × 720 at 30 fps (repeated source frames), with fast-start playback and a **≤10 MB** limit. `highlights.gif` is a looping 480-wide, 6 fps preview linked to the MP4, **≤8 MB**. GitHub's Markdown renderer does not support an inline `<video>` here, so the README uses the GIF as a normal image link.
+
+Review **every** source frame before encoding/publication, including transitions, overlay text and all characters/props. Review final cards and social preview too. The encoder strips PNG ancillary chunks and descriptive video metadata; WebP cutouts and paintings are re-encoded without EXIF/XMP. Run `npm run -s check:privacy` after staging so new assets are scanned. Keep frame manifests, diagnostic output, installation data and review contact sheets outside public history.
