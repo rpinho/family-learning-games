@@ -1,37 +1,43 @@
-# Gameplay showcase
+# Gameplay showcase v3
 
-The showcase uses actual **1280 × 720**, native-scale gameplay from a freshly built public edition and an isolated **Admin** installation. Screenshots are in `screenshots/`; feature cards preserve the full screenshot in a 1280 × 860 layout. Scores and the scripted house doodle are invented demonstration state, not children's performance.
+The hero is a real Book frame: painted doors open onto a treasure chest, with a large fictional guide pointing toward the opening, an explorer reacting, a sister carrying a map, and a plush fox reaching. The figures use three-quarter action poses, different depths, and soft contact shadows. The Book's preview-only `capture` option removes its chrome in the player; no controls are painted over.
 
-The **1280 × 640** social preview makes the painted Book the hero, with four larger game tiles: Letter Quest, Word Arcade, Number Park and Rook Academy. The four social tiles crop into the captured activity for a clearer preview; full screenshots and feature cards preserve the complete frame. The exact copy is “Family Learning Games — ten games and a story Book that plays”. This file is ready for review; committing it does not change GitHub's separate Social preview setting.
+Three **1280 × 640** social layouts are saved in `docs/media/`: `social-preview-v3-gallery.png`, `social-preview-v3-cream.png`, and `social-preview-v3-cinematic.png`. The gallery version is selected as `social-preview.png`. Its exact title is “Family Learning Games — a story world and ten calm learning games”. Gameplay tiles use actual **2560 × 1440** captures, cropped with CSS for legibility. Full screenshots and README images are **1280 × 720** and preserve the gameplay frame.
 
-## Painted Book
+## Fictional art
 
-`demo-chapter.mjs` supplies an authored fictional chapter to the existing read-only Admin preview. Its curious boy, older sister, guide and plush fox are newly generated fictional cutouts, each with idle and cheer poses. Seven original painted scenes have landscape and portrait variants. The demo shows three keys flying into the painted castle doors, an opening onto a generic treasure chest, counting the volcano's twelve painted stones, and helping the fox correct a sum. No household chapters, notes, profiles, photos, voices, toys or other personal objects are used. [Art provenance and generation prompts](../../hub/public/book-art/ART.md).
+Six action candidates were generated for each of four original characters. The guide's reaching candidate crossed a sprite boundary and was rejected. Accepted poses include walking, pointing, kicking, reaching, kneeling to count, carrying a map, and cheering. Alpha extraction separates the selected figures; contact shadows are part of scene composition. The explorer, sister and guide share textured gouache, clothing, reflected sunlight and expressive faces; the fox remains a consistent original felt companion. Real people, photographs, toys and household objects were never generation inputs. [Provenance and prompts](../../hub/public/book-art/ART.md).
 
-Painted counting and the `gate-open` effect are connected to this public player. The fox page is a right/wrong learning choice; it does not demonstrate branching endings. Nightly generation and optional narration still require separate setup. The capture driver skips device speech waits and produces silent footage; it does not synthesize or copy voices.
+## Castle Kingdom
 
-## Build and capture
+`node docs/showcase/demo-server.mjs` opens a public-safe, loopback-only preview at `http://localhost:5710/`. Its Castle Kingdom uses the world client's walking, approach, friend conversation, goal ribbon, inventory, fog map, challenge rules and animated castle doors. The fictional cast replaces every private character. State is held in memory; restarting clears it. No household configuration, save, chapter, notes, recordings or private artwork is read. The Book demo is an authored fictional chapter.
 
-Use a separate local installation with fresh `.data` and free ports. Build with `npm run setup`, then start it with `BASE_PORT=5611 HUB_PORT=5610 npm start`. Never use a household installation or child preset. Five embedded apps are captured through their isolated Admin proxy URL to use the entire frame at native scale. Three in a Row retains the hub frame and its compact layout; hub games and the Book keep their own UI. Target Trail is scrolled to its active range; Three in a Row and Soccer Club are scrolled to keep the board and pitch visible. No browser zoom, colour wash, gameplay replacement or private-live screenshot is used.
+The normal world demonstrates a fictional partially restored map. A separate `reveal=1` demo state shows the working treasure door. This is synthetic demonstration progress. Four extra room backgrounds reuse generic public paintings; this preview does not distribute the household's full art collection. The world remains separate from the standard hub's home screen.
 
-With optional Playwright and ffmpeg installed separately:
+## Edition differences
 
-```sh
-DEMO_URL=http://localhost:5610 CAPTURE_DIR=/path/to/private-frames CHROME_PATH=/path/to/test-chrome node docs/showcase/capture.mjs
-CHROME_PATH=/path/to/test-chrome node docs/showcase/render.mjs
-CAPTURE_DIR=/path/to/private-frames FFMPEG=/path/to/ffmpeg node docs/showcase/encode.mjs
-```
+The ten game stills come from **current immutable live builds**, run as separate loopback previews with fresh empty data directories and neutral Explorer labels. Their release IDs and capture receipts stay in the private review folder. The preview CLI copies household data and had no free slots, so it was not used; no existing preview or household service was changed.
 
-`PLAYWRIGHT_MODULE` can select a separately installed Playwright `index.mjs`. On a machine with a configured test Chrome, use its executable; always close the browser. The renderer closes Chrome even on failure. `SHOWCASE_HTML_DIR=/path/to/render-pages node docs/showcase/render.mjs --html-only` writes standalone layouts without launching it. Optional tooling is not a game-runtime dependency.
+The public source has **not** been bulk-synchronized from private history. Earlier v2 notes overstated visual parity. These gaps remain:
 
-Open activities before taking their screenshots, and wait for start overlays and entrance animations to settle. The capture driver records the Book first, then all ten games: Word transformer, Letter Blaster, Put together, a new drawing, a tracing maze, an active tic-tac-toe match, live arrow and sling ranges, a chess lesson, and live dribbling. All interaction writes belong to isolated Admin data. Book preview makes no progress writes. Supplemental painted letter-kick and magic-word stills are recaptured after the video sequence.
+| Public component | Current live visuals shown here that the public copy lacks |
+| --- | --- |
+| Letter Quest | Calm study, illustrated activity choices and paper lesson styling |
+| Word Arcade | New mission-control/calm visual layer; the Word Reactor activity retains its space palette |
+| Number Park | Later activity artwork and styling, and the revised Balance scale layout |
+| Maze Garden | Calm stylesheet and atmosphere layer |
+| Three in a Row | Calm paper layout and controls |
+| Target Trail and Sling | Calm range layouts and atmosphere layer |
+| Hub, Rook Academy and Soccer Club | Calm home and later visual refinements |
 
-## Edition differences — October 3, 2026
+The new fictional Book art, scene blocking, capture flag and runnable Castle Kingdom preview **are included** in this PR. Identity labels are supplied before browser rendering; no gameplay artwork or mechanics are replaced. Scores, the drawing and map progress are synthetic. No narration cache is copied or fabricated. Missing optional narration can produce the app's own notice; this silent showcase makes no claim of voice or audio parity.
 
-The game source matches public main at `271282a`, which includes the current calm layouts. Both React apps were rebuilt for these captures. Public Number Park's **Balance** layout still has the earlier 660-pixel stage and emoji cards; the household release has a larger stage and later visual polish. This showcase captures public **Put together**, without substituting private Balance footage. Letter Quest's visual stylesheet matches the current release apart from a sanitized comment; Word Arcade, Maze Garden, Three in a Row and Target Trail's visual sources match the current releases. Household identity/configuration and optional prerecorded speech differ. This cache-free Letter Quest demo can display the existing “Rook’s voice is not ready” notice after a letter tap; no narration cache was fabricated or copied to hide it. This is a visual showcase, not a claim of audio equivalence or full household feature parity.
+## Capture and encoding
 
-## Silent highlights and review
+Use the configured test Chrome, never an automated launch of the household's everyday Chrome. Always close browsers and the isolated preview processes. Optional Playwright and ffmpeg are documentation tools, not game runtime dependencies.
 
-The **38-second** video starts with the painted Book and includes all ten games. Capture uses ten distinct JPEG frames per second. `highlights.mp4` is silent H.264/yuv420p, 1280 × 720 at 30 fps (repeated source frames), with fast-start playback and a **≤10 MB** limit. `highlights.gif` is a looping 480-wide, 6 fps preview linked to the MP4, **≤8 MB**. GitHub's Markdown renderer does not support an inline `<video>` here, so the README uses the GIF as a normal image link.
+The main driver is `capture-v3.mjs`; `capture-detail.mjs` selects the Letter Study and newer Balance scale gameplay. Set `CAPTURE_DIR` outside the repository, `PLAYWRIGHT_MODULE` if needed, and `CHROME` to test Chrome. `SHOWCASE_PORTS` maps game IDs to isolated loopback ports. `SHOWCASE_PRIVATE_LABELS` supplies labels to replace in text/JSON before rendering, including uppercase forms; those labels must never be committed. `SHOWCASE_NUMBER_PLAYER` selects the isolated older demo preset. Start from empty data before each full capture. Partial world/game/still recapture flags support review iterations.
 
-Review **every** source frame before encoding/publication, including transitions, overlay text and all characters/props. Review final cards and social preview too. The encoder strips PNG ancillary chunks and descriptive video metadata; WebP cutouts and paintings are re-encoded without EXIF/XMP. Run `npm run -s check:privacy` after staging so new assets are scanned. Keep frame manifests, diagnostic output, installation data and review contact sheets outside public history.
+`render-v3.mjs` writes the three layouts from actual captures; `SHOWCASE_HTML_DIR` optionally preserves the layouts privately. `encode-v3.mjs` trims continuous native browser video, joins it with 0.36-second dissolves, and creates the silent **34-second**, 1280 × 720, native **25 fps** H.264 highlight. Its sequence is Castle Kingdom walk/talk/map, world treasure, Book door opening, volcano counting, then Letter Quest, Balance scale, Maze Garden, Rook Academy and Target Trail. The **640-wide, 8 fps** GIF is linked to the MP4 in the README. Limits are **10 MB** for MP4 and **8 MB** for GIF.
+
+Every exported image and every decoded MP4/GIF frame must be visually reviewed before publication. The private contact sheet includes images, all decoded frames, cast studies and privacy results. Strip descriptive media metadata, run the relevant Book tests, and run `npm run -s check:privacy` after staging. Committing the image files does not change GitHub's separate Social preview setting or publish anything to LinkedIn.

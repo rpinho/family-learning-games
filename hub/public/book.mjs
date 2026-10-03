@@ -16,13 +16,13 @@ export function rememberPlace(player,hash,storage=globalThis.localStorage){try{i
 function post(player,body,keepalive=false){return fetch('/api/book?player='+encodeURIComponent(player),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),keepalive}).then(r=>r.ok?r.json():null).catch(()=>null);}
 // Test hook: every play() attempt is recorded (clip, page, whether the browser allowed it).
 const audit=globalThis.__bookAudio||(globalThis.__bookAudio=[]);
-export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=false}){
+export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=false,capture=false}){
  const ch=book.chapter,date=book.date,art=ch.art||{backgrounds:{},actors:{},props:{}},early=ch.level==='early';
  const keys=new Set(book.collection?.keys||[]);
  let page=preview?0:Math.min(Math.max(0,book.progress?.page||0),ch.pages.length-1),alive=true,finished=false,turn=0,timers=[],shownAt=0,canNext=false,autoTimer=null;
  const later=(fn,ms)=>{const t=setTimeout(()=>{if(alive)fn();},ms);timers.push(t);return t;};
  const clearTimers=()=>{timers.forEach(clearTimeout);timers=[];};
- const root=document.createElement('section');root.className=`bk bk-${ch.level}`;root.setAttribute('aria-label',`${ch.name}'s book`);
+ const root=document.createElement('section');root.className=`bk bk-${ch.level}${preview&&capture?' bk-capture':''}`;root.setAttribute('aria-label',`${ch.name}'s book`);
  root.innerHTML=`<div class="bk-view"></div><div class="bk-chrome"><button class="bk-exit" type="button" aria-label="Back to the games">✕</button><button class="bk-hear" type="button" aria-label="Hear it again">🔊</button>${early?'<div class="bk-keys" aria-hidden="true"></div>':''}<div class="bk-dots" aria-hidden="true"></div><div class="bk-tapnext" aria-hidden="true">👉</div>${preview?'<div class="bk-preview-bar">PREVIEW · nothing is saved</div>':''}</div>`;
  main.innerHTML='';main.append(root);
  const view=root.querySelector('.bk-view'),dots=root.querySelector('.bk-dots'),tapnext=root.querySelector('.bk-tapnext');
@@ -53,6 +53,13 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  // ---- pictures ----
  function placedActors(scene,{ground,scale}={}){
   const W=root.clientWidth||innerWidth,H=root.clientHeight||innerHeight;
+  // Authored scene blocking: feet, height and gaze direction belong to the story.
+  // Generic/generated chapters retain the automatic layout below.
+  if(scene.composition&&W>=H)return scene.actors.map(a=>{
+   const p=scene.composition[a.id],P=art.actors[a.id]?.poses[a.pose];
+   if(!p||!P)return null;const height=p.height,width=height*P.ar*H/W;
+   return {...a,left:p.x-width/2,width,height,bottom:1-p.ground,flip:!!p.flip,depth:p.ground};
+  }).filter(Boolean);
   const placed=layoutActors(scene.actors,art,{width:W,height:H,ground,scale});
   if(art.backgrounds[scene.bg]?.realForeground&&W>=H){const centres=[.1,.28,.72,.91];for(let i=0;i<placed.length;i++)placed[i].left=Math.max(.02,Math.min(.98-placed[i].width,centres[i]-placed[i].width/2));}
   return placed;
@@ -62,7 +69,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   // A train in the picture always carries the friends (all aboard!).
   if((scene.ride||scene.props.some(p=>p.id==='train'))&&art.props.train?.seats){return trainHTML(scene,W,H);}
   return placedActors(scene,{ground,scale}).map((a,i)=>{const P=art.actors[a.id].poses[a.pose];
-   return `<div class="bk-actor${P.fly||a.pose==='fly'?' fly':''}" data-id="${esc(a.id)}" data-pose="${esc(a.pose)}" style="left:${(a.left*100).toFixed(2)}%;width:${(a.width*100).toFixed(2)}%;height:${(a.height*100).toFixed(2)}%;bottom:${(a.bottom*100).toFixed(2)}%;--from:${a.left+a.width/2<0.5?-40:40}vw;animation-delay:${i*0.15}s"><div style="animation-delay:${-i*0.7}s;animation-duration:${(2.2+i*0.37).toFixed(2)}s"><img src="${esc(P.url)}" alt="${esc(art.actors[a.id].name)}"></div></div>`;}).join('');
+   return `<div class="bk-actor${P.fly||a.pose==='fly'?' fly':''}${a.depth?' bk-blocked':''}" data-id="${esc(a.id)}" data-pose="${esc(a.pose)}" style="left:${(a.left*100).toFixed(2)}%;width:${(a.width*100).toFixed(2)}%;height:${(a.height*100).toFixed(2)}%;bottom:${(a.bottom*100).toFixed(2)}%;${a.depth?'z-index:'+Math.round(a.depth*100)+';':''}--from:${a.left+a.width/2<0.5?-40:40}vw;animation-delay:${i*0.15}s"><div style="animation-delay:${-i*0.7}s;animation-duration:${(2.2+i*0.37).toFixed(2)}s"><img style="${a.flip?'transform:scaleX(-1)':''}" src="${esc(P.url)}" alt="${esc(art.actors[a.id].name)}"></div></div>`;}).join('');
  }
  function trainHTML(scene,W,H){
   const T=art.props.train,h=Math.min(T.h*1.2,0.4),w=h*T.ar*H/W,left=(1-w)/2,bottom=0.06;
@@ -83,7 +90,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  }
  function burst(fx='sparkles'){view.querySelector('.bk-page')?.insertAdjacentHTML('beforeend',fxHTML(fx,true));view.querySelectorAll('.bk-actor').forEach(a=>{a.classList.remove('hop');void a.offsetWidth;a.classList.add('hop');});}
  function cheer(){const pg=ch.pages[page];if(!pg)return;const b=backgroundFor(pg),beat=pg.kind==='beat';
-  const scene={...pg.scene,actors:pg.scene.actors.map(a=>({...a,pose:art.actors[a.id]?.poses.cheer?'cheer':art.actors[a.id]?.poses.happy?'happy':a.pose}))};
+  const scene={...pg.scene,actors:pg.scene.actors.map(a=>({...a,pose:pg.scene.celebration?.[a.id]|| (art.actors[a.id]?.poses.cheer?'cheer':art.actors[a.id]?.poses.happy?'happy':a.pose)}))};
   const placed=placedActors(scene,{ground:b?.realForeground ? .96 : beat ? .64 : .93,scale:beat ? .75 : 1});
   for(const a of placed){const el=view.querySelector(`.bk-page:last-child .bk-actor[data-id="${CSS.escape(a.id)}"]`),P=art.actors[a.id].poses[a.pose];if(el&&P){el.querySelector('img').src=P.url;el.dataset.pose=a.pose;Object.assign(el.style,{left:a.left*100+'%',width:a.width*100+'%',height:a.height*100+'%'});}}
  }

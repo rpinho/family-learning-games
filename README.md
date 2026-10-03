@@ -2,7 +2,7 @@
 
 ![Family Learning Games — gameplay previews from the collection](docs/media/social-preview.png)
 
-**One app. Ten games and The Book.** A single home screen brings together reading, numbers, free drawing, mazes, chess, strategy, soccer, and an illustrated story with little games inside it. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, not a public online classroom or hosted play service.
+**One app. Ten games, The Book, and a Castle Kingdom preview.** A single home screen brings together reading, numbers, free drawing, mazes, chess, strategy, soccer, and an illustrated story with little games inside it. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, not a public online classroom or hosted play service.
 
 After setup, open **http://localhost:4810/**. Choose a player once; their name stays large at the top and their progress stays separate. Use **Games** to return home, **Refresh** to reload, and **Grown-ups** to change the device's player or switch the main menu between gameplay screenshots and illustrated logos. The artwork choice is saved for that player on that device; activity-variant menus retain their gameplay previews. Main-menu order adapts per player from recent local play sessions, including older activities that now belong to Maze Garden or Soccer Club. The menu opens immediately using its last known order (or the default), updates preferences in the background for the next visit, and stays still while choosing.
 
@@ -10,7 +10,9 @@ After setup, open **http://localhost:4810/**. Choose a player once; their name s
 
 [![Watch the games and The Book in action — silent animated highlights](docs/media/highlights.gif)](docs/media/highlights.mp4)
 
-[Watch the full 38-second highlight video](docs/media/highlights.mp4) · Silent · Fictional Admin demo
+[Watch the 34-second highlight video](docs/media/highlights.mp4) · Silent · Fictional cast and empty preview saves
+
+**Gallery build note:** these captures show the current live calm editions. The public Letter Quest, Word Arcade, Number Park, Maze Garden, Three in a Row, Target Trail/Sling, and hub/chess/soccer interfaces still lack some of those newer visual layers. This PR adds the fictional Book cast and Castle Kingdom demo; it does not synchronize the other applications. [Exact edition differences](docs/showcase/README.md#edition-differences).
 
 ## Ten games and The Book
 
@@ -21,6 +23,13 @@ Drag, trace, steer, aim, and think ahead. Pick an activity and a manageable chal
 <table>
 <tr>
 <td colspan="2" valign="top">
+<img src="docs/media/world-talk.png" alt="Castle Kingdom: a fictional explorer walks to a painted guide; a goal ribbon and conversation explain the next quest" width="65%"> <img src="docs/media/world-map.png" alt="Castle Kingdom: a partially restored map shows visited places and unexplored rooms behind fog" width="33%"><br>
+<strong>The Castle Kingdom — a world to explore together.</strong><br>
+Walk through painted places, talk to friends, collect tools, and solve little challenges. The map reveals places as you visit; restoring its three pieces opens the castle treasure. A public-safe, memory-only preview is included: run <code>node docs/showcase/demo-server.mjs</code>, then open <code>http://localhost:5710/world?player=hero</code>. This preview is separate from the standard hub installation.
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top">
 <a href="book/SCHEMA.md"><img src="docs/media/book-story.png" alt="The Book: painted castle doors open onto a treasure chest with an original fictional cast" width="100%"><br> <img src="docs/media/book-count.png" alt="The Book: tap twelve painted stepping stones inside a volcanic crater" width="49%"> <img src="docs/media/book-choice.png" alt="The Book: help an original plush fox correct a sum in a painted treehouse town" width="49%"></a><br>
 <strong>The Book — play inside the story.</strong><br>
 The optional nightly writing pipeline creates an illustrated chapter. Explore painted worlds with the fictional cast. Tap the volcano’s stones, watch keys open the castle doors, and help a friend put the story right. Letter kicks and magic words are also supported. Grown-ups can preview a chapter without changing progress.
@@ -28,19 +37,19 @@ The optional nightly writing pipeline creates an illustrated chapter. Explore pa
 </tr>
 <tr>
 <td width="50%" valign="top">
-<a href="games/letter-quest"><img src="docs/media/letter-quest.png" alt="Letter Quest: reading missions with word building, sentence activities and an original coach" width="100%"></a>
+<a href="games/letter-quest"><img src="docs/media/letter-quest.png" alt="Letter Quest: a calm paper lesson with Rook asks the explorer to match letter A" width="100%"></a>
 <strong>Letter Quest — words open worlds.</strong><br>
 Letter tracing, reading missions, word building and story adventures.
 </td>
 <td width="50%" valign="top">
-<a href="games/word-arcade"><img src="docs/media/word-arcade.png" alt="Word Arcade: a spaceship aims at moving letters to complete a word" width="100%"></a>
+<a href="games/word-arcade"><img src="docs/media/word-arcade.png" alt="Word Arcade: the Word Reactor activity replaces letters in a word" width="100%"></a>
 <strong>Word Arcade — spelling takes flight.</strong><br>
 Spaceship challenges, word building, rhyme hunts, sorting, and flashcards. Practice or Arcade pace.
 </td>
 </tr>
 <tr>
 <td width="50%" valign="top">
-<a href="games/number-park"><img src="docs/media/number-park.png" alt="Number Park: draggable groups of five and four stars for a hands-on addition activity" width="100%"></a>
+<a href="games/number-park"><img src="docs/media/number-park.png" alt="Number Park: a calm illustrated balance scale asks which animal is lighter" width="100%"></a>
 <strong>Number Park — math you can move.</strong><br>
 Count objects, combine groups, take away, continue patterns, trace numbers and shapes, and explore reading or harder math.
 </td>

@@ -1,4 +1,8 @@
 /* The Book: a full-screen, narrated picture book. Scenes are composed from a picture library. */
+.bk-capture .bk-chrome{display:none}
+.bk-blocked::before{content:"";position:absolute;bottom:-1%;left:8%;width:84%;height:4%;border-radius:50%;background:#352a24;opacity:.23;filter:blur(7px)}
+.bk-actor.bk-blocked img{filter:none}
+.bk-actor.bk-blocked>div{animation:none}
 .bk-painted-things{position:absolute;inset:0;pointer-events:none}
 .bk-painted-thing{position:absolute;border:0;border-radius:50%;background:transparent;cursor:pointer;pointer-events:auto;color:white}
 .bk-painted-thing:hover,.bk-painted-thing:focus-visible{outline:3px solid #ffe687;box-shadow:0 0 20px #ffe687}

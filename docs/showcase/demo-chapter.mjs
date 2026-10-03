@@ -2,7 +2,9 @@
 import {artFor} from '../../hub/public/book-scene.mjs';
 export function demoChapter(library,{extras=false}={}) {
  const line=text=>({who:'narrator',text,voice:'af_heart',speed:.95});
- const scene=(bg,fx='none')=>({bg,actors:['hero','bo','grown-up','pip'].map(id=>({id,pose:'idle'})),props:[],fx});
+ const scene=(bg,fx='none')=>({bg,actors:[{id:'hero',pose:bg==='volcano'?'point':'walk'},{id:'bo',pose:bg==='volcano'?'kneel':'carry'},{id:'grown-up',pose:bg==='volcano'?'kneel':'point'},{id:'pip',pose:bg==='volcano'?'kneel':'reach'}],props:[],fx,celebration:{hero:'cheer',bo:'carry','grown-up':'point',pip:'reach'},composition:bg==='volcano'?{
+  hero:{x:.22,ground:.9,height:.3},bo:{x:.36,ground:.94,height:.23},'grown-up':{x:.78,ground:.94,height:.31,flip:true},pip:{x:.65,ground:.9,height:.17,flip:true}
+ }:{hero:{x:.3,ground:.94,height:.31},bo:{x:.4,ground:.85,height:.3},'grown-up':{x:.74,ground:.91,height:.4,flip:true},pip:{x:.65,ground:.95,height:.18,flip:true}}});
  const pages=extras?[
   {id:'kick',kind:'beat',scene:{...scene('soccer-pitch'),props:[{id:'ball',n:1}]},caption:'Kick the letter B',say:[line('The next key is hiding on a football.')],beat:{id:'kick-b',kind:'kick-letter',letter:'B',balls:['D','B','P'],spoken:line('Kick B into the goal.'),notIt:line('Try B.'),done:line('The letter key is yours!')}},
   {id:'magic',kind:'story',scene:scene('castle-forest'),caption:'',say:[line('A magic word lights the forest path.')],magic:{word:'open',object:'the forest path',read:line('Open!'),after:[line('The path is open!')]}}

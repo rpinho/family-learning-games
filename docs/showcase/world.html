@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The World · Castle Kingdom</title><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/book.css"><link rel="stylesheet" href="/world.css">
+<body>
+<section id="adult" class="adult" hidden><form id="gate-form"><small>Grown-ups · World demo</small><h1>The Castle Kingdom</h1><p id="question"></p><strong id="code"></strong><label>Answer<input id="answer" autocomplete="off" required></label><button>Open the world</button><p id="gate-status" role="status"></p></form></section>
+<main id="world" hidden aria-label="The Castle Kingdom">
+ <div id="scene" class="scene"><img id="painting" class="painting" alt=""><div id="door-layer"></div><div id="actors"></div><div id="objects"></div><div id="exits"></div><div id="destination" hidden></div></div>
+ <header class="hud"><div class="place"><small>THE CASTLE KINGDOM <span></span></small><strong id="room-name"></strong></div><div id="backpack" class="backpack" aria-label="Your backpack"></div><button id="home-button" aria-label="Back to Games">🏡</button><button id="map-button" aria-label="Open your map">🗺 Map</button><button id="what-next" aria-label="What next? Ask the guide">?</button><button id="sound" aria-label="Mute voice" title="Mute voice">♪</button></header>
+ <button id="goal" class="goal" aria-live="polite"></button>
+ <div id="tutorial" class="tutorial" hidden></div>
+ <button id="caption" class="caption" hidden aria-label="Replay the spoken line"></button>
+ <section id="challenge" class="challenge" hidden aria-label="Map-piece challenge"></section>
+ <section id="map" class="map" hidden aria-label="The restored map"></section>
+ <div id="save-status" class="save-status" role="status"></div>
+</main>
+<div id="loading" class="loading" role="status">Opening the castle kingdom…</div>
+<script type="module" src="/world.mjs"></script></body></html>

@@ -950,88 +950,240 @@
   "actors": {
     "hero": {
       "name": "a curious boy",
-      "h": 0.38,
+      "h": 0.3,
       "poses": {
         "idle": {
           "file": "actors/hero-idle.webp",
-          "ar": 0.3288888888888889,
+          "ar": 0.6094069529652352,
           "size": [
-            296,
-            900
+            298,
+            489
           ]
         },
         "cheer": {
           "file": "actors/hero-cheer.webp",
-          "ar": 0.5611111111111111,
+          "ar": 0.5315682281059063,
           "size": [
-            505,
-            900
+            261,
+            491
+          ]
+        },
+        "walk": {
+          "file": "actors/hero-walk.webp",
+          "ar": 0.6094069529652352,
+          "size": [
+            298,
+            489
+          ]
+        },
+        "point": {
+          "file": "actors/hero-point.webp",
+          "ar": 0.652542372881356,
+          "size": [
+            308,
+            472
+          ]
+        },
+        "kneel": {
+          "file": "actors/hero-kneel.webp",
+          "ar": 0.8324468085106383,
+          "size": [
+            313,
+            376
+          ]
+        },
+        "carry": {
+          "file": "actors/hero-carry.webp",
+          "ar": 0.5525210084033614,
+          "size": [
+            263,
+            476
+          ]
+        },
+        "kick": {
+          "file": "actors/hero-kick.webp",
+          "ar": 0.9935344827586207,
+          "size": [
+            461,
+            464
           ]
         }
       }
     },
     "grown-up": {
       "name": "a friendly guide",
-      "h": 0.52,
+      "h": 0.4,
       "poses": {
         "idle": {
           "file": "actors/grown-up-idle.webp",
-          "ar": 0.3811111111111111,
+          "ar": 0.6757369614512472,
           "size": [
-            343,
-            900
+            298,
+            441
           ]
         },
         "cheer": {
           "file": "actors/grown-up-cheer.webp",
-          "ar": 0.5611111111111111,
+          "ar": 0.476,
           "size": [
-            505,
-            900
+            238,
+            500
+          ]
+        },
+        "walk": {
+          "file": "actors/grown-up-walk.webp",
+          "ar": 0.639763779527559,
+          "size": [
+            325,
+            508
+          ]
+        },
+        "point": {
+          "file": "actors/grown-up-point.webp",
+          "ar": 0.6560509554140127,
+          "size": [
+            309,
+            471
+          ]
+        },
+        "kneel": {
+          "file": "actors/grown-up-kneel.webp",
+          "ar": 0.9635854341736695,
+          "size": [
+            344,
+            357
+          ]
+        },
+        "carry": {
+          "file": "actors/grown-up-carry.webp",
+          "ar": 0.6757369614512472,
+          "size": [
+            298,
+            441
           ]
         }
       }
     },
     "bo": {
       "name": "his older sister",
-      "h": 0.42,
+      "h": 0.32,
       "poses": {
         "idle": {
           "file": "actors/bo-idle.webp",
-          "ar": 0.3488888888888889,
+          "ar": 0.6751054852320675,
           "size": [
-            314,
-            900
+            320,
+            474
           ]
         },
         "cheer": {
           "file": "actors/bo-cheer.webp",
-          "ar": 0.5855555555555556,
+          "ar": 0.6395833333333333,
           "size": [
-            527,
-            900
+            307,
+            480
+          ]
+        },
+        "walk": {
+          "file": "actors/bo-walk.webp",
+          "ar": 0.6751054852320675,
+          "size": [
+            320,
+            474
+          ]
+        },
+        "point": {
+          "file": "actors/bo-point.webp",
+          "ar": 0.7245762711864406,
+          "size": [
+            342,
+            472
+          ]
+        },
+        "reach": {
+          "file": "actors/bo-reach.webp",
+          "ar": 0.8191964285714286,
+          "size": [
+            367,
+            448
+          ]
+        },
+        "kneel": {
+          "file": "actors/bo-kneel.webp",
+          "ar": 0.818407960199005,
+          "size": [
+            329,
+            402
+          ]
+        },
+        "carry": {
+          "file": "actors/bo-carry.webp",
+          "ar": 0.6901098901098901,
+          "size": [
+            314,
+            455
           ]
         }
       }
     },
     "pip": {
       "name": "a plush fox",
-      "h": 0.25,
+      "h": 0.19,
       "poses": {
         "idle": {
           "file": "actors/pip-idle.webp",
-          "ar": 0.7833333333333333,
+          "ar": 0.890625,
           "size": [
-            705,
-            900
+            399,
+            448
           ]
         },
         "cheer": {
           "file": "actors/pip-cheer.webp",
-          "ar": 0.8377777777777777,
+          "ar": 0.8029661016949152,
           "size": [
-            754,
-            900
+            379,
+            472
+          ]
+        },
+        "walk": {
+          "file": "actors/pip-walk.webp",
+          "ar": 0.7858627858627859,
+          "size": [
+            378,
+            481
+          ]
+        },
+        "point": {
+          "file": "actors/pip-point.webp",
+          "ar": 0.7991718426501035,
+          "size": [
+            386,
+            483
+          ]
+        },
+        "reach": {
+          "file": "actors/pip-reach.webp",
+          "ar": 0.7505285412262156,
+          "size": [
+            355,
+            473
+          ]
+        },
+        "kneel": {
+          "file": "actors/pip-kneel.webp",
+          "ar": 1.072992700729927,
+          "size": [
+            441,
+            411
+          ]
+        },
+        "carry": {
+          "file": "actors/pip-carry.webp",
+          "ar": 0.890625,
+          "size": [
+            399,
+            448
           ]
         }
       }
