@@ -59,15 +59,18 @@ const games = [
   ["target-trail", "Target Trail"],
   ["chess", "Rook Academy"],
   ["dribble-duel", "Soccer Club"],
+  ["drawing-studio", "Guess My Drawing"],
+  ["sling", "Sling Shot"],
+  ["book-story", "The Book"],
 ];
 let body =
   '<rect width="1280" height="640" fill="#102730"/>' +
-  text(44, 66, 15, "EIGHT GAMES. ONE PLACE TO PLAY.", 700, "#bcefdc") +
+  text(44, 66, 15, "TEN GAMES + THE BOOK.", 700, "#bcefdc") +
   text(44, 150, 68, "Family", 800, "white") +
   text(44, 222, 68, "Learning", 800, "white") +
   text(44, 294, 68, "Games.", 800, "#c7f2b2") +
   text(44, 354, 23, "Read. Count. Trace. Think ahead.", 400, "#d3e2e3") +
-  text(44, 390, 23, "Little games. Big adventures.", 400, "#d3e2e3");
+  text(44, 390, 23, "Play inside an illustrated story.", 400, "#d3e2e3");
 for (const [i, label] of [
   "Touch-friendly",
   "Adjustable",
@@ -81,10 +84,11 @@ body +=
   text(66, 526, 23, "npm run play", 700) +
   text(44, 583, 15, "github.com/rpinho/family-learning-games", 400, "#bed1d3");
 games.forEach(([id, name], i) => {
-  const x = 552 + (i % 2) * 344,
-    y = 44 + Math.floor(i / 2) * 139;
+  const x = 552 + (i % 3) * 232,
+    y = 44 + Math.floor(i / 3) * 139,
+    w = id === "book-story" ? 450 : 218;
   body +=
-    `<defs><clipPath id="tile${i}"><rect x="${x}" y="${y}" width="326" height="126" rx="14"/></clipPath></defs><g clip-path="url(#tile${i})"><rect x="${x}" y="${y}" width="326" height="126" fill="#d8ebde"/><image x="${x}" y="${y}" width="326" height="98" preserveAspectRatio="xMidYMid slice" href="${image(id)}"/></g>` +
-    text(x + 15, y + 119, 17, name, 700);
+    `<defs><clipPath id="tile${i}"><rect x="${x}" y="${y}" width="${w}" height="126" rx="14"/></clipPath></defs><g clip-path="url(#tile${i})"><rect x="${x}" y="${y}" width="${w}" height="126" fill="#d8ebde"/><image x="${x}" y="${y}" width="${w}" height="98" preserveAspectRatio="xMidYMid ${id === 'book-story' ? 'meet' : 'slice'}" href="${image(id)}"/></g>` +
+    text(x + 10, y + 119, 15, name, 700);
 });
 render("social-preview", 1280, 640, body);
