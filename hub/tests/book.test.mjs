@@ -56,6 +56,10 @@ test('Today’s chapter opens by itself until finished; keys and words he earns 
   assert.equal((await fetch(base+'/book-voice/ffffffffffffffff.wav')).status,404);
   const own=await fetch(base+'/book-art/bg/castle-forest.webp');assert.equal(own.status,200);assert.equal(own.headers.get('content-type'),'image/webp');
   const generic=await fetch(base+'/book-art/actors/hero.svg');assert.equal(generic.status,200,'the generic library fills in');assert.equal(generic.headers.get('content-type'),'image/svg+xml');
+  for(const path of ['bg/real-foreground/castle-gateLandscape.webp','bg/real-foreground/volcanoPortrait.webp','actors/hero-cheer.webp','props/treasure-chest.webp']){
+   const picture=await fetch(base+'/book-art/'+path);assert.equal(picture.status,200,path);assert.equal(picture.headers.get('content-type'),'image/webp');
+  }
+  for(const path of ['actors/real-foreground/hero.webp','bg/real-foreground/%2e%2e%2fsecret.webp','bg/other/private.webp'])assert.equal((await fetch(base+'/book-art/'+path)).status,404,path);
   for(const bad of ['/book-art/..%2Fbeginner%2Ftoday.json','/book-art/bg/../../x.webp','/book-art/secret/x.webp','/book-art/bg/nothing.webp'])assert.equal((await fetch(base+bad)).status,404,bad);
   for(const f of ['/book.mjs','/book.css','/book-scene.mjs','/word-break.mjs'])assert.equal((await fetch(base+f)).status,200,f);
   for(const f of ['/bedtime.html','/bedtime.mjs','/api/book/bedtime'])assert.notEqual((await fetch(base+f)).status,200,`${f} is gone`);
