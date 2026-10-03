@@ -16,8 +16,8 @@ test('copy practice accepts wobble on all shapes and numbers but not taps, missi
  assert.equal(checkCopy(SHAPES.rectangle.paths,[...SHAPES.rectangle.paths,Array.from({length:200},(_,i)=>[i%2?0:100,i%2?100:0])]).ok,false);
  assert.deepEqual(safeInk(undefined),[]);assert.deepEqual(safeInk([[null]]),[]);assert.deepEqual(safeInk([[[2,3]]]),[[[2,3]]]);
 });
-test('nine shapes cycle and resume; copied work is distinct from guided work and never arithmetic mastery',()=>{
- let p=freshProfile('beginner');const shapes=Object.keys(SHAPES);assert.equal(shapes.length,9);assert.equal(startingShape(undefined),'rectangle');
+test('ten shapes cycle and resume; copied work is distinct from guided work and never arithmetic mastery',()=>{
+ let p=freshProfile('beginner');const shapes=Object.keys(SHAPES);assert.equal(shapes.length,10);assert.equal(startingShape(undefined),'rectangle');
  for(const shape of shapes){action(p,{kind:'shape',shape,strokes:SHAPES[shape].paths,practice:'copy',revision:p.revision});p=JSON.parse(JSON.stringify(p));assert.equal(p.shapeNext,nextShape(shape));assert.equal(p.copiedShapes[shape],1);assert.equal(p.shapes,undefined);}
  assert.equal(p.shapeNext,'rectangle');action(p,{kind:'trace',digit:'14',strokes:numberPaths('14'),practice:'copy',revision:p.revision});assert.equal(p.traceNext,'15');assert.equal(p.copiedNumbers['14'],1);assert.equal(p.guided['14'],undefined);assert.equal(p.xp,0);assert.equal(p.ceiling,13);assert.equal(p.history.length,0);
  const before=structuredClone(p);assert.throws(()=>action(p,{kind:'trace',digit:'15',strokes:[],practice:'copy',revision:p.revision}));assert.deepEqual(p,before);
