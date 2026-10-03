@@ -3,7 +3,7 @@ import {useEffect,useRef,useState} from 'react';
 import {Button} from '@/components/ui/button';
 import {NativeSelect,NativeSelectOption} from '@/components/ui/native-select';
 import {GuidedTrace} from '@/lib/guided-trace.mjs';
-import {SHAPES,nextShape,startingShape} from '@/lib/shapes.mjs';
+import {SHAPES,nextShape,startingShape,checkShapeCopy} from '@/lib/shapes.mjs';
 import {numberPaths,nextTraceNumber,startingTraceNumber,TRACE_MAX} from '@/lib/number-trace.mjs';
 import {checkCopy} from '@/lib/copy-practice.mjs';
 import {drawingPoint,FREE_DRAWING_WIDTH,wideDrawingInk} from '@/lib/drawing-space.mjs';
@@ -12,25 +12,33 @@ import {useInkTools} from './ink-tools';
 import {drawingIdeasFor,drawingModes,initialDrawingMode} from '@/lib/drawing-ideas.mjs';
 type Point=[number,number];
 type Practice='guided'|'copy';
-export function Drawing({player,traceNext,shapeNext,saved,savedSpace,onSave,onTrace,onShape,onSpeak,report,busy,art,act,studio=false}:{player:string,traceNext?:string,shapeNext?:string,saved?:Point[][],savedSpace?:string,onSave:(ink:Point[][])=>Promise<void>,onTrace:(digit:string,ink:Point[][],practice:Practice)=>Promise<void>,onShape:(shape:string,ink:Point[][],practice:Practice)=>Promise<void>,onSpeak:(text:string|string[])=>void,report:(name:string,detail:string)=>void,busy:boolean,art:any,act:(input:any)=>Promise<any>,studio?:boolean}){
+export function Drawing({player,traceNext,shapeNext,saved,savedSpace,onSave,onTrace,onShape,onSpeak,report,busy,art,act,studio=false,sound=true}:{player:string,traceNext?:string,shapeNext?:string,saved?:Point[][],savedSpace?:string,onSave:(ink:Point[][])=>Promise<void>,onTrace:(digit:string,ink:Point[][],practice:Practice)=>Promise<void>,onShape:(shape:string,ink:Point[][],practice:Practice)=>Promise<void>,onSpeak:(text:string|string[])=>void,report:(name:string,detail:string)=>void,busy:boolean,art:any,act:(input:any)=>Promise<any>,studio?:boolean,sound?:boolean}){
  const [mode,setMode]=useState(()=>studio?'free':initialDrawingMode()),[shape,setShape]=useState(()=>startingShape(shapeNext)),[digit,setDigit]=useState(()=>startingTraceNumber(traceNext)),[idea,setIdea]=useState(-1);
  const [ink,setInk]=useState<Point[][]>(()=>wideDrawingInk(saved,savedSpace)),[draft,setDraft]=useState<Point[]>([]),[attempt,setAttempt]=useState<Point[][]>([]);
  const inkTools=useInkTools(ink,setInk);
  const [practice,setPractice]=useState<Practice>('guided'),[tick,setTick]=useState(0),[message,setMessage]=useState(''),[ready,setReady]=useState<string|null>(null),[visible,setVisible]=useState(true);
  const held=useRef<number|null>(null),draftRef=useRef<Point[]>([]),rail=useRef(new GuidedTrace(numberPaths(startingTraceNumber(traceNext))));
  const generation=useRef(0),saving=useRef(false);
+ const [shapeGap,setShapeGap]=useState<Point[]>([]),gapSpoken=useRef(false);
  const guided=mode!=='free'&&practice==='guided',target=mode==='shapes'?shape:digit;
  const paths:Point[][]=mode==='shapes'?SHAPES[shape as keyof typeof SHAPES].paths as Point[][]:numberPaths(digit);
  const update=()=>setTick(t=>t+1);
  const clearDraft=()=>{draftRef.current=[];setDraft([]);held.current=null;};
- const reset=(d=digit,m=mode,sh=shape)=>{generation.current++;setReady(null);rail.current=new GuidedTrace(m==='shapes'?SHAPES[sh as keyof typeof SHAPES].paths:numberPaths(d));setAttempt([]);clearDraft();setMessage('');update();};
+ const reset=(d=digit,m=mode,sh=shape)=>{generation.current++;setReady(null);setShapeGap([]);gapSpoken.current=false;rail.current=new GuidedTrace(m==='shapes'?SHAPES[sh as keyof typeof SHAPES].paths:numberPaths(d));setAttempt([]);clearDraft();setMessage('');update();};
  useEffect(()=>{const update=()=>setVisible(document.visibilityState==='visible');update();document.addEventListener('visibilitychange',update);return()=>{generation.current++;document.removeEventListener('visibilitychange',update);};},[]);
  // Read pointer coordinates synchronously. React clears currentTarget after the
  // handler returns; reading it inside a deferred setState updater crashed ink.
  const point=(e:React.PointerEvent<SVGSVGElement>):Point=>drawingPoint(e.clientX,e.clientY,e.currentTarget.getBoundingClientRect(),mode==='free') as Point;
  const completed=async(strokes:Point[][]=rail.current.completed as Point[][])=>{
   if(saving.current||busy||ready===target||mode==='free'||(guided&&!rail.current.done))return;
-  if(!guided){const check=checkCopy(paths,strokes);report('copy_check',JSON.stringify({mode,target,...check}));if(!check.ok){setMessage(check.precision<.72?'Try following the pale shape. Undo a line or use the gold guide.':'Keep going—fill in the missing parts. Wobbles are okay.');return;}}
+  if(!guided){
+   const check=mode==='shapes'?checkShapeCopy(shape,strokes):checkCopy(paths,strokes),gap:Point[]='gap' in check?check.gap as Point[]:[];
+   setShapeGap(gap);report('copy_check',JSON.stringify({mode,target,ok:check.ok,coverage:check.coverage,precision:check.precision,open:!!gap.length}));
+   if(!check.ok){
+    const cue=gap.length?'Bring the ends together. Small gaps are okay.':check.precision<.72?'Try following the pale shape. Undo a line or use the gold guide.':'Keep going—fill in the missing parts. Wobbles are okay.';
+    setMessage(cue);if(gap.length&&!gapSpoken.current){gapSpoken.current=true;if(sound)onSpeak(cue);}return;
+   }
+  }
   const token=generation.current,completedMode=mode,completedTarget=target;saving.current=true;setMessage('Saving…');
   try{if(completedMode==='shapes')await onShape(completedTarget,strokes,practice);else await onTrace(completedTarget,strokes,practice);
    if(token!==generation.current)return;setMessage(completedMode==='shapes'?'Shape complete!':nextTraceNumber(completedTarget)?'Number complete!':`You reached ${TRACE_MAX}!`);setReady(completedTarget);
@@ -63,7 +71,7 @@ export function Drawing({player,traceNext,shapeNext,saved,savedSpace,onSave,onTr
   <Button variant="outline" disabled={busy} onClick={()=>mode!=='free'?reset():(setInk([]),clearDraft(),inkTools.reset(),setMessage('Cleared the pad. Save to keep it.'))}>↻ {mode==='free'?'Clear pad':'Try again'}</Button>
   {mode==='free'&&<>{inkTools.controls(busy)}<Button variant="outline" disabled={busy||!inkTools.canUndo} onClick={()=>{inkTools.undo();setMessage('Not saved yet. Tap Save drawing.');}}>Undo</Button><Button disabled={busy} onClick={async()=>{try{await onSave(ink);setMessage('Drawing saved.');}catch{setMessage('Could not save. Keep the pad open and tap Save drawing again.');}}}>Save drawing</Button></>}
  </div>
- {mode!=='free'&&<div className="draw-tools"><Button variant={guided?'default':'outline'} disabled={busy} onClick={()=>switchPractice('guided')}>Gold guide</Button><Button variant={!guided?'default':'outline'} disabled={busy} onClick={()=>switchPractice('copy')}>Draw it myself</Button>{!guided&&<Button variant="outline" disabled={busy||!attempt.length||!!ready} onClick={()=>{setAttempt(a=>a.slice(0,-1));setMessage('Try that line again.');}}>Undo line</Button>}<Button variant="outline" disabled={busy} aria-label="Hear drawing instruction again" onClick={()=>onSpeak(mode==='shapes'?'Trace a '+shape+'.':digit)}>🔊</Button></div>}
+ {mode!=='free'&&<div className="draw-tools"><Button variant={guided?'default':'outline'} disabled={busy} onClick={()=>switchPractice('guided')}>Gold guide</Button><Button variant={!guided?'default':'outline'} disabled={busy} onClick={()=>switchPractice('copy')}>Draw it myself</Button>{!guided&&<Button variant="outline" disabled={busy||!attempt.length||!!ready} onClick={()=>{setAttempt(a=>a.slice(0,-1));setShapeGap([]);setMessage('Try that line again.');}}>Undo line</Button>}<Button variant="outline" disabled={busy} aria-label="Hear drawing instruction again" onClick={()=>onSpeak(mode==='shapes'?'Trace a '+shape+'.':digit)}>🔊</Button></div>}
  {mode==='shapes'&&<div className="shape-choices">{Object.entries(SHAPES).map(([id,sh])=><Button key={id} variant={shape===id?'default':'outline'} disabled={busy} onClick={()=>{setShape(id);reset(digit,'shapes',id);onSpeak('Trace a '+id+'.');}}><svg width="40" height="32" viewBox="0 0 100 100" aria-hidden="true"><polyline points={sh.paths[0].map(v=>v.join(',')).join(' ')} fill="none" stroke="currentColor" strokeWidth="8" strokeLinejoin="round"/></svg>{sh.name}</Button>)}</div>}
  <h1>{mode==='free'?'Guess My Drawing':(guided?'Follow the ':'Draw the ')+target+'.'}</h1><p>{mode==='free'?'Draw anything you imagine. Use the whole canvas.':guided?'Drag the gold button. The ink stays on the track.':'Draw over the pale shape. Your own ink. Wobbles are okay.'}</p>
  {mode==='free'&&<div className="draw-tools idea-tools"><span>{idea>=0?ideas[idea]:'Your drawing. No right or wrong way.'}</span><Button variant="outline" disabled={busy} onClick={()=>{const next=(idea+1)%ideas.length;setIdea(next);onSpeak(ideas[next]);report('idea',JSON.stringify({index:next,prompt:ideas[next]}));}}>{idea<0?'Give me an idea':'Another idea'}</Button></div>}
@@ -76,12 +84,13 @@ export function Drawing({player,traceNext,shapeNext,saved,savedSpace,onSave,onTr
  {mode==='trace'&&[15,50,85].map(y=><line key={y} x1="5" x2="95" y1={y} y2={y} stroke="#d5e7ec" strokeWidth=".4" strokeDasharray={y===50?'2 2':undefined}/>)}
  {mode!=='free'&&paths.map((p,i)=><polyline key={i} points={p.map(v=>v.join(',')).join(' ')} fill="none" stroke={guided&&i===rail.current.stroke?'#bde8e9':'#e6f1f3'} strokeWidth={guided?8:4} strokeLinecap="round" strokeLinejoin="round"/>)}
  {marks.filter(p=>p.length).map((p,i)=><polyline key={i} points={p.map((v:number[])=>v.join(',')).join(' ')} fill="none" stroke="#007e83" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>)}
+ {mode==='shapes'&&!guided&&shapeGap.length>0&&<polyline data-shape-gap="true" points={shapeGap.map(v=>v.join(',')).join(' ')} fill="none" stroke="#b47b08" strokeWidth="4" strokeDasharray="2 3" strokeLinecap="round" pointerEvents="none"/>}
  {guided&&rail.current.handle&&<g><circle cx={rail.current.handle[0]} cy={rail.current.handle[1]} r="6" fill="#ffbf35" stroke="#a67308" strokeWidth=".7"/><circle cx={rail.current.handle[0]} cy={rail.current.handle[1]} r="1.2" fill="#6d4700"/></g>}
  {mode==='free'&&inkTools.cursor}
  </svg>
  {mode==='free'&&<GuessDrawing ink={ink} art={art} act={act} busy={busy} onSpeak={onSpeak}/>}
  {mode==='trace'&&ready===String(TRACE_MAX)&&<Button onClick={()=>{setDigit('1');reset('1');onSpeak('1');}}>Trace again from 1 →</Button>}
- <p aria-live="polite">{message||(mode==='free'?'Your last saved drawing stays on the server.':'Finish to meet the next '+(mode==='shapes'?'shape':'number')+'. Lift your finger anytime.')}</p>
+ <p aria-live="polite">{message||(mode==='free'?'Your last saved drawing stays on the Mac Mini.':'Finish to meet the next '+(mode==='shapes'?'shape':'number')+'. Lift your finger anytime.')}</p>
  {message.includes('not saved yet')&&mode!=='free'&&<Button disabled={busy} onClick={()=>void completed(guided?rail.current.completed as Point[][]:attempt)}>Save practice again</Button>}
  {mode!=='free'&&<small>{guided?'Guided practice—not a handwriting test.':'Copying practice—not a handwriting or memory test. Use Gold guide whenever you need it.'}</small>}
  </section>;

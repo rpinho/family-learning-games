@@ -1,4 +1,4 @@
-import {SHAPES,validGuidedShape,nextShape} from './shapes.mjs';
+import {SHAPES,validGuidedShape,nextShape,checkShapeCopy} from './shapes.mjs';
 import {validNumberTrace,nextTraceNumber,traceNumber,numberPaths,TRACE_MAX} from './number-trace.mjs';
 import {checkCopy} from './copy-practice.mjs';
 import {FREE_DRAWING_SPACE,validFreeInk} from './drawing-space.mjs';
@@ -240,7 +240,7 @@ export function action(p,input,now=Date.now(),services={}){
   p.traceNext=nextTraceNumber(input.digit)??String(TRACE_MAX);
  }else if(input.kind==='shape'){
   if(input.practice!==undefined&&!['guided','copy'].includes(input.practice))fail('Choose a practice mode.');
-  if(!Object.hasOwn(SHAPES,input.shape)||(input.practice==='copy'?!checkCopy(SHAPES[input.shape].paths,input.strokes).ok:!validGuidedShape(input.shape,input.strokes)))fail('Finish following the shape first.');
+  if(!Object.hasOwn(SHAPES,input.shape)||(input.practice==='copy'?!checkShapeCopy(input.shape,input.strokes).ok:!validGuidedShape(input.shape,input.strokes)))fail('Finish following the shape first.');
   const counts=input.practice==='copy'?(p.copiedShapes??={}):(p.shapes??={});counts[input.shape]=(counts[input.shape]||0)+1;
   p.shapeNext=nextShape(input.shape);
  }else fail('Unknown action.');

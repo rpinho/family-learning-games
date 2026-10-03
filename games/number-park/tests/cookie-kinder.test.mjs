@@ -7,8 +7,8 @@ import {KINDER_TRACK,KINDER_LEVELS,KINDER_MAX_TOTAL,KINDER_START,KINDER_UNEVEN,k
 import {daySummary} from '../lib/day-summary.mjs';
 const act=(p,input,now)=>action(p,{...input,revision:p.revision},now);
 // Deal one-for-you-one-for-me onto the plates, one saved move at a time.
-const deal=p=>{const q=p.session.question;for(let id=0;id<q.total;id++){const draft=[...p.session.cookieDraft];draft[id]=id%q.plates;act(p,{kind:'cookie-place',questionId:q.id,draft});}};
-const clean=p=>{deal(p);act(p,{kind:'cookie-check',questionId:p.session.question.id});};
+const deal=(p,now)=>{const q=p.session.question;for(let id=0;id<q.total;id++){const draft=[...p.session.cookieDraft];draft[id]=id%q.plates;act(p,{kind:'cookie-place',questionId:q.id,draft},now);}};
+const clean=(p,now)=>{deal(p,now);act(p,{kind:'cookie-check',questionId:p.session.question.id},now);};
 const next=p=>act(p,{kind:'next'});
 
 test('Beginner keeps every small-number game and gains Cookie sharing; Explorer keeps his own list',()=>{
@@ -92,7 +92,7 @@ test('Explorer’s cookie track and saves are untouched by kindergarten rows',()
 
 test('Existing Beginner progress is preserved and the parent summary names the kindergarten level',()=>{
  const p=freshProfile('beginner');p.xp=330;p.lessons=30;p.completed={pattern:22};p.history=[{at:'2026-09-19T23:22:04.749Z',game:'subtract',question:{kind:'subtract'},ok:false,helped:false}];
- act(p,{kind:'start',game:'cookies'},Date.parse('2026-10-01T15:00:00Z'));clean(p);
+ const now=Date.parse('2026-10-01T15:00:00Z');act(p,{kind:'start',game:'cookies'},now);clean(p,now);
  assert.equal(p.completed.pattern,22);assert.equal(p.lessons,30);assert.equal(p.history[0].game,'subtract');assert.equal(p.xp,340);
  const s=daySummary(p,'2026-10-01','America/New_York');
  assert.equal(s.levels.kinderCookies.level,KINDER_START);assert.equal(s.levels.cookies,undefined);
