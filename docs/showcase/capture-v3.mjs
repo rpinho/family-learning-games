@@ -8,7 +8,8 @@ await Promise.all([mkdir(shots,{recursive:true}),mkdir(tiles,{recursive:true}),m
 const ports=JSON.parse(process.env.SHOWCASE_PORTS||'{"letter-quest":5721,"word-arcade":5722,"number-park":5723,"maze-garden":5724,"three-in-a-row":5725,"target-trail":5726,"hub":5727,"world":5710}');
 const labels=(process.env.SHOWCASE_PRIVATE_LABELS||'').split(',').filter(Boolean);
 const browser=await chromium.launch({executablePath:process.env.CHROME,headless:true,args:['--mute-audio']});
-const clips=(process.env.SHOWCASE_GAMES_ONLY||process.env.SHOWCASE_EXTRAS_ONLY||process.env.SHOWCASE_WORLD_ONLY)?JSON.parse(await readFile(resolve(scratch,'clips.json'))).filter(c=>process.env.SHOWCASE_WORLD_ONLY?!(c.id.startsWith('world-')||c.id.startsWith('book-')):process.env.SHOWCASE_EXTRAS_ONLY||c.id.startsWith('world-')||c.id.startsWith('book-')):[],errors=[],receipts=[];
+const chessOnly=Boolean(process.env.SHOWCASE_CHESS_ONLY);
+const clips=(chessOnly||process.env.SHOWCASE_GAMES_ONLY||process.env.SHOWCASE_EXTRAS_ONLY||process.env.SHOWCASE_WORLD_ONLY)?JSON.parse(await readFile(resolve(scratch,'clips.json'))).filter(c=>chessOnly?c.id!=='chess':process.env.SHOWCASE_WORLD_ONLY?!(c.id.startsWith('world-')||c.id.startsWith('book-')):process.env.SHOWCASE_EXTRAS_ONLY||c.id.startsWith('world-')||c.id.startsWith('book-')):[],errors=[],receipts=[];
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 let context,page,origin;
 async function fresh(){
@@ -45,7 +46,24 @@ async function record(id,seconds,actions=[]){
  await wait(seconds*1000);await Promise.all(tasks);
  const path=await video.path();clips.push({id,path,start,duration:seconds});console.log('Clip:',id,seconds);
 }
+async function captureChess(){
+ await load('hub','chess');const lesson=page.getByRole('button',{name:'Start Find the forcing move'});if(await lesson.isVisible())await lesson.click();await page.locator('#chess-board').waitFor();await wait(600);
+ if(chessOnly){
+  const rook=page.locator('.rook-replay .rook-puppet');
+  if(await rook.locator('circle[cx="87"][r="20"]').count()!==1||await rook.locator('.rook-arm').count()!==1||await rook.locator('.rook-clasp').count())throw Error('The chess preview must use Rook Classic (glasses and pencil).');
+ }
+ await shot('chess');
+ // Preserve the unframed capture, then crop to the full board and companion.
+ await page.screenshot({path:resolve(tiles,'chess-full@2x.png'),scale:'device'});
+ const board=await page.locator('#chess-board').boundingBox(),rook=await page.locator('.rook-replay .rook-puppet').boundingBox();
+ const x=Math.max(0,Math.floor(Math.min(board.x,rook.x)-8)),y=Math.max(0,Math.floor(Math.min(board.y,rook.y)-8));
+ const right=Math.ceil(Math.max(board.x+board.width,rook.x+rook.width)+8),bottom=Math.ceil(Math.max(board.y+board.height,rook.y+rook.height)+8);
+ await page.screenshot({path:resolve(tiles,'chess@2x.png'),scale:'device',clip:{x,y,width:right-x,height:bottom-y}});
+ await record('chess',3,[[.4,()=>page.locator('[data-square="d5"]').click()],[1.2,()=>page.locator('[data-square="c7"]').click()],[2,()=>shot('chess-feedback')]]);
+}
 try{
+ if(chessOnly)await captureChess();
+ if(!chessOnly){
  if(!process.env.SHOWCASE_GAMES_ONLY&&!process.env.SHOWCASE_EXTRAS_ONLY){
  await fresh();await page.goto(`http://localhost:${ports.world}/world?player=hero&session=walk-${Date.now()}`);await page.locator('#world').waitFor({state:'visible'});await wait(750);await shot('world-walk');
  await record('world-walk-talk-map',8,[[.2,()=>page.mouse.click(640,665)],[2.5,()=>page.locator('.actor:not(.hero)').first().click({force:true})],[4.2,()=>shot('world-talk')],[5.3,()=>page.locator('#map-button').click()],[6,()=>shot('world-map')]]);
@@ -68,8 +86,7 @@ try{
  await record('number-park',3,[[.4,()=>click('Put together →')],[1.3,async()=>{if(nq)await page.getByRole('button',{name:String(nq.answer??(nq.a+nq.b)),exact:true}).click();}],[2,()=>shot('number-park-feedback')]]);
  await load('maze-garden');await page.locator('#board').focus();await shot('maze-garden');
  await record('maze-garden',3,[[.3,()=>page.keyboard.press('ArrowUp')],[.8,()=>page.keyboard.press('ArrowRight')],[1.3,()=>page.locator('#hint').click()]]);
- await load('hub','chess');const lesson=page.getByRole('button',{name:'Start Find the forcing move'});if(await lesson.isVisible())await lesson.click();await page.locator('#chess-board').waitFor();await wait(600);await shot('chess');
- await record('chess',3,[[.4,()=>page.locator('[data-square="d5"]').click()],[1.2,()=>page.locator('[data-square="c7"]').click()],[2,()=>shot('chess-feedback')]]);
+ await captureChess();
  await load('target-trail');if(await page.locator('#start').isVisible())await page.locator('#start').click();await page.locator('#overlay').waitFor({state:'hidden'});await page.locator('.range').scrollIntoViewIfNeeded();await shot('target-trail');
  await record('target-trail',3,[[.7,()=>page.locator('#fire').click()],[1.8,()=>page.keyboard.press('ArrowLeft')]]);
  }
@@ -81,6 +98,7 @@ try{
  await load('hub','sling');if(await page.locator('#start').isVisible())await page.locator('#start').click();await page.locator('#overlay').waitFor({state:'hidden'});await page.locator('#canvas').focus();await page.keyboard.press('ArrowUp');await shot('sling');
  await load('hub','dribble-duel/live');await page.locator('.live-soccer canvas').focus();await page.locator('.live-soccer canvas').evaluate(e=>scrollTo(0,scrollY+e.getBoundingClientRect().top-100));await page.keyboard.down('ArrowUp');await wait(800);await page.keyboard.up('ArrowUp');await shot('dribble-duel');
  await load('hub');await shot('calm-home');
+ }
  }
  if(errors.length)throw Error(errors.join('\n'));
 }finally{

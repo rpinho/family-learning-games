@@ -7,7 +7,7 @@ const labels=(process.env.SHOWCASE_PRIVATE_LABELS||'').split(',').filter(Boolean
 const ports=JSON.parse(process.env.SHOWCASE_PORTS||'{"letter-quest":5721,"number-park":5723}');
 const browser=await chromium.launch({executablePath:process.env.CHROME,headless:true,args:['--mute-audio']});
 const clips=[],receipts=[];
-try{for(const game of ['letter-quest','number-park']){
+try{for(const game of process.env.SHOWCASE_LETTER_ONLY?['letter-quest']:['letter-quest','number-park']){
  const player=game==='number-park'?process.env.SHOWCASE_NUMBER_PLAYER||'explorer':'admin';
  const context=await browser.newContext({viewport:{width:1280,height:720},deviceScaleFactor:2,recordVideo:{dir:resolve(dir,'raw-video'),size:{width:1280,height:720}}});
  try{
