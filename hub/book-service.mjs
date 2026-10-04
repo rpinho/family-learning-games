@@ -6,6 +6,7 @@
 import {readFile,writeFile,rename,mkdir,readdir} from 'node:fs/promises';
 import {join,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {bookArtMatch} from './book-art-path.mjs';
 const publicArt=join(dirname(fileURLToPath(import.meta.url)),'public','book-art');
 const ART_TYPES={webp:'image/webp',png:'image/png',svg:'image/svg+xml',jpg:'image/jpeg'};
 const send=(res,status,obj)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(obj));};
@@ -107,7 +108,7 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
    const clip=u.pathname.match(/^\/book-voice\/([a-f0-9]{16}\.wav)$/);
    if(clip&&req.method==='GET'){try{const bytes=await readFile(join(bookDir,'voice',clip[1]));res.writeHead(200,{'Content-Type':'audio/wav','Content-Length':bytes.length,'Cache-Control':'max-age=31536000, immutable'});res.end(bytes);}catch(e){if(e.code==='ENOENT')send(res,404,{error:'Use device narration.'});else throw e;}return;}
    // Pictures: the household's own library (private, next to the chapters), else the generic one.
-   const pic=u.pathname.match(/^\/book-art\/((?:bg|actors|props)\/[a-z0-9-]{1,60}\.(webp|png|svg|jpg))$/);
+   const pic=bookArtMatch(u.pathname);
    if(pic&&req.method==='GET'){for(const dir of [join(bookDir,'art','lib'),publicArt]){try{const bytes=await readFile(join(dir,pic[1]));res.writeHead(200,{'Content-Type':ART_TYPES[pic[2]],'Content-Length':bytes.length,'Cache-Control':'max-age=300'});res.end(bytes);return;}catch(e){if(e.code!=='ENOENT')throw e;}}
     send(res,404,{error:'No picture.'});return;}
    return false;

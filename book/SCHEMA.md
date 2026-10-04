@@ -23,7 +23,12 @@ Everything below lives **outside the repository** (children's data is private), 
 | `<hub data>/book-notes.json` | hub (Grown-ups "Today…") | nightly job |
 
 Staging reads `staging-data/book/` instead of `book/`. Game saves are only ever read. Without a household
-library the generic one in `hub/public/book-art/` is used (a hero, a grown-up, Bo the bear, Pip the robot).
+library the fictional one in `hub/public/book-art/` is used: a curious boy (`hero`), his older sister
+(`bo`), a friendly guide (`grown-up`) and a plush fox (`pip`), with idle/cheer painted cutouts.
+Seven original painted settings include landscape/portrait layouts and twelve tappable volcano stones.
+`scene.fx: "gate-open"` animates the castle doors using the background's `door` rectangle;
+`gateKeys` sets the key count and `gateReveal` selects a library prop (the public default is a treasure chest).
+For painted counting, use a `count` beat with `painted: true` and `targetGroup: "stones"`.
 
 ## profiles.json
 

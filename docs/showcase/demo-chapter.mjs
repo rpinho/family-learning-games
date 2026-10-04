@@ -1,15 +1,19 @@
-// Invented documentation chapter. Only the repository's generic picture library is used.
-export function demoChapter(library) {
+// Authored fictional documentation chapter, unrelated to household chapters or notes.
+import {artFor} from '../../hub/public/book-scene.mjs';
+export function demoChapter(library,{extras=false}={}) {
  const line=text=>({who:'narrator',text,voice:'af_heart',speed:.95});
- const scene=bg=>({bg,actors:['hero','grown-up','bo','pip'].map(id=>({id,pose:'idle'})),props:[],fx:'none'});
- const art=Object.fromEntries(['backgrounds','actors','props'].map(kind=>[kind,Object.fromEntries(Object.entries(library[kind]).map(([id,a])=>[id,kind==='actors'?{...a,poses:Object.fromEntries(Object.entries(a.poses).map(([pose,p])=>[pose,{...p,url:'/book-art/'+p.file}]))}:{...a,url:'/book-art/'+a.file}]))]));
- return {schema:'family-book-chapter-2',player:'beginner',name:'The Hero',date:'2026-10-03',number:1,title:'The Star on the Hill',level:'reader',cover:{title:'The Star on the Hill',line:line('The Star on the Hill.'),scene:scene('meadow')},art,
- pages:[
- {id:'p1',kind:'story',scene:scene('meadow'),caption:'A star is missing!',say:[line('Bo and Pip have found a map. A star is missing from the castle!')]},
- {id:'p2',kind:'beat',scene:scene('forest'),caption:'Count the stars',say:[line('Count the stars to open the forest gate.')],beat:{id:'count-stars',kind:'count',thing:'star',n:4,spoken:line('Tap each star.'),ask:line('How many stars?'),options:[3,4,5],answer:4,done:line('Four stars. The gate is open!')}},
- {id:'p3',kind:'beat',scene:scene('pitch'),caption:'Kick the letter B',say:[line('Bo needs a letter key to open the next gate.')],beat:{id:'kick-b',kind:'kick-letter',letter:'B',balls:['D','B','P'],spoken:line('Kick B into the goal.'),notIt:line('Try B.'),done:line('The letter key is yours!')}},
- {id:'p4',kind:'story',scene:scene('castle'),caption:'',say:[line('A magic word shines on the castle gate.')],magic:{word:'open',object:'the castle gate',read:line('Open!'),after:[line('The gate opens and the star shines!')]}},
- {id:'p5',kind:'beat',scene:scene('night'),caption:'Help Pip choose',say:[line('Pip wants to put the star upside down. Can you help?')],beat:{id:'pip-choice',kind:'no',who:'pip',claim:line('The star has six points!'),ask:line('Is Pip right?'),wrong:6,right:5,display:'How many points?',ifYes:line('Look again. Count the points.'),caught:line('You spotted it!'),fixSpoken:line('How many points does the star have?'),options:[4,5,6],hint:line('Count all five points.')}},
- {id:'p6',kind:'story',scene:{...scene('night'),props:[{id:'star',n:1}],fx:'stars'},caption:'The star is home.',say:[line('The star is home. Bo and Pip dance under the night sky.')]}
- ],ui:{yes:line('Yes!'),tryAgain:line('Try again.'),readIt:line('Read the magic word.'),noPrompt:line('Tell Pip what you think.'),nextTime:line('Another adventure tomorrow.'),numbers:Object.fromEntries([1,2,3,4,5].map(n=>[n,line(String(n))]))},summary:'A fictional star adventure.',hook:'Another adventure tomorrow.',meta:{source:'authored generic documentation demo'}};
+ const scene=(bg,fx='none')=>({bg,actors:[{id:'hero',pose:bg==='volcano'?'point':'walk'},{id:'bo',pose:bg==='volcano'?'kneel':'carry'},{id:'grown-up',pose:bg==='volcano'?'kneel':'point'},{id:'pip',pose:bg==='volcano'?'kneel':'reach'}],props:[],fx,celebration:{hero:'cheer',bo:'carry','grown-up':'point',pip:'reach'},composition:bg==='volcano'?{
+  hero:{x:.22,ground:.9,height:.3},bo:{x:.36,ground:.94,height:.23},'grown-up':{x:.78,ground:.94,height:.31,flip:true},pip:{x:.65,ground:.9,height:.17,flip:true}
+ }:{hero:{x:.3,ground:.94,height:.31},bo:{x:.4,ground:.85,height:.3},'grown-up':{x:.74,ground:.91,height:.4,flip:true},pip:{x:.65,ground:.95,height:.18,flip:true}}});
+ const pages=extras?[
+  {id:'kick',kind:'beat',scene:{...scene('soccer-pitch'),props:[{id:'ball',n:1}]},caption:'Kick the letter B',say:[line('The next key is hiding on a football.')],beat:{id:'kick-b',kind:'kick-letter',letter:'B',balls:['D','B','P'],spoken:line('Kick B into the goal.'),notIt:line('Try B.'),done:line('The letter key is yours!')}},
+  {id:'magic',kind:'story',scene:scene('castle-forest'),caption:'',say:[line('A magic word lights the forest path.')],magic:{word:'open',object:'the forest path',read:line('Open!'),after:[line('The path is open!')]}}
+ ]:[
+  {id:'gate',kind:'story',scene:scene('castle-gate','gate-open'),caption:'',gateKeys:3,gateReveal:'treasure-chest',say:[line('The three keys fly to the castle gate.'),line('Behind the doors, a treasure chest waits!')]},
+  {id:'stones',kind:'beat',scene:scene('volcano'),caption:'Count the stones',say:[line('The fox wants to cross the crater. Count the stones together.')],beat:{id:'count-stones',kind:'count',painted:true,targetGroup:'stones',thing:'stones',n:12,spoken:line('Tap each painted stone.'),ask:line('How many stones?'),options:[11,12,13],answer:12,done:line('Twelve stones. We can cross!')}},
+  {id:'choice',kind:'beat',scene:scene('treehouse-town'),caption:'Help the fox choose',say:[line('The fox says two plus one makes four. Is that right?')],beat:{id:'fox-choice',kind:'no',who:'pip',claim:line('Two plus one makes four!'),ask:line('Is the fox right?'),wrong:4,right:3,display:'2 + 1 = ?',ifYes:line('Look again. Try counting on your fingers.'),caught:line('You spotted it!'),fixSpoken:line('How much is two plus one?'),options:[2,3,4],hint:line('Start with two. Add one more.')}},
+  {id:'end',kind:'story',scene:{...scene('pirate-ship','stars'),actors:['hero','bo','grown-up','pip'].map(id=>({id,pose:'cheer'}))},caption:'A new adventure awaits.',say:[line('Across the dock, a ship waits for the next adventure.')]}
+ ];
+ const cover={title:'The Three Golden Keys',line:line('The Three Golden Keys.'),scene:scene('castle-gate')};
+ return {schema:'family-book-chapter-2',player:'beginner',name:'The Explorer',date:'2026-10-03',number:1,title:cover.title,level:'reader',cover,art:artFor([...pages,{scene:cover.scene}],library),pages,ui:{yes:line('Yes!'),tryAgain:line('Try again.'),readIt:line('Read the magic word.'),noPrompt:line('Tell the fox what you think.'),nextTime:line('Another adventure tomorrow.'),numbers:Object.fromEntries(Array.from({length:13},(_,i)=>[i+1,line(String(i+1))]))},summary:'A fictional adventure with three golden keys.',hook:'Another adventure tomorrow.',meta:{source:'authored fictional documentation demo'}};
 }

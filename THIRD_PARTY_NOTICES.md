@@ -31,6 +31,8 @@ Other supplied music loops are original synthesized compositions; their generato
 
 ## Artwork and software
 
+The public Book’s fictional cast, treasure chest and seven painted scene pairs are original project-generated artwork. [Provenance and generation prompts](hub/public/book-art/ART.md). No family photos, personal-object paintings or third-party character assets are included in that library.
+
 The game logos, coach artwork and spaceship artwork were created for these games (including AI-generated artwork), not copied third-party character art or family photographs. Emoji appearance is supplied by the viewer's platform. This project is not affiliated with or endorsed by other learning-game brands.
 
 npm dependencies retain their respective licenses in the installed packages. Vendored UI primitives follow the shadcn component system; see https://github.com/shadcn-ui/ui/blob/main/LICENSE.md (MIT). There is no blanket claim of ownership over those components or third-party assets.

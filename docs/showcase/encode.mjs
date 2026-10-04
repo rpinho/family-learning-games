@@ -2,7 +2,7 @@
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
-import {readFile,writeFile,readdir} from 'node:fs/promises';
+import {readFile,writeFile,readdir,stat} from 'node:fs/promises';
 const dir=process.env.CAPTURE_DIR;if(!dir)throw Error('Set CAPTURE_DIR to the reviewed frame directory.');
 const out=fileURLToPath(new URL('../media/',import.meta.url));
 const ffmpeg=process.env.FFMPEG||'ffmpeg';
@@ -20,6 +20,10 @@ function stripLabels(start,end){for(let at=start;at+8<=end;){const len=video.rea
 }}
 stripLabels(0,video.length);await writeFile(videoPath,video);
 run(['-i',resolve(out,'highlights.mp4'),'-filter_complex','fps=6,scale=480:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=64:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=3','-an','-map_metadata','-1','-loop','0',resolve(out,'highlights.gif')]);
+for(const [name,limit] of [['highlights.mp4',10_000_000],['highlights.gif',8_000_000]]){
+ const {size}=await stat(resolve(out,name));if(size>limit)throw Error(`${name} exceeds its ${limit}-byte review limit (${size} bytes).`);
+ console.log(`${name}: ${size} bytes`);
+}
 // Chrome PNGs have no identifying metadata; retain only image chunks to make that explicit.
 for(const folder of [out,fileURLToPath(new URL('screenshots/',import.meta.url))]){
  for(const file of (await readdir(folder)).filter(f=>f.endsWith('.png'))){
