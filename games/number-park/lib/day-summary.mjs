@@ -18,6 +18,14 @@ export function stretches(rows,timeZone){
 }
 function describe(q){
  if(!q)return 'a question';
+ if(q.kind==='balance'){
+  if(q.weights)return q.weights.mode==='free'?`make both pans total ${q.weights.target}`:`balance ${q.weights.label} with number weights (target ${q.weights.target})`;
+  if(q.mode==='animals')return `${q.direction||'heavier'} animal: ${q.left?.name||'left animal'} or ${q.right?.name||'right animal'}`;
+  if(q.mode==='blocks')return `balance ${q.target} counting blocks`;
+  const side=e=>e&&Number.isFinite(e.a)&&Number.isFinite(e.b)?`${e.a} ${e.op||'+'} ${e.b}`:'a pan';
+  if(q.mode==='complete')return `balance ${side(q.left)} against ${q.right?.a??'?'} + ?`;
+  return `compare ${side(q.left)} with ${side(q.right)}`;
+ }
  if(q.kind==='cookies'&&isKinder(q))return `cookies ${q.total} shared by ${q.plates} (kindergarten level ${q.level})`;
  if(q.kind==='cookies'){const d=q.mode==='bags'?q.bagSize:q.plates,mode={share:'sharing',fix:'fix the plates',mixed:'hidden counts',bags:'bags',rows:'rows',leftover:'remainders'}[q.mode]||'sharing';return `cookies ${q.total} ÷ ${d} (${mode}, level ${q.level}${q.fade?', '+q.fade:''})`;}
  if(q.placeMode==='build')return `build ${q.total??(q.target||[]).reduce((n,v)=>n*10+v,0)} from blocks (level ${q.level})`;
@@ -32,7 +40,10 @@ function describe(q){
 }
 function stuckReason(h){
  const r=[];
- if(!h.ok)r.push(h.question?.placeMode==='which'?`tapped the ${h.question.digits?.[h.answer]}`:`answered ${h.answer}`);
+ if(!h.ok){
+  const q=h.question;
+  r.push(q?.placeMode==='which'?`tapped the ${q.digits?.[h.answer]}`:q?.kind==='balance'&&q.mode==='animals'?`chose ${(h.answer===0?q.left:q.right)?.name||'an animal'}`:q?.kind==='balance'&&q.mode==='compare'?`chose ${['left pan','equal pans','right pan'][h.answer]||'a pan'}`:`answered ${h.answer}`);
+ }
  if(h.cookieChecks)r.push(`${h.cookieChecks} uneven/extra check${h.cookieChecks>1?'s':''}`);
  if(h.askTries)r.push(`${h.askTries} wrong count${h.askTries>1?'s':''}`);
  if(h.predicted!==undefined&&h.predicted!==h.answer)r.push(`guessed ${h.predicted}`);
