@@ -29,3 +29,19 @@ test('Short round timing still contributes to the estimate, with a defined ten-m
  const p=freshProfile('admin');p.history=[{...round,durationMs:180000}];
  assert.match(daySummary(p,'2026-06-01','UTC').stuck[0],/180 s elapsed/);
 });
+
+test('Balance recap describes the saved task and chosen animal or pan instead of numeric UI indexes',()=>{
+ const cases=[
+  [{kind:'balance',mode:'animals',direction:'lighter',left:{name:'cat'},right:{name:'horse'}},1,'lighter animal: cat or horse: chose horse'],
+  [{kind:'balance',mode:'compare',left:{a:7,op:'×',b:8},right:{a:50,op:'+',b:5}},1,'compare 7 × 8 with 50 + 5: chose equal pans'],
+  [{kind:'balance',mode:'complete',left:{a:6,op:'×',b:9},right:{a:50,op:'+',b:4}},5,'balance 6 × 9 against 50 + ?: answered 5'],
+  [{kind:'balance',weights:{mode:'fixed',label:'7 × 8',target:56}},56,'balance 7 × 8 with number weights (target 56): pressed Help'],
+  [{kind:'balance',weights:{mode:'free',label:'',target:24}},24,'make both pans total 24: pressed Help'],
+  [{kind:'balance',mode:'blocks',target:8},8,'balance 8 counting blocks: pressed Help'],
+ ];
+ for(const [question,answer,text]of cases){
+  const p=freshProfile('admin');p.history=[{at,game:'balance',question,answer,ok:text.includes('pressed Help'),helped:text.includes('pressed Help'),durationMs:5000}];
+  const before=structuredClone(p),summary=daySummary(p,'2026-06-01','UTC');
+  assert.ok(summary.stuck[0].endsWith(text),summary.stuck[0]);assert.doesNotMatch(summary.stuck[0],/undefined|NaN/);assert.deepEqual(p,before);
+ }
+});
