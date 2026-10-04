@@ -5,7 +5,7 @@ const app=await readFile(new URL('../dist/app.mjs',import.meta.url),'utf8');
 test('Only essential lines bypass the sound toggle; word breaks pass essential through',()=>{
  assert.match(app,/async function speak\(line,essential=false\)\{if\(!line\|\|\(!sound&&!essential\)\)return;/);
  assert.match(app,/speak:\(line,essential\)=>\{lastSpeech='';void speak\(line,essential\);\}/);
- assert.match(app,/speak\(WORDS\.retry\)/);assert.doesNotMatch(app,/speak\(WORDS\.retry,true\)/);
+ assert.match(app,/game\.phase!=='done'\)void speak\(p\.game\.message\);/);assert.doesNotMatch(app,/game\.phase!=='done'\)void speak\(p\.game\.message,true\)/);
 });
 test('Practice questions are content with an idle repeat; start lines are once per session',()=>{
  assert.match(app,/ask\(practiceLine\(g\),/);assert.match(app,/idleLeft=IDLE_REPEATS/);
