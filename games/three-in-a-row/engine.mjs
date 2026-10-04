@@ -1,8 +1,8 @@
-export const VERSION='three-in-a-row-2026-09-26-speech-once';
+export const VERSION='three-in-a-row-2026-10-03-fork-feedback';
 export const PLAYERS={beginner:'Beginner',explorer:'Explorer',admin:'Admin · Admin'};
 export const LEVELS=['','Friendly','Clever','Perfect'];
 export const LINES=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-export const WORDS={start:'You are X. Make three in a row.',turn:'Your turn.',win:'Three in a row! You did it.',lose:'Rook made a row. Let’s try again.',draw:'A draw! Neither player made a row.',find:'Find the move that makes three Xs.',block:'Two Os! Block their row.',fork:'Make two ways to win.',correct:'You found it!',winLesson:'Three Xs in a row!',blockLesson:'You stopped their row!',forkLesson:'Now you have two ways to win.',retry:'Look again. Try another square.',hint:'Try the glowing square.',level:'Rook will think a little harder next game.',practice:'Practice complete. Ready to play?',saved:'Your game is saved.'};
+export const WORDS={start:'You are X. Make three in a row.',turn:'Your turn.',win:'Three in a row! You did it.',lose:'Rook made a row. Let’s try again.',draw:'A draw! Neither player made a row.',find:'Find the move that makes three Xs.',block:'Two Os! Block their row.',fork:'Make two ways to win.',correct:'You found it!',winLesson:'Three Xs in a row!',blockLesson:'You stopped their row!',forkLesson:'Two ways to win. Rook can block only one.',retry:'Look again. Try another square.',forkZero:'That makes no winning threat. Look for two.',forkOne:'That makes one winning threat. Look for two.',hint:'Try the glowing square.',level:'Rook will think a little harder next game.',practice:'Practice complete. Ready to play?',saved:'Your game is saved.'};
 Object.assign(WORDS,{startO:'You are O. Rook starts with X.',hintWin:'Finish your row here!',hintBlock:'Block Rook here.',hintDouble:'Rook has two ways to win. We can only block one.',hintOpening:'Start here. Then watch what Rook does.',hintSafe:'Try here. Watch for Rook’s next move.',hintLost:'Rook has the advantage. Try this move.',hintFork:'This gives you two ways to win.'});
 export const other=mark=>mark==='X'?'O':'X';
 export const youMark=g=>g?.mode==='practice'?'X':g?.youMark||'X';
@@ -10,6 +10,11 @@ export const empty=b=>b.map((v,i)=>v?null:i).filter(i=>i!==null);
 const boardKey=b=>b.map(v=>v||'-').join('');
 export function result(b){for(const line of LINES)if(b[line[0]]&&line.every(i=>b[i]===b[line[0]]))return {winner:b[line[0]],line};return empty(b).length?null:{winner:'draw',line:[]};}
 export const threats=(b,mark)=>empty(b).filter(i=>{const c=[...b];c[i]=mark;return result(c)?.winner===mark;});
+// Explain the existing fork exercise on the same board, without revealing an unfinished solution.
+export function forkRoutes(g){
+ if(g?.mode!=='practice'||g.stage!=='fork'||g.phase!=='done')return [];
+ return threats(g.board,'X').map(target=>({target,line:LINES.find(line=>line.includes(target)&&line.every(i=>i===target||g.board[i]==='X'))}));
+}
 const memo=new Map();
 export function minimax(b,turn){const r=result(b);if(r)return r.winner==='X'?1:r.winner==='O'?-1:0;const key=b.map(v=>v||'-').join('')+turn;if(memo.has(key))return memo.get(key);const scores=empty(b).map(i=>{const c=[...b];c[i]=turn;return minimax(c,turn==='X'?'O':'X');});const score=turn==='X'?Math.max(...scores):Math.min(...scores);memo.set(key,score);return score;}
 export function bestMoves(b,mark){const moves=empty(b),scores=moves.map(i=>{const c=[...b];c[i]=mark;return minimax(c,mark==='X'?'O':'X');});const best=mark==='X'?Math.max(...scores):Math.min(...scores);return moves.filter((_,i)=>scores[i]===best);}
@@ -46,7 +51,11 @@ export function action(p,input,rng=Math.random){if(!input||input.revision!==p.re
  case 'move':{
  if(!g||g.phase!=='you'||!Number.isInteger(input.cell)||input.cell<0||input.cell>8||g.board[input.cell])fail();
  if(g.mode==='practice'){
-  if(input.cell!==g.answer){g.wrong++;g.message=WORDS.retry;break;}
+  if(input.cell!==g.answer){
+   g.wrong++;g.message=WORDS.retry;
+   if(g.stage==='fork'){const tried=[...g.board];tried[input.cell]='X';g.message=threats(tried,'X').length?WORDS.forkOne:WORDS.forkZero;}
+   break;
+  }
   g.board[input.cell]='X';g.phase='done';g.line=result(g.board)?.line||[];g.message=WORDS[g.stage+'Lesson'];p.learning.done++;const independent=!g.helped&&!g.wrong;if(independent){p.learning.clean++;p.stars++;}p.history.push({id:g.id,mode:'practice',stage:g.stage,helped:g.helped,wrong:g.wrong,independent,at:new Date().toISOString()});p.history=p.history.slice(-300);
  }else{const mark=youMark(g);g.board[input.cell]=mark;g.moves.push({mark,cell:input.cell});g.hint=null;g.hintReason=null;if(!finish(p,g)){g.phase='bot';g.message='Rook is thinking…';}}
  break;}

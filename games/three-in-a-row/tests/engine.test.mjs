@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {freshProfile,action,result,empty,threats,bestMoves,botMove,lesson,publicState,clue,WORDS} from '../engine.mjs';
+import {freshProfile,action,result,empty,threats,bestMoves,botMove,lesson,publicState,clue,WORDS,forkRoutes} from '../engine.mjs';
 const act=(p,input)=>action(p,{...input,revision:p.revision},()=>.4);
 test('Circle choice gives Rook X first, counts child O wins correctly and preserves active boards',()=>{
  const p=freshProfile('beginner');act(p,{type:'mark',mark:'O'});act(p,{type:'start'});assert.equal(p.game.phase,'bot');act(p,{type:'bot'});assert.equal(p.game.moves[0].mark,'X');assert.equal(p.game.phase,'you');
@@ -61,4 +61,25 @@ test('Normal progression stays beatable; Perfect is opt-in and current boards ar
  const p=freshProfile('explorer');for(let n=0;n<9;n++){act(p,{type:'start'});p.game.board=['X','X',null,'O','O',null,null,null,null];p.game.phase='you';act(p,{type:'move',cell:2});}assert.equal(p.level,2);
  act(p,{type:'level',level:3});act(p,{type:'start'});const current=structuredClone(p.game);act(p,{type:'level',level:2});assert.deepEqual(p.game,current);assert.equal(p.level,2);
  p.game.phase='done';act(p,{type:'start'});assert.equal(p.game.level,2);
+});
+
+test('Fork retries explain the tried move; solved forks show two distinct real winning squares',()=>{
+ const p=freshProfile('admin');p.revision=2;p.learning.clean=9;p.learning.done=2;act(p,{type:'practice'});
+ assert.equal(p.game.stage,'fork');const original=structuredClone(p.game.board);const answer=p.game.answer;
+ assert.deepEqual(forkRoutes(publicState(p).game),[]);
+ const explained=new Set();for(const cell of empty(original).filter(i=>i!==answer)){
+  const tried=[...original];tried[cell]='X';const n=threats(tried,'X').length;
+  assert.ok(n<2);act(p,{type:'move',cell});assert.deepEqual(p.game.board,original);
+  assert.equal(p.game.message,n?WORDS.forkOne:WORDS.forkZero);explained.add(n);
+  assert.deepEqual(forkRoutes(publicState(p).game),[]);
+ }
+ assert.deepEqual([...explained].sort(),[0,1]);act(p,{type:'move',cell:answer});const routes=forkRoutes(publicState(p).game);
+ assert.ok(routes.length>=2);assert.equal(new Set(routes.map(r=>r.target)).size,routes.length);
+ for(const {target,line} of routes){assert.equal(p.game.board[target],null);assert.equal(line.length,3);const next=[...p.game.board];next[target]='X';assert.equal(result(next).winner,'X');}
+ for(const cell of empty(p.game.board)){const blocked=[...p.game.board];blocked[cell]='O';assert.ok(threats(blocked,'X').length>=1,'Rook cannot block both');}
+ assert.equal(p.learning.done,3);assert.equal(p.learning.clean,9);assert.equal(p.stars,0);
+ const saved=JSON.parse(JSON.stringify(p));assert.deepEqual(forkRoutes(publicState(saved).game),routes);
+ act(p,{type:'practice'});assert.deepEqual(forkRoutes(publicState(p).game),[]);
+ assert.deepEqual(forkRoutes({...saved.game,stage:'block'}),[]);
+ assert.deepEqual(forkRoutes({...saved.game,mode:'play'}),[]);
 });
