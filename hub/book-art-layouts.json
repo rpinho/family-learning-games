@@ -1,0 +1,921 @@
+{
+  "castle-gate": {
+    "file": "bg/real-foreground/castle-gateLandscape.webp",
+    "about": "a big castle gate with three round shields",
+    "bed": "meadow",
+    "keepOut": [
+      {
+        "name": "painted scene objects",
+        "r": [
+          0,
+          0,
+          1,
+          0.475
+        ]
+      }
+    ],
+    "size": [
+      1774,
+      887
+    ],
+    "focal": [
+      0.5,
+      0
+    ],
+    "groundStart": 0.49,
+    "ground": 0.97,
+    "url": "/book-art/bg/real-foreground/castle-gateLandscape.webp",
+    "fit": "cover",
+    "realForeground": true,
+    "foreground": 0.49,
+    "standBand": [
+      0,
+      1
+    ],
+    "oneRow": false,
+    "portraitHeight": null,
+    "portraitGround": null,
+    "floorColor": null,
+    "variants": {
+      "portrait": {
+        "file": "bg/real-foreground/castle-gatePortrait.webp",
+        "about": "a big castle gate with three round shields",
+        "bed": "meadow",
+        "keepOut": [
+          {
+            "name": "painted scene objects",
+            "r": [
+              0,
+              0,
+              1,
+              0.21500000000000002
+            ]
+          }
+        ],
+        "size": [
+          836,
+          1881
+        ],
+        "focal": [
+          0.5,
+          0
+        ],
+        "groundStart": 0.23,
+        "ground": 0.97,
+        "url": "/book-art/bg/real-foreground/castle-gatePortrait.webp",
+        "fit": "cover",
+        "realForeground": true,
+        "foreground": 0.23,
+        "standBand": [
+          0,
+          1
+        ],
+        "oneRow": false,
+        "portraitHeight": null,
+        "portraitGround": null,
+        "floorColor": null,
+        "variants": null,
+        "targets": null,
+        "goal": null,
+        "door": [
+          0.276,
+          0.006,
+          0.448,
+          0.204
+        ]
+      }
+    },
+    "targets": null,
+    "goal": null,
+    "door": [
+      0.366,
+      0.035,
+      0.268,
+      0.437
+    ]
+  },
+  "castle-forest": {
+    "file": "bg/real-foreground/castleLandscape.webp",
+    "url": "/book-art/bg/real-foreground/castleLandscape.webp",
+    "size": [
+      1774,
+      887
+    ],
+    "fit": "cover",
+    "focal": [
+      0.5,
+      0
+    ],
+    "realForeground": true,
+    "groundStart": 0.56,
+    "foreground": 0.56,
+    "ground": 0.97,
+    "standBand": [
+      0,
+      1
+    ],
+    "oneRow": false,
+    "portraitHeight": null,
+    "portraitGround": null,
+    "floorColor": null,
+    "keepOut": [
+      {
+        "name": "castle and river",
+        "r": [
+          0.09,
+          0.01,
+          0.84,
+          0.48
+        ]
+      }
+    ],
+    "goal": null,
+    "targets": null,
+    "variants": {
+      "portrait": {
+        "file": "bg/real-foreground/castlePortrait.webp",
+        "url": "/book-art/bg/real-foreground/castlePortrait.webp",
+        "size": [
+          836,
+          1881
+        ],
+        "fit": "cover",
+        "focal": [
+          0.5,
+          0
+        ],
+        "realForeground": true,
+        "groundStart": 0.25,
+        "foreground": 0.25,
+        "ground": 0.97,
+        "standBand": [
+          0,
+          1
+        ],
+        "oneRow": false,
+        "portraitHeight": null,
+        "portraitGround": null,
+        "floorColor": null,
+        "keepOut": [
+          {
+            "name": "castle and river",
+            "r": [
+              0.12,
+              0.01,
+              0.8,
+              0.22
+            ]
+          }
+        ],
+        "goal": null,
+        "targets": null
+      }
+    }
+  },
+  "chess-courtyard": {
+    "file": "bg/real-foreground/chess-courtyardLandscape.webp",
+    "about": "a sunny castle courtyard with a giant chessboard on the stone floor; three giant dark wooden pieces on one side (king, knight, bishop) and three giant cream pieces on the other (king, knight, rook)",
+    "bed": "meadow",
+    "keepOut": [
+      {
+        "name": "all six chess pieces",
+        "r": [
+          0.28,
+          0.2,
+          0.45,
+          0.27
+        ]
+      }
+    ],
+    "size": [
+      1774,
+      887
+    ],
+    "focal": [
+      0.5,
+      0
+    ],
+    "groundStart": 0.55,
+    "ground": 0.97,
+    "foreground": 0.55,
+    "variants": {
+      "portrait": {
+        "file": "bg/real-foreground/chess-courtyardPortrait.webp",
+        "about": "a sunny castle courtyard with a giant chessboard on the stone floor; three giant dark wooden pieces on one side (king, knight, bishop) and three giant cream pieces on the other (king, knight, rook)",
+        "bed": "meadow",
+        "keepOut": [
+          {
+            "name": "all six chess pieces",
+            "r": [
+              0.025,
+              0.102,
+              0.95,
+              0.115
+            ]
+          }
+        ],
+        "size": [
+          836,
+          1881
+        ],
+        "focal": [
+          0.5,
+          0
+        ],
+        "groundStart": 0.28,
+        "ground": 0.97,
+        "foreground": 0.28,
+        "variants": null,
+        "url": "/book-art/bg/real-foreground/chess-courtyardPortrait.webp",
+        "fit": "cover",
+        "realForeground": true,
+        "standBand": [
+          0,
+          1
+        ],
+        "oneRow": false,
+        "portraitHeight": null,
+        "portraitGround": null,
+        "floorColor": null,
+        "targets": null,
+        "goal": null
+      }
+    },
+    "url": "/book-art/bg/real-foreground/chess-courtyardLandscape.webp",
+    "fit": "cover",
+    "realForeground": true,
+    "standBand": [
+      0,
+      1
+    ],
+    "oneRow": false,
+    "portraitHeight": null,
+    "portraitGround": null,
+    "floorColor": null,
+    "targets": null,
+    "goal": null
+  },
+  "volcano": {
+    "file": "bg/real-foreground/volcanoLandscape.webp",
+    "bed": "none",
+    "about": "Inside a volcanic crater: twelve clear stepping stones and a dry stone bridge.",
+    "fit": "cover",
+    "foreground": 0.57,
+    "oneRow": false,
+    "keepOut": [
+      {
+        "name": "twelve stepping stones",
+        "r": [
+          0.31,
+          0.318,
+          0.4,
+          0.19
+        ]
+      },
+      {
+        "name": "dry bridge",
+        "r": [
+          0.411,
+          0.206,
+          0.155,
+          0.108
+        ]
+      },
+      {
+        "name": "hot spring",
+        "r": [
+          0.135,
+          0.28,
+          0.12,
+          0.07
+        ]
+      }
+    ],
+    "targets": {
+      "stones": [
+        {
+          "id": "1",
+          "label": "Stepping stone 1",
+          "r": [
+            0.4185456595264938,
+            0.3275084554678692,
+            0.047914317925591886,
+            0.02593010146561443
+          ]
+        },
+        {
+          "id": "2",
+          "label": "Stepping stone 2",
+          "r": [
+            0.4935174746335964,
+            0.32525366403607664,
+            0.047914317925591886,
+            0.02593010146561443
+          ]
+        },
+        {
+          "id": "3",
+          "label": "Stepping stone 3",
+          "r": [
+            0.5713077790304397,
+            0.3286358511837655,
+            0.047914317925591886,
+            0.02593010146561443
+          ]
+        },
+        {
+          "id": "4",
+          "label": "Stepping stone 4",
+          "r": [
+            0.6513528748590756,
+            0.32525366403607664,
+            0.047914317925591886,
+            0.02593010146561443
+          ]
+        },
+        {
+          "id": "5",
+          "label": "Stepping stone 5",
+          "r": [
+            0.33962795941375423,
+            0.3737316798196167,
+            0.047914317925591886,
+            0.02593010146561443
+          ]
+        },
+        {
+          "id": "6",
+          "label": "Stepping stone 6",
+          "r": [
+            0.4326381059751973,
+            0.38726042841037206,
+            0.047914317925591886,
+            0.02593010146561443
+          ]
+        },
+        {
+          "id": "7",
+          "label": "Stepping stone 7",
+          "r": [
+            0.5245208568207441,
+            0.3906426155580609,
+            0.047914317925591886,
+            0.02593010146561443
+          ]
+        },
+        {
+          "id": "8",
+          "label": "Stepping stone 8",
+          "r": [
+            0.620913190529876,
+            0.3804960541149944,
+            0.047914317925591886,
+            0.02593010146561443
+          ]
+        },
+        {
+          "id": "9",
+          "label": "Stepping stone 9",
+          "r": [
+            0.3153889515219842,
+            0.44813979706877116,
+            0.047914317925591886,
+            0.02593010146561443
+          ]
+        },
+        {
+          "id": "10",
+          "label": "Stepping stone 10",
+          "r": [
+            0.41685456595264936,
+            0.4616685456595265,
+            0.047914317925591886,
+            0.02593010146561443
+          ]
+        },
+        {
+          "id": "11",
+          "label": "Stepping stone 11",
+          "r": [
+            0.5222660653889515,
+            0.4616685456595265,
+            0.047914317925591886,
+            0.02593010146561443
+          ]
+        },
+        {
+          "id": "12",
+          "label": "Stepping stone 12",
+          "r": [
+            0.632750845546787,
+            0.44813979706877116,
+            0.047914317925591886,
+            0.02593010146561443
+          ]
+        }
+      ],
+      "paths": [
+        {
+          "id": "lava",
+          "label": "Glowing lava",
+          "r": [
+            0.79,
+            0.34,
+            0.07,
+            0.04
+          ]
+        },
+        {
+          "id": "bridge",
+          "label": "Dry stone bridge",
+          "r": [
+            0.411,
+            0.206,
+            0.155,
+            0.108
+          ]
+        }
+      ]
+    },
+    "size": [
+      1774,
+      887
+    ],
+    "focal": [
+      0.5,
+      0
+    ],
+    "ground": 0.97,
+    "groundStart": 0.57,
+    "url": "/book-art/bg/real-foreground/volcanoLandscape.webp",
+    "realForeground": true,
+    "standBand": [
+      0,
+      1
+    ],
+    "portraitHeight": null,
+    "portraitGround": null,
+    "floorColor": null,
+    "variants": {
+      "portrait": {
+        "file": "bg/real-foreground/volcanoPortrait.webp",
+        "bed": "none",
+        "about": "Inside a volcanic crater: twelve clear stepping stones and a dry stone bridge.",
+        "fit": "cover",
+        "foreground": 0.31,
+        "oneRow": false,
+        "keepOut": [
+          {
+            "name": "twelve stepping stones",
+            "r": [
+              0.205,
+              0.172,
+              0.62,
+              0.1
+            ]
+          },
+          {
+            "name": "dry bridge",
+            "r": [
+              0.38,
+              0.13,
+              0.235,
+              0.045
+            ]
+          },
+          {
+            "name": "hot spring",
+            "r": [
+              0.02,
+              0.13,
+              0.19,
+              0.035
+            ]
+          }
+        ],
+        "targets": {
+          "stones": [
+            {
+              "id": "1",
+              "label": "Stepping stone 1",
+              "r": [
+                0.3929425837320574,
+                0.1757044125465178,
+                0.08971291866028708,
+                0.013290802764486975
+              ]
+            },
+            {
+              "id": "2",
+              "label": "Stepping stone 2",
+              "r": [
+                0.513755980861244,
+                0.17410951621477938,
+                0.08971291866028708,
+                0.013290802764486975
+              ]
+            },
+            {
+              "id": "3",
+              "label": "Stepping stone 3",
+              "r": [
+                0.6309808612440191,
+                0.1735778841041999,
+                0.08971291866028708,
+                0.013290802764486975
+              ]
+            },
+            {
+              "id": "4",
+              "label": "Stepping stone 4",
+              "r": [
+                0.7266746411483254,
+                0.16932482721956407,
+                0.08971291866028708,
+                0.013290802764486975
+              ]
+            },
+            {
+              "id": "5",
+              "label": "Stepping stone 5",
+              "r": [
+                0.27093301435406697,
+                0.20015948963317384,
+                0.08971291866028708,
+                0.013290802764486975
+              ]
+            },
+            {
+              "id": "6",
+              "label": "Stepping stone 6",
+              "r": [
+                0.43600478468899523,
+                0.20547581073896865,
+                0.08971291866028708,
+                0.013290802764486975
+              ]
+            },
+            {
+              "id": "7",
+              "label": "Stepping stone 7",
+              "r": [
+                0.5819377990430622,
+                0.20760233918128654,
+                0.08971291866028708,
+                0.013290802764486975
+              ]
+            },
+            {
+              "id": "8",
+              "label": "Stepping stone 8",
+              "r": [
+                0.7278708133971292,
+                0.2134502923976608,
+                0.08971291866028708,
+                0.013290802764486975
+              ]
+            },
+            {
+              "id": "9",
+              "label": "Stepping stone 9",
+              "r": [
+                0.2278708133971292,
+                0.23205741626794257,
+                0.08971291866028708,
+                0.013290802764486975
+              ]
+            },
+            {
+              "id": "10",
+              "label": "Stepping stone 10",
+              "r": [
+                0.4001196172248804,
+                0.24109516214779372,
+                0.08971291866028708,
+                0.013290802764486975
+              ]
+            },
+            {
+              "id": "11",
+              "label": "Stepping stone 11",
+              "r": [
+                0.56877990430622,
+                0.2437533227006911,
+                0.08971291866028708,
+                0.013290802764486975
+              ]
+            },
+            {
+              "id": "12",
+              "label": "Stepping stone 12",
+              "r": [
+                0.7254784688995215,
+                0.24853801169590642,
+                0.08971291866028708,
+                0.013290802764486975
+              ]
+            }
+          ],
+          "paths": [
+            {
+              "id": "lava",
+              "label": "Glowing lava",
+              "r": [
+                0.81,
+                0.2,
+                0.05,
+                0.035
+              ]
+            },
+            {
+              "id": "bridge",
+              "label": "Dry stone bridge",
+              "r": [
+                0.38,
+                0.13,
+                0.235,
+                0.045
+              ]
+            }
+          ]
+        },
+        "size": [
+          836,
+          1881
+        ],
+        "focal": [
+          0.5,
+          0
+        ],
+        "ground": 0.97,
+        "groundStart": 0.31,
+        "url": "/book-art/bg/real-foreground/volcanoPortrait.webp",
+        "realForeground": true,
+        "standBand": [
+          0,
+          1
+        ],
+        "portraitHeight": null,
+        "portraitGround": null,
+        "floorColor": null,
+        "variants": null,
+        "goal": null
+      }
+    },
+    "goal": null
+  },
+  "pirate-ship": {
+    "file": "bg/real-foreground/pirate-shipLandscape.webp",
+    "about": "a friendly pirate ship at a river dock",
+    "bed": "meadow",
+    "keepOut": [
+      {
+        "name": "pirate ship and dock",
+        "r": [
+          0.335,
+          0,
+          0.505,
+          0.43
+        ]
+      }
+    ],
+    "size": [
+      1774,
+      887
+    ],
+    "focal": [
+      0.5,
+      0
+    ],
+    "groundStart": 0.465,
+    "ground": 0.97,
+    "url": "/book-art/bg/real-foreground/pirate-shipLandscape.webp",
+    "fit": "cover",
+    "realForeground": true,
+    "foreground": 0.465,
+    "standBand": [
+      0,
+      1
+    ],
+    "oneRow": false,
+    "portraitHeight": null,
+    "portraitGround": null,
+    "floorColor": null,
+    "variants": {
+      "portrait": {
+        "file": "bg/real-foreground/pirate-shipPortrait.webp",
+        "about": "a friendly pirate ship at a river dock",
+        "bed": "meadow",
+        "keepOut": [
+          {
+            "name": "pirate ship and dock",
+            "r": [
+              0.22,
+              0.13,
+              0.71,
+              0.16
+            ]
+          }
+        ],
+        "size": [
+          836,
+          1881
+        ],
+        "focal": [
+          0.5,
+          0
+        ],
+        "groundStart": 0.34,
+        "ground": 0.97,
+        "url": "/book-art/bg/real-foreground/pirate-shipPortrait.webp",
+        "fit": "cover",
+        "realForeground": true,
+        "foreground": 0.34,
+        "standBand": [
+          0,
+          1
+        ],
+        "oneRow": false,
+        "portraitHeight": null,
+        "portraitGround": null,
+        "floorColor": null,
+        "variants": null,
+        "targets": null,
+        "goal": null
+      }
+    },
+    "targets": null,
+    "goal": null
+  },
+  "treehouse-town": {
+    "file": "bg/real-foreground/treehouse-townLandscape.webp",
+    "about": "a lush treehouse town with rope bridges",
+    "bed": "forest",
+    "keepOut": [
+      {
+        "name": "painted scene objects",
+        "r": [
+          0,
+          0,
+          1,
+          0.49
+        ]
+      }
+    ],
+    "size": [
+      1774,
+      887
+    ],
+    "focal": [
+      0.5,
+      0
+    ],
+    "groundStart": 0.53,
+    "ground": 0.97,
+    "url": "/book-art/bg/real-foreground/treehouse-townLandscape.webp",
+    "fit": "cover",
+    "realForeground": true,
+    "foreground": 0.53,
+    "standBand": [
+      0,
+      1
+    ],
+    "oneRow": false,
+    "portraitHeight": null,
+    "portraitGround": null,
+    "floorColor": null,
+    "variants": {
+      "portrait": {
+        "file": "bg/real-foreground/treehouse-townPortrait.webp",
+        "about": "a lush treehouse town with rope bridges",
+        "bed": "forest",
+        "keepOut": [
+          {
+            "name": "painted scene objects",
+            "r": [
+              0,
+              0,
+              1,
+              0.235
+            ]
+          }
+        ],
+        "size": [
+          836,
+          1881
+        ],
+        "focal": [
+          0.5,
+          0
+        ],
+        "groundStart": 0.25,
+        "ground": 0.97,
+        "url": "/book-art/bg/real-foreground/treehouse-townPortrait.webp",
+        "fit": "cover",
+        "realForeground": true,
+        "foreground": 0.25,
+        "standBand": [
+          0,
+          1
+        ],
+        "oneRow": false,
+        "portraitHeight": null,
+        "portraitGround": null,
+        "floorColor": null,
+        "variants": null,
+        "targets": null,
+        "goal": null
+      }
+    },
+    "targets": null,
+    "goal": null
+  },
+  "soccer-pitch": {
+    "file": "bg/real-foreground/soccerLandscape.webp",
+    "url": "/book-art/bg/real-foreground/soccerLandscape.webp",
+    "size": [
+      1774,
+      887
+    ],
+    "fit": "cover",
+    "focal": [
+      0.5,
+      0
+    ],
+    "realForeground": true,
+    "groundStart": 0.49,
+    "foreground": 0.49,
+    "ground": 0.97,
+    "standBand": [
+      0,
+      1
+    ],
+    "oneRow": false,
+    "portraitHeight": null,
+    "portraitGround": null,
+    "floorColor": null,
+    "keepOut": [
+      {
+        "name": "complete soccer goal",
+        "r": [
+          0.382,
+          0.319,
+          0.197,
+          0.131
+        ]
+      }
+    ],
+    "goal": [
+      0.382,
+      0.319,
+      0.197,
+      0.131
+    ],
+    "targets": null,
+    "variants": {
+      "portrait": {
+        "file": "bg/real-foreground/soccerPortrait.webp",
+        "url": "/book-art/bg/real-foreground/soccerPortrait.webp",
+        "size": [
+          836,
+          1881
+        ],
+        "fit": "cover",
+        "focal": [
+          0.5,
+          0
+        ],
+        "realForeground": true,
+        "groundStart": 0.28,
+        "foreground": 0.28,
+        "ground": 0.97,
+        "standBand": [
+          0,
+          1
+        ],
+        "oneRow": false,
+        "portraitHeight": null,
+        "portraitGround": null,
+        "floorColor": null,
+        "keepOut": [
+          {
+            "name": "complete soccer goal",
+            "r": [
+              0.35,
+              0.202,
+              0.3,
+              0.058
+            ]
+          }
+        ],
+        "goal": [
+          0.35,
+          0.202,
+          0.3,
+          0.058
+        ],
+        "targets": null
+      }
+    }
+  }
+}

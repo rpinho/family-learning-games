@@ -5,6 +5,7 @@
 // Learning happens inside the story ("beats"): letter keys, stepping-stones, counting, magic words he
 // reads to make things happen, spells, sharing, and the NO! beat where a friend wants to do something wrong.
 import {layoutActors} from './book-scene.mjs';
+import {selectBackground,backgroundRect,paintedTapRect} from './book-painted-layout.mjs';
 import {IDLE_REPEAT_MS,IDLE_REPEATS,shuffle} from './word-break.mjs';
 import {fetchJSON} from './save-request.mjs';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -15,13 +16,13 @@ export function rememberPlace(player,hash,storage=globalThis.localStorage){try{i
 function post(player,body,keepalive=false){return fetch('/api/book?player='+encodeURIComponent(player),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),keepalive}).then(r=>r.ok?r.json():null).catch(()=>null);}
 // Test hook: every play() attempt is recorded (clip, page, whether the browser allowed it).
 const audit=globalThis.__bookAudio||(globalThis.__bookAudio=[]);
-export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=false}){
+export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=false,capture=false}){
  const ch=book.chapter,date=book.date,art=ch.art||{backgrounds:{},actors:{},props:{}},early=ch.level==='early';
  const keys=new Set(book.collection?.keys||[]);
  let page=preview?0:Math.min(Math.max(0,book.progress?.page||0),ch.pages.length-1),alive=true,finished=false,turn=0,timers=[],shownAt=0,canNext=false,autoTimer=null;
  const later=(fn,ms)=>{const t=setTimeout(()=>{if(alive)fn();},ms);timers.push(t);return t;};
  const clearTimers=()=>{timers.forEach(clearTimeout);timers=[];};
- const root=document.createElement('section');root.className=`bk bk-${ch.level}`;root.setAttribute('aria-label',`${ch.name}'s book`);
+ const root=document.createElement('section');root.className=`bk bk-${ch.level}${preview&&capture?' bk-capture':''}`;root.setAttribute('aria-label',`${ch.name}'s book`);
  root.innerHTML=`<div class="bk-view"></div><div class="bk-chrome"><button class="bk-exit" type="button" aria-label="Back to the games">✕</button><button class="bk-hear" type="button" aria-label="Hear it again">🔊</button>${early?'<div class="bk-keys" aria-hidden="true"></div>':''}<div class="bk-dots" aria-hidden="true"></div><div class="bk-tapnext" aria-hidden="true">👉</div>${preview?'<div class="bk-preview-bar">PREVIEW · nothing is saved</div>':''}</div>`;
  main.innerHTML='';main.append(root);
  const view=root.querySelector('.bk-view'),dots=root.querySelector('.bk-dots'),tapnext=root.querySelector('.bk-tapnext');
@@ -50,12 +51,25 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   for(const f of files)fetch('/book-voice/'+f).catch(()=>{});const b=art.backgrounds[p.scene?.bg];if(b){const im=new Image();im.src=b.url;}}
  function talking(who){view.querySelectorAll('.bk-actor').forEach(a=>a.classList.toggle('talking',!!who&&a.dataset.id===who));}
  // ---- pictures ----
+ function placedActors(scene,{ground,scale}={}){
+  const W=root.clientWidth||innerWidth,H=root.clientHeight||innerHeight;
+  // Authored scene blocking: feet, height and gaze direction belong to the story.
+  // Generic/generated chapters retain the automatic layout below.
+  if(scene.composition&&W>=H)return scene.actors.map(a=>{
+   const p=scene.composition[a.id],P=art.actors[a.id]?.poses[a.pose];
+   if(!p||!P)return null;const height=p.height,width=height*P.ar*H/W;
+   return {...a,left:p.x-width/2,width,height,bottom:1-p.ground,flip:!!p.flip,depth:p.ground};
+  }).filter(Boolean);
+  const placed=layoutActors(scene.actors,art,{width:W,height:H,ground,scale});
+  if(art.backgrounds[scene.bg]?.realForeground&&W>=H){const centres=[.1,.28,.72,.91];for(let i=0;i<placed.length;i++)placed[i].left=Math.max(.02,Math.min(.98-placed[i].width,centres[i]-placed[i].width/2));}
+  return placed;
+ }
  function actorsHTML(scene,{ground=0.93,scale=1}={}){
   const W=root.clientWidth||innerWidth,H=root.clientHeight||innerHeight;
   // A train in the picture always carries the friends (all aboard!).
   if((scene.ride||scene.props.some(p=>p.id==='train'))&&art.props.train?.seats){return trainHTML(scene,W,H);}
-  return layoutActors(scene.actors,art,{width:W,height:H,ground,scale}).map((a,i)=>{const P=art.actors[a.id].poses[a.pose];
-   return `<div class="bk-actor${P.fly||a.pose==='fly'?' fly':''}" data-id="${esc(a.id)}" data-pose="${esc(a.pose)}" style="left:${(a.left*100).toFixed(2)}%;width:${(a.width*100).toFixed(2)}%;height:${(a.height*100).toFixed(2)}%;bottom:${(a.bottom*100).toFixed(2)}%;--from:${a.left+a.width/2<0.5?-40:40}vw;animation-delay:${i*0.15}s"><div style="animation-delay:${-i*0.7}s;animation-duration:${(2.2+i*0.37).toFixed(2)}s"><img src="${esc(P.url)}" alt="${esc(art.actors[a.id].name)}"></div></div>`;}).join('');
+  return placedActors(scene,{ground,scale}).map((a,i)=>{const P=art.actors[a.id].poses[a.pose];
+   return `<div class="bk-actor${P.fly||a.pose==='fly'?' fly':''}${a.depth?' bk-blocked':''}" data-id="${esc(a.id)}" data-pose="${esc(a.pose)}" style="left:${(a.left*100).toFixed(2)}%;width:${(a.width*100).toFixed(2)}%;height:${(a.height*100).toFixed(2)}%;bottom:${(a.bottom*100).toFixed(2)}%;${a.depth?'z-index:'+Math.round(a.depth*100)+';':''}--from:${a.left+a.width/2<0.5?-40:40}vw;animation-delay:${i*0.15}s"><div style="animation-delay:${-i*0.7}s;animation-duration:${(2.2+i*0.37).toFixed(2)}s"><img style="${a.flip?'transform:scaleX(-1)':''}" src="${esc(P.url)}" alt="${esc(art.actors[a.id].name)}"></div></div>`;}).join('');
  }
  function trainHTML(scene,W,H){
   const T=art.props.train,h=Math.min(T.h*1.2,0.4),w=h*T.ar*H/W,left=(1-w)/2,bottom=0.06;
@@ -75,7 +89,11 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
   const n=burst?18:10;return `<div class="bk-fx${burst?' burst':''}">${Array.from({length:n},(_,i)=>`<i style="left:${burst?50:(8+Math.random()*84).toFixed(1)}%;top:${burst?45:(6+Math.random()*60).toFixed(1)}%;font-size:${(18+Math.random()*26).toFixed(0)}px;animation-delay:${(Math.random()*(burst?0.2:2.4)).toFixed(2)}s;--dx:${((Math.random()-.5)*80).toFixed(0)}vw;--dy:${((Math.random()-.5)*70).toFixed(0)}vh">${set}</i>`).join('')}</div>`;
  }
  function burst(fx='sparkles'){view.querySelector('.bk-page')?.insertAdjacentHTML('beforeend',fxHTML(fx,true));view.querySelectorAll('.bk-actor').forEach(a=>{a.classList.remove('hop');void a.offsetWidth;a.classList.add('hop');});}
- function cheer(){const pg=ch.pages[page];if(!pg)return;for(const el of view.querySelectorAll('.bk-actor')){const A=art.actors[el.dataset.id];const P=A?.poses.cheer||A?.poses.happy;if(P)el.querySelector('img').src=P.url;}}
+ function cheer(){const pg=ch.pages[page];if(!pg)return;const b=backgroundFor(pg),beat=pg.kind==='beat';
+  const scene={...pg.scene,actors:pg.scene.actors.map(a=>({...a,pose:pg.scene.celebration?.[a.id]|| (art.actors[a.id]?.poses.cheer?'cheer':art.actors[a.id]?.poses.happy?'happy':a.pose)}))};
+  const placed=placedActors(scene,{ground:b?.realForeground ? .96 : beat ? .64 : .93,scale:beat ? .75 : 1});
+  for(const a of placed){const el=view.querySelector(`.bk-page:last-child .bk-actor[data-id="${CSS.escape(a.id)}"]`),P=art.actors[a.id].poses[a.pose];if(el&&P){el.querySelector('img').src=P.url;el.dataset.pose=a.pose;Object.assign(el.style,{left:a.left*100+'%',width:a.width*100+'%',height:a.height*100+'%'});}}
+ }
  function renderDots(){dots.innerHTML=ch.pages.map((_,i)=>`<i class="${i<page?'done':i===page?'now':''}"></i>`).join('');const k=root.querySelector('.bk-keys');if(k)k.innerHTML=[...keys].map(l=>`<b>🔑${esc(l)}</b>`).join('');}
  function setNext(on){canNext=on;tapnext.classList.toggle('on',on);}
  // ---- navigation: tap anywhere / swipe; each turn speaks the new page at once ----
@@ -95,21 +113,42 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  root.addEventListener('pointermove',e=>parallax(e.clientX/innerWidth-.5,e.clientY/innerHeight-.5),{passive:true});
  const tilt=e=>{if(e.gamma!=null)parallax(Math.max(-1,Math.min(1,e.gamma/30))/2,Math.max(-1,Math.min(1,(e.beta-45)/30))/2);};addEventListener('deviceorientation',tilt);
  function page_(){return ch.pages[page];}
+ function backgroundFor(p){return selectBackground(art.backgrounds[p.scene.bg],{width:root.clientWidth,height:root.clientHeight});}
  function pageFrame(p,{beat=false}={}){
-  const b=art.backgrounds[p.scene.bg];
-  const ground=beat?0.64:0.93,scale=beat?0.72:1;
+  const b=backgroundFor(p);
+  const ground=b?.realForeground?0.96:beat?0.64:0.93,scale=beat?(b?.realForeground?0.75:0.72):1;
   const cap=p.caption&&!p.magic&&!(p.beat&&['teach-letter'].includes(p.beat.kind))?`<button class="bk-caption" type="button">${esc(p.caption)}</button>`:'';
   view.querySelector('.bk-page')?.classList.add('out');
   const old=view.querySelector('.bk-page');if(old)setTimeout(()=>old.remove(),350);
-  const el=document.createElement('div');el.className='bk-page';
+  const el=document.createElement('div');el.className='bk-page';el.dataset.page=String(page);el.dataset.scene=p.scene.bg;
   el.innerHTML=`${b?`<img class="bk-bg" src="${esc(b.url)}" alt="">`:''}<div class="bk-layer">${propsHTML(p.scene,{ground,play:!!p.action||p.beat?.kind==='kick-letter'})}${actorsHTML(p.scene,{ground,scale})}</div>${fxHTML(p.scene.fx)}${cap}<div class="bk-play"></div>`;
   view.append(el);
+  if(b?.realForeground){const img=el.querySelector('.bk-bg');img.style.animation='none';img.style.translate='none';img.style.objectPosition=(b.focal||[.5,.5]).map(v=>`${v*100}%`).join(' ');}
+  if(p.scene.fx==='gate-open')later(()=>{if(el.isConnected)gateOpen(el,p);},500);
   el.querySelector('.bk-caption')?.addEventListener('click',()=>{const l=(p.say||[]).find(x=>x.text.toLowerCase().includes(p.caption.toLowerCase()));if(l)void speak(l);});
   return el;
  }
+ // Animate the painted door itself; the reveal is always an authored library prop.
+ function gateOpen(el,p){
+  const b=backgroundFor(p),img=el.querySelector('.bk-bg');if(!b?.door||!img)return;
+  const W=root.clientWidth,H=root.clientHeight,R=backgroundRect(b,{width:W,height:H});
+  const [x,y,w,h]=b.door,d={x:R.x+x*R.w,y:R.y+y*R.h,w:w*R.w,h:h*R.h};
+  const g=document.createElement('div');g.className='bk-gate';Object.assign(g.style,{left:d.x+'px',top:d.y+'px',width:d.w+'px',height:d.h+'px'});
+  const half=side=>`<div class="bk-door ${side}" style="background-image:url('${esc(b.url)}');background-size:${R.w}px ${R.h}px;background-position:${-(d.x-R.x)-(side==='r'?d.w/2:0)}px ${-(d.y-R.y)}px"></div>`;
+  const prop=art.props[p.gateReveal||'treasure-chest'];
+  g.innerHTML=`<div class="bk-gate-in">${prop?`<img class="bk-gate-reveal" src="${esc(prop.url)}" alt="a treasure chest">`:''}</div>${half('l')}${half('r')}`;
+  el.querySelector('.bk-layer').before(g);
+  const N=Math.max(1,Math.min(12,Number(p.gateKeys)||3));
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){g.classList.add('open','still');return;}
+  for(let i=0;i<N;i++)later(()=>{
+   const k=document.createElement('div');k.className='bk-gate-key';k.textContent='🗝️';Object.assign(k.style,{left:W-60+'px',top:'40px'});el.append(k);
+   requestAnimationFrame(()=>{k.style.transform=`translate(${d.x+d.w*(.25+.5*(i+.5)/N)-(W-60)}px,${d.y+d.h*.62-40}px) translate(-50%,-50%) rotate(${i*25-25}deg)`;});
+  },400+i*360);
+  later(()=>{g.classList.add('open');el.querySelectorAll('.bk-gate-key').forEach(k=>k.classList.add('gone'));cheer();},400+N*360+450);
+ }
  function replay(){const p=page_();const my=++turn;void speakAll(p.say,my);}
  function cover(){
-  page=-1;const p=ch.pages[0],b=art.backgrounds[ch.cover?.scene?.bg||p.scene.bg];
+  page=-1;const p=ch.pages[0],b=selectBackground(art.backgrounds[ch.cover?.scene?.bg||p.scene.bg],{width:root.clientWidth,height:root.clientHeight});
   const hero=p.scene.actors.find(a=>a.id===player)||p.scene.actors[0];const H=hero&&art.actors[hero.id]?.poses[hero.pose];
   view.innerHTML=`<div class="bk-page">${b?`<img class="bk-bg" src="${esc(b.url)}" alt="">`:''}<div class="bk-cover"><div class="card"><div class="kicker">${esc(ch.name)}'s Book · Chapter ${esc(ch.number)}</div><h1>${esc(ch.title)}</h1>${H?`<img src="${esc(H.url)}" alt="" style="height:min(22vh,180px)">`:''}<br><button class="bk-open" type="button" aria-label="Open the book">📖</button></div></div></div>`;
   dots.innerHTML='';renderDots();
@@ -133,7 +172,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
    if(!await speakAll(p.say,my))return;
    if(p.action){await act(el,p,my);if(my!==turn)return;}
    if(p.magic){await magic(el,p,my);if(my!==turn)return;}
-   setNext(true);later(()=>{if(my===turn&&canNext)go(page+1);},AUTO_ADVANCE_MS);
+   setNext(true);later(()=>{if(my===turn&&canNext)go(page+1);},p.scene.fx==='gate-open'?6500:AUTO_ADVANCE_MS);
   })();
  }
  // ---- he plays: actions that move the story; the narration reacts only after he acts ----
@@ -260,15 +299,26 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
     return;}
    case 'count':{
     await speak(b.spoken);if(my!==turn)return;
-    const box=document.createElement('div');box.className='bk-things';el.append(box);const P=art.props[b.thing];
-    const spots=shuffle(Array.from({length:b.n},(_,i)=>i));let counted=0;
-    for(let i=0;i<b.n;i++){const t=document.createElement('button');t.type='button';t.className='bk-thing';const k=spots[i];
+    const BG=backgroundFor(p),targets=b.painted?BG?.targets?.[b.targetGroup||b.thing]:null;
+    const n=targets?.length||b.n,options=targets?[n-1,n,n+1]:b.options,answer=targets?n:b.answer;
+    const box=document.createElement('div');box.className=targets?'bk-painted-things':'bk-things';el.append(box);const P=art.props[b.thing];
+    const spots=shuffle(Array.from({length:n},(_,i)=>i));let counted=0;
+    for(let i=0;i<n;i++){const t=document.createElement('button');t.type='button';t.className=targets?'bk-painted-thing':'bk-thing';const k=spots[i];
      const cols=Math.ceil(Math.sqrt(b.n*1.6)),x=(k%cols+0.5)/cols*100+(Math.random()-.5)*6,y=(Math.floor(k/cols)+0.5)/Math.ceil(b.n/cols)*100+(Math.random()-.5)*8;
      t.style.cssText=`left:${x}%;top:${y}%;width:clamp(56px,13vmin,120px);height:clamp(56px,13vmin,120px);font-size:clamp(44px,10vmin,96px)`;
      t.innerHTML=P?`<img src="${esc(P.url)}" alt="">`:`<span>${esc(b.emoji)}</span>`;
-     t.onclick=async()=>{if(t.dataset.n||my!==turn)return;counted++;t.dataset.n=counted;t.insertAdjacentHTML('beforeend',`<b>${counted}</b>`);t.classList.add('counted');await speak(ch.ui.numbers[String(counted)]);
-      if(counted===b.n&&my===turn){await speak(b.ask);if(my!==turn)return;
-       choices(play,b.options,{cls:'ball',answer:b.answer,prompt:b.ask,my,onRight:async m=>{burst('confetti');await speak(b.done);if(my===turn)done({misses:m});}});}};
+     if(targets){const R=backgroundRect(BG,{width:root.clientWidth,height:root.clientHeight}),[x,y,w,h]=targets[i].r;
+      const tap=paintedTapRect({x:R.x+x*R.w,y:R.y+y*R.h,w:w*R.w,h:h*R.h},{width:root.clientWidth,height:root.clientHeight});
+      t.style.cssText=`left:${tap.x}px;top:${tap.y}px;width:${tap.w}px;height:${tap.h}px`;t.innerHTML='';t.setAttribute('aria-label',targets[i].label);t.paintedCentre={x:R.x+(x+w/2)*R.w,y:R.y+(y+h/2)*R.h};}
+     t.onclick=async e=>{
+      // Generous phone finger boxes overlap. The nearest painted stone owns a pointer tap;
+      // keyboard activation keeps the focused button, and repeat taps never count another stone.
+      if(targets&&e.detail>0){const r=el.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+       const nearest=[...box.children].reduce((a,b)=>Math.hypot(b.paintedCentre.x-x,b.paintedCentre.y-y)<Math.hypot(a.paintedCentre.x-x,a.paintedCentre.y-y)?b:a);
+       if(nearest!==t){nearest.click();return;}}
+      if(t.dataset.n||my!==turn)return;counted++;t.dataset.n=counted;t.insertAdjacentHTML('beforeend',`<b>${counted}</b>`);t.classList.add('counted');await speak(ch.ui.numbers[String(counted)]);
+      if(counted===n&&my===turn){await speak(b.ask);if(my!==turn)return;
+       choices(play,options,{cls:'ball',answer,prompt:b.ask,my,onRight:async m=>{burst('confetti');cheer();await speak(b.done);if(my===turn)done({misses:m});}});}};
      box.append(t);}
     return;}
    case 'signs':{

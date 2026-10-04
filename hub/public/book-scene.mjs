@@ -4,7 +4,7 @@
 //   {backgrounds:{id:{file,about}}, actors:{id:{name,h,poses:{pose:{file,ar}}}}, props:{id:{h,file,ar,about,seats?}}}
 // h = height as a share of the scene height; ar = width/height of the image. A household keeps its own
 // (private) library next to its chapters; this repository ships a small generic one (book-art/).
-export const FX=['sparkles','stars','confetti','hearts','bubbles','none'];
+export const FX=['sparkles','stars','confetti','hearts','bubbles','gate-open','none'];
 export const CARRIERS=['ball','egg','bubble','shield','sign','star'];
 export const MAX_ACTORS=4,MAX_PROPS=3;
 const clean=s=>String(s??'').trim().toLowerCase();
@@ -34,10 +34,11 @@ export function artFor(pages,lib,base='/book-art/'){
  const out={backgrounds:{},actors:{},props:{}};
  const url=f=>base+f;
  for(const p of pages){const s=p.scene;if(!s)continue;
-  const b=lib.backgrounds[s.bg];if(b)out.backgrounds[s.bg]={url:url(b.file),...(b.goal?{goal:b.goal}:{})};
+  const b=lib.backgrounds[s.bg];if(b)out.backgrounds[s.bg]={...b,url:url(b.file),...(b.variants?{variants:Object.fromEntries(Object.entries(b.variants).map(([key,v])=>[key,{...v,url:url(v.file)}]))}:{})};
   // Every pose of an actor in the picture (the player switches poses as he plays: kick, cheer, dive, run).
   for(const a of s.actors){const A=lib.actors[a.id];if(!A||out.actors[a.id])continue;out.actors[a.id]={name:A.name||a.id,h:A.h||0.4,poses:Object.fromEntries(Object.entries(A.poses).map(([k,P])=>[k,{url:url(P.file),ar:P.ar||0.6,...(P.fly?{fly:true}:{})}]))};}
-  for(const pr of [...s.props,...(p.carrierProp?[{id:p.carrierProp}]:[])]){const P=lib.props[pr.id];if(P)out.props[pr.id]={url:url(P.file),h:P.h||0.12,ar:P.ar||1,...(P.seats?{seats:P.seats}:{})};}
+  const reveal=p.gateReveal||(s.fx==='gate-open'?'treasure-chest':null);
+  for(const pr of [...s.props,...(p.carrierProp?[{id:p.carrierProp}]:[]),...(reveal?[{id:reveal}]:[])]){const P=lib.props[pr.id];if(P)out.props[pr.id]={url:url(P.file),h:P.h||0.12,ar:P.ar||1,...(P.seats?{seats:P.seats}:{})};}
  }
  return out;
 }
