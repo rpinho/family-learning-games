@@ -23,14 +23,14 @@ Drag, trace, steer, aim, and think ahead. Pick an activity and a manageable chal
 <table>
 <tr>
 <td colspan="2" valign="top">
-<img src="docs/media/world-talk.png" alt="Castle Kingdom: a fictional explorer walks to a painted guide; a goal ribbon and conversation explain the next quest" width="65%"> <img src="docs/media/world-map.png" alt="Castle Kingdom: a partially restored map shows visited places and unexplored rooms behind fog" width="33%"><br>
+<img src="docs/media/world-talk.png" alt="Castle Kingdom: an original painted fox walks to a mapmaker in a lush castle garden; a goal ribbon and conversation explain the next quest" width="65%"> <img src="docs/media/world-map.png" alt="Castle Kingdom: a partially restored map shows visited places and unexplored rooms behind fog" width="33%"><br>
 <strong>The Castle Kingdom — a world to explore together.</strong><br>
 Walk through painted places, talk to friends, collect tools, and solve little challenges. The map reveals places as you visit; restoring its three pieces opens the castle treasure. A public-safe, memory-only preview is included: run <code>node docs/showcase/demo-server.mjs</code>, then open <code>http://localhost:5710/world?player=hero</code>. This preview is separate from the standard hub installation.
 </td>
 </tr>
 <tr>
 <td colspan="2" valign="top">
-<a href="book/SCHEMA.md"><img src="docs/media/book-story.png" alt="The Book: painted castle doors open onto a treasure chest with an original fictional cast" width="100%"><br> <img src="docs/media/book-count.png" alt="The Book: tap twelve painted stepping stones inside a volcanic crater" width="49%"> <img src="docs/media/book-choice.png" alt="The Book: help an original plush fox correct a sum in a painted treehouse town" width="49%"></a><br>
+<a href="book/SCHEMA.md"><img src="docs/media/book-story.png" alt="The Book: a large original mapmaker, castle garden, opening treasure doors and a visible reading puzzle" width="100%"><br> <img src="docs/media/book-count.png" alt="The Book: tap twelve painted stepping stones inside a volcanic crater" width="49%"> <img src="docs/media/book-choice.png" alt="The Book: a painted treehouse town with a large sum board and visible number choices" width="49%"></a><br>
 <strong>The Book — play inside the story.</strong><br>
 The optional nightly writing pipeline creates an illustrated chapter. Explore painted worlds with the fictional cast. Tap the volcano’s stones, watch keys open the castle doors, and help a friend put the story right. Letter kicks and magic words are also supported. Grown-ups can preview a chapter without changing progress.
 </td>
@@ -98,7 +98,7 @@ Aim for the spoken letter, number, pattern, times-table answer or next spelling 
 
 </table>
 
-The Book uses original painted scenes and a fictional boy, older sister, guide and plush fox in this edition. Its nightly generation and optional local narration need separate setup; <code>npm run play</code> starts the games and chapter player, without automatically writing chapters. See the <a href="book/SCHEMA.md">chapter and picture-library guide</a>. The public player supports tapping painted objects and keys flying into opening castle doors, with a treasure chest reveal. Branching-ending helpers remain separate from public playback. These captures show this public build; <a href="docs/showcase/README.md#edition-differences--october-3-2026">edition differences</a> are documented.
+The showcase uses original fantasy paintings, an independently invented mapmaker and a plush fox; no child stand-ins appear in these captures. Its nightly generation and optional local narration need separate setup; <code>npm run play</code> starts the games and chapter player, without automatically writing chapters. See the <a href="book/SCHEMA.md">chapter and picture-library guide</a>. The public player supports tapping painted objects and keys flying into opening castle doors, with a treasure chest reveal. Branching-ending helpers remain separate from public playback. These captures use the current public player and an authored fictional chapter; <a href="docs/showcase/README.md#edition-differences">edition differences</a> are documented.
 
 *Actual gameplay from an isolated, generic Admin demo. Click a card for its game guide. No children's profiles or drawings are shown; the house doodle is newly scripted; screenshots are not evidence of learning outcomes.*
 

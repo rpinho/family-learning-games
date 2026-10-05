@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createWorldModel} from './world-model.mjs';
+import {readFile} from 'node:fs/promises';
+import {demoChapter} from './demo-chapter.mjs';
+import {showcaseArt} from './showcase-art.mjs';
 test('a fictional explorer restores the map through real challenge rules and opens the castle',()=>{
  const m=createWorldModel();let s=m.freshWorld();
  const act=b=>{s=m.worldAction(s,b).state;};
@@ -22,4 +25,17 @@ test('a fictional explorer restores the map through real challenge rules and ope
 test('the public definition references only original fictional cast IDs',()=>{
  const {definition}=createWorldModel();const cast=new Set(['hero','bo','grown-up','pip']);
  for(const room of Object.values(definition.ROOMS))assert.ok(cast.has(room.friend));
+});
+test('the documentation chapter uses playable painted targets and no substitute children',async()=>{
+ const library=showcaseArt(JSON.parse(await readFile(new URL('../../hub/public/book-art/library.json',import.meta.url))));
+ const ch=demoChapter(library);
+ for(const p of ch.pages)assert.ok(p.scene.actors.every(a=>['grown-up','pip'].includes(a.id)));
+ const count=ch.pages.find(p=>p.beat?.kind==='count');
+ const targets=ch.art.backgrounds[count.scene.bg].targets[count.beat.painted];
+ assert.equal(targets.length,count.beat.n,'the current player resolves painted targets by group name');
+ assert.equal(count.scene.actors.length,0,'the scene and counting puzzle carry the volcano page');
+ assert.match(ch.art.actors['grown-up'].poses.point.url,/guide-map.webp$/);
+ assert.match(ch.art.backgrounds['castle-gate'].url,/castle-garden.webp$/);
+ assert.equal(ch.art.actors.hero,undefined);
+ assert.equal(ch.art.actors.bo,undefined);
 });
