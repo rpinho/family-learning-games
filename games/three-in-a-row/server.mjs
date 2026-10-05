@@ -5,8 +5,8 @@ import {homedir,hostname,networkInterfaces} from 'node:os';
 import {fileURLToPath} from 'node:url';
 import {action,freshProfile,publicState,PLAYERS,VERSION} from './engine.mjs';
 import {literacyFrom,DEFAULT_TRACK} from './dist/word-break.mjs';
-const root=fileURLToPath(new URL('./dist/',import.meta.url)),data=process.env.TTT_DATA||join(homedir(),'.local/share/family-learning-games/three-in-a-row'),port=Number(process.env.PORT||4323);
-const letterData=process.env.LETTER_QUEST_DATA||join(homedir(),'.local/share/family-learning-games/letter-quest');
+const root=fileURLToPath(new URL('./dist/',import.meta.url)),data=process.env.TTT_DATA||join(homedir(),'.local/share/three-in-a-row'),port=Number(process.env.PORT||4323);
+const letterData=process.env.LETTER_QUEST_DATA||join(homedir(),'.local/share/letter-quest');
 // Read-only look at Letter Quest progress so word breaks match each child.
 const literacy=async id=>{let save=null;try{save=JSON.parse(await readFile(join(letterData,id+'.json'),'utf8'));}catch{}return literacyFrom(save,DEFAULT_TRACK[id]||'mixed');};
 await mkdir(join(data,'logs'),{recursive:true,mode:0o700});let queue=Promise.resolve(),logError=null;
@@ -18,15 +18,15 @@ const BASE_HOSTS=['localhost','127.0.0.1'];let hostCache=null,hostCacheAt=0;
 function allowedHosts(){if(hostCache&&Date.now()-hostCacheAt<5000)return hostCache;const me=hostname().toLowerCase(),short=me.replace(/\.local$/,'');hostCacheAt=Date.now();return hostCache=new Set([...BASE_HOSTS.map(h=>String(h).toLowerCase()),me,short,short+'.local',...(process.env.FAMILY_EXTRA_HOSTS||'').split(/[\s,]+/).filter(Boolean).map(h=>h.toLowerCase()),...Object.values(networkInterfaces()).flat().filter(Boolean).map(i=>i.family==='IPv6'||i.family===6?'['+i.address.toLowerCase()+']':i.address)]);}
 const load=async id=>{try{return JSON.parse(await readFile(join(data,id+'.json'),'utf8'));}catch(e){if(e.code==='ENOENT')return freshProfile(id);throw e;}};
 const reply=(res,code,body)=>{res.writeHead(code,{'Content-Type':'application/json'});res.end(JSON.stringify(body));};
-const files={'/':'index.html','/word-break.mjs':'word-break.mjs','/app.mjs':'app.mjs','/style.css':'style.css','/icon.svg':'icon.svg','/manifest.webmanifest':'manifest.webmanifest','/icon-192.png':'icon-192.png','/icon-512.png':'icon-512.png'};
-const types={'.html':'text/html','.mjs':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json','.json':'application/json','.wav':'audio/wav'};
+const files={'/calm.css':'calm.css','/calm-sound.mjs':'calm-sound.mjs','/water.m4a':'water.m4a','/':'index.html','/word-break.mjs':'word-break.mjs','/app.mjs':'app.mjs','/style.css':'style.css','/icon.svg':'icon.svg','/manifest.webmanifest':'manifest.webmanifest','/icon-192.png':'icon-192.png','/icon-512.png':'icon-512.png'};
+const types={'.m4a':'audio/mp4','.html':'text/html','.mjs':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json','.json':'application/json','.wav':'audio/wav'};
 const server=http.createServer(async(req,res)=>{
  res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','same-origin');
  let u;try{u=new URL(req.url,'http://'+req.headers.host);if(!allowedHosts().has(u.hostname.toLowerCase())||req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host||req.headers['sec-fetch-site']==='cross-site')return reply(res,403,{error:'Use the home-network address.'});}catch{return reply(res,400,{error:'Invalid address.'});}
  try{
  if(u.pathname==='/health')return reply(res,200,{ok:true,version:VERSION,diagnostics:{ok:!logError,error:logError}});
  if(u.pathname==='/api/state'||u.pathname==='/api/action'||u.pathname==='/api/events'||u.pathname==='/api/word-break'){
-  const player=u.searchParams.get('player');if(!Object.hasOwn(PLAYERS,player))return reply(res,400,{error:'Choose a player.'});
+  const player=u.searchParams.get('player');if(!/^(?:(?:beginner|explorer)(?:_[1-9]\d{0,3})?|admin)$/.test(player))return reply(res,400,{error:'Choose a player.'});
   if(u.pathname==='/api/word-break'){if(req.method!=='GET')return reply(res,405,{error:'Read only.'});return reply(res,200,await literacy(player));}
   if(req.method==='GET'&&u.pathname==='/api/state'){queue=queue.catch(()=>{}).then(async()=>{try{reply(res,200,publicState(await load(player)));}catch{reply(res,500,{error:'Could not load. Try Refresh.'});}});return;}
   if(req.method!=='POST'||u.pathname==='/api/state')return reply(res,405,{error:'Unsupported method.'});

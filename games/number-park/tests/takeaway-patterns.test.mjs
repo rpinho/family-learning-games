@@ -14,12 +14,12 @@ test('Take away states the exact quantity, remains small and survives reload for
 test('patterns have a recoverable rule, valid missing/next pictures and twelve varied picture sets',()=>{
  const p=freshProfile('beginner'),families=new Set(),themes=new Set(),unique=new Set();
  for(let i=0;i<600;i++){p.revision=i;const q=makeQuestion(p,'pattern',i),period=PATTERN_UNITS[q.family].length;families.add(q.family);themes.add(q.theme);unique.add(q.fingerprint);assert.ok(q.sequence.length>=2*period&&q.sequence.length<=10);for(let j=0;j<q.sequence.length;j++)if(j!==q.blank)assert.equal(q.sequence[j],q.unit[(j+q.phase)%period]);assert.equal(q.answer,q.unit[((['missing','repair'].includes(q.mode)?q.blank:q.sequence.length)+q.phase)%period]);assert.equal(q.options.length,4);assert.equal(new Set(q.options).size,4);assert.ok(q.options.includes(q.answer));assert.ok(new Set(q.sequence).size>=2);}
- assert.equal(families.size,7);assert.equal(themes.size,12);assert.ok(unique.size>100);
+ assert.equal(families.size,10);assert.equal(themes.size,12);assert.ok(unique.size>100);
 });
-test('patterns adapt from saved independent outcomes and ease after errors/help, without changing the numeric ceiling',()=>{
- const p=freshProfile('beginner'),put=(ok,helped=false)=>p.history.push({ok,helped,question:{patternVersion:2}});
- assert.equal(patternLevel(p),2);for(let i=0;i<5;i++)put(true);assert.equal(patternLevel(p),3);
- for(let i=0;i<200;i++){p.revision=i;const q=makeQuestion(p,'pattern',i*6);assert.equal(q.mode,'pair');const n=q.sequence.length;assert.equal(q.answer,[q.unit[(n+q.phase)%q.unit.length],q.unit[(n+q.phase+1)%q.unit.length]].join(' '));assert.equal(new Set(q.options).size,4);assert.ok(q.options.includes(q.answer));}
- put(true,true);put(false);assert.equal(patternLevel(p),2);put(false);put(false);assert.equal(patternLevel(p),1);assert.equal(makeQuestion(p,'pattern').mode,'next');assert.equal(p.ceiling,13);
- assert.equal(patternLevel(freshProfile('admin')),2);
+test('patterns adapt from new saved outcomes, preserve old history and keep the numeric ceiling',()=>{
+ const p=freshProfile('beginner'),put=(ok,helped=false)=>p.history.push({ok,helped,question:{patternVersion:3}});
+ p.history.push(...Array.from({length:10},()=>({ok:false,question:{patternVersion:2}})));
+ assert.equal(patternLevel(p),4);for(let i=0;i<5;i++)put(true);assert.equal(patternLevel(p),5);
+ put(true,true);assert.equal(patternLevel(p),5);put(false);put(false);assert.equal(patternLevel(p),4);
+ assert.equal(p.ceiling,13);assert.equal(patternLevel(freshProfile('admin')),2);
 });

@@ -8,7 +8,7 @@ test('Server saves separate profiles, rejects repeated arrows and never serves p
  assert.equal((await post({...input,motion:undefined})).status,409);
  p=await(await post(input)).json();assert.equal(p.round.score,10);assert.equal((await post(input)).status,409);assert.equal(JSON.parse(await readFile(join(data,'admin.json'),'utf8')).shots,1);
  const other=await(await fetch(url+'/api/state?player=beginner')).json();assert.equal(other.shots,0);assert.equal(other.revision,0);
- for(const path of ['/','/icon.svg','/icon-192.png','/icon-512.png','/manifest.webmanifest','/app.mjs','/engine.mjs','/challenges.mjs','/style.css'])assert.equal((await fetch(url+path)).status,200,path);
+ for(const path of ['/','/icon.svg','/icon-192.png','/icon-512.png','/manifest.webmanifest','/app.mjs','/engine.mjs','/challenges.mjs','/style.css','/calm.css','/calm-sound.mjs','/calm-atmosphere.mjs','/calm-water.m4a'])assert.equal((await fetch(url+path)).status,200,path);
  assert.equal((await fetch(url+'/api/state?player=admin',{headers:{Origin:'https://example.com'}})).status,403);for(const path of ['/admin.json','/logs/today.jsonl','/../server.mjs'])assert.equal((await fetch(url+path)).status,404);
  const log=await readFile(join(data,'logs',new Date().toISOString().slice(0,10)+'.jsonl'),'utf8');assert.ok(log.includes('"type":"action"'));assert.ok(log.includes('"type":"rejected"'));
 });

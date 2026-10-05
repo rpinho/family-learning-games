@@ -52,7 +52,7 @@ export const READING_STORIES=[
   ['A snail moves slowly. A rabbit runs fast. The rabbit reaches the tree first.','Who reaches the tree last?','snail',['rabbit','both together']],
   ['The brush was beside the cup. Sam moves it into a box. Then he shuts the box.','Where is the brush now?','in the box',['beside the cup','under the chair']],
   ['The shark swims past a ship. A small fish hides behind a rock until the shark is gone.','Why does the fish hide?','to stay safe',['to catch the shark','to sail the ship']],
-  ['Helper gives Admin a map. Admin follows the map to the park. Explorer meets him there.','Where does Explorer meet Admin?','park',['shop','beach']]
+  ['Ada gives Alex a map. Alex follows the map to the park. Explorer meets him there.','Where does Explorer meet Alex?','park',['shop','beach']]
  ]
 ];
 export const READING_LINES={intro:'New mission! Words do things. Let us find out what they can do.',correct:'You solved it! That word just opened a new door.',wrong:'Let us look again. You can hear a clue or try another answer.',hint:'Here is some help. Learning together counts, too.',saved:'Your writing is saved. Show it to a grown-up. I do not grade your handwriting here.',done:'Mission complete! My mustache would like to borrow your brain.',skip:'A different challenge is a good idea. On we go.'};
@@ -70,8 +70,8 @@ export function readingState(p){return p.reading||{run:0,step:0,phase:'lobby',fo
 export function readingQuestion(p){
  const s=readingState(p);if(s.question)return s.question;
  const type=s.focus==='mix'?READING_TYPES[s.step%7][0]:s.focus,level=s.skills[type]?.level||1;
- const index=s.focus==='mix'?s.run-1:(s.run-1)*7+s.step,r=random(s.run*7919+s.step*997+(p.id==='beginner'?31:0));
- const pool=READING_WORDS[level-1],pair=pool[(index+(p.id==='beginner'?3:0)+(type==='dictation'?4:type==='write'?7:0))%pool.length],base={id:`reading1:${s.run}:${s.step}`,type,level};
+ const index=s.focus==='mix'?s.run-1:(s.run-1)*7+s.step,r=random(s.run*7919+s.step*997+(String(p.id).split('_')[0]==='beginner'?31:0));
+ const pool=READING_WORDS[level-1],pair=pool[(index+(String(p.id).split('_')[0]==='beginner'?3:0)+(type==='dictation'?4:type==='write'?7:0))%pool.length],base={id:`reading1:${s.run}:${s.step}`,type,level};
  if(['decode','dictation','write'].includes(type)){
   const [word,picture]=pair,tiles=level===3?[...'abcdefghijklmnopqrstuvwxyz']:shuffle([...new Set([...word,...shuffle([...'abcdefghijklmnopqrstuvwxyz'],r).slice(0,4)])],r);
   return {...base,word,picture,answer:word,tiles,prompt:type==='decode'?prompts.decode:type==='write'?`Write the word ${word}. Say it as you write.`:`Build the word ${word}. Listen, then spell it.`,helpLine:`The word is ${word}.`,options:shuffle([pair,...shuffle(pool.filter(w=>w[0]!==word),r).slice(0,level===1?2:3)],r).map(([value,picture])=>({value,picture}))};

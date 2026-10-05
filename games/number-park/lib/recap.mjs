@@ -1,5 +1,5 @@
 // End-of-round recap: one or two short sentences of what the child did, shown
-// and spoken once when a six-question round finishes. Borrowed from Sage
+// and spoken once when a six-question round finishes. Borrowed from guided practice
 // Teacher's session wrap-up, kept short on purpose (a parent turned that
 // tutor's verbosity down). Every sentence comes from a finite list so the
 // voice clips can be generated ahead of time.
@@ -8,6 +8,7 @@ const plural=(n,one,many=one+'s')=>`${n} ${n===1?one:many}`;
 // Main sentence per game. Explorer (older) games first, then the little games.
 const MAIN={
  balance:n=>`You solved ${plural(n,'balance puzzle')}.`,
+ 'balance-k':n=>`You solved ${plural(n,'balance puzzle')}.`,
  multiply:n=>`You solved ${plural(n,'times-table fact')}.`,
  factor:n=>`You found ${plural(n,'missing factor')}.`,
  sums:n=>`You solved ${plural(n,'sum')}.`,
@@ -34,7 +35,7 @@ export const WIND_DOWN_LINE='All done for today. See you next time!';
 // Loona the puppy (Bo the bear before 2026-09-27) only ever gains: every correct answer is one treat.
 export const FEEDER={name:'Loona',icon:'🐶',treat:'🦴'};
 export const feedLine=n=>`${FEEDER.name} ate ${plural(n,'treat','treats')}!`;
-export const feeds=player=>player!=='explorer';
+export const feeds=player=>String(player).split('_')[0]!=='explorer';
 const hasZero=q=>Array.isArray(q?.target)&&q.target.some((n,i)=>n===0&&q.target.slice(0,i).some(v=>v>0));
 // entries: this round's history rows (one per finished question).
 export function roundRecap({game,advanced,correct,independent,entries=[],player,levelUps=0,windDown=false}){

@@ -7,19 +7,19 @@ import {allVoiceLines} from '../public/dialogue.mjs';
 import {briefLine} from '../public/voice.mjs';
 const answer=(p,c)=>applyAttempt(p,c,c.type==='trace'?{strokes:c.paths,durationMs:4000,helped:false}:{answer:expectedAnswer(c),durationMs:4000,helped:false});
 const finishLesson=p=>{for(let i=0;i<60;i++){const r=answer(p,nextChallenge(p));if(r.lesson)return r;}throw Error('no lesson');};
-test('each finished lesson adds one beat to Bo’s story, with the letter he practised',()=>{
+test('each finished lesson adds one beat to Beginner and Bo’s story, with the letter he practised',()=>{
  const voiced=new Set(allVoiceLines());
  for(const line of [...boStoryVoiceLines(),REST_LINE,REST_COACH]){assert.ok(voiced.has(line),line);assert.equal(briefLine(line),line,'one sentence per spoken line: '+line);}
  const p=freshProfile('beginner');const r=finishLesson(p);
  assert.ok(r.story);assert.equal(p.boStory.count,1);assert.equal(r.story.lesson,p.completed);
- assert.equal(r.story.lines[0],'Bo set off from the cozy cave.');
- if(r.story.letter)assert.equal(r.story.lines[1],`Bo found the letter ${r.story.letter}.`);
+ assert.equal(r.story.lines[0],'Beginner and Loona set off from the cozy doghouse.');
+ if(r.story.letter)assert.equal(r.story.lines[1],`They found the letter ${r.story.letter}.`);
  for(const line of r.story.lines)assert.ok(voiced.has(line),line);
- const r2=finishLesson(p);assert.equal(r2.story.lines[0],'Bo walked into the berry forest.');assert.equal(p.boStory.count,2);
- for(let i=0;i<BO_PLACES.length;i++)finishLesson(p);assert.equal(p.boStory.beats.at(-1).lines[0],'Bo walked into the berry forest.','the walk loops');
+ const r2=finishLesson(p);assert.equal(r2.story.lines[0],'Beginner and Loona walked into the berry forest.');assert.equal(p.boStory.count,2);
+ for(let i=0;i<BO_PLACES.length;i++)finishLesson(p);assert.equal(p.boStory.beats.at(-1).lines[0],'Beginner and Loona walked into the berry forest.','the walk loops');
  const f=freshProfile('explorer');for(let i=0;i<60&&!f.completed;i++)answer(f,nextChallenge(f));
  assert.equal(tellsBoStory('explorer'),false);assert.equal(f.boStory,undefined);
- const a=freshProfile('admin');assert.equal(finishLesson(a).story.lines[0],'Bo set off from the cozy cave.');
+ const a=freshProfile('admin');assert.equal(finishLesson(a).story.lines[0],'Loona set off from the cozy doghouse.');
 });
 test('wind-down: 20 minutes of continuous play, breaks reset it, rest ends by itself or by a grown-up',()=>{
  const p={};let t=0;

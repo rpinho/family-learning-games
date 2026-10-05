@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {traceDone} from '../public/book.mjs';
+const step=16,R=7.5*step,th=2.4*step,cx=200,cy=200;
+const cellsO=()=>{const c=[];for(let y=step/2;y<400;y+=step)for(let x=step/2;x<400;x+=step){const d=Math.hypot((x-cx)/0.85,y-cy);if(Math.abs(d-R)<th/2)c.push({x,y,hit:false});}return c;};
+const ring=(frac,dr=0,wob=0)=>Array.from({length:400},(_,i)=>{const a=-Math.PI/2+2*Math.PI*frac*i/399,r=R+dr+wob*Math.sin(a*5)*step;return {x:cx+Math.cos(a)*r*0.85,y:cy+Math.sin(a)*r};});
+const trace=pts=>{const c=cellsO();let live=null;pts.forEach((p,i)=>{for(const k of c)if(!k.hit&&Math.hypot(k.x-p.x,k.y-p.y)<step*1.1)k.hit=true;if(live==null&&traceDone(c,0.97,0.85))live=i/pts.length;});return {live,lift:traceDone(c,0.8,0.75)};};
+test('a careful O completes, at the very end of the stroke',()=>{const t=trace(ring(1));assert.ok(t.lift);assert.ok(t.live>=0.94);});
+test('a slightly wobbly but complete O completes on lift',()=>assert.ok(trace(ring(1,0,0.6)).lift));
+test('stopping 1/10 or 1/5 short does not complete',()=>{for(const f of [0.9,0.8]){const t=trace(ring(f));assert.equal(t.live,null);assert.ok(!t.lift);}});
+test('a sloppy trace beside the line does not complete',()=>{assert.ok(!trace(ring(1,1.6*step)).lift);assert.ok(!trace(ring(1,0,2.2)).lift);});

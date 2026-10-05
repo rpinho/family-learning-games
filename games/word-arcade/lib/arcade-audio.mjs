@@ -1,4 +1,6 @@
-// Original generated music loops and CC0 laser effects; see audio credits.
+// User-supplied Synthesis recordings stay on the private Mini; see audio credits.
+// Background ambient noise is retired; music defaults to Off.
+// Brief harp feedback remains. The musical recordings stay available by explicit choice.
 export const TRACKS=[
   {id:'off',name:'Off'},
   {id:'pixel',name:'Pixel Flight',file:'/audio/pixel.wav'},
@@ -7,6 +9,7 @@ export const TRACKS=[
   {id:'stardrift',name:'Moon Drift',file:'/audio/stardrift.wav'},
 ];
 export const LASERS=[
+  {id:'harp',name:'Harp',file:'/audio/calm-harp-g4.m4a',gain:0.9},
 
   {id:'pulse',name:'Pulse',file:'/audio/laser-pulse-v2.wav'},
   {id:'retro',name:'Retro',file:'/audio/laser-retro-v2.wav'},
@@ -16,9 +19,9 @@ const volume=(v,fallback)=>Number.isFinite(v)?Math.max(0,Math.min(1,v)):fallback
 export const audioPreferences=value=>({
   track:TRACKS.some(t=>t.id===value?.track)?value.track:'off',
   effects:value?.effects!==false,
-  volume:volume(value?.volume,0.65),
+  volume:volume(value?.volume,0.5),
   effectsVolume:volume(value?.effectsVolume,0.6),
-  laser:LASERS.some(t=>t.id===value?.laser)?value.laser:'pulse',
+  laser:LASERS.some(t=>t.id===value?.laser)?value.laser:'harp',
 });
 export class ArcadeAudio {
   constructor({createContext=()=>new (window.AudioContext||window.webkitAudioContext)(),createPlayer=()=>{const p=document.createElement('audio');document.body.append(p);return p;},fetchAudio=(...args)=>fetch(...args),record=()=>{},notify=()=>{}}={}){
@@ -41,7 +44,7 @@ export class ArcadeAudio {
       }
       if(this.ctx.state!=='running')await this.ctx.resume();
       if(this.disposed)return false;
-      this.sync();void this.preloadLaser();return this.ctx.state==='running';
+      this.sync();void this.preloadLaser();this.preloadCalm();return this.ctx.state==="running";
     }catch(e){this.record('audio_error',{reason:'unlock',message:e.message});this.notify('Tap a sound control to try audio again.');return false;}
   }
   configure(prefs){
@@ -84,6 +87,8 @@ export class ArcadeAudio {
     if(!this.ctx||this.disposed||!this.prefs.effects)return null;
     const {id,file}=LASERS.find(t=>t.id===this.prefs.laser);
     if(this.buffers.has(id))return this.buffers.get(id);
+    // (the harp is one of the calm plucks: one download, shared)
+    if(file.startsWith('/audio/calm-'))return this.calmBuffer(file).then(b=>{if(b&&!this.disposed){this.buffers.set(id,b);this.record('laser_ready',{laser:id,duration:b.duration});}return b;});
     if(this.loading.has(id))return this.loading.get(id);
     const task=(async()=>{try{
       const r=await this.fetchAudio(file);if(!r.ok)throw Error('Laser file unavailable');
@@ -114,7 +119,18 @@ export class ArcadeAudio {
     o.connect(g);g.connect(this.fx);this.nodes.add(o);
     o.onended=()=>{o.disconnect();g.disconnect();this.nodes.delete(o);};o.start(time);o.stop(time+duration+0.01);
   }
-  feedback(ok){if(this.prefs.effects&&!this.paused&&!this.disposed&&this.ctx?.state==='running'){if(ok){for(const [i,f] of [660,880,1320].entries())this.tone({frequency:f,endFrequency:f,duration:0.22,gain:0.36,delay:i*0.09});}else this.tone({frequency:180,endFrequency:110});this.record('answer_chime',{ok});}}
+  // A right answer: one harp pluck, rising through C major over a mission; a miss: one soft wooden tone. (Recorded
+  // plucks, loaded once; until they are ready, a quiet sine stands in.)
+  async calmBuffer(file){if(!this.ctx)return null;if(this.buffers.has(file))return this.buffers.get(file);if(this.loading.has(file))return this.loading.get(file);
+    const task=(async()=>{try{const r=await this.fetchAudio(file);if(!r.ok)throw Error('calm sound unavailable');const b=await this.ctx.decodeAudioData(await r.arrayBuffer());if(!this.disposed)this.buffers.set(file,b);return b;}catch(e){this.record('audio_error',{reason:'calm_file',message:e.message});return null;}finally{this.loading.delete(file);}})();
+    this.loading.set(file,task);return task;}
+  feedback(ok){if(!this.prefs.effects||this.paused||this.disposed||this.ctx?.state!=='running')return;
+    const notes=['c4','d4','e4','g4','a4','c5'],file=ok?`/audio/calm-harp-${notes[(this.step=((this.step??-1)+1)%notes.length)]}.m4a`:'/audio/calm-soft.m4a',b=this.buffers.get(file);
+    if(b){const o=this.ctx.createBufferSource(),g=this.ctx.createGain();o.buffer=b;g.gain.value=ok?0.8:0.7;o.connect(g);g.connect(this.fx);o.start();}
+    else{void this.calmBuffer(file);this.tone(ok?{frequency:523,endFrequency:523,duration:0.5,gain:0.12}:{frequency:196,endFrequency:180,duration:0.3,gain:0.1});}
+    this.record('feedback',{ok,calm:true});}
+  strum(){if(!this.prefs.effects||this.paused||this.disposed||this.ctx?.state!=='running')return;const b=this.buffers.get('/audio/calm-harp-strum.m4a');if(b){const o=this.ctx.createBufferSource();o.buffer=b;o.connect(this.fx);o.start();}else void this.calmBuffer('/audio/calm-harp-strum.m4a');}
+  preloadCalm(){for(const f of ['c4','d4','e4','g4','a4','c5'].map(n=>`/audio/calm-harp-${n}.m4a`).concat('/audio/calm-soft.m4a','/audio/calm-harp-strum.m4a'))void this.calmBuffer(f);}
   stopNodes(){for(const o of this.nodes){try{o.stop();}catch{}o.disconnect();}this.nodes.clear();}
   dispose(){this.disposed=true;this.stopMusic();this.stopNodes();if(this.player){this.player.removeAttribute('src');this.player.load();this.player.remove();}this.source?.disconnect();if(this.ctx){this.ctx.onstatechange=null;void this.ctx.close().catch(()=>{});}}
 }

@@ -27,21 +27,25 @@ test('Explorer has a separate menu and varied mathematically valid grade-2 chall
 });
 test('skill adaptation needs unaided evidence, ignores old preschool attempts and does not transfer skills',()=>{
  const p=freshProfile('explorer');p.history=Array.from({length:30},()=>({ok:true,helped:false,question:{kind:'count'}}));
- // Generic presets keep their established starts; independent practice can reach five tiers.
- assert.equal(challengeLevel(p,'multiply'),2);assert.equal(challengeLevel(p,'sums'),2);assert.equal(challengeLevel(p,'place'),2);
+ // 2026-10-01: he called 6 x 7 too easy, so multiplication starts at 4 and the other challenge skills at 3.
+ assert.equal(challengeLevel(p,'multiply'),4);assert.equal(challengeLevel(p,'sums'),3);assert.equal(challengeLevel(p,'place'),2);
  const record=(ok,helped=false,durationMs)=>p.history.push({ok,helped,durationMs,question:{track:EXPLORER_TRACK,skill:'multiply'}});
- for(let i=0;i<5;i++)record(true);assert.equal(challengeLevel(p,'multiply'),2);
- record(true);assert.equal(challengeLevel(p,'multiply'),3);assert.equal(challengeLevel(p,'sums'),2);
- for(let i=0;i<12;i++)record(true);assert.equal(challengeLevel(p,'multiply'),5,'level 5 is the ceiling');
+ for(let i=0;i<5;i++)record(true);assert.equal(challengeLevel(p,'multiply'),4);
+ record(true);assert.equal(challengeLevel(p,'multiply'),5);assert.equal(challengeLevel(p,'sums'),3);
+ for(let i=0;i<6;i++)record(true);assert.equal(challengeLevel(p,'multiply'),5,'level 5 is the ceiling');
  record(true,true);record(true,true);assert.equal(challengeLevel(p,'multiply'),4);
- // Rushed taps (wrong in under 2.5 s) reset the streak but never ease the challenge.
+ // Rushed taps (wrong in under 2.5 s) reset the streak but never ease him.
  record(false,false,760);record(false,false,1200);assert.equal(challengeLevel(p,'multiply'),4);
  record(false,false,9000);record(false,false,8000);assert.equal(challengeLevel(p,'multiply'),3);
  for(let i=0;i<6;i++)record(true);assert.equal(challengeLevel(p,'multiply'),4);
 });
-
+test('rounds before the 2026-10-01 restart do not hold him at the old easy levels',()=>{
+ const p=freshProfile('explorer');
+ p.history=[{at:'2026-09-08T10:44:00Z',ok:false,helped:false,durationMs:900,question:{track:EXPLORER_TRACK,skill:'factor'}},{at:'2026-09-08T10:45:00Z',ok:false,helped:false,durationMs:6000,question:{track:EXPLORER_TRACK,skill:'factor'}},{at:'2026-09-08T10:46:00Z',ok:false,helped:false,durationMs:6000,question:{track:EXPLORER_TRACK,skill:'factor'}}];
+ assert.equal(challengeLevel(p,'factor'),3);
+});
 test('Easier/Harder applies at once to the open question and later rounds adapt from it',()=>{
- const p=freshProfile('explorer');p.challengeManual={multiply:{level:4,after:0}};act(p,{kind:'start',game:'multiply'});
+ const p=freshProfile('explorer');act(p,{kind:'start',game:'multiply'});
  assert.equal(p.session.question.level,4);
  act(p,{kind:'challenge-level',delta:1});assert.equal(p.session.question.level,5);assert.equal(challengeLevel(p,'multiply'),5);
  assert.throws(()=>act(p,{kind:'challenge-level',delta:2}),/easier or harder/);
@@ -69,7 +73,7 @@ test('all challenge tiers have bounded options, valid arithmetic and a hidden-fa
   }
  }
 });
-test('Explorer scores and resumes without resetting old saves; Beginner and Admin stay small',()=>{
+test('Explorer scores and resumes without resetting old saves; Beginner and family Admin stay small',()=>{
  const p=freshProfile('explorer');p.xp=47;p.lessons=2;p.drawing=[[[1,1],[2,2]]];p.guided={'2':3};
  p.session={game:'addobjects',round:1,finished:false,result:{ok:true},question:{id:'legacy',kind:'addobjects'}};
  const before=structuredClone(p);prepareProfile(p);assert.deepEqual(p,before);

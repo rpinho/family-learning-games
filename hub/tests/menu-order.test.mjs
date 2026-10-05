@@ -37,7 +37,7 @@ test('Frequency uses distinct sessions, not click volume, and keeps the players 
   assert.equal(ranked.order[0],'chess');
   assert.equal(rankPlay(events,'explorer',NOW).order[0],'number-park');
   assert.equal(JSON.stringify(events),before);
-  assert.equal(new Set(ranked.order).size,11);
+  assert.equal(new Set(ranked.order).size,12);
 });
 test('Recent visits outweigh old play, stale/future rows expire, ties are stable and daily repeats capped', () => {
   const events=[point('chess',1),point('maze-garden',12*1440),point('maze-garden',13*1440),point('word-arcade',15*1440),point('target-trail',-1)];
@@ -60,4 +60,15 @@ test('Log service reads rotated files, tolerates incomplete rows, refreshes new 
   assert.equal((await service.ranking('beginner')).order[0],'letter-quest');
   assert.deepEqual((await service.ranking('explorer')).order,CATALOG.map(g=>g.id));
   await assert.rejects(service.ranking('unknown'));
+});
+
+test('Ski opens and gate answers belong to the separate Ski card; duplicate open and play form one visit',()=>{
+ const open={type:'client',kind:'open_game',detail:'letter-slalom'};
+ assert.equal(activityFor('hub',open),'letter-slalom');
+ assert.equal(activityFor('hub',{...open,detail:'not-a-game'}),null);
+ assert.equal(activityFor('word-arcade',{type:'client',event:{kind:'open',game:'slalom'}}),'letter-slalom');
+ assert.equal(activityFor('word-arcade',{type:'action',input:{kind:'answer'},before:{game:'slalom'}}),'letter-slalom');
+ assert.equal(activityFor('word-arcade',{type:'action',input:{kind:'answer'},before:{game:'rhyme'}}),'word-arcade');
+ const ranked=rankPlay([point('letter-slalom',10),point('letter-slalom',9),point('letter-slalom',8),point('chess',120)],'beginner',NOW);
+ assert.equal(ranked.visits['letter-slalom'],1);assert.equal(ranked.order[0],'letter-slalom');
 });

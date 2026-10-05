@@ -109,7 +109,7 @@ function ridgeGeometry({radius,height,base,seed,haze,rock,span,depth,mist=0.25,p
  const g=new BufferGeometry();g.setAttribute('position',new Float32BufferAttribute(pos,3));g.setAttribute('color',new Float32BufferAttribute(col,3));g.setIndex(idx);return g;
 }
 function skyMaterial(sunDir){
- return new ShaderMaterial({side:BackSide,depthWrite:false,fog:false,uniforms:{top:{value:new Color('#1f63bf')},mid:{value:new Color('#6fa6e3')},horizon:{value:new Color('#dbe7f3')},sun:{value:sunDir.clone()}},
+ return new ShaderMaterial({side:BackSide,depthWrite:false,fog:false,uniforms:{top:{value:new Color('#8ea6c4')},mid:{value:new Color('#c3d0e0')},horizon:{value:new Color('#f1e4d4')},sun:{value:sunDir.clone()}},
   vertexShader:'varying vec3 vDir;void main(){vDir=normalize((modelMatrix*vec4(position,1.0)).xyz-cameraPosition);gl_Position=projectionMatrix*viewMatrix*modelMatrix*vec4(position,1.0);gl_Position.z=gl_Position.w;}',
   fragmentShader:'uniform vec3 top;uniform vec3 mid;uniform vec3 horizon;uniform vec3 sun;varying vec3 vDir;void main(){vec3 d=normalize(vDir);float h=max(d.y,0.0);vec3 c=mix(horizon,mid,smoothstep(0.0,0.14,h));c=mix(c,top,smoothstep(0.1,0.6,h));float s=max(dot(d,sun),0.0);c+=vec3(1.0,0.93,0.8)*(pow(s,6.0)*0.22+pow(s,60.0)*0.35)+vec3(1.0)*smoothstep(0.9993,0.9997,s)*1.2;gl_FragColor=vec4(c,1.0);\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}'});
 }
@@ -184,11 +184,11 @@ export function createSlalomScene(container,opts){
  catch(e){canvas.remove();throw e;}
  renderer.toneMapping=NeutralToneMapping;renderer.toneMappingExposure=1.0;
  renderer.shadowMap.enabled=T.shadows;renderer.shadowMap.type=PCFShadowMap;
- const scene=new Scene();scene.fog=new FogExp2('#dfe9f4',0.0021);scene.background=new Color('#dfe9f4');
+ const scene=new Scene();scene.fog=new FogExp2('#ece6de',0.0024);scene.background=new Color('#ece6de');
  const camera=new PerspectiveCamera(58,1,0.3,6000);
  const sunDir=new Vector3(0.72,0.5,-0.48).normalize();
- const hemi=new HemisphereLight('#b3cdea','#e3e9f1',2.3);scene.add(hemi);
- const sun=new DirectionalLight('#fff0dc',4.8);sun.castShadow=T.shadows;scene.add(sun,sun.target);
+ const hemi=new HemisphereLight('#c9d3e0','#ede6dc',2.3);scene.add(hemi);
+ const sun=new DirectionalLight('#ffe7c7',3.9);sun.castShadow=T.shadows;scene.add(sun,sun.target);
  const sc=sun.shadow.camera;sc.left=-30;sc.right=30;sc.top=30;sc.bottom=-30;sc.near=5;sc.far=170;sun.shadow.bias=-0.0006;sun.shadow.normalBias=0.35;
  if(T.shadowMap)sun.shadow.mapSize.set(T.shadowMap,T.shadowMap);
  const disposables=[];const keep=x=>{disposables.push(x);return x;};
@@ -196,7 +196,7 @@ export function createSlalomScene(container,opts){
  const sky=new Mesh(keep(new SphereGeometry(4000,24,12)),keep(skyMaterial(sunDir)));sky.frustumCulled=false;scene.add(sky);
  const ridgeMat=keep(new MeshBasicMaterial({vertexColors:true,fog:false}));
  // far to near: each layer a little less hazy, so the range reads in depth
- const ridgeParts=[];for(const L of [{radius:2900,height:1500,base:-460,seed:3,haze:'#cfdcec',rock:'#8499b5',span:[-1.7,1.7],depth:900,peaks:9,mist:0.5},{radius:2200,height:1000,base:-420,seed:5,haze:'#cbd9ea',rock:'#6f86a6',span:[-1.5,1.35],depth:650,peaks:7,mist:0.36},{radius:1600,height:620,base:-380,seed:11,haze:'#c8d7e9',rock:'#5d7596',span:[-1.25,1.45],depth:420,peaks:6,mist:0.22}]){
+ const ridgeParts=[];for(const L of [{radius:2900,height:1500,base:-460,seed:3,haze:'#e6ddd2',rock:'#9d98a0',span:[-1.7,1.7],depth:900,peaks:9,mist:0.5},{radius:2200,height:1000,base:-420,seed:5,haze:'#ddd6cf',rock:'#8a8792',span:[-1.5,1.35],depth:650,peaks:7,mist:0.36},{radius:1600,height:620,base:-380,seed:11,haze:'#d6d0cb',rock:'#7a7784',span:[-1.25,1.45],depth:420,peaks:6,mist:0.22}]){
   ridgeParts.push(ridgeGeometry(L));}
  {const m=new Mesh(keep(mergeGeometries(ridgeParts)),ridgeMat);ridgeParts.forEach(g=>g.dispose());m.frustumCulled=false;m.renderOrder=-1;scene.add(m);}
  // valley clouds: soft planes facing the run, merged into one mesh (one draw call)
@@ -230,12 +230,11 @@ export function createSlalomScene(container,opts){
   for(let d=8;d<finishD+10&&k<n;d+=16)for(const side of [-1,1]){const u=side*(COURSE.piste+0.6);m.makeTranslation(cx(d)+u,groundY(u,d),-d);mk.setMatrixAt(k++,m);}mk.count=k;mk.castShadow=true;mk.computeBoundingSphere();scene.add(mk);}
  // gates
  // Gates: per row, one small atlas texture, one merged banner mesh and one merged frame mesh (2 draw calls a row).
- // Banners 1.75x the first version (readable from further away), on taller frames; high contrast.
  const res=tier===0?0.6:0.8,BW=5.3,BH=2.34,BY=3.45,PX=2.75,PH=4.75;
  const frameGeo=keep((()=>{const pole=x=>{const g=new CylinderGeometry(0.08,0.09,PH,6,1,true).translate(x,PH/2,0);g.deleteAttribute('uv');return g.toNonIndexed();};
   const flag=sx=>{const g=new BufferGeometry().setFromPoints([new Vector3(0,PH,0),new Vector3(0.75*sx,PH-0.24,0),new Vector3(0,PH-0.48,0)]);g.computeVertexNormals();return g.translate(PX*sx,0,0);};
   return mergeGeometries([pole(-PX),pole(PX),flag(-1),flag(1)]);})());
- const colors=['#e5484d','#2f7fe0'],frameMats=colors.map(color=>keep(new MeshLambertMaterial({color,side:DoubleSide})));
+ const colors=['#b86b5e','#5f80a6'],frameMats=colors.map(color=>keep(new MeshLambertMaterial({color,side:DoubleSide})));
  let bannerScale=1;
  function makeRow(g,i){const d=COURSE.first+i*COURSE.spacing,lanes=laneOffsets(g.options.length),color=colors[i%2],n=g.options.length,yaw=Math.atan2(-dcx(d),1);
   const bw=512*res,bh=224*res,tex=canvasTexture(bw,bh*n,(c)=>{g.options.forEach((text,k)=>drawBanner(c,text,color,res,k*bh));});tex.anisotropy=1;
@@ -261,7 +260,7 @@ export function createSlalomScene(container,opts){
  // finish arch + lodge
  {const u=0,d=finishD,grp=new Group();world(u,d,grp.position);grp.rotation.y=Math.atan2(-dcx(d),1);const post=keep(new BoxGeometry(0.5,4.4,0.5).translate(0,2.2,0)),pm=keep(new MeshLambertMaterial({color:'#2f7fe0'}));
   for(const s of [-1,1]){const p=new Mesh(post,pm);p.position.x=s*7.2;p.castShadow=true;grp.add(p);}
-  const tex=keep(canvasTexture(1024,160,(g,w,h)=>{g.fillStyle='#2f7fe0';g.fillRect(0,0,w,h);g.fillStyle='#ffd35c';g.fillRect(0,h-18,w,18);g.fillStyle='#fff';g.font=`800 104px ${FONT}`;g.textAlign='center';g.textBaseline='middle';g.fillText('FINISH',w/2,h/2-6);}));
+  const tex=keep(canvasTexture(1024,160,(g,w,h)=>{g.fillStyle='#5f80a6';g.fillRect(0,0,w,h);g.fillStyle='#e7c77a';g.fillRect(0,h-18,w,18);g.fillStyle='#fff';g.font=`800 104px ${FONT}`;g.textAlign='center';g.textBaseline='middle';g.fillText('FINISH',w/2,h/2-6);}));
   const b=new Mesh(keep(new PlaneGeometry(14.9,2.3)),keep(new MeshBasicMaterial({map:tex,fog:false})));b.position.y=4.3;grp.add(b);scene.add(grp);
   // the lodge: one merged, vertex-coloured mesh (one draw call)
   const lodge=new Group(),lu=-15,ld=stopD+14;world(lu,ld,lodge.position);lodge.position.y-=0.3;lodge.rotation.y=Math.atan2(-dcx(ld),1)+0.5;
@@ -290,7 +289,6 @@ export function createSlalomScene(container,opts){
  const ray=new Raycaster(),ndc=new Vector2();
  const uFromX=clientX=>{const r=canvas.getBoundingClientRect();return clamp(((clientX-r.left)/r.width-0.5)*2*(COURSE.piste-0.5)*1.12,-(COURSE.piste-0.8),COURSE.piste-0.8);};
  function pickGate(e){const row=rows[st.next];if(!row)return null;const r=canvas.getBoundingClientRect();ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(ndc,camera);const hit=ray.intersectObject(row.bannerMesh,false)[0];return hit?row.lanes[Math.floor(hit.faceIndex/2)]??null:null;}
- // Go faster lives on the rider: press and hold ON the skier or
  // snowboarder, or drag up; release or drag back down to ease off. Left/right still steers. The scene only speeds up once
  // the row's question has been heard (lib/slalom-timing.mjs).
  function riderOnScreen(){tmp.copy(skPos);tmp.y+=0.9;tmp.project(camera);const r=canvas.getBoundingClientRect();return {x:r.left+(tmp.x+1)/2*r.width,y:r.top+(1-tmp.y)/2*r.height,r:Math.max(64,Math.min(r.width,r.height)*0.13)};}
@@ -303,11 +301,6 @@ export function createSlalomScene(container,opts){
  const up=e=>{if(st.pointer!==e.pointerId)return;st.pointer=null;st.ptrBoost=false;try{canvas.releasePointerCapture(e.pointerId);}catch{}};
  canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);canvas.addEventListener('lostpointercapture',up);
  canvas.style.touchAction='none';
- // ---------- sound: a soft swish that follows the carving ----------
- let swish=null;
- function startSwish(){if(swish||!sound?.ctx||sound.ctx.state!=='running')return;try{const ctx=sound.ctx,len=ctx.sampleRate*2,buf=ctx.createBuffer(1,len,ctx.sampleRate),ch=buf.getChannelData(0);let b=0;for(let i=0;i<len;i++){b=0.97*b+0.03*(Math.random()*2-1);ch[i]=b*3;}
-  const src=ctx.createBufferSource();src.buffer=buf;src.loop=true;const f=ctx.createBiquadFilter();f.type='bandpass';f.frequency.value=900;f.Q.value=0.7;const g=ctx.createGain();g.gain.value=0;src.connect(f).connect(g).connect(sound.destination);src.start();swish={src,f,g,ctx};}catch{swish=null;}}
- function updateSwish(carve){if(!swish)return startSwish();const on=sound.enabled()&&!st.paused&&st.go&&!st.finished;const level=on?clamp(0.012+st.v/COURSE.baseSpeed*0.025+carve*0.09,0,0.14):0;swish.g.gain.setTargetAtTime(level,swish.ctx.currentTime,0.08);swish.f.frequency.setTargetAtTime(700+carve*900+st.v*30,swish.ctx.currentTime,0.1);}
  // ---------- quality: measure, then scale down (and, on fast machines, back up) ----------
  const perf={frames:0,sum:0,window:[],all:[],changes:[],lastCheck:0,since:0,fast:0,down:false,up:false};
  function setTier(t,reason){if(t===tier)return;tier=t;T=TIERS[t];scale=Math.min(scale,T.scale);
@@ -334,7 +327,8 @@ export function createSlalomScene(container,opts){
   const row=rows[st.next],p=st.prompt[st.next];
   // support rows (two misses in a row): a calmer cruise for the longer sound-out question, and no go-faster
   const support=!!row?.gate?.support;
-  return speedFor({dist:row?row.d-st.d:undefined,promptEnded:p?.ended===undefined?undefined:st.time-p.ended,boost:st.boost&&!support,...(support?{base:COURSE.supportSpeed}:{})});
+  return speedFor({dist:row?row.d-st.d:undefined,promptEnded:p?.ended===undefined?undefined:st.time-p.ended,boost:st.boost&&!support,   // (his own go-faster, hold the rider or drag up: only once the question has been heard)
+  ...(support?{base:COURSE.supportSpeed}:{})});
  }
  function step(dt){
   st.time+=dt;
@@ -345,11 +339,12 @@ export function createSlalomScene(container,opts){
   if(st.pointer===null&&st.tilt!==null)st.tU=clamp(st.tilt*(COURSE.piste-1),-(COURSE.piste-1),COURSE.piste-1);
   if(st.pointer===null&&lanes&&row&&row.d-st.d<30&&row.d-st.d>1){const near=lanes.reduce((a,b)=>Math.abs(b-st.tU)<Math.abs(a-st.tU)?b:a);st.tU+=(near-st.tU)*smooth(st.tilt!==null?1.2:2.6,dt);}
   const au=16*(st.tU-st.u)-8*st.vu;st.vu=clamp(st.vu+au*dt,-9,9);st.u=clamp(st.u+st.vu*dt,-COURSE.piste+0.6,COURSE.piste-0.6);
-  const vt=targetSpeed();st.v=nextSpeed(st.v,vt,dt);if(st.v<0.01&&vt===0)st.v=0;
+  // the calm valley: going faster eases in gently (at most 1.2 m/s each second above the base pace; the shared model's
+  // budget assumes a quicker ramp, so a gentler one only leaves more time before each row)
+  const vt=targetSpeed();const nv=nextSpeed(st.v,vt,dt);st.v=nv>st.v&&st.v>=COURSE.baseSpeed-0.1?Math.min(nv,st.v+1.2*dt):nv;if(st.v<0.01&&vt===0)st.v=0;
   if(st.boost&&vt===COURSE.boostSpeed)boostTime+=dt;
   const before=st.d;st.d+=st.v*dt;
   // gate crossing: the lane nearest the skier is the choice (every pass is a choice; no crashes)
-  // Hint: after the question, only in the final stretch and only while the skier heads for a wrong gate, the
   // right one glows (it corrects, never gives away). A pass after a hint is recorded as hinted, not unaided.
   if(row&&row.state===null){const dist=row.d-st.d,heading=row.lanes.reduce((best,x,k)=>Math.abs(x-st.tU)<Math.abs(row.lanes[best]-st.tU)?k:best,0),right=row.gate.options.indexOf(row.gate.answer);
    const on=st.prompt[st.next]?.ended!==undefined&&dist>0&&dist<hintDistance(st.next)&&heading!==right;
@@ -371,7 +366,7 @@ export function createSlalomScene(container,opts){
     const shadow=new Mesh(new CircleGeometry(0.42,16).rotateX(-Math.PI/2),new MeshBasicMaterial({color:'#6d87a6',transparent:true,opacity:0.25,depthWrite:false}));shadow.position.y=0.02;shadow.scale.set(1.3,1,0.7);obj.add(shadow);obj.userData.standee=true;
    }else{
     if(!loader){const {GLTFLoader}=await import('three/addons/loaders/GLTFLoader.js');loader=new GLTFLoader();}
-    const gltf=await loader.loadAsync(f.url);if(disposed)return;obj=gltf.scene;const box=new Box3().setFromObject(obj),h=(box.max.y-box.min.y)||1,sc=(f.tall?1.25:1.05)/h;
+    const gltf=await loader.loadAsync(f.url);if(disposed)return;obj=gltf.scene;const box=new Box3().setFromObject(obj),h=(box.max.y-box.min.y)||1,sc=(f.id==='dragon'?1.25:1.05)/h;
     obj.scale.setScalar(sc);obj.userData.lift=-box.min.y*sc;obj.traverse(o=>{if(o.isMesh){o.castShadow=T.shadows;o.frustumCulled=false;}});
     const clip=gltf.animations.find(a=>a.name==='cheer')||gltf.animations[0];if(clip){const mixer=new AnimationMixer(obj);mixer.clipAction(clip).play();mixer.timeScale=0;obj.userData.mixer=mixer;mixers.push(mixer);}
    }
@@ -437,7 +432,7 @@ export function createSlalomScene(container,opts){
    if(vis){const cd=row.d-(st.d-8);row.bannerMesh.material.opacity=clamp((cd-5)/9,0.12,1);}
    if(row.hinted&&!row.glow){const k=row.gate.options.indexOf(row.gate.answer),at=world(row.lanes[k],row.d);const g=new PlaneGeometry(BW*bannerScale*1.45,BH*bannerScale*1.8).rotateY(row.yaw).translate(at.x,at.y+BY+(bannerScale-1)*1.1,at.z).translate(-Math.sin(row.yaw)*0.08,0,-Math.cos(row.yaw)*0.08);row.glow=new Mesh(g,glowMat.clone());row.glow.renderOrder=0;scene.add(row.glow);}
    if(row.glow){const target=row.hintOn?0.55+0.35*Math.sin(st.time*6):0;row.glow.material.opacity+=(target-row.glow.material.opacity)*smooth(10,dt);row.glow.visible=vis&&row.glow.material.opacity>0.01;
-    if(!row.state)tintRow(row,row.gate.options.indexOf(row.gate.answer),row.hintOn&&Math.sin(st.time*6)>0?'#fff1b0':'#ffffff');}
+    if(!row.state)tintRow(row,row.gate.options.indexOf(row.gate.answer),row.hintOn&&Math.sin(st.time*1.6)>0?'#fff4cc':'#ffffff');}
    if(row.state&&!row.state.tinted){row.state.tinted=true;row.texts.forEach((text,k)=>{const right=text===row.gate.answer,chosen=k===row.state.chosen;tintRow(row,k,right?(chosen?'#9ff0b8':'#ffdf80'):chosen?'#c9d0da':'#ffffff');});}}
   // camera: smooth chase, a short opening sweep, and a turn to the front at the bottom
   const back=portrait?12:8,upH=portrait?7.4:3.7;
@@ -452,7 +447,6 @@ export function createSlalomScene(container,opts){
   camera.position.copy(camPos);camera.lookAt(camLook);sky.position.copy(camPos);
   // the sun (and its shadow box) follows the skier
   sun.position.copy(skPos).addScaledVector(sunDir,90).addScaledVector(fwd,12);sun.target.position.copy(skPos).addScaledVector(fwd,12);
-  updateSwish(carve);
   renderer.render(scene,camera);
  }
  raf=requestAnimationFrame(frame);
@@ -461,7 +455,7 @@ export function createSlalomScene(container,opts){
   passes(){return passLog.slice();},
   boost(on){st.boostKey=!!on;},
   canBoost(){const row=rows[st.next];return st.go&&!st.finished&&(!row||(st.prompt[st.next]?.ended!==undefined&&!row.gate?.support));},
-  setPaused(v){st.paused=!!v;clock.last=performance.now();if(swish)updateSwish(0);},
+  setPaused(v){st.paused=!!v;clock.last=performance.now();},
   promptStarted(i){st.prompt[i]={...st.prompt[i],started:st.time};},
   promptEnded(i){st.prompt[i]={...st.prompt[i],ended:st.time};},
   // The child's own toys wait at the bottom and cheer (private). Preloaded one per gate during the run (a small parse
@@ -485,7 +479,7 @@ export function createSlalomScene(container,opts){
    out.sort((a,b)=>a-b);const info=renderer.info.render;return {tier:T.name,pixelRatio:+renderer.getPixelRatio().toFixed(2),size:`${Math.round(width)}x${Math.round(height)}`,p50Ms:+out[out.length>>1].toFixed(2),p95Ms:+out[Math.floor(out.length*0.95)].toFixed(2),calls:info.calls,triangles:info.triangles};},
   // Deterministic stepping for tests and still renders.
   advance(seconds,fps=60){const dt=1/fps;for(let t=0;t<seconds;t+=dt){const au=step(dt);draw(dt,au);}},
-  dispose(){if(disposed)return;disposed=true;cancelAnimationFrame(raf);ro.disconnect();try{swish?.src.stop();swish?.g.disconnect();}catch{}
+  dispose(){if(disposed)return;disposed=true;cancelAnimationFrame(raf);ro.disconnect();
    for(const r of rows)dropRow(r);for(const x of disposables)x.dispose?.();
    scene.traverse(o=>{if(o.isMesh||o.isPoints||o.isSprite){o.geometry?.dispose?.();const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{m?.map?.dispose?.();m?.dispose?.();});}});
    sun.shadow.map?.dispose();renderer.dispose();try{renderer.forceContextLoss();}catch{}canvas.remove();}

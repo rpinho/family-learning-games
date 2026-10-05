@@ -11,8 +11,8 @@ Everything below lives **outside the repository** (children's data is private), 
 
 | Path | Written by | Read by |
 |---|---|---|
-| `book/profiles.json` | a grown-up, by hand | nightly job |
-| `book/cast.json` | a grown-up | nightly job |
+| `book/profiles.json` | hub Family setup or a grown-up | nightly job |
+| `book/cast.json` | hub Family setup or a grown-up | nightly job |
 | `book/art/lib/library.json` + images | `book/build-art.py` from the household's own source images | nightly job, hub `/book-art/` |
 | `learner/<player>.json` | `book/build-learner.mjs` | nightly job, grown-ups |
 | `learner/<player>-life.json` | `book/life.mjs` (weekly, or when a source changes) | nightly job |
@@ -97,3 +97,7 @@ narrator never says them first, and reading one makes the world respond.
 school-report language, teachers, grandparents, brands, personal data, private words, wrong sums, answer give-aways,
 children speaking, unknown pictures, over-long captions, and narration above the child's level. One repair pass,
 then `template.mjs`.
+
+## Family setup starting context
+
+Onboarding adds `grade`, `startingSkills` (letters, counting, reading, maths and `source: "grown-up-report"`), `placement` (`source: "grown-up-observation"` with four independent/help/later/skip observations), `favourites`, and `onboarding.version: 1` to a child’s private profile. These reports remain distinct from gameplay mastery. `artReferences: {enabled, localOnly: true, photos: ["photos/<child>/<random-id>.jpg"]}` is mirrored into that child’s cast entry. `book/private-art.mjs` emits a private local-worker manifest only for enabled references; it makes no provider calls. Public art is the fallback until the family supplies a reviewed local library.

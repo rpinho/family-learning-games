@@ -7,3 +7,5 @@ https://kenney.nl/assets/sci-fi-sounds
 https://creativecommons.org/publicdomain/zero/1.0/
 
 No private-use music, character recordings or extracted teaching audio is redistributed.
+
+Calm harp notes and neutral feedback tones are synthesized from scratch by `scripts/make-calm-sounds.py`. No recordings or voice samples are used. Background music starts Off and the optional original loops remain available.

@@ -6,11 +6,7 @@ import {join} from 'node:path';
 import {spawn} from 'node:child_process';
 import {fresh,act,voiceLines,GAMES} from '../lib/engine.mjs';
 import {slalomRun,easeGate,SLALOM_LINES,SLALOM_GATES,CVC_WORDS,CVC_FAMILIES,canSoundOut,afterGate,supportGate,easyNext,slalomChoice,pickFamily,familyTargets,familyWords,SLALOM_FAMILIES,trickyWords,trickyLetters,familyBreakItem,wordPicture,FAMILY_PICTURES,soundOutLine} from '../lib/slalom.mjs';
-import {literacyFrom,PICTURE_NAMES,PICTURE_REJECTED} from '../lib/word-break.mjs';
-const send=(p,input,ctx)=>act(p,{...input,revision:p.revision,questionId:p.session?.q?.id},ctx);
-const beginner={...literacyFrom(null,'letters'),source:'letter-quest',letters:[...'FRANCISOETL'],lower:['f','r','a'],learning:[...'FRANCISOETL','f','r','a']};
-const explorer={...literacyFrom(null,'words'),source:'letter-quest',wordLevel:2};
-const lines=new Set(voiceLines());
+
 test('letter finish reviews at most three distinct missed or hinted letters, with misses first',()=>{
  const gates=['O','E','S','a','R','I','L','E'].map(answer=>({track:'letters',answer}));
  const outcomes=[{ok:true},{ok:true,hinted:true},{ok:true},{ok:true,hinted:true},{ok:false},{ok:false},{ok:false},{ok:false}];
@@ -19,6 +15,11 @@ test('letter finish reviews at most three distinct missed or hinted letters, wit
  assert.deepEqual(trickyLetters(gates,outcomes.map(()=>({ok:true}))),[]);
  assert.deepEqual(trickyLetters(gates,[{ok:false},{ok:false},{ok:true},{ok:true},{ok:true},{ok:true},{ok:true},{ok:false}]),[0,1]);
 });
+import {literacyFrom,PICTURE_NAMES,PICTURE_REJECTED} from '../lib/word-break.mjs';
+const send=(p,input,ctx)=>act(p,{...input,revision:p.revision,questionId:p.session?.q?.id},ctx);
+const beginner={...literacyFrom(null,'letters'),source:'letter-quest',letters:[...'FRANCISOETL'],lower:['f','r','a'],learning:[...'FRANCISOETL','f','r','a']};
+const explorer={...literacyFrom(null,'words'),source:'letter-quest',wordLevel:2};
+const lines=new Set(voiceLines());
 function checkGate(g){
  assert.equal(new Set(g.options).size,g.options.length,g.options.join());assert.ok(g.options.includes(g.answer));assert.equal(g.options[g.lane],g.answer);
  for(const line of [g.prompt,g.praise,g.correction,g.recap,g.recapSoundOut].filter(Boolean))assert.ok(lines.has(line),line);
@@ -83,20 +84,24 @@ test('The server builds a run from the Letter Quest save without changing it',as
 });
 test('Finish-line friends: listed models and standees that exist are offered and served; nothing else',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'wa-slalom-')),assets=await mkdtemp(join(tmpdir(),'wa-3d-'));const {mkdir}=await import('node:fs/promises');
- await writeFile(join(assets,'companions.json'),JSON.stringify({beginner:['toy-a','missing','../x',{id:'paper',standee:'standees/paper.png',fallback:'toy-c'},{id:'bird',standee:'standees/bird.png',fallback:'toy-b'}],explorer:['toy-b']}));
- for(const n of ['toy-a','toy-b','toy-c','secret'])await writeFile(join(assets,n+'.glb'),'glTF');await mkdir(join(assets,'standees'));await writeFile(join(assets,'standees','paper.png'),'PNG');
+ await writeFile(join(assets,'companions.json'),JSON.stringify({beginner:['toy-a','missing','../x',{id:'bo',standee:'standees/bo.png',fallback:'toy-c'},{id:'birdie',standee:'standees/birdie.png',fallback:'toy-b'}],explorer:['toy-b']}));
+ for(const n of ['toy-a','toy-b','toy-c','secret'])await writeFile(join(assets,n+'.glb'),'glTF');await mkdir(join(assets,'standees'));await writeFile(join(assets,'standees','bo.png'),'PNG');
  const child=spawn(process.execPath,['server.mjs'],{cwd:new URL('..',import.meta.url),env:{...process.env,PORT:'14332',HOST:'127.0.0.1',WORD_ARCADE_DATA:dir,LETTER_QUEST_DATA:dir,FAMILY_ASSETS3D:assets},stdio:['ignore','pipe','pipe']});
  try{await new Promise((resolve,reject)=>{child.stdout.once('data',resolve);child.once('error',reject);});const base='http://127.0.0.1:14332';
-  assert.deepEqual((await(await fetch(base+'/api/beginner/companions')).json()).friends,[{id:'toy-a',kind:'model',url:'companion/toy-a.glb'},{id:'paper',kind:'standee',url:'companion/paper.png'},{id:'toy-b',kind:'model',url:'companion/toy-b.glb'}]);
+  assert.deepEqual((await(await fetch(base+'/api/beginner/companions')).json()).friends,[{id:'toy-a',kind:'model',url:'companion/toy-a.glb'},{id:'bo',kind:'standee',url:'companion/bo.png'},{id:'toy-b',kind:'model',url:'companion/toy-b.glb'}]);
   assert.deepEqual((await(await fetch(base+'/api/admin/companions')).json()).friends,[]);
   const r=await fetch(base+'/companion/toy-a.glb');assert.equal(r.status,200);assert.equal(r.headers.get('content-type'),'model/gltf-binary');
-  const g=await fetch(base+'/companion/paper.png');assert.equal(g.status,200);assert.equal(g.headers.get('content-type'),'image/png');
+  const g=await fetch(base+'/companion/bo.png');assert.equal(g.status,200);assert.equal(g.headers.get('content-type'),'image/png');
   assert.equal((await fetch(base+'/companion/toy-c.glb')).status,404,'a fallback is served only when used');
-  assert.equal((await fetch(base+'/companion/secret.glb')).status,404);assert.equal((await fetch(base+'/companion/..%2Fsecret.glb')).status,404);assert.equal((await fetch(base+'/companion/bird.png')).status,404);
+  assert.equal((await fetch(base+'/companion/secret.glb')).status,404);assert.equal((await fetch(base+'/companion/..%2Fsecret.glb')).status,404);assert.equal((await fetch(base+'/companion/birdie.png')).status,404);
   assert.equal((await fetch(base+'/api/beginner/companions',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).status,405);
  }finally{child.kill();}
 });
-test('Every spoken slalom line is in the voice line list',()=>{for(const l of Object.values(SLALOM_LINES))assert.ok(lines.has(l),l);});
+test('Public narration has a device fallback and every spoken slalom line is declared',async()=>{
+ const {readdir}=await import('node:fs/promises');
+ for(const dir of ['app','lib']){for(const f of await readdir(new URL(`../${dir}/`,import.meta.url))){if(!/\.(m?js|jsx|tsx?)$/.test(f))continue;const src=await readFile(new URL(`../${dir}/${f}`,import.meta.url),'utf8');if(f!=='voice.mjs')assert.ok(!/speechSynthesis|SpeechSynthesisUtterance/.test(src),`${dir}/${f} bypasses the narration adapter`);}}
+ for(const l of Object.values(SLALOM_LINES))assert.ok(lines.has(l),l);
+});
 test('Hinted passes are recorded apart from unaided ones; the ride choice is remembered in the save',()=>{
  const p=fresh('explorer');send(p,{kind:'start',game:'slalom',ride:'board'},{literacy:explorer});assert.equal(p.slalom.ride,'board');assert.equal(p.session.ride,'board');
  const a=send(p,{kind:'answer',answer:p.session.q.answer,durationMs:10,hinted:true});assert.equal(a.ok,true);
@@ -110,7 +115,6 @@ test('Only words made of recorded letter sounds are ever sounded out',()=>{
  for(let seed=0;seed<80;seed++)for(const level of [explorer,{...explorer,sentenceReady:true}])for(const g of slalomRun(level,{seed}))if(g.recapSoundOut)assert.ok(canSoundOut(g.answer),g.answer);
 });
 
-// ---------- Explorer's teaching design (2026-09-28) ----------
 const words=p=>p.session.gates.map(g=>g.answer);
 function playRun(p,missAt=[],opts={}){send(p,{kind:'start',game:'slalom',...opts},{literacy:explorer});for(let i=0;i<8;i++){const q=p.session.q;send(p,{kind:'answer',answer:missAt.includes(i)?q.options.find(o=>o!==q.answer):q.answer,durationMs:10});}assert.equal(p.session.phase,'complete');}
 test('Letters or words: Beginner never gets a choice; Explorer defaults to letters, his tap is remembered, and two word runs read over 70% offer words',()=>{
@@ -143,7 +147,6 @@ test('Two misses in a row: every row left becomes a pair with the sound-out as i
  assert.equal(p.session.support,true);assert.equal(p.session.supportFrom,3);
  for(let k=3;k<8;k++){const g=p.session.gates[k];assert.equal(g.options.length,2);assert.equal(g.support,true);assert.equal(g.prompt,soundOutLine(g.answer));assert.ok(lines.has(g.prompt));assert.deepEqual(browser.gates[k].options,g.options);assert.equal(browser.gates[k].prompt,g.prompt);}
  assert.equal(p.session.q.prompt,soundOutLine(p.session.q.answer));
- // letters (Beginner) unchanged: a miss only eases the next row, never a support run
  const g=slalomRun(beginner,{seed:3});let st={gates:g,support:false,missRun:0};st=afterGate(st.gates,4,false,st);st=afterGate(st.gates,5,false,st);assert.equal(st.support,false);assert.ok(st.gates.every(x=>!x.support));
  assert.equal(supportGate(g[6]).support,undefined);
 });

@@ -15,6 +15,7 @@ export function mountBoard(
     showLegalMoves = true,
     onMove,
     onMotion = () => {},
+    onMoveLanded = () => {},
     onSelect = () => {},
   },
 ) {
@@ -372,6 +373,9 @@ export function mountBoard(
       await Promise.all(journeys);
       if (disposed) return;
       refreshPieces();
+      // The captured piece is gone now, before the extra bounce/ring effects.
+      // Coaches can respond without waiting for the whole turn's animations.
+      if (feedback) onMoveLanded(m, { preview });
       cell(from).classList.add("last");
       cell(to).classList.add("last");
       const landed = cell(to).querySelector("svg");

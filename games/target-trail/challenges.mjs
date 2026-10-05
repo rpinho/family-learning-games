@@ -32,5 +32,5 @@ export function aimAt(r,x,y,elapsed){
  const amplitude=r.rules===2?Math.min(17,Math.max(0,r.level-2)*1.1):0,phase=(r.seed%31)/5;
  return {x:clamp(x+amplitude*(.7*Math.sin(elapsed*.004+phase)+.3*Math.sin(elapsed*.009)),0,800),y:clamp(y+amplitude*.7*Math.sin(elapsed*.0057+phase),0,500)};
 }
-export function learningDefaults(id){return {level:id==='explorer'?2:1,correct:0,wrong:0,misses:0,streak:0,struggles:0};}
+export function learningDefaults(id){return {level:String(id).split('_')[0]==='explorer'?2:1,correct:0,wrong:0,misses:0,streak:0,struggles:0};}
 export const voiceLines=()=>[...LETTERS.flatMap(v=>[cueLine(v,'letter'),nameLine(v,'letter')]),...WORD_BANK.flatMap(v=>[cueLine(v,'word'),nameLine(v,'word')])];

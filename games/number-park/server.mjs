@@ -8,12 +8,11 @@ import {recognizeArt} from './lib/symbol-recognition.mjs';
 import {daySummary,localDate} from './lib/day-summary.mjs';
 import {literacyFrom,DEFAULT_TRACK} from './lib/word-break.mjs';
 const timeZone=process.env.FAMILY_TZ||Intl.DateTimeFormat().resolvedOptions().timeZone;
-
 const doodleModel=JSON.parse(await readFile(new URL('./data/doodle-model.json',import.meta.url),'utf8'));
 const symbolModel=JSON.parse(await readFile(new URL('./data/symbol-model.json',import.meta.url),'utf8'));
-const data=process.env.NUMBER_PARK_DATA||join(homedir(),'.local/share/family-learning-games/number-park');
+const data=process.env.NUMBER_PARK_DATA||join(homedir(),'.local/share/number-park');
 // Read-only look at Letter Quest progress so word breaks match each child. Never written.
-const letterData=process.env.LETTER_QUEST_DATA||join(homedir(),'.local/share/family-learning-games/letter-quest');
+const letterData=process.env.LETTER_QUEST_DATA||join(homedir(),'.local/share/letter-quest');
 async function literacy(id){let save=null;try{save=JSON.parse(await readFile(join(letterData,id+'.json'),'utf8'));}catch{}return literacyFrom(save,DEFAULT_TRACK[id]||'mixed');}
 const root=resolve(process.env.NUMBER_PARK_STATIC||'dist/client'),port=Number(process.env.PORT||4321);
 await mkdir(join(data,'logs'),{recursive:true,mode:0o700});
@@ -26,7 +25,7 @@ const send=(res,status,body)=>{res.writeHead(status,{'Content-Type':'application
 // other names this machine answers to, such as a VPN DNS name.
 const BASE_HOSTS=['localhost','127.0.0.1'];let hostCache=null,hostCacheAt=0;
 function allowedHosts(){if(hostCache&&Date.now()-hostCacheAt<5000)return hostCache;const me=hostname().toLowerCase(),short=me.replace(/\.local$/,'');hostCacheAt=Date.now();return hostCache=new Set([...BASE_HOSTS.map(h=>String(h).toLowerCase()),me,short,short+'.local',...(process.env.FAMILY_EXTRA_HOSTS||'').split(/[\s,]+/).filter(Boolean).map(h=>h.toLowerCase()),...Object.values(networkInterfaces()).flat().filter(Boolean).map(i=>i.family==='IPv6'||i.family===6?'['+i.address.toLowerCase()+']':i.address)]);}
-const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.rsc':'text/x-component','.txt':'text/plain','.svg':'image/svg+xml','.png':'image/png','.ico':'image/x-icon','.wav':'audio/wav','.webmanifest':'application/manifest+json','.woff2':'font/woff2'};
+const mime={'.m4a':'audio/mp4','.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.rsc':'text/x-component','.txt':'text/plain','.svg':'image/svg+xml','.png':'image/png','.ico':'image/x-icon','.wav':'audio/wav','.webmanifest':'application/manifest+json','.woff2':'font/woff2'};
 const server=http.createServer(async(req,res)=>{
  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','same-origin');
  const began=Date.now();let url;
@@ -36,9 +35,9 @@ const server=http.createServer(async(req,res)=>{
  res.on('close',()=>{if(!res.writableFinished&&url.pathname.startsWith('/api/'))void log({type:'response_interrupted',...diagnostic,path:url.pathname.slice(0,120),ms:Date.now()-began});});
  try{
   if(url.pathname==='/health')return send(res,200,{ok:true,version:VERSION,diagnostics:{ok:!logError,error:logError}});
-  const breakRoute=url.pathname.match(/^\/api\/(beginner|explorer|admin)\/word-break$/);
+  const breakRoute=url.pathname.match(/^\/api\/((?:beginner|explorer)(?:_[1-9]\d{0,3})?|admin)\/word-break$/);
   if(breakRoute){if(req.method!=='GET')return send(res,405,{error:'Read only.'});return send(res,200,await literacy(breakRoute[1]));}
-  const route=url.pathname.match(/^\/api\/(beginner|explorer|admin)(?:\/(action|events|summary))?$/);
+  const route=url.pathname.match(/^\/api\/((?:beginner|explorer)(?:_[1-9]\d{0,3})?|admin)(?:\/(action|events|summary))?$/);
   if(route){
    const [,id,op]=route;
    if(op==='summary'){

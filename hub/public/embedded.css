@@ -25,3 +25,4 @@ html[data-family-game="maze-garden"] #maker-back {
 html[data-family-game="maze-garden"] body > main {
   padding-top: 12px;
 }
+button.family-tap{outline:3px solid #e4af51;outline-offset:2px;filter:brightness(1.08)}

@@ -4,7 +4,7 @@ import {WORDS} from '../engine.mjs';
 const app=await readFile(new URL('../dist/app.mjs',import.meta.url),'utf8');
 test('Only essential lines bypass the sound toggle; word breaks pass essential through',()=>{
  assert.match(app,/async function speak\(line,essential=false\)\{if\(!line\|\|\(!sound&&!essential\)\)return;/);
- assert.match(app,/speak:\(line,essential\)=>\{lastSpeech='';void speak\(line,essential\);\}/);
+ assert.match(app,/speak:\(line,essential\)=>\{lastSpeech='';return speak\(line,essential\);\}/);
  assert.match(app,/game\.phase!=='done'\)void speak\(p\.game\.message\);/);assert.doesNotMatch(app,/game\.phase!=='done'\)void speak\(p\.game\.message,true\)/);
 });
 test('Practice questions are content with an idle repeat; start lines are once per session',()=>{
@@ -12,4 +12,8 @@ test('Practice questions are content with an idle repeat; start lines are once p
  assert.match(app,/onceThisSession\('three-in-a-row:play:'\+key\)/);
  for(const k of ['find','block','fork','start','startO'])assert.ok(WORDS[k],k);
 });
-test('Blocked autoplay retries the pending question on the next touch',()=>{assert.match(app,/essential&&navigator\.userActivation&&!navigator\.userActivation\.hasBeenActive\)\{retryOnTouch\(line\)/);});
+test('Blocked autoplay retries the pending question on the next touch',()=>{assert.match(app,/NotAllowedError'&&essential\?retryOnTouch\(line\)/);});
+test('Word-break lines report when they are over (audio-finished contract), including a retried blocked question',()=>{
+ assert.match(app,/const el=audio;await el\.play\(\);event\('voice','started: '\+line\);return mediaSettled\(el\);/);
+ assert.match(app,/release\(l\?speak\(l,true\):'stopped'\);/);assert.match(app,/return pendingDone;\}/);
+});

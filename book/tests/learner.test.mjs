@@ -9,20 +9,20 @@ import {saves,deployment,NOW} from './fixtures.mjs';
 
 test('Learner model: letters, words, maths, tricks, story and dad lines from synthetic saves',()=>{
  const s=saves('older');
- const m=buildLearner({player:'older',name:'Leo',profile:{age:8,interests:['robots'],companions:[{name:'Gizmo'}],tricks:[{id:'sentence-position',text:'guesses by position'}]},now:NOW,saves:s,
+ const m=buildLearner({player:'older',name:'Robin',profile:{age:8,interests:['robots'],companions:[{name:'Gizmo'}],tricks:[{id:'sentence-position',text:'guesses by position'}]},now:NOW,saves:s,
   wordBreaks:[{kind:'sentence',answer:'Bo and Max run to the net.',misses:9,ms:6000},{kind:'sentence',answer:'A red bug sat on Bo.',misses:8,ms:5000},{kind:'sentence',answer:'Is Bo in the net?',misses:6,ms:4000}],
-  notes:[{date:'2026-03-09',at:new Date(NOW-5*36e5).toISOString(),text:'Leo scored a goal',player:'older'},{date:'2026-03-09',at:new Date(NOW-5*36e5).toISOString(),text:'Ada drew a whale',player:'young'},{date:'2026-03-01',at:'2026-03-01T10:00:00Z',text:'old',player:null}],
+  notes:[{date:'2026-03-09',at:new Date(NOW-5*36e5).toISOString(),text:'Robin scored a goal',player:'older'},{date:'2026-03-09',at:new Date(NOW-5*36e5).toISOString(),text:'Ada drew a whale',player:'young'},{date:'2026-03-01',at:'2026-03-01T10:00:00Z',text:'old',player:null}],
   playDate:'2026-03-09',timeZone:'UTC'});
  assert.equal(m.schema,'family-book-learner-1');
  assert.deepEqual(m.companions,[{name:'Gizmo'}]);
  assert.ok(m.literacy.lettersMastered.includes('A'));
- assert.ok(m.literacy.wordsMastered.includes('cat')&&m.literacy.wordsMastered.includes('sun'));
- assert.ok(m.literacy.wordsStuck.includes('duck'));
+ assert.deepEqual(m.literacy.wordsMastered,[],'save counters cannot establish word mastery');
+ assert.deepEqual(m.literacy.wordsStuck,[],'save counters cannot establish low first-try reading');
  assert.equal(m.math.track,'facts');assert.deepEqual(m.math.cookies,{level:1,stage:'own'});
  assert.deepEqual(m.math.factsStuck,['6x7']);
  const trick=m.tricks.find(t=>t.id==='sentence-position');assert.equal(trick.source,'parent');assert.deepEqual(trick.evidence,{sentenceBreaks:3,tapThrough:3});
  assert.ok(m.tricks.some(t=>t.id==='harder-tapping'),'rapid "harder" taps are noticed');
- assert.deepEqual(m.recent.dadLines.map(l=>l.text),['Leo scored a goal'],'only this child’s and recent lines');
+ assert.deepEqual(m.recent.dadLines.map(l=>l.text),['Robin scored a goal'],'only this child’s and recent lines');
  assert.ok(m.recent.play.some(l=>l.startsWith('Sling Shot: 1 round')));
  assert.ok(m.interests.includes('robots'));
 });
@@ -48,7 +48,7 @@ test('Builder reads saves and logs without changing them, and writes a private m
  const file=join(root,'data','letter-quest','older.json'),before=await readFile(file,'utf8'),mtime=(await stat(file)).mtimeMs;
  const rows=await wordBreakRows(paths.data['maze-garden'],'older',{now:NOW});assert.equal(rows.length,3);assert.equal(rows[2].misses,6);
  const m=await learnerFor('older',{paths,profiles,now:NOW,chapterDate:'2026-03-10'});
- assert.equal(m.name,'Leo');assert.equal(m.recent.yesterday.date,'2026-03-09');assert.ok(m.stuck.some(s=>/duck/.test(s.detail||'')));
+ assert.equal(m.name,'Robin');assert.equal(m.recent.yesterday.date,'2026-03-09');assert.equal(m.literacy.wordLevel,1);
  assert.equal(m.tricks.find(t=>t.id==='sentence-position').evidence.tapThrough,3);
  const young=await learnerFor('young',{paths,profiles,now:NOW,chapterDate:'2026-03-10'});
  assert.ok(young.recent.play.some(l=>/Make-a-Maze/.test(l)),'hub opens become play lines');
@@ -60,7 +60,7 @@ test('Outside tutor file (family-sage-1) is summarised read-only; absent or fore
  const sage={schema:'family-sage-1',sessions:3,lastSession:'2026-03-09T10:00:00Z',worked:['Counting I'],
   mastered:['Counting I: Map numeral to quantity'],practising:[{area:'Place Value',skill:'State digit place value'}],
   recentMisses:[{area:'Place Value',target:'Worth of tens digit',note:'face value',extra:'dropped'}]};
- const m=buildLearner({player:'older',name:'Leo',profile:{age:8},now:NOW,saves:saves('older'),sage});
+ const m=buildLearner({player:'older',name:'Robin',profile:{age:8},now:NOW,saves:saves('older'),sage});
  assert.deepEqual(m.sage.mastered,['Counting I: Map numeral to quantity']);
  assert.deepEqual(m.sage.practising,['Place Value: State digit place value']);
  assert.deepEqual(m.sage.recentMisses,[{area:'Place Value',target:'Worth of tens digit',note:'face value'}]);

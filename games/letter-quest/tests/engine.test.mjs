@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {GLYPHS,freshProfile as newProfile,nextChallenge,applyAttempt,assessTrace,samplePath,unlocked,leagueRows,resetProgress,questRating,taskPrompt,visibleTaskPrompt,challengeKey,expectedAnswer,WORDS,startDuel} from '../public/engine.mjs';
 // These regressions exercise the original curriculum AFTER the new lowercase track.
-// Fresh/unmastered Explorer profiles are covered separately in lowercase.test.mjs.
 function freshProfile(id){const p=newProfile(id);if(p.id==='explorer')p.foundation={reviewComplete:true};return p;}
 test('B accepts its shared middle bar in either bowl without tracing it twice',()=>{
  const [stem,upper,lower]=GLYPHS.B;
@@ -114,9 +113,9 @@ test('Failed tracing retries the same letter with a new ID and reduced difficult
  assert.equal(success.ok,true);assert.equal(p.inLesson,1);assert.equal(p.retryTrace,undefined);
  assert.equal(p.history.at(-1).helped,true);
 });
-test('Admin practice starts with Admin; reset preserves settings and invalidates stale challenges',()=>{
- const p=freshProfile('admin');assert.equal(p.name,'Admin');p.seq=13;
- assert.equal(nextChallenge(p).word,'Admin');
+test('Admin practice starts with Alex; reset preserves settings and invalidates stale challenges',()=>{
+ const p=freshProfile('admin');assert.equal(p.name,'Alex');p.seq=13;
+ assert.equal(nextChallenge(p).word,'Alex');
  p.xp=80;p.completed=1;p.revision=15;p.retryTrace='F';p.settings.sound=false;
  const prior=JSON.stringify(p),reset=resetProgress(p);
  assert.equal(reset.id,'admin');assert.equal(reset.xp,0);assert.equal(reset.seq,0);assert.equal(reset.revision,16);
@@ -139,9 +138,9 @@ test('Family names rotate independently, retain duplicate tiles, and persist acr
    assert.equal(result.ok,true);assert.equal(p.history.at(-1).word,c.word);
    p=JSON.parse(JSON.stringify(p));
   }
-  assert.deepEqual(new Set(words.slice(0,4)),new Set(['Explorer','Beginner','Admin','Helper']));
+  assert.deepEqual(new Set(words.slice(0,4)),new Set(['Explorer','Beginner','Alex','Ada']));
   assert.deepEqual(words.slice(0,4),words.slice(4));
-  assert.equal(words[0],id==='beginner'?'Beginner':id==='admin'?'Admin':'Explorer');
+  assert.equal(words[0],id==='beginner'?'Beginner':id==='admin'?'Alex':'Explorer');
   assert.equal(p.familyNameRound,8);assert.equal(resetProgress(p).familyNameRound,undefined);
  }
  const fresh=freshProfile('beginner');assert.equal(fresh.familyNameRound,undefined);

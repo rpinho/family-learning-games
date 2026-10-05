@@ -1,5 +1,21 @@
 # Original Book artwork
 
+## Public visuals refresh
+
+Generated with the built-in imagegen tool from text only. No reference images, household photographs, private scenes, real identities or franchise characters were inputs. The guide is saved at `actors/guide-map.webp` with its original alpha; the castle painting is saved at `bg/castle-garden.webp`. Both are metadata-free lossless WebP encodings. `docs/showcase/showcase-art.mjs` selects this art only for the memory-only fictional demo; it maps the explorer to the original fox and removes child stand-ins from the authored chapter. Puzzles and layout come from the current public player, not an image generator. The guide occupies about 40% of a landscape story frame.
+
+Exact guide prompt:
+
+Use case: illustration-story. Asset: transparent full-body cutout for an actual painted adventure game.
+Create one wholly original fictional adult woman explorer, about 55, richly painted with fine traditional gouache and watercolor brushwork, believable expressive anatomy, warm copper-brown skin, long silver hair in a loose braid, kind intelligent face with subtle laugh lines, muted forest-green long field jacket, cream linen shirt, russet trousers, weathered leather walking boots, small satchel. Full body in a lively natural three-quarter action pose: weight on one leg, other knee bent forward, torso turning toward the LEFT, one arm reaching invitingly with an open hand toward a discovery at upper left, other hand holding an unfolded parchment map near her waist. Warm delighted expression, relaxed fingers, moving jacket hem. Face small relative to body, no huge cartoon head. Sophisticated illustrated children's book with luminous warm reflected sunlight and rich fabric texture, polished traditional painting, no 3D rendering, no stiff straight-on standing, no stick figures, no chibi style. Entire body including boots, generous clear transparent margins. True transparent background, no backdrop or ground, no text, no logo, no real person or franchise resemblance. A single character only.
+
+Castle prompt (generic architectural exclusions condensed):
+
+Use case: illustration-story. Asset: a complete background painting for a real interactive fantasy story game, wide landscape composition, 16:9.
+An original magical ivy-covered stone castle entrance in a forest, viewed close enough to see warm sandstone texture, lichen, intricately carved oak double doors with brass hinges and three plain round brass medallions. Door opening bounding rectangle centered across the top half (x 36% to 64%, y 4% to 46%), large stone arch surrounding it. No people or animals anywhere. Rich, sophisticated traditional gouache and watercolor illustration, luminous warm late afternoon light, fine leafy brush textures, natural layered depth, professional illustrated storybook.
+The LOWER HALF must be a richly painted near foreground, not a vast empty flat field: fern fronds and bluebell clusters sweeping in from both bottom corners, a mossy stone ledge and flowering vines along left side, leafy shrubs and an ancient tree root at lower right, wildflower beds with daisies and orange poppies along a gently curved walkway. The sunlit walkway is modest and walkable across the central portion of the lower half with visible irregular flagstones and tiny sprigs between them, never an empty sandy courtyard. Foreground leaves large and detailed, midground flowers softer, castle behind crisp; ample central standing room in bottom center. Door and its three medallions unobscured; neither flowers nor roots cover it. Atmospheric and beautiful, hand painted, no 3D rendering, no cartoon vector shapes, no text, no signage, no flags with logos, no people, only invented fantasy architecture, with no resemblance to any real private place. This is wholly imagined fantasy castle architecture.
+
+
 The painted cutouts and seven scene pairs are original AI-generated project artwork. They are not family photographs, traced identities, licensed franchise characters or third-party illustrations. No household character assets or real personal objects are distributed. The internal actor IDs remain compatible: `hero` is a boy, `bo` his older sister, `grown-up` a guide, and `pip` a plush fox.
 
 ## Fictional cutouts v2 — superseded

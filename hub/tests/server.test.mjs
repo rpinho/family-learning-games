@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
-import {mkdtemp,readFile,readdir} from 'node:fs/promises';
+import {mkdtemp,readFile,readdir,mkdir,writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {once} from 'node:events';
@@ -37,8 +37,16 @@ test('Hub persists only the chosen profile, rejects replay/foreign origins, and 
   assert.deepEqual((await readdir(data)).sort(),['admin.json','logs']);
   const savedBeforeMenu=await readFile(join(data,'admin.json'),'utf8');
   const menu=await(await fetch(base+'/api/menu?player=admin')).json();
-  assert.equal(new Set(menu.order).size,11); // Background ranking may still be warming; never wait for it.
-  assert.deepEqual(Object.keys(menu),['order','ready']);
+  const conf=await(await fetch(base+'/api/config')).json();
+  assert.equal(typeof conf.menuTimeZone, 'string');
+  assert.doesNotThrow(()=>new Intl.DateTimeFormat('en-CA',{timeZone:conf.menuTimeZone}));
+  assert.equal(new Set(menu.order).size,12); // Background ranking may still be warming; never wait for it.
+  // The learner model readout (grown-ups' diagnostics): 404 until the nightly writes one, then the private file as is.
+  assert.equal((await fetch(base+'/api/learner?player=admin')).status,404);
+  assert.equal((await fetch(base+'/api/learner?player=../admin')).status,400);
+  await mkdir(join(data,'learner'),{recursive:true});await writeFile(join(data,'learner','admin-learner.json'),JSON.stringify({schema:'family-learner-2',player:'admin'}));
+  assert.deepEqual(await(await fetch(base+'/api/learner?player=admin')).json(),{schema:'family-learner-2',player:'admin'});
+  assert.deepEqual(Object.keys(menu),['order','ready','home','nudge','familyOrder']);// the nudge card's id only (Today keeps it off the first row); reasons stay behind why=1
   assert.equal((await(await fetch(base+'/api/menu?player=beginner')).json()).order[0],'letter-quest');
   assert.equal((await fetch(base+'/api/menu?player=unknown')).status,400);
   assert.equal((await fetch(base+'/api/menu?player=admin',{headers:{Origin:'https://untrusted.example'}})).status,403);
@@ -65,11 +73,18 @@ test('Hub persists only the chosen profile, rejects replay/foreign origins, and 
   assert.equal((await(await fetch(base+'/manifest.webmanifest?player=nobody')).json()).id,'/');
   assert.match(await(await fetch(base+'/?player=beginner')).text(),/href="\/manifest\.webmanifest\?player=beginner"/);
   assert.match(await(await fetch(base+'/?player=%3Cx%3E')).text(),/href="\/manifest\.webmanifest"/);
-  for(const path of ['/dribble-live.mjs','/live-pitch.mjs','/dribble-ui.mjs','/chess/tokens.mjs'])assert.equal((await fetch(base+path)).status,200);
+  for(const path of ['/dribble-live.mjs','/live-pitch.mjs','/dribble-ui.mjs','/chess/tokens.mjs','/chess/feedback.mjs'])assert.equal((await fetch(base+path)).status,200);
   const live=await(await request({type:'live-start',liveRules:1,revision:escaped.profile.revision})).json();
   assert.equal(live.profile.live.level,1);assert.equal(live.profile.dribbles,1);
   const checkpoint=await(await request({type:'live-checkpoint',liveRules:1,revision:live.profile.revision,roundId:live.profile.live.round.id,inputs:'iwee'})).json();
   assert.equal(checkpoint.profile.live.round.inputs,'iwee');
   const reloaded=await(await fetch(base+'/api/dribble?player=admin')).json();assert.equal(reloaded.profile.live.round.inputs,'iwee');
+  await mkdir(join(data,'chess-voice'));
+  const clip=Buffer.from('RIFFsynthetic audio fixture');await writeFile(join(data,'chess-voice','0123456789abcdef.wav'),clip);
+  const audio=await fetch(base+'/chess-voice/0123456789abcdef.wav');
+  assert.equal(audio.headers.get('content-length'),String(clip.length));assert.match(audio.headers.get('cache-control'),/immutable/);
+  assert.deepEqual(Buffer.from(await audio.arrayBuffer()),clip);
+  await writeFile(join(data,'chess-voice','manifest.json'),'{}');
+  assert.equal((await fetch(base+'/chess-voice/manifest.json')).headers.get('cache-control'),'no-store');
  }finally{child.kill('SIGTERM');await once(child,'exit');}
 });

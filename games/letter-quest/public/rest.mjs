@@ -1,4 +1,4 @@
-// Calm wind-down (from Sage Teacher's session timers, without a timer on
+// Calm wind-down (from guided practice session timers, without a timer on
 // screen). Play time is tracked from saved actions on the server. After
 // WIND_DOWN_MS of continuous play, the lesson or labyrinth that just finished
 // becomes the last one for now: "All done for today" and new lessons/levels

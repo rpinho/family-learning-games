@@ -2,7 +2,7 @@ import test from 'node:test';import assert from 'node:assert/strict';import {rea
 import {gapAfterGate,COURSE,FEEDBACK_SHARE} from '../lib/slalom-timing.mjs';
 import {budgetReport,slalomTimingLines,trackLines} from '../lib/slalom-budget.mjs';
 import {slalomRun} from '../lib/slalom.mjs';import {literacyFrom} from '../lib/word-break.mjs';
-// Real clip lengths (seconds) from the built voice store: node scripts/check-slalom-timing.mjs --voice DIR --write <this file>
+// Synthetic durations exercise the timing budget without redistributing a voice-cache manifest.
 const seconds=JSON.parse(readFileSync(new URL('./fixtures/slalom-clip-seconds.json',import.meta.url),'utf8'));
 test('The clip-length fixture covers every feedback line and question a run can say',()=>{for(const l of slalomTimingLines())assert.ok(seconds[l]>0,`missing ${l}: regenerate the fixture`);
  const lines=new Set(slalomTimingLines());

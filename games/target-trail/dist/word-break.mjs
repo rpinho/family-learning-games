@@ -153,6 +153,40 @@ export function wordBreakLines(){
  for(const s of [...SENTENCES.flat(),...STARTER_SENTENCES])lines.add(s);
  return [...lines];
 }
+// ---------- Audio-finished contract ----------
+// Every game's speak(line, essential) adapter returns a promise that settles once THAT line is over: it ended, was
+// stopped or replaced on purpose, failed, was blocked by autoplay, or was never played (muted, missing clip). It may
+// resolve with 'ended' | 'stopped' | 'failed' | 'blocked' | 'muted'. A checkpoint never waits longer than
+// SETTLE_MAX_MS for one line, so a stuck or silent adapter cannot hang the break.
+export const SETTLE_MAX_MS=6000;
+export function settled(task,max=SETTLE_MAX_MS){
+ if(!task||typeof task.then!=='function')return Promise.resolve('unreported');
+ return new Promise(done=>{const t=setTimeout(()=>done('timeout'),max);task.then(v=>{clearTimeout(t);done(typeof v==='string'?v:'ended');},()=>{clearTimeout(t);done('failed');});});
+}
+// For adapters built on an <audio> element: resolves when the clip playing on el is over (ended, paused/replaced, failed).
+export function mediaSettled(el,max=SETTLE_MAX_MS){
+ return new Promise(done=>{
+  if(!el||el.ended){done('ended');return;}
+  if(el.paused){done('stopped');return;}
+  const kinds={ended:'ended',pause:'stopped',emptied:'stopped',abort:'stopped',error:'failed'},on={};
+  const finish=s=>{clearTimeout(t);for(const k in kinds)el.removeEventListener(k,on[k]);done(s);};
+  for(const k in kinds){on[k]=()=>finish(k==='pause'&&el.ended?'ended':kinds[k]);el.addEventListener(k,on[k]);}
+  const t=setTimeout(()=>finish('timeout'),max);
+ });
+}
+// One voice line for a checkpoint. A clip that is playing (the question, or a short reply) is never cut off by another
+// checkpoint line: the new line waits until the adapter reports it finished. At most one line waits (the newest
+// replaces an older waiting one), and a line already playing or waiting is not said twice, so quick taps never build
+// a queue of chatter. say() resolves true when its line starts, false if it was dropped.
+export function checkpointVoice(speak,{max=SETTLE_MAX_MS}={}){
+ let now=null,next=null;
+ const advance=()=>{now=next;next=null;if(!now)return;const line=now;let task;try{task=speak(line.text,line.essential);}catch{}line.start(true);settled(task,max).then(()=>{if(now===line)advance();});};
+ const say=(text,essential=false)=>new Promise(start=>{
+  if(now?.text===text||next?.text===text){start(false);return;}
+  next?.start(false);next={text,essential,start};if(!now)advance();
+ });
+ return {say,playing:()=>now?.text??null};
+}
 // ---------- Browser UI ----------
 const CSS=`dialog.wb{border:0;border-radius:28px;padding:0;max-width:min(94vw,760px);width:94vw;background:#fffaf0;color:#17324a;box-shadow:0 20px 60px #0005;font-family:ui-rounded,'Avenir Next',system-ui,sans-serif}
 dialog.wb:focus{outline:none}
@@ -199,28 +233,30 @@ export async function fetchWordLevel(url,fallbackTrack='mixed'){
 // effects: false (or a function returning false) mutes the chimes when the game's effects toggle is off.
 export function wordBreak({player='admin',level,speak=()=>{},log=()=>{},reason='',doc=globalThis.document,r=Math.random,item,effects=true}={}){
  const ding=ok=>{if(typeof effects==='function'?effects():effects)chime(ok);};
+ // Replies wait for the question to finish (see checkpointVoice); the question is never restarted over itself.
+ const voice=checkpointVoice(speak),ask=()=>voice.say(q.spoken,true);
  styles(doc);
  const lvl=level||literacyFrom(null,DEFAULT_TRACK[player]||'mixed'),q=item||wordBreakItem(lvl,{r,recent:readRecent(player),sentences:readSentences(player)}),started=Date.now();
  const d=doc.createElement('dialog');d.className='wb';d.dataset.kind=q.kind;d.setAttribute('aria-label',q.track==='letters'?'Letter break':'Word break');
  const card=doc.createElement('div');card.className='wb-card';d.append(card);
  const top=doc.createElement('div');top.className='wb-top';const eyebrow=doc.createElement('p');eyebrow.className='wb-eyebrow';eyebrow.textContent=q.track==='letters'?'LETTER BREAK':'WORD BREAK';
- const hear=doc.createElement('button');hear.type='button';hear.className='wb-hear';hear.textContent='🔊';hear.setAttribute('aria-label','Hear it again');hear.onclick=()=>{speak(q.spoken,true);nudge();};top.append(eyebrow,hear);card.append(top);
+ const hear=doc.createElement('button');hear.type='button';hear.className='wb-hear';hear.textContent='🔊';hear.setAttribute('aria-label','Hear it again');hear.onclick=()=>{if(finished)return;void ask();nudge();};top.append(eyebrow,hear);card.append(top);
  if(q.picture){const p=doc.createElement('div');p.className='wb-picture';p.textContent=q.picture;p.setAttribute('aria-hidden','true');card.append(p);}
  let built,slots=[];
  if(q.kind==='sentence'){built=doc.createElement('div');built.className='wb-built';slots=q.answer.map(()=>{const s=doc.createElement('span');s.className='wb-slot';built.append(s);return s;});const m=doc.createElement('span');m.className='wb-mark';m.textContent=q.mark;built.append(m);card.append(built);}
  const choices=doc.createElement('div');choices.className='wb-choices'+(q.kind==='sentence'||q.kind==='read-word'?' wb-words':'');card.append(choices);
  let misses=0,missesHere=0,step=0,finished=false,idle=null,repeats=0;
  // Gentle idle repeat: say the question again after ~6 s without a tap, at most twice.
- const nudge=()=>{clearTimeout(idle);if(finished||repeats>=IDLE_REPEATS)return;idle=setTimeout(()=>{if(finished||!d.isConnected)return;repeats++;speak(q.spoken,true);nudge();},IDLE_REPEAT_MS);};
+ const nudge=()=>{clearTimeout(idle);if(finished||repeats>=IDLE_REPEATS)return;idle=setTimeout(()=>{if(finished||!d.isConnected)return;repeats++;void ask();nudge();},IDLE_REPEAT_MS);};
  return new Promise(resolve=>{
   const finish=()=>{finished=true;clearTimeout(idle);ding(true);remember(player,q);
-   const done=doc.createElement('p');done.className='wb-done';done.textContent=q.kind==='sentence'?'Great reading!':'Yes!';card.append(done);speak(q.kind==='sentence'?'Great reading!':'Yes!',false);
+   const done=doc.createElement('p');done.className='wb-done';done.textContent=q.kind==='sentence'?'Great reading!':'Yes!';card.append(done);const praised=voice.say(q.kind==='sentence'?'Great reading!':'Yes!',false);
    const result={kind:q.kind,track:q.track,answer:q.sentence||q.answer,misses,ms:Date.now()-started,reason,...(q.starter?{starter:true}:{})};log(result);
    if(q.kind==='sentence')rememberSentence(player,{misses,tiles:q.answer.length,starter:!!q.starter});
-   setTimeout(()=>{try{d.close();}catch{}d.remove();resolve(result);},q.kind==='sentence'?1500:1000);};
+   void praised.then(()=>setTimeout(()=>{try{d.close();}catch{}d.remove();resolve(result);},q.kind==='sentence'?1500:1000));};
   const wrong=b=>{misses++;missesHere++;ding(false);b.classList.remove('wiggle');void b.offsetWidth;b.classList.add('wiggle');
-   if(missesHere>=2){const want=q.kind==='sentence'?q.answer[step]:q.answer;const right=[...choices.children].find(x=>x.dataset.value===want&&!x.classList.contains('used'));right?.classList.add('glow');speak(q.spoken,true);}
-   else speak('Try again.',false);};
+   if(missesHere>=2){const want=q.kind==='sentence'?q.answer[step]:q.answer;const right=[...choices.children].find(x=>x.dataset.value===want&&!x.classList.contains('used'));right?.classList.add('glow');void ask();}
+   else void voice.say('Try again.',false);};
   const list=q.kind==='sentence'?q.tiles:q.options;
   for(const value of list){const b=doc.createElement('button');b.type='button';b.className='wb-choice';b.textContent=value;b.dataset.value=value;b.setAttribute('aria-label',value);
    b.onclick=()=>{if(finished||b.classList.contains('used'))return;
@@ -231,6 +267,6 @@ export function wordBreak({player='admin',level,speak=()=>{},log=()=>{},reason='
   d.addEventListener('cancel',e=>e.preventDefault());
   // Focus the dialog itself: showModal() would otherwise focus (and ring) the first button, which looks pre-chosen.
   d.tabIndex=-1;d.autofocus=true;doc.body.append(d);try{d.showModal();}catch{d.setAttribute('open','');}try{d.focus({preventScroll:true});}catch{}
-  ding(true);setTimeout(()=>{if(!finished)speak(q.spoken,true);nudge();},350);
+  ding(true);setTimeout(()=>{if(!finished)void ask();nudge();},350);
  });
 }

@@ -48,7 +48,7 @@ export function createSaveClient({fetch:send,apply,status,report=(_name,_detail)
      return null;
     }catch(recovery){if(token!==epoch)return null;note('recovery_failed',{error:recovery.message});}
    }
-   status({busy:true,error:e.status&&e.status<500&&e.status!==409?e.message:'Cannot reach your server. Keep this screen open, then tap Refresh.',notice:''});
+   status({busy:true,error:e.status&&e.status<500&&e.status!==409?e.message:'Cannot reach your Mac Mini. Keep this screen open, then tap Refresh.',notice:''});
    return null;
   }finally{
    if(token===epoch){working=false;status({busy:false});if(pending){pending=false;void perform(null,'queued');}}

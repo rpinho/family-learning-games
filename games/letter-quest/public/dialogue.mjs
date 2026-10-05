@@ -1,4 +1,4 @@
-// Original coach dialogue for the shared edition.
+// Short Rook reaction lines.
 import {FAMILY_NAMES,WORDS,taskPrompt} from './engine.mjs';
 import {wordBreakLines} from './word-break.mjs';
 import {storyVoiceLines} from './story.mjs';
@@ -11,12 +11,12 @@ import {recapVoiceLines} from './recap.mjs';
 import {boStoryVoiceLines} from './bo-story.mjs';
 import {REST_LINE,REST_COACH} from './rest.mjs';
 import {RESCUE_LINES,PUZZLE_LINES} from './rescue.mjs';
-
-export const ROOK_CHEERS = [
-  'My hat just did a victory lap!',
-  'That answer deserves a tiny trumpet.',
-  'You earned a royal high five.',
-  'One more try helped you get there.'
+// Situation-specific Rook dialogue.
+export const ROOK_REACTIONS = [
+  'Bold move. I approve.',
+  "Well, you're full of surprises.",
+  'Glory belongs to you.',
+  "You didn't give up. And that shows courage."
 ];
 export const DIALOGUE = {
   rook_miss: [
@@ -49,7 +49,13 @@ export const DIALOGUE = {
     'A draw! We will need another round to settle this.',
     'Nobody lost. My mustache finds this acceptable.'
   ],
-  success: [ROOK_CHEERS[0], ROOK_CHEERS[1],
+  success: [ROOK_REACTIONS[0], ROOK_REACTIONS[1],
+    'You found it! I was still adjusting my thinking face.',
+    'Excellent! I shall claim I helped. Very quietly.',
+    'Aha! My detective hat is jealous.',
+    'You got it! I will supply the dramatic applause.',
+    'Well spotted! I was distracted by my own eyebrows.',
+    'Brilliant! My job was mostly looking mysterious.',
     'Ah, a masterpiece in miniature!',
     'My moustache is positively impressed.',
     'A tiny move with tremendous style.',
@@ -77,7 +83,7 @@ export const DIALOGUE = {
     'A secret map, kept right inside your memory.',
     'Your very own letter, straight from memory.'
   ],
-  assisted: [ROOK_CHEERS[3],
+  assisted: [ROOK_REACTIONS[3],
     'A little help, a little practice. That is how we learn.',
     'You followed the clue and found your way.',
     'We made a rather good team on that one.',
@@ -98,7 +104,7 @@ export const DIALOGUE = {
     'Back to the gold dot, and off we go together.',
     'This trail has a starting point. Look for the gold dot.'
   ],
-  lesson: [ROOK_CHEERS[2],
+  lesson: [ROOK_REACTIONS[2],
     'Five moves, one finished quest. Take a bow, apprentice!',
     'A splendid quest. The kingdom celebrates with you.',
     'You have earned a victory. I shall polish the trophy.',
@@ -168,7 +174,6 @@ export function allVoiceLines(){
   lines.push(...SHORT_FEEDBACK,...[...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'].map(c=>`Letter ${c}.`));
   for(const word of FOUNDATION_WORDS)lines.push(`Complete the word ${word}. Choose the missing letter.`);
   lines.push(...recapVoiceLines(),...boStoryVoiceLines(),REST_LINE,REST_COACH);
-  lines.push(...wordBreakLines());
   lines.push(...wordBreakLines());
 
   // Automatic narration shortens rescue cues; replay still needs their full versions.

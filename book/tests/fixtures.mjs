@@ -38,23 +38,25 @@ export async function deployment({players=['young','older']}={}){
   {at:at(18),player:'older',kind:'word-break',type:'client',detail:JSON.stringify({kind:'sentence',answer:'Is Bo in the net?',misses:6,ms:4000})},
   {at:at(18),player:'young',kind:'word-break',type:'client',detail:JSON.stringify({kind:'find-letter',answer:'B',misses:0,ms:2000})}
  ].map(r=>JSON.stringify(r)).join('\n')+'\n');
+ for(const date of ['2026-03-07','2026-03-08'])await writeFile(join(root,'data','letter-quest','logs',date+'.jsonl'),['cat','sun'].flatMap(word=>Array.from({length:3},(_,i)=>JSON.stringify({at:date+'T12:0'+i+':00Z',player:'older',type:'maze_action',input:{kind:'answer',questionId:date+word+i,answer:word,durationMs:4000},result:{ok:true,helped:false,question:{id:date+word+i,type:'word',word,answer:word,options:[word,'pin','hat']}}}))).join('\n')+'\n');
  await writeFile(join(root,'data','hub','logs','2026-03-09.jsonl'),JSON.stringify({at:at(20),type:'client',player:'young',kind:'open_game',detail:'maze-garden/maker'})+'\n');
- await writeFile(join(root,'data','hub','config.json'),JSON.stringify({players:[{id:'young',name:'Ada'},{id:'older',name:'Leo'},{id:'admin',name:'Admin'}],games:{}}));
- await writeFile(join(root,'data','hub','book-notes.json'),JSON.stringify({notes:[{id:'1',date:'2026-03-09',at:at(5),text:'Leo scored a goal',player:'older'},{id:'2',date:'2026-03-09',at:at(5),text:'we built the robot track',player:null}]}));
+ await writeFile(join(root,'data','hub','config.json'),JSON.stringify({players:[{id:'young',name:'Ada'},{id:'older',name:'Robin'},{id:'admin',name:'Admin'}],games:{}}));
+ await writeFile(join(root,'data','hub','book-notes.json'),JSON.stringify({notes:[{id:'1',date:'2026-03-09',at:at(5),text:'Robin scored a goal',player:'older'},{id:'2',date:'2026-03-09',at:at(5),text:'we built the robot track',player:null}]}));
  await writeFile(join(root,'deploy.json'),JSON.stringify({games}));
  await mkdir(join(root,'book'),{recursive:true});
  await writeFile(join(root,'book','profiles.json'),JSON.stringify({
-  young:{age:5,interests:['dinosaurs'],companions:[{name:'Bo',kind:'a big gentle bear',emoji:'🐻'}],sibling:'Leo',mathTrack:'early'},
+  young:{age:5,interests:['dinosaurs'],companions:[{name:'Bo',kind:'a big gentle bear',emoji:'🐻'}],sibling:'Robin',mathTrack:'early'},
   older:{age:8,interests:['robots','soccer'],companions:[{name:'Gizmo',kind:'a small robot pup',emoji:'🤖'}],sibling:'Ada',mathTrack:'facts',tricks:[{id:'sentence-position',text:'guesses sentence tiles by position',source:'parent'}]},
   _lint:{extra:['Smithers']}
  }));
  const recap=join(root,'recap');await mkdir(recap);
- await writeFile(join(recap,'2026-03-09.json'),JSON.stringify({date:'2026-03-09',kids:[{player:'older',name:'Leo',played:true,minutes:12,apps:{'letter-quest':{played:true,minutes:12,labyrinth:{gatesAnswered:10,gatesCorrect:8},stuck:['labyrinth word duck: 3 misses'],story:[]}}},{player:'young',name:'Ada',played:false,apps:{}}]}));
- await writeFile(join(recap,'2026-03-09.md'),'# Family learning games\n\n## Leo\n- **Time:** about 12 min\n\n## Ada\nNo play.\n');
+ await writeFile(join(recap,'2026-03-09.json'),JSON.stringify({date:'2026-03-09',kids:[{player:'older',name:'Robin',played:true,minutes:12,apps:{'letter-quest':{played:true,minutes:12,labyrinth:{gatesAnswered:10,gatesCorrect:8},stuck:['labyrinth word duck: 3 misses'],story:[]}}},{player:'young',name:'Ada',played:false,apps:{}}]}));
+ await writeFile(join(recap,'2026-03-09.md'),'# Family learning games\n\n## Robin\n- **Time:** about 12 min\n\n## Ada\nNo play.\n');
  const env={FAMILY_DEPLOY_ROOT:root,FAMILY_RECAP_DIR:recap,FAMILY_TZ:'UTC',FAMILY_CONFIG:'',FAMILY_DATA:''};
  return {root,env};
 }
 
-const young=buildLearner({player:'young',name:'Ada',profile:{age:5,mathTrack:'early',companions:[{name:'Bo',kind:'a big gentle bear',emoji:'🐻'}],interests:['dinosaurs']},now:NOW,saves:saves('young')});
-const older=buildLearner({player:'older',name:'Leo',profile:{age:8,mathTrack:'facts',companions:[{name:'Gizmo',kind:'a small robot pup',emoji:'🤖'}],interests:['robots']},now:NOW,saves:saves('older')});
-export const plans=(dates=['2026-03-10','2026-03-11','2026-03-12','2026-03-13','2026-03-14'])=>dates.flatMap(d=>[planChapter(young,{date:d,profile:{sibling:'Leo'}}),planChapter(older,{date:d,profile:{sibling:'Ada'}})]);
+export const young=buildLearner({player:'young',name:'Ada',profile:{age:5,mathTrack:'early',companions:[{name:'Bo',kind:'a big gentle bear',emoji:'🐻'}],interests:['dinosaurs']},now:NOW,saves:saves('young')});
+const readingEvidence=['cat','sun'].flatMap(word=>Array.from({length:6},(_,i)=>({player:'older',source:'letter-quest',at:NOW-(24+i*12)*36e5,item:word+i,ok:true,help:false,tags:['word:'+word,'pattern:cvc','vowel:'+word[1]],readTask:true,choices:3,ms:4000})));
+export const older=buildLearner({evidence:readingEvidence,player:'older',name:'Robin',profile:{age:8,mathTrack:'facts',companions:[{name:'Gizmo',kind:'a small robot pup',emoji:'🤖'}],interests:['robots']},now:NOW,saves:saves('older')});
+export const plans=(dates=['2026-03-10','2026-03-11','2026-03-12','2026-03-13','2026-03-14'])=>dates.flatMap(d=>[planChapter(young,{date:d,profile:{sibling:'Robin'}}),planChapter(older,{date:d,profile:{sibling:'Ada'}})]);

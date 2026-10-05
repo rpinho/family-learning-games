@@ -22,7 +22,6 @@ test('all levels keep drag sharing and every prompt is spoken',()=>{
   assert.equal(q.prompt,cookiePrompt(q.total,q.plates,q.mode,q.baked,q.eaten));
   assert.equal(q.leftover,0);assert.equal(q.eaten,0);
  }
- // Beginner's Cookie Monster is the kindergarten sharing track, never this division track.
  const d=freshProfile('beginner');act(d,{kind:'start',game:'cookies'});
  assert.equal(d.session.question.track,'kinder-cookies-1');assert.notEqual(d.session.question.track,EXPLORER_TRACK);
 });
@@ -90,7 +89,7 @@ test('old easy wins seed moderate sharing; new independent rounds advance and hi
   act(p,{kind:'next'});
  }
  assert.equal(p.completed.cookies,1);assert.equal(p.completed.multiply,3);
- assert.equal(p.xp,79);assert.equal(challengeLevel(p,'cookies'),2);assert.equal(challengeLevel(p,'multiply'),2);
+ assert.equal(p.xp,79);assert.equal(challengeLevel(p,'cookies'),2);assert.equal(challengeLevel(p,'multiply'),4);
 
  assert.equal(p.session.finished,true);
 });

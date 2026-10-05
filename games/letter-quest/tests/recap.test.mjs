@@ -4,7 +4,7 @@ import {freshProfile,nextChallenge,applyAttempt,expectedAnswer} from '../public/
 import {lessonRecap,lessonBerries,recapVoiceLines,feedLine} from '../public/recap.mjs';
 import {allVoiceLines} from '../public/dialogue.mjs';
 const answer=(p,c)=>applyAttempt(p,c,c.type==='trace'?{strokes:c.paths,durationMs:4000,helped:false}:{answer:expectedAnswer(c),durationMs:4000,helped:false});
-test('a finished lesson gets one short spoken recap line, and Bo only ever gains berries',()=>{
+test('a finished lesson gets one short spoken recap line, and Loona only ever gains treats',()=>{
  const voiced=new Set(allVoiceLines());
  for(const line of recapVoiceLines())assert.ok(voiced.has(line),line);
  const p=freshProfile('beginner');let lesson=false,before=0,spots=0;
@@ -25,7 +25,7 @@ test('Explorer gets the recap sentence but no bear; words are listed',()=>{
  p.history=['cat','hat','mat','sat','bat'].map(w=>({key:'gap:'+w,word:w,ok:true}));
  const r=lessonRecap(p);assert.deepEqual(r.lines,['You made 5 words.']);assert.deepEqual(r.words,['cat','hat','mat','sat','bat']);assert.equal(r.treats,0);
  const d=freshProfile('beginner');d.history=[{key:'find:D',ok:true,spot:true},{key:'find:B',ok:false},{key:'trace:D',ok:true},{key:'find:M',ok:true},{key:'trace:A',ok:true},{key:'name',word:'Beginner',ok:true}];
- assert.deepEqual(lessonRecap(d).lines,['You found 2 letters, traced 2 and made 1 word.','Bo ate 7 berries!']);
+ assert.deepEqual(lessonRecap(d).lines,['You found 2 letters, traced 2 and made 1 word.','Loona ate 7 treats!']);
 });
 test('every browser module imported by the app is on the server allowlist',async()=>{
  const {readFileSync}=await import('node:fs');

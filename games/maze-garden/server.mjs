@@ -7,9 +7,9 @@ import {randomBytes} from 'node:crypto';
 import {PLAYERS,VERSION,newProfile,action} from './engine.mjs';
 import {literacyFrom,DEFAULT_TRACK} from './public/word-break.mjs';
 import {actionLogRow} from './action-log.mjs';
-const root=dirname(fileURLToPath(import.meta.url)),data=process.env.MAZE_DATA_DIR||resolve(homedir(),'.local/share/family-learning-games/maze-garden'),port=Number(process.env.PORT||4322);
+const root=dirname(fileURLToPath(import.meta.url)),data=process.env.MAZE_DATA_DIR||resolve(homedir(),'.local/share/maze-garden'),port=Number(process.env.PORT||4322);
 mkdirSync(resolve(data,'logs'),{recursive:true,mode:0o700});
-const letterData=process.env.LETTER_QUEST_DATA||resolve(homedir(),'.local/share/family-learning-games/letter-quest');
+const letterData=process.env.LETTER_QUEST_DATA||resolve(homedir(),'.local/share/letter-quest');
 // Read-only look at Letter Quest progress so word breaks match each child.
 function literacy(id){let save=null;try{save=JSON.parse(readFileSync(resolve(letterData,id+'.json'),'utf8'));}catch{}return literacyFrom(save,DEFAULT_TRACK[id]||'mixed');}
 // Only this machine's own names and addresses. The network interfaces are re-read every few seconds, so a new
@@ -22,12 +22,12 @@ const file=p=>resolve(data,p+'.json');
 function save(p){const tmp=file(p.player)+'.tmp';writeFileSync(tmp,JSON.stringify(p),{mode:0o600});renameSync(tmp,file(p.player));}
 function load(player){return existsSync(file(player))?JSON.parse(readFileSync(file(player),'utf8')):newProfile(player);}
 function send(res,status,value){res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(value));}
-const types={'.html':'text/html; charset=utf-8','.css':'text/css','.mjs':'text/javascript','.js':'text/javascript','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json'};
+const types={'.m4a':'audio/mp4','.html':'text/html; charset=utf-8','.css':'text/css','.mjs':'text/javascript','.js':'text/javascript','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json'};
 const server=http.createServer(async(req,res)=>{res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self'; connect-src 'self'; frame-ancestors 'none'");
  try{const url=new URL(req.url,`http://${req.headers.host}`);if(!allowedHosts().has(url.hostname.toLowerCase()))return send(res,403,{error:'Local access only'});
  if(req.headers.origin&&req.headers.origin!==url.origin)return send(res,403,{error:'Origin mismatch'});
  if(url.pathname==='/api/health')return send(res,200,{version:VERSION,name:'Maze Garden'});
- if(url.pathname.startsWith('/api/')){const player=url.searchParams.get('player');if(!Object.hasOwn(PLAYERS,player))return send(res,400,{error:'Choose a player'});
+ if(url.pathname.startsWith('/api/')){const player=url.searchParams.get('player');if(!/^(?:(?:beginner|explorer)(?:_[1-9]\d{0,3})?|admin)$/.test(player))return send(res,400,{error:'Choose a player'});
  if(req.method==='GET'&&url.pathname==='/api/state')return send(res,200,{...load(player),serverNow:Date.now()});
  if(req.method==='GET'&&url.pathname==='/api/word-break')return send(res,200,literacy(player));
  if(req.method!=='POST'||req.headers['content-type']!=='application/json')return send(res,405,{error:'Use JSON POST'});

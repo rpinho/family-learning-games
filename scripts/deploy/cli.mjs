@@ -6,7 +6,7 @@
 import {spawnSync, spawn} from 'node:child_process';
 import {existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, readdirSync, statSync, lstatSync, readlinkSync,
   symlinkSync, copyFileSync, rmSync, appendFileSync, realpathSync, constants as fsc} from 'node:fs';
-import {join, dirname, resolve, basename} from 'node:path';
+import {join, dirname, resolve, basename, isAbsolute, sep} from 'node:path';
 import {homedir} from 'node:os';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
@@ -94,6 +94,23 @@ function saveFiles(name, dir) {
 function walk(abs, rel, out) {for (const f of safeList(abs)) {const a = join(abs, f), r = join(rel, f), s = statSync(a); if (s.isDirectory()) walk(a, r, out); else if (s.isFile()) out.push(r);}}
 function safeList(d) {try {return readdirSync(d);} catch {return [];}}
 const sha256 = file => createHash('sha256').update(readFileSync(file)).digest('hex');
+// Optional household-only artwork overrides live in private deploy.json. The
+// public checkout and archive remain the default; no private asset enters git.
+function applyOverlays(name, dir) {
+  const applied = [];
+  for (const item of game(name).overlays || []) {
+    if (!item || typeof item.from !== 'string' || typeof item.to !== 'string') throw new Error(`${name}: invalid overlay`);
+    const source = exp(item.from), target = resolve(dir, item.to);
+    if (!isAbsolute(source) || !existsSync(source) || !statSync(source).isFile() ||
+        target === dir || !target.startsWith(dir + sep) || !existsSync(target) ||
+        !lstatSync(target).isFile() || !realpathSync(dirname(target)).startsWith(realpathSync(dir) + sep)) {
+      throw new Error(`${name}: overlay must replace an existing release file from an absolute private file`);
+    }
+    copyFileSync(source, target);
+    applied.push({file: item.to, sha256: sha256(target)});
+  }
+  return applied;
+}
 function hashSaves(name, dir) {return Object.fromEntries(saveFiles(name, dir).map(f => [f, sha256(join(dir, f))]));}
 function backupSaves(name, dir, tag, base) {
   const dest = join(base || join(BACKUPS, `${stamp()}-${tag}`), name);
@@ -122,16 +139,28 @@ function lastActivity() {
   for (const [k, t] of Object.entries(times)) if (t > latest) {latest = t; source = k;}
   return {latest, source, times};
 }
-function inNight(d = new Date()) {
-  const m = d.getHours() * 60 + d.getMinutes(), [sh, sm] = cfg.nightStart.split(':').map(Number), [eh, em] = cfg.nightEnd.split(':').map(Number);
-  const s = sh * 60 + sm, e = eh * 60 + em;
-  return s > e ? (m >= s || m < e) : (m >= s && m < e);
+// Quiet windows: when the children are asleep or at school. deploy.json `quietWindows` =
+// [{days:[0-6, 0=Sun], start:'HH:MM', end:'HH:MM', quietMinutes}]; an overnight window belongs to the day it starts.
+// Falls back to nightStart/nightEnd/nightQuietMinutes. Every window still needs a short idle (sick days, holidays).
+function windows() {
+  return cfg.quietWindows?.length ? cfg.quietWindows
+    : [{days: [0, 1, 2, 3, 4, 5, 6], start: cfg.nightStart, end: cfg.nightEnd, quietMinutes: cfg.nightQuietMinutes}];
 }
+function activeWindow(d = new Date()) {
+  const m = d.getHours() * 60 + d.getMinutes(), today = d.getDay(), yesterday = (today + 6) % 7;
+  for (const w of windows()) {
+    const [sh, sm] = w.start.split(':').map(Number), [eh, em] = w.end.split(':').map(Number), s = sh * 60 + sm, e = eh * 60 + em;
+    const hit = s > e ? (m >= s && w.days.includes(today)) || (m < e && w.days.includes(yesterday)) : (m >= s && m < e && w.days.includes(today));
+    if (hit) return w;
+  }
+  return null;
+}
+function inNight(d = new Date()) { return !!activeWindow(d); }
 function idleState() {
   const {latest, source} = lastActivity();
-  const idleMin = latest ? (Date.now() - latest) / 60000 : Infinity, night = inNight();
-  const ok = idleMin >= cfg.idleMinutes || (night && idleMin >= cfg.nightQuietMinutes);
-  return {ok, idleMin, night, source, latest: latest ? new Date(latest).toISOString() : null};
+  const idleMin = latest ? (Date.now() - latest) / 60000 : Infinity, w = activeWindow(), night = !!w;
+  const ok = idleMin >= cfg.idleMinutes || (night && idleMin >= (w.quietMinutes ?? cfg.nightQuietMinutes));
+  return {ok, idleMin, night, window: w ? `${w.start}-${w.end}` : null, source, latest: latest ? new Date(latest).toISOString() : null};
 }
 
 // ---------- build ----------
@@ -144,6 +173,7 @@ async function build(name, ref, {voice = true} = {}) {
     console.log(`${name}: exporting ${r.sha.slice(0, 7)} -> ${tmp}`);
     const tar = spawnSync('/bin/sh', ['-c', `git -C "$1" archive --format=tar "$2" | tar -x -C "$3"`, 'sh', g.repo, r.sha, tmp], {stdio: 'inherit'});
     if (tar.status !== 0) throw new Error('git archive failed');
+    const overlays = applyOverlays(name, tmp);
     if (g.deps) {
       const lockA = join(tmp, 'package-lock.json'), lockB = join(g.repo, 'package-lock.json');
       const same = existsSync(lockA) && existsSync(lockB) && sha256(lockA) === sha256(lockB) && existsSync(join(g.repo, 'node_modules'));
@@ -151,8 +181,9 @@ async function build(name, ref, {voice = true} = {}) {
       else {console.log(`${name}: npm ci`); heavy(join(NODE_BIN, 'npm'), ['ci', '--no-audit', '--no-fund'], {cwd: tmp, env: {...process.env, PATH: PATH_ENV}});}
     }
     if (g.build) {console.log(`${name}: ${g.build.join(' ')}`); heavy(g.build[0] === 'npm' ? join(NODE_BIN, 'npm') : g.build[0], g.build.slice(1), {cwd: tmp, env: {...process.env, PATH: PATH_ENV, NODE_ENV: 'production'}});}
-    const meta = {game: name, version: r.version, commit: r.sha, ref: ref || 'HEAD', repo: g.repo, builtAt: now(), voice: null};
+    const meta = {game: name, version: r.version, commit: r.sha, ref: ref || 'HEAD', repo: g.repo, builtAt: now(), overlays, voice: null};
     if (g.voice) meta.voice = voice ? buildVoice(name, tmp) : declareLiveVoice(name, tmp);
+    if(name==='hub'&&existsSync(join(tmp,'hub/scripts/world-render-voices.mjs')))meta.worldVoice=buildWorldVoice(tmp);
     writeJSON(join(tmp, '.release.json'), meta);
     if (existsSync(final)) {rmSync(tmp, {recursive: true, force: true}); return r.version;}
     renameSync(tmp, final);
@@ -185,6 +216,29 @@ function buildVoice(name, rel) {
     return out;
   } finally {rmSync(work, {recursive: true, force: true});}
 }
+// World narration is built with the candidate in isolation. Every declared clip travels with it.
+function buildWorldVoice(rel){
+ const work=join(ROOT,'tmp',`world-voice-${process.pid}`),source=join(ROOT,'book');mkdirSync(work,{recursive:true});
+ for(const f of ['cast.json','voice-renderers.json'])if(existsSync(join(source,f)))copyFileSync(join(source,f),join(work,f));
+ if(existsSync(join(source,'voice')))heavy('cp',['-cR',join(source,'voice'),join(work,'voice')]);
+ // Reuse content-addressed fallback sentences from the previous staged release,
+ // adding only missing files to this private build cache. Live voices are never changed.
+ const prior=join(channelLink('staging','hub'),'.release','world-voice'),cached=readJSON(join(prior,'manifest.json'),{});
+ for(const clip of clipNames(cached)){const dest=join(work,'voice',clip);if(!existsSync(dest)&&existsSync(join(prior,clip))){mkdirSync(dirname(dest),{recursive:true});copyFileSync(join(prior,clip),dest,fsc.COPYFILE_EXCL);}}
+ // Optional private build cache: reuse already rendered, content-addressed recordings.
+ const extra=process.env.FAMILY_WORLD_VOICE_CACHE;
+ if(extra){const manifest=readJSON(join(extra,'world-voices.json'),{});for(const clip of clipNames(manifest)){const dest=join(work,'voice',clip),src=join(extra,'voice',clip);if(!existsSync(dest)&&existsSync(src)){mkdirSync(dirname(dest),{recursive:true});copyFileSync(src,dest,fsc.COPYFILE_EXCL);}}}
+ heavy(NODE,['hub/scripts/world-render-voices.mjs','--book',work],{cwd:rel,env:{...process.env,PATH:PATH_ENV}});
+ const manifest=readJSON(join(work,'world-voices.json'),null);if(!manifest)throw Error('Missing World voice manifest');
+ const dest=join(rel,'.release','world-voice');mkdirSync(dest,{recursive:true});copyFileSync(join(work,'world-voices.json'),join(dest,'manifest.json'));
+ for(const clip of clipNames(manifest))copyFileSync(join(work,'voice',clip),join(dest,clip));
+ return {required:clipNames(manifest).length};
+}
+function applyWorldVoice(name,version,bookDir,{dryRun=false}={}){
+ if(name!=='hub')return;const source=join(releaseDir(name,version),'.release','world-voice'),manifest=readJSON(join(source,'manifest.json'),null);if(!manifest)return;
+ const dest=join(bookDir,'voice');if(!dryRun)mkdirSync(dest,{recursive:true});
+ for(const clip of clipNames(manifest)){if(!existsSync(join(source,clip)))throw Error('Missing release World voice '+clip);if(!dryRun&&!existsSync(join(dest,clip)))copyFileSync(join(source,clip),join(dest,clip),fsc.COPYFILE_EXCL);}
+}
 function declareLiveVoice(name, rel) {
   const g = game(name), out = {dirs: {}, declaredFromLive: true};
   for (const d of g.voice.dirs) {
@@ -195,7 +249,9 @@ function declareLiveVoice(name, rel) {
   return out;
 }
 // Additive: copies only clips that do not exist yet; never overwrites or deletes a clip.
-function applyVoice(name, version, data, {dryRun = false} = {}) {
+function applyVoice(name, version, data, {dryRun = false, worldBook = null} = {}) {
+  const channel=data===dataDir(name,'staging')?'staging':'live';
+  applyWorldVoice(name,version,worldBook||join(ROOT,channel==='staging'?'staging-data/book':'book'),{dryRun});
   const g = game(name), rel = releaseDir(name, version), res = [];
   if (!g.voice) return res;
   for (const d of g.voice.dirs) {
@@ -271,14 +327,15 @@ async function check(name, version) {
   heavy('cp', ['-cR', g.data, data]);
   let child;
   try {
-    applyVoice(name, version, data);
+    if(name==='hub'){heavy('cp',['-cR',join(ROOT,'book'),join(work,'book')]);applyWorldVoice(name,version,join(work,'book'));}
+    applyVoice(name, version, data, {worldBook:join(work,'book')});
     let env = envFor(name, 'check', {port, uiPort, data, deployDir: join(work, 'deploy')});
     if (name === 'hub') {
       const conf = readJSON(join(g.data, 'config.json'), {});
       for (const k of Object.keys(conf.games || {})) conf.games[k] = cfg.games[k].port + cfg.channels.staging.portOffset;
       conf.gameData = Object.fromEntries(Object.keys(conf.games || {}).map(k => [k, dataDir(k, 'staging')]));
       writeJSON(join(data, 'config.json'), conf);
-      env.FAMILY_CONFIG = join(data, 'config.json');
+      env.FAMILY_CONFIG = join(data, 'config.json');env.FAMILY_BOOK=join(work,'book');
     }
     const [cmd, ...args] = programFor(name, rel);
     child = spawn(cmd, args, {cwd: join(rel, g.cwd || ''), env, detached: true, stdio: ['ignore', 'ignore', 'pipe']});
@@ -348,8 +405,52 @@ function refreshStagingData(name) {
   if (name === 'hub') stagingHubConfig();
   console.log(`staging data for ${name} refreshed from live saves`);
 }
+// Narration gate (hub): every line a child can hear in that channel's book data (living stories, chapters from
+// today on) must have its voice clip. A release whose gate script finds a missing clip is refused, and the missing
+// lines are logged; the players never fall back to the device's voice.
+// cannot be staged or promoted unless its own test suites pass inside the built release (unit + integration + the
+// world model checker in hub/world-check.mjs). The only way past is --skip-qa, which is logged as a refusal override.
+function qualityGate(name, version, channel, opts = {}) {
+  if (name !== 'hub') return;
+  if (opts.skipQa) { log(`QA-SKIPPED ${name} ${version} for ${channel} (--skip-qa by ${process.env.USER || 'agent'})`); return; }
+  // (the tests run on a clean copy of the release's exact commit, the source of truth: the build overlays some files,
+  // which a few tests rightly assert the source does not contain; node_modules is borrowed from the release)
+  const rel = releaseDir(name, version), sha = releaseCommit(name, version), work = join(ROOT, 'tmp', `qa-${name}-${process.pid}`);
+  if (!sha) throw new Error(`${channel} refused: ${name} ${version} has no recorded commit`);
+  rmSync(work, {recursive: true, force: true}); mkdirSync(work, {recursive: true});
+  const tar = spawnSync('/bin/sh', ['-c', `git -C "$1" archive --format=tar "$2" | tar -x -C "$3"`, 'sh', game(name).repo, sha, work], {encoding: 'utf8'});
+  if (tar.status !== 0) throw new Error(`${channel} refused: could not export ${sha} for tests`);
+  if (existsSync(join(rel, 'node_modules'))) symlinkSync(join(rel, 'node_modules'), join(work, 'node_modules'));
+  const suites = ['hub/tests', 'book/tests'].filter(d => existsSync(join(work, d)));
+  const files = suites.flatMap(d => readdirSync(join(work, d)).filter(f => f.endsWith('.test.mjs')).map(f => join(d, f)));
+  if (!files.length) throw new Error(`${channel} refused: ${name} ${version} has no tests to run`);
+  let r; try { r = spawnSync(process.execPath, ['--test', '--test-reporter=tap', ...files], {cwd: work, encoding: 'utf8', maxBuffer: 1 << 26, timeout: 15 * 60 * 1000}); }
+  finally { rmSync(work, {recursive: true, force: true}); }
+  const fail = Number((r.stdout.match(/^# fail (\d+)/m) || [])[1] ?? NaN), pass = Number((r.stdout.match(/^# pass (\d+)/m) || [])[1] ?? 0);
+  if (r.status !== 0 || fail !== 0) {
+    const failed = (r.stdout.match(/^not ok \d+ - .*$/gm) || []).slice(0, 10).join('; ');
+    log(`REFUSED ${name} ${version} for ${channel}: tests failed (${Number.isNaN(fail) ? 'no result' : fail}): ${failed}`);
+    throw new Error(`${channel} refused: ${name} ${version} tests failed: ${failed || (r.stderr || '').slice(-400)}`);
+  }
+  log(`QA-PASSED ${name} ${version} for ${channel}: ${pass} tests`);
+}
+function narrationGate(name, version, channel) {
+  if (name !== 'hub') return;
+  const script = join(releaseDir(name, version), 'hub', 'scripts', 'check-clips.mjs');
+  if (!existsSync(script)) return;
+  const book = channel === 'staging' ? join(ROOT, 'staging-data', 'book') : join(ROOT, 'book');
+  const r = spawnSync(process.execPath, [script, '--book', book, '--json'], {encoding: 'utf8'});
+  let out = null; try {out = JSON.parse(r.stdout);} catch {}
+  if (r.status !== 0) {
+    const list = (out?.missing || []).slice(0, 20).map(m => `${m.where} ${m.key}`).join('; ');
+    log(`REFUSED ${name} ${version} for ${channel}: ${out?.missing?.length ?? '?'} line(s) without a voice clip: ${list}`);
+    throw new Error(`${channel} refused: lines without a voice clip (${out?.missing?.length ?? 'unknown'}): ${list || r.stderr}`);
+  }
+}
 async function stage(name, ref, opts) {
   const version = await build(name, ref, opts);
+  qualityGate(name, version, 'staging', opts);
+  narrationGate(name, version, 'staging');
   const release = lock('staging'); if (!release) die('another staging deploy is running; retry in a minute');
   try {
     if (!existsSync(dataDir(name, 'staging'))) refreshStagingData(name);
@@ -358,8 +459,12 @@ async function stage(name, ref, opts) {
     const previous = currentVersion('staging', name);
     atomicSymlink(releaseDir(name, version), channelLink('staging', name));
     const {label, obj} = plistFor(name, 'staging'), file = plistPath(label);
+    await bootout(label);
+    for (const port of [portFor(name, 'staging'), uiPortFor(name, 'staging')].filter(Boolean)) {
+      if (!await waitPortFree(port, 25)) throw new Error(`${name}: staging port ${port} did not stop`);
+    }
     writePlist(file, obj);
-    if (loaded(label)) kickstart(label); else await bootstrap(file, label);
+    await bootstrap(file, label);
     const v = await verifyServing(name, 'staging', version);
     if (!v.ok) {log(`STAGING-FAILED ${name} ${version} ${v.why} (previous ${previous})`); throw new Error(`staging ${name} ${version} unhealthy: ${v.why}`);}
     setCurrent('staging', name, version);
@@ -369,15 +474,139 @@ async function stage(name, ref, opts) {
 }
 
 // ---------- promotion ----------
+// ---------- forward only ----------
+// A release may go live only if its commit CONTAINS the live release's commit (git merge-base --is-ancestor), so an
+// agent promoting from a branch that missed someone else's newer live work cannot roll it back by accident
+// (2026-09-28: a queued hub build lacked the live primer transition). Real rollbacks say so: --allow-rollback
+// (the rollback command sets it). Returns null when fine, else the reason.
+function forwardCheck(repo, liveSha, candSha, git = (args) => spawnSync('git', args, {encoding: 'utf8'})) {
+  if (!liveSha || !candSha || liveSha === candSha) return null;
+  const r = git(['-C', repo, 'merge-base', '--is-ancestor', liveSha, candSha]);
+  if (r.status === 0) return null;
+  if (r.status === 1) return `live ${liveSha.slice(0, 7)} is not in candidate ${candSha.slice(0, 7)}; merge first (or --allow-rollback for a deliberate rollback)`;
+  return `cannot tell whether live ${liveSha.slice(0, 7)} is in candidate ${candSha.slice(0, 7)} (${String(r.stderr || '').trim().slice(0, 120) || 'git failed'}); merge first or --allow-rollback`;
+}
+function releaseCommit(name, version) {return version ? readJSON(join(releaseDir(name, version), '.release.json'), null)?.commit || null : null;}
+function forwardOnly(name, version, allowRollback = false) {
+  if (allowRollback) return null;
+  const live = currentVersion('live', name);
+  if (!live || live === version) return null;
+  const liveSha = releaseCommit(name, live), candSha = releaseCommit(name, version);
+  if (!liveSha) return null;                     // live is not a managed release (dev tree before the cutover)
+  if (!candSha) return `candidate ${version} has no recorded commit; cannot prove it contains live ${live}`;
+  const why = forwardCheck(game(name).repo, liveSha, candSha);
+  return why ? `${name}: ${why} (live ${live}, candidate ${version})` : null;
+}
+
+// An idea is built on an idea/* branch and shown as a PREVIEW: an immutable release running on its own local port
+// with its OWN data (a copy-on-write clone of the live saves; a hub preview also gets a clone of the book and uses
+// the STAGING games), reached through the staging site at /preview/<name>/ (see hub/preview-route.mjs). It never
+// writes to live or staging data. At most MAX_PREVIEWS run at once (the Mini has 16 GB). One launchd job each, so a
+// preview survives a reboot. approve prints the merge step (then the usual stage -> idle-gated promote); reject and
+// close stop it and move its release and data to previews-archive/ (nothing is deleted).
+// ---------- previews ----------
+const PREVIEWS = join(ROOT, 'previews.json'), PREVIEW_DIR = join(ROOT, 'previews'), PREVIEW_ARCHIVE = join(ROOT, 'previews-archive');
+// (deploy.json maxPreviews: how many may run at once; 3 unless set. Each preview is a node server plus its data clone.)
+const MAX_PREVIEWS = Number.isInteger(cfg.maxPreviews) && cfg.maxPreviews > 0 ? cfg.maxPreviews : 3, PREVIEW_PORT0 = 5400, PREVIEW_NAME = /^[a-z0-9][a-z0-9-]{1,30}$/;
+const previewLabel = name => `com.alex.family-games-preview.${name}`;
+const previewUrl = (name, game) => `https://${cfg.previewHost || 'localhost'}/preview/${name}/?player=${game === 'hub' ? 'beginner' : 'admin'}`;
+function readPreviews() {return readJSON(PREVIEWS, {previews: {}});}
+const runningPreviews = reg => Object.values(reg.previews).filter(p => ['active', 'approved'].includes(p.state));
+function previewPorts(reg, busy = listenerPid) {
+  const used = new Set(runningPreviews(reg).flatMap(p => [p.port, p.uiPort].filter(Boolean)));
+  const out = []; for (let port = PREVIEW_PORT0; out.length < 2 && port < PREVIEW_PORT0 + 100; port++) if (!used.has(port) && !busy(port)) out.push(port);
+  return out;
+}
+function previewEnv(p) {
+  const env = envFor(p.game, 'staging', {port: p.port, uiPort: p.uiPort || undefined, data: p.data, deployDir: join(p.dir, 'deploy')});
+  env.FAMILY_CHANNEL = 'preview'; env.FAMILY_PREVIEW = p.name; env.HOST = '127.0.0.1';   // reached only through the staging site
+  if (p.game === 'hub') {env.FAMILY_CONFIG = join(p.data, 'config.json'); env.FAMILY_BOOK = join(p.dir, 'book');}
+  return env;
+}
+function previewPlist(p) {
+  const g = game(p.game), rel = releaseDir(p.game, p.version);
+  return {Label: previewLabel(p.name), ProgramArguments: programFor(p.game, rel), WorkingDirectory: join(rel, g.cwd || ''), EnvironmentVariables: previewEnv(p),
+    RunAtLoad: true, KeepAlive: true, ProcessType: 'Background', Nice: 10, LowPriorityIO: true,
+    StandardOutPath: join(p.dir, 'server.log'), StandardErrorPath: join(p.dir, 'server-error.log'), ...(g.throttle ? {ThrottleInterval: g.throttle} : {})};
+}
+async function previewCreate(name, gameName, ref, opts) {
+  if (!PREVIEW_NAME.test(name || '')) die('preview name: 2-31 lowercase letters, digits or dashes');
+  const g = game(gameName), reg = readPreviews();
+  if (reg.previews[name] && ['active', 'approved'].includes(reg.previews[name].state)) die(`preview ${name} is already running`);
+  const run = runningPreviews(reg);
+  if (run.length >= MAX_PREVIEWS) die(`${run.length} previews are running (at most ${MAX_PREVIEWS}): ${run.map(p => p.name).join(', ')}; reject or close one first`);
+  if (!/^idea\//.test(ref || '')) console.log(`note: ideas are built on idea/* branches (got "${ref}")`);
+  const version = await build(gameName, ref, opts);
+  await check(gameName, version);
+  const dir = join(PREVIEW_DIR, name), data = join(dir, 'data');
+  if (existsSync(dir)) {mkdirSync(PREVIEW_ARCHIVE, {recursive: true}); renameSync(dir, join(PREVIEW_ARCHIVE, `${name}-stale-${stamp()}`));}
+  mkdirSync(dir, {recursive: true});
+  heavy('cp', ['-cR', g.data, data]);
+  for (const f of ['server.log', 'server-error.log']) rmSync(join(data, f), {force: true});
+  if (gameName === 'hub') {
+    // The preview hub's games are the STAGING games (never live), and it reads a clone of the live book.
+    const conf = readJSON(join(data, 'config.json'), {});
+    for (const k of Object.keys(conf.games || {})) conf.games[k] = portFor(k, 'staging');
+    conf.gameData = Object.fromEntries(Object.keys(conf.games || {}).map(k => [k, dataDir(k, 'staging')]));
+    writeJSON(join(data, 'config.json'), conf);
+    heavy('cp', ['-cR', join(ROOT, 'book'), join(dir, 'book')]);
+  }
+  applyVoice(gameName, version, data, {worldBook:join(dir,'book')});
+  const [port, uiPort] = previewPorts(reg);
+  if (!port || (g.uiPort && !uiPort)) die('no free preview port');
+  const p = {name, game: gameName, ref, commit: releaseCommit(gameName, version), version, port, uiPort: g.uiPort ? uiPort : null, dir, data, state: 'active', createdAt: now(), by: process.env.USER || 'agent'};
+  const label = previewLabel(name), file = plistPath(label);
+  await bootout(label); writePlist(file, previewPlist(p)); await bootstrap(file, label);
+  const h = await health(gameName, port, g.startTimeout || 60);
+  if (!h.ok) {await bootout(label); rmSync(file, {force: true}); throw new Error(`preview ${name} did not start: ${JSON.stringify(h.statuses)} (logs in ${dir})`);}
+  const fresh = readPreviews(); fresh.previews[name] = p; writeJSON(PREVIEWS, fresh);
+  log(`PREVIEW ${name} ${gameName} ${version} (${ref}) on :${port}`);
+  console.log(`\nPreview ${name} is running: ${previewUrl(name, gameName)}\n(players: ?player=beginner, explorer or admin; leave it at /preview/exit)`);
+}
+function previewList() {
+  const reg = readPreviews(), all = Object.values(reg.previews).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+  if (!all.length) return console.log('no previews');
+  for (const p of all) console.log(`${p.name.padEnd(24)} ${p.state.padEnd(9)} ${p.game.padEnd(14)} ${String(p.ref).padEnd(34)} ${p.version}${['active', 'approved'].includes(p.state) ? `  :${p.port}  ${previewUrl(p.name, p.game)}` : ''}`);
+  console.log(`${runningPreviews(reg).length} of ${MAX_PREVIEWS} running`);
+}
+function previewApprove(name) {
+  const reg = readPreviews(), p = reg.previews[name];
+  if (!p || !['active', 'approved'].includes(p.state)) die(`no running preview ${name}`);
+  p.state = 'approved'; p.approvedAt = now(); writeJSON(PREVIEWS, reg); log(`PREVIEW-APPROVED ${name} ${p.version}`);
+  const repo = game(p.game).repo, live = releaseCommit(p.game, currentVersion('live', p.game));
+  console.log(`Approved. Next (the idea goes out the normal way):
+  1. merge ${p.ref} (${String(p.commit).slice(0, 7)}) into your working branch in ${repo}${live ? ` (it must also contain live ${live.slice(0, 7)})` : ''}
+  2. node scripts/deploy/cli.mjs stage ${p.game} <that branch>   and test on staging
+  3. scripts/promote ${p.game} <that branch>                    (idle-gated; refused if it misses the live commit)
+  4. when it is live: node scripts/deploy/cli.mjs preview close ${name}`);
+}
+async function previewStop(name, state) {
+  const reg = readPreviews(), p = reg.previews[name];
+  if (!p || !['active', 'approved'].includes(p.state)) die(`no running preview ${name}`);
+  const label = previewLabel(name), file = plistPath(label), to = join(PREVIEW_ARCHIVE, `${name}-${stamp()}`);
+  await bootout(label); mkdirSync(to, {recursive: true});
+  if (existsSync(file)) renameSync(file, join(to, 'service.plist'));
+  if (existsSync(p.dir)) renameSync(p.dir, join(to, 'preview'));
+  // Its release too, unless live or staging (or another preview) runs it.
+  const inUse = ['live', 'staging'].some(c => currentVersion(c, p.game) === p.version) || runningPreviews(reg).some(o => o.name !== name && o.version === p.version);
+  if (!inUse && existsSync(releaseDir(p.game, p.version))) renameSync(releaseDir(p.game, p.version), join(to, 'release'));
+  p.state = state; p.stoppedAt = now(); p.archivedTo = to; writeJSON(PREVIEWS, reg);
+  log(`PREVIEW-${state.toUpperCase()} ${name} ${p.version}; archived in ${to}`);
+  console.log(`preview ${name} ${state}; everything moved to ${to}`);
+}
+
 async function promote(name, ref, opts) {
   const version = await build(name, ref, opts);
+  {const why = forwardOnly(name, version, opts.allowRollback); if (why) {log(`REFUSED ${name} ${version}: ${why}`); throw new Error(why);}}
   await check(name, version);
+  qualityGate(name, version, 'live', opts);
+  narrationGate(name, version, 'live');
   applyVoice(name, version, game(name).data, {dryRun: true});
-  const q = {game: name, version, queuedAt: now(), by: process.env.USER || 'agent'};
+  const q = {game: name, version, queuedAt: now(), by: process.env.USER || 'agent', ...(opts.allowRollback ? {allowRollback: true} : {})};
   writeJSON(join(ROOT, 'queue', name + '.json'), q);
   log(`QUEUED ${name} ${version}`);
   const s = idleState();
-  console.log(`\nQueued ${name} ${version}. It goes live automatically when every game has been idle ${cfg.idleMinutes} min, or between ${cfg.nightStart} and ${cfg.nightEnd}.`);
+  console.log(`\nQueued ${name} ${version}. It goes live automatically when every game has been idle ${cfg.idleMinutes} min, or inside a quiet window (${windows().map(w => `${w.start}-${w.end}${w.days.length < 7 ? ' weekdays' : ''}`).join(', ')}).`);
   console.log(`Now: last activity ${s.latest || 'none'} (${s.source || '-'}), idle ${s.idleMin.toFixed(1)} min${s.night ? ', night window' : ''}.`);
 }
 async function applyLive(name, version, why = 'PROMOTED') {
@@ -385,15 +614,34 @@ async function applyLive(name, version, why = 'PROMOTED') {
   if (!existsSync(releaseDir(name, version))) throw new Error(`release ${name}/${version} missing`);
   if (previous === version) {log(`SKIP ${name} ${version} already live`); return true;}
   const {dest, hashes} = backupSaves(name, g.data, `promote-${name}-${version}`);
+  const file = plistPath(label), original = readFileSync(file);
+  copyFileSync(file, join(dest, 'service.plist'));
+  const {obj} = plistFor(name, 'live');
+  // launchd retains the loaded environment; kickstart does not reread the plist.
+  // Reload only this service, inside the promoter's existing idle guard.
+  async function reload(configuration) {
+    await bootout(label);
+    for (const port of [g.port, g.uiPort].filter(Boolean)) {
+      if (!await waitPortFree(port, 25)) throw new Error(`${name}: port ${port} did not stop`);
+    }
+    if (Buffer.isBuffer(configuration)) {
+      const temp = `${file}.restore-${process.pid}`;
+      writeFileSync(temp, configuration); renameSync(temp, file);
+    } else writePlist(file, configuration);
+    await bootstrap(file, label);
+  }
   const voice = applyVoice(name, version, g.data);
-  atomicSymlink(releaseDir(name, version), link);
-  kickstart(label);
-  const v = await verifyServing(name, 'live', version);
-  if (!v.ok) {
-    log(`FAILED ${name} ${version}: ${v.why}; rolling back to ${previous}`);
+  let v;
+  try {
+    atomicSymlink(releaseDir(name, version), link);
+    await reload(obj);
+    v = await verifyServing(name, 'live', version);
+    if (!v.ok) throw new Error(v.why);
+  } catch (error) {
+    log(`FAILED ${name} ${version}: ${error.message}; rolling back to ${previous}`);
     if (previous) atomicSymlink(releaseDir(name, previous), link);
     restoreVoiceManifests(name, g.data, voice);
-    kickstart(label);
+    await reload(original);
     const back = previous ? await verifyServing(name, 'live', previous) : {ok: false, why: 'no previous release'};
     log(`ROLLBACK ${name} -> ${previous}: ${back.ok ? 'healthy' : 'UNHEALTHY ' + back.why}`);
     return false;
@@ -422,12 +670,36 @@ async function tick() {
       if (!idleState().ok) break;
       const qf = join(ROOT, 'queue', q.game + '.json');
       if (readJSON(qf, {}).version !== q.version) continue;
+      // Forward only, checked again at the moment of going live (live may have moved since it was queued).
+      const why = forwardOnly(q.game, q.version, q.allowRollback === true);
+      if (why) {log(`REFUSED ${q.game} ${q.version}: ${why}`); mkdirSync(join(ROOT, 'queue', 'refused'), {recursive: true}); renameSync(qf, join(ROOT, 'queue', 'refused', `${q.game}-${q.version}.json`)); continue;}
       let ok = false;
       try {ok = await applyLive(q.game, q.version);} catch (e) {log(`FAILED ${q.game} ${q.version}: ${e.message}`);}
       if (readJSON(qf, {}).version === q.version) {
         if (ok) rmSync(qf, {force: true});
         else {mkdirSync(join(ROOT, 'queue', 'failed'), {recursive: true}); renameSync(qf, join(ROOT, 'queue', 'failed', `${q.game}-${q.version}.json`));}
       }
+    }
+  } finally {release();}
+}
+
+// put queued releases live immediately, skipping ONLY the idle gate. Forward-only, health checks, save checks and
+// backups are unchanged (applyLive), and every use is logged as an OVERRIDE with the reason.
+async function goLiveNow(names, reason) {
+  if (!reason) die('go-live needs --reason "why it is safe now" (logged)');
+  const release = lock('live'); if (!release) die('live lock busy');
+  try {
+    const queued = safeList(join(ROOT, 'queue')).filter(f => f.endsWith('.json')).map(f => readJSON(join(ROOT, 'queue', f), null)).filter(Boolean)
+      .filter(q => names.includes('all') || names.includes(q.game)).sort((a, b) => cfg.order.indexOf(a.game) - cfg.order.indexOf(b.game));
+    if (!queued.length) {console.log('Nothing queued for ' + names.join(', ') + '.'); return;}
+    for (const q of queued) {
+      const why = forwardOnly(q.game, q.version, q.allowRollback === true);
+      if (why) {log(`REFUSED ${q.game} ${q.version}: ${why}`); continue;}
+      log(`OVERRIDE go-live ${q.game} ${q.version}: idle gate skipped (${reason})`);
+      const ok = await applyLive(q.game, q.version);
+      const qf = join(ROOT, 'queue', q.game + '.json');
+      if (ok && readJSON(qf, {}).version === q.version) rmSync(qf, {force: true});
+      if (!ok) log(`FAILED ${q.game} ${q.version} (override); still queued`);
     }
   } finally {release();}
 }
@@ -527,14 +799,18 @@ function status() {
 
 const [cmd, ...args] = process.argv.slice(2);
 const flags = new Set(args.filter(a => a.startsWith('--'))), pos = args.filter(a => !a.startsWith('--'));
-const opts = {voice: !flags.has('--no-voice')};
+const opts = {voice: !flags.has('--no-voice'), allowRollback: flags.has('--allow-rollback'), skipQa: flags.has('--skip-qa')};
 const usage = `usage: cli.mjs <command>
   build <game> [ref]            build an immutable release (no deploy)
   stage <game|all> [ref]        build + deploy to STAGING (safe any time)
-  promote <game> [ref|staging]  build + health-check + QUEUE for live (idle-gated)
+  promote <game> [ref|staging]  build + health-check + QUEUE for live (idle-gated); refused unless the
+                                candidate contains the live commit (--allow-rollback to go back on purpose)
   status                        versions, queue, idle state
+  preview create <name> <game|hub> <ref>   run an idea build as a preview (own port and data; staging site /preview/<name>/)
+  preview list | approve <name> | reject <name> | close <name>
   staging-refresh <game|all>    copy live saves into staging data
   rollback <game> [--now]       queue (or with --now apply immediately) the previous live release
+  go-live <game|all> --reason "..."   put QUEUED releases live now, skipping only the idle gate (operator override, logged)
   tick                          promoter step (launchd, every minute)
   install                       install tooling copy + promoter plist
   prepare-cutover               build+check HEAD of every game and queue the one-time cutover
@@ -544,7 +820,17 @@ try {
   if (cmd === 'build') console.log(await build(pos[0] && game(pos[0]) && pos[0], pos[1], opts));
   else if (cmd === 'stage') {for (const n of pos[0] === 'all' ? cfg.order : [pos[0]]) {game(n); await stage(n, pos[0] === 'all' ? 'HEAD' : pos[1], opts);}}
   else if (cmd === 'promote') {if (!pos[0]) die(usage); game(pos[0]); await promote(pos[0], pos[1], opts);}
+  else if (cmd === 'go-live') {const i = args.indexOf('--reason'), reason = i >= 0 ? args[i + 1] || '' : '', names = pos.filter(p => p !== reason); if (!names[0]) die(usage); await goLiveNow(names, reason);}
   else if (cmd === 'status') status();
+  else if (cmd === 'preview') {
+    const [sub, name, a, b] = pos;
+    if (sub === 'create') {if (!name || !a || !b) die('usage: preview create <name> <game|hub> <ref>'); await previewCreate(name, a, b, opts);}
+    else if (sub === 'list') previewList();
+    else if (sub === 'approve') previewApprove(name);
+    else if (sub === 'reject') await previewStop(name, 'rejected');
+    else if (sub === 'close') await previewStop(name, 'closed');
+    else die('usage: preview create <name> <game|hub> <ref> | list | approve <name> | reject <name> | close <name>');
+  }
   else if (cmd === 'staging-refresh') {for (const n of pos[0] === 'all' ? cfg.order : [pos[0]]) {game(n); refreshStagingData(n);}}
   else if (cmd === 'rollback') {
     const name = pos[0]; game(name);
@@ -552,7 +838,7 @@ try {
     const cur = currentVersion('live', name), prev = [...hist].reverse().find(v => v !== cur);
     if (!prev) die(`no previous live release recorded for ${name}`);
     if (flags.has('--now')) {const r = lock('live'); if (!r) die('live lock busy'); try {await applyLive(name, prev, 'ROLLED-BACK');} finally {r();}}
-    else {writeJSON(join(ROOT, 'queue', name + '.json'), {game: name, version: prev, queuedAt: now(), by: 'rollback'}); log(`QUEUED ${name} ${prev} (rollback)`);}
+    else {writeJSON(join(ROOT, 'queue', name + '.json'), {game: name, version: prev, queuedAt: now(), by: 'rollback', allowRollback: true}); log(`QUEUED ${name} ${prev} (rollback)`);}
   }
   else if (cmd === 'print-plist') console.log(JSON.stringify(plistFor(pos[0], pos[1] || 'live').obj, null, 1));
   else if (cmd === 'tick') await tick();

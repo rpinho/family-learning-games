@@ -10,10 +10,10 @@ const dirs=[[0,-1],[1,0],[0,1],[-1,0]];
 export const MAZE_WORDS=[...WORDS.filter(w=>w.tier<=2),...AT_WORDS,...EXTRA_WORDS].filter((w,i,all)=>all.findIndex(v=>v.word===w.word)===i);
 const random=seed=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
 const shuffle=(items,r)=>{const a=[...items];for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
-export function mazeState(p){return p.maze||{level:1,position:null,direction:0,solved:[],visited:[],tasks:{},failures:{},hints:[],ability:p.id==='beginner'?1:2,streak:0,moves:0,done:false,history:[]};}
+export function mazeState(p){return p.maze||{level:1,position:null,direction:0,solved:[],visited:[],tasks:{},failures:{},hints:[],ability:String(p.id).split('_')[0]==='beginner'?1:2,streak:0,moves:0,done:false,history:[]};}
 const cache=new Map();
 export function mazeBoard(p){
- const s=mazeState(p),rooms=Math.min(p.id==='beginner'?4:6,(p.id==='beginner'?3:4)+Math.floor((s.level-1)/3)),size=rooms*2+1,seed=2717+s.level*7919+(p.id==='beginner'?71:0),key=`${size}:${seed}`;
+ const s=mazeState(p),rooms=Math.min(String(p.id).split('_')[0]==='beginner'?4:6,(String(p.id).split('_')[0]==='beginner'?3:4)+Math.floor((s.level-1)/3)),size=rooms*2+1,seed=2717+s.level*7919+(String(p.id).split('_')[0]==='beginner'?71:0),key=`${size}:${seed}`;
  if(cache.has(key))return cache.get(key);
  const r=random(seed),grid=Array.from({length:size},()=>Array(size).fill(1)),stack=[[1,size-2]],seen=new Set([`${1},${size-2}`]);grid[size-2][1]=0;
  while(stack.length){const [x,z]=stack.at(-1),next=shuffle(dirs,r).map(([dx,dz])=>[x+dx*2,z+dz*2,dx,dz]).find(([nx,nz])=>nx>0&&nz>0&&nx<size-1&&nz<size-1&&!seen.has(`${nx},${nz}`));

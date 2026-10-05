@@ -7,6 +7,7 @@ import {
 import {STEP_UNITS,STEP_VOICE} from '../hub/public/chess/steps-curriculum.mjs';
 import {FOUNDATION_UNITS,FOUNDATION_VOICE} from '../hub/public/chess/foundations-curriculum.mjs';
 import {matchVoiceLines} from '../hub/public/chess/match-voice.mjs';
+import {banterLines} from '../hub/public/chess/banter.mjs';
 import {wordBreakLines} from '../hub/public/word-break.mjs';
 const lines = [
  ...FOUNDATION_UNITS.flatMap(u=>[u.idea,u.cue,...u.hints]),...Object.values(FOUNDATION_VOICE),
@@ -18,7 +19,7 @@ const lines = [
   "Compare checks, captures and threats. Calculate their best reply.",
 ];
 // Full games against the coach, and the shared end-of-game word break in the same voice.
-lines.push(...matchVoiceLines(), ...wordBreakLines());
+lines.push(...matchVoiceLines(), ...banterLines(), ...wordBreakLines());
 for (const type of Object.keys(NAMES))
   for (const file of "abcdefgh")
     for (let rank = 1; rank <= 8; rank++)

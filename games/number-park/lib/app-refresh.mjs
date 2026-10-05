@@ -30,7 +30,7 @@ export function createAppRefresh({read,fetch:send,confirm,navigate,status,stop=(
     // Keep actions locked until navigation actually replaces this document.
     return true;
    }catch{
-    status({busy:true,error:'Cannot reach your server. Your screen is still here. Try Refresh when connected.',notice:''});
+    status({busy:true,error:'Cannot reach your Mac Mini. Your screen is still here. Try Refresh when connected.',notice:''});
     return false;
    }finally{
     clearTimeout(timer);

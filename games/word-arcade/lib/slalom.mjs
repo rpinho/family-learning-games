@@ -1,18 +1,16 @@
-// Letter Slalom: a short, calm downhill run. Each gate row carries two or three letters (Beginner) or words
-// (Explorer); the child skis through the one they hear. No score, no fail state: a missed gate names the
 // right answer and the run continues. Content follows Letter Quest (read-only `literacyFrom`), like word breaks.
 // Pure module: used by the server engine (gate generation, checking) and the browser (lines, recap).
 import {FIRST_WORDS,WORD_GROUPS,SENTENCE_DISTRACT,literacyFrom,DEFAULT_TRACK,CVC_WORDS,CVC_FAMILIES,CVC_TARGETS,cvcDistractors,PICTURE_NAMES} from './word-break.mjs';
 export {CVC_WORDS,CVC_FAMILIES,CVC_TARGETS,cvcDistractors};
 export const SLALOM_GATES=8;
 export const SLALOM_LINES={
- howLetters:'Slide your finger to steer. Ski through the gate with the right letter.',
- howWords:'Slide your finger to steer. Ski through the gate with the right word.',
+ howLetters:'Take your time. Slide your finger to steer, and ski through the gate with the right letter.',
+ howWords:'Take your time. Slide your finger to steer, and ski through the gate with the right word.',
  recapLetters:'What a lovely run! Here are your letters.',
  recapTricky:"What a lovely run! Let's look at the tricky ones.",
  recapAllRead:'What a lovely run! You read every word.',
  warmup:"Let's meet today's words.",
- warmupGo:"Ready? Let's ski!"
+ warmupGo:"When you are ready, off we glide."
 };
 const LQ_ORDER='FRANCISOETLHDMBPUKGWYVZXJQ';
 // Look-alike letters (same table as the shared word break), so the child has to look, not guess.
@@ -25,7 +23,6 @@ const cap=w=>w[0].toUpperCase()+w.slice(1);
 const upper=c=>c.toUpperCase();
 // Spoken lines per gate kind. `correction` is said when the child skis through another gate (content, always
 // spoken); `recap` is the short line said for this gate at the bottom of the hill.
-// After a gate only a short line (the next question must be heard before the next row): the letter or word,
 // or "It's F." on a miss. Measured budget and test: lib/slalom-timing.mjs, tests/slalom-timing.test.mjs.
 export const praiseLetter=(c,lower)=>lower?`Little ${c.toLowerCase()}!`:`${c.toUpperCase()}!`;
 export const missLetter=(c,lower)=>lower?`Little ${c.toLowerCase()}!`:`It's ${c.toUpperCase()}.`;
@@ -67,7 +64,6 @@ export const soundOutLine=w=>`Sound out ${w}.`;
 // Letters with a recorded sound (scripts/import-letter-sounds.py). Only words made of these are ever sounded out.
 export const SOUND_LETTERS='abcdefghimnoprstu';
 export const canSoundOut=w=>[...w].every(c=>SOUND_LETTERS.includes(c));
-// ---------- Words track: one word family per run (Explorer, 2026-09-28) ----------
 // Teach before testing: the run's 3-4 target words come from ONE family (at, an, ig, op, ug, in) and are introduced
 // before the first gate (picture, slow sound-out, whole word). Gate look-alikes still share the first letter and differ
 // in the vowel or the last letter (mat / map / mit), so the child reads past the first letter.
@@ -99,7 +95,6 @@ function targetOrder(targets,count,r){
  for(let tries=0;tries<50;tries++){const bag=shuffled(Array.from({length:count},(_,i)=>targets[i%targets.length]),r);if(bag.every((w,i)=>i===0||w!==bag[i-1]))return bag;}
  return Array.from({length:count},(_,i)=>targets[i%targets.length]);
 }
-// Gate rows for one run. Beginner (letters): pairs first, then triplets. Words: one family; two pairs then triplets, or
 // four pairs on an easy run (after a hard one). The answer never sits in the same lane three times running.
 export function slalomRun(levelIn,{seed=1,count=SLALOM_GATES,family,targets,easy=false}={}){
  const level={...literacyFrom(null),...levelIn},r=rng(seed*7919+13),gates=[],recent=[];
@@ -135,7 +130,6 @@ export function afterGate(gates,i,ok,{support=false,missRun=0}={}){
 }
 // The next run starts easier (same family, 3 words, four pairs) when more than 40% of the last 8 word rows were missed.
 export const easyNext=(rows=[])=>{const last=(Array.isArray(rows)?rows:[]).slice(-8);return last.length>=4&&last.filter(Boolean).length/last.length>0.4;};
-// Letters or words on the start screen. Beginner: letters only (no choice). Others: the remembered choice, else letters
 // until the last two word runs were read over 70% on his own (no glow), then words. `ready` offers words.
 export function slalomChoice(id,slalom={},defaultTrack=DEFAULT_TRACK[id]||'mixed'){
  const runs=(Array.isArray(slalom?.wordRuns)?slalom.wordRuns:[]).filter(r=>r?.rows>=SLALOM_GATES).slice(-2);

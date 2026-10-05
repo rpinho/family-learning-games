@@ -23,7 +23,8 @@ try{for(const game of process.env.SHOWCASE_LETTER_ONLY?['letter-quest']:['letter
  let answer;
  if(game==='number-park'){
   const q=state.session.question;const masses={mouse:.025,hamster:.12,hedgehog:.8,rabbit:2,cat:4,fox:6,beagle:10,'African penguin':3.5,turkey:8,koala:9,badger:12,sheep:70,pig:150,'giant panda':100,lion:190,gorilla:160,horse:500,cow:650,giraffe:1000,'African elephant':5000};const left=masses[q.left.name],right=masses[q.right.name];answer=Number(q.direction==='lighter'?right<left:right>left);await page.locator('[data-animal="0"]').click();await wait(180);await page.locator('[data-animal="1"]').click();await wait(650);
- }else answer=state.challenge.answer||state.challenge.char;
+ // Admin's visible practice round can differ from its saved progression challenge.
+ }else answer=(await page.locator('.letter-model').innerText()).trim();
  await screenshot(game);const start=(Date.now()-origin)/1000;
  await wait(650);
  if(game==='number-park')await page.locator(`[data-animal="${answer}"]`).click();

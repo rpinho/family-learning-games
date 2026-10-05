@@ -22,7 +22,6 @@ function play(p,{now,helped=false,predict}={}){
 
 test('old rounds keep the level he reached; faded rounds climb show -> hide -> own -> next level',()=>{
  const p=freshProfile('explorer');
- // Explorer-shaped history: legacy drag rounds that put him at level 2.
  p.history=[...Array.from({length:5},()=>({...row(undefined),question:{...row().question,fade:undefined}})),{...row(),question:{...row().question,fade:undefined},helped:true},{...row(),question:{...row().question,fade:undefined},helped:true}];
  const legacy=challengeLevel({history:p.history.map(h=>({...h}))},'cookies');
  assert.equal(cookieProgress(p).level,legacy);assert.equal(cookieProgress(p).fade,'show');
@@ -64,7 +63,7 @@ test('five clean rounds on his own promote him quietly, and the round recap says
  assert.ok(new Set(recapVoiceLines()).has(LEVEL_UP));
 });
 
-test('remainders live only at level 6: leftovers go to Cookie Buddy and the equation has r',()=>{
+test('remainders live only at level 6: leftovers go to Snack Friend and the equation has r',()=>{
  const lines=new Set(cookieVoiceLines());
  for(let level=1;level<=5;level++)for(let i=0;i<200;i++)assert.notEqual(cookieQuestion(level,Math.random).mode,'leftover');
  let seen=0;
@@ -77,7 +76,6 @@ test('remainders live only at level 6: leftovers go to Cookie Buddy and the equa
  assert.equal(publicState(p).session.question.leftover,undefined);
  const put=(id,slot)=>{const d=[...p.session.cookieDraft];d[id]=slot;act(p,{kind:'cookie-place',questionId:q.id,draft:d});};
  assert.throws(()=>put(0,q.plates+1));
- // Everything to Cookie Buddy: plates are "equal" at zero, but he has enough for one more each.
  for(let id=0;id<q.total;id++)put(id,q.plates);
  act(p,{kind:'cookie-check',questionId:q.id});assert.equal(p.session.cookieMessage,MONSTER_TOO_MANY);assert.equal(p.session.cookieAsk,undefined);
  for(let id=0;id<q.plates*q.answer;id++)put(id,Math.floor(id/q.answer));
@@ -108,11 +106,11 @@ test('after a long stretch the finishing round becomes the last one for now, nev
 test('each finished round adds one spoken line to his baker story; the little track has none',()=>{
  const lines=new Set(storyVoiceLines()),p=freshProfile('explorer');
  act(p,{kind:'start',game:'cookies'});for(let round=0;round<6;round++){play(p);act(p,{kind:'next'});}
- const s=p.session.story;assert.deepEqual(s.lines[0],STORY_OPENING);assert.equal(s.lines.length,2);assert.match(s.lines[1],/^In the little bakery, the baker /);
+ const s=p.session.story;assert.deepEqual(s.lines[0],STORY_OPENING);assert.equal(s.lines.length,2);assert.match(s.lines[1],/^In the little bakery, Explorer /);
  for(const line of s.lines)assert.ok(lines.has(line),line);
  act(p,{kind:'start',game:'place'});
  for(let round=0;round<6;round++){const q=p.session.question;if(q.placeMode==='build')act(p,{kind:'place-check',questionId:q.id,counts:q.target});else act(p,{kind:'answer',questionId:q.id,answer:q.answer});act(p,{kind:'next'});}
- assert.deepEqual(p.session.story.lines,['At the village market, the baker built a new oven from blocks.']);
+ assert.deepEqual(p.session.story.lines,['At the village market, Explorer built a new oven from blocks.']);
  assert.equal(p.story.count,2);assert.equal(p.session.story.recent.length,2);
  for(const line of p.story.beats.map(b=>b.line))assert.ok(line.split(' ').length<=12,line);
  const d=freshProfile('beginner');act(d,{kind:'start',game:'count'});for(let round=0;round<6;round++){const q=d.session.question;act(d,{kind:'answer',questionId:q.id,answer:q.answer});act(d,{kind:'next'});}
@@ -140,7 +138,6 @@ test('HTTP: the parent summary is read-only and rest-clear ends a wind-down',asy
 
 test('a round won with only a Help tap earns nothing but never eases the level or stage',()=>{
  const legacy=(ok,helped,cookieChecks)=>({...row(undefined,ok,helped),question:{...row().question,fade:undefined},cookieChecks});
- // Eight clean legacy rounds reach level 3, then two Help-only wins.
  const p=freshProfile('explorer');p.history=[...Array.from({length:8},()=>legacy(true,false,0)),legacy(true,true,0),legacy(true,true,0)];
  assert.equal(cookieProgress(p).level,3);
  // Help taps reset the run: four more clean rounds are needed, not three.

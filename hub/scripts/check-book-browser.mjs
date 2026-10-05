@@ -13,7 +13,7 @@ import {join} from 'node:path';
 const args=process.argv.slice(2),arg=(k,d=null)=>{const i=args.indexOf(k);return i>=0?args[i+1]:d;},flag=k=>args.includes(k);
 const base=arg('--base','http://127.0.0.1:4810'),player=arg('--player'),[W,H]=arg('--size','1366x768').split('x').map(Number),mobile=flag('--mobile');
 const shots=arg('--shots'),shotPages=new Set((arg('--shot-pages','')||'').split(',').filter(Boolean).map(Number)),label=arg('--label',`${W}x${H}`);
-const chrome=arg('--chrome',process.env.CHROME||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');
+const chrome=arg('--chrome',process.env.CHROME);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const profile=await mkdtemp(join(tmpdir(),'book-check-chrome-'));
 const proc=spawn(chrome,['--headless=new','--remote-debugging-port=0',`--user-data-dir=${profile}`,'--no-first-run','--no-default-browser-check','--autoplay-policy=document-user-activation-required','--mute-audio',`--window-size=${W},${H}`,'about:blank'],{stdio:'ignore'});

@@ -1,3 +1,4 @@
+import {mediaSettled} from './word-break.mjs';
 export const briefLine=text=>text?.match(/^.*?[.!?](?:\s|$)/)?.[0].trim()||text;
 export const SHORT_FEEDBACK=['Nice!','Got it!','Well done!','Try again.'];
 const TOUCH_EVENTS=['pointerup','touchend','click'];
@@ -31,7 +32,6 @@ export class CoachVoice {
     }catch(e){this.record('voice_error',{reason:'manifest',message:e.message});return null;}
   }
   stop(){
-    globalThis.speechSynthesis?.cancel();
     this.generation++;if(this.mode)this.lastSpeech=Date.now();this.mode=null;clearTimeout(this.promptTimer);this.promptTimer=null;
     this.cancelWait?.();this.cancelWait=null;
     this.tail=Promise.resolve();this.queued=false;
@@ -46,10 +46,19 @@ export class CoachVoice {
     this.stop();this.mode='manual';
     return this.play(text,this.generation,essential);
   }
+  // retried: settles when the retried line is over, so a word break's reply waits for it too.
   retryOnTouch(text){
     this.pendingText=text;if(this.retryArmed||typeof document==='undefined')return;this.retryArmed=true;
-    const go=()=>{for(const n of TOUCH_EVENTS)document.removeEventListener(n,go,true);this.retryArmed=false;const t=this.pendingText;this.pendingText=null;if(t)void this.speak(t,true);};
+    let release;this.retried=new Promise(r=>release=r);
+    const go=()=>{for(const n of TOUCH_EVENTS)document.removeEventListener(n,go,true);this.retryArmed=false;const t=this.pendingText;this.pendingText=null;release(t?this.speakToEnd(t,true):'stopped');};
     for(const n of TOUCH_EVENTS)document.addEventListener(n,go,true);
+  }
+  // Audio-finished contract (word breaks): resolves once this line is over: ended, stopped or replaced, failed, or a
+  // blocked essential line has been retried on the next touch and finished.
+  async speakToEnd(text,essential=false){
+    const starting=this.speak(text,essential),generation=this.generation;
+    if(!await starting)return generation!==this.generation?'stopped':essential&&this.retryArmed?this.retried:'failed';
+    return generation===this.generation?mediaSettled(this.player):'stopped';
   }
   instruction(text,{key='',essential=true}={}){
     if(!text)return;
@@ -95,7 +104,6 @@ export class CoachVoice {
     // A new deployment can add clips while an older tab still holds its manifest.
     if(!clip&&manifest){this.ready=this.load();manifest=await this.ready;clip=manifest?.clips[text];}
     if(generation!==this.generation)return;
-
     if(!clip){
       if(!globalThis.speechSynthesis){this.mode=null;this.notify('Speech is unavailable on this device. Read the instruction together.');return;}
       // Device speech cannot say isolated letter sounds; a sound-out line just says the word.

@@ -32,12 +32,12 @@ test('old profile response never replaces newly selected player or unlocks their
 });
 test('unavailable server releases controls and allows manual recovery; no endless retries',async()=>{
  let offline=false,calls=0;const {client,statuses}=fixture(async()=>{calls++;if(offline)throw Error('offline');return reply(state());});
- await client.select('beginner');offline=true;await client.action({kind:'answer'});assert.equal(calls,3);assert.equal(client.busy,false);assert.ok(statuses.some(s=>s.error?.includes('server')));
+ await client.select('beginner');offline=true;await client.action({kind:'answer'});assert.equal(calls,3);assert.equal(client.busy,false);assert.ok(statuses.some(s=>s.error?.includes('Mac Mini')));
  offline=false;await client.refresh();assert.equal(calls,4);assert.ok(statuses.some(s=>s.notice==='Game is up to date.'));
 });
 test('hung requests time out, release busy state and do not loop',async()=>{
  let calls=0;const {client,statuses}=fixture(async(_p,o)=>{calls++;return new Promise((_,reject)=>o.signal.addEventListener('abort',()=>reject(Error('aborted'))));},{timeoutMs:10});
- await client.select('beginner');assert.equal(calls,1);assert.equal(client.busy,false);assert.ok(statuses.some(s=>s.error?.includes('server')));
+ await client.select('beginner');assert.equal(calls,1);assert.equal(client.busy,false);assert.ok(statuses.some(s=>s.error?.includes('Mac Mini')));
 });
 test('refresh preserves unchanged state identity and ignores older snapshots',async()=>{
  const replies=[state(4),state(4),state(3)];const {client,applied}=fixture(async()=>reply(replies.shift()));await client.select('beginner');await client.refresh();await client.refresh();assert.equal(applied.length,1);assert.equal(applied[0].revision,4);

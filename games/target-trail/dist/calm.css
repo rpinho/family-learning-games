@@ -1,0 +1,32 @@
+/* Review-only field-book design. Geometry, saves and learning rules are unchanged. */
+:root{color:#293f35;background:#eee5d2;font-family:"Avenir Next",system-ui,sans-serif}
+body{color:#293f35;background:radial-gradient(ellipse at 10% 0,#fdf9ed,transparent 60%),#eee5d2}
+header,body.sling-page header{background:#f9f3e5;color:#293f35;border-bottom:1px solid #bca97c}
+header .identity small{color:#66725c;letter-spacing:.14em}
+header button,.tools button{background:#f5eddd;color:#354b3d;border:1px solid #c5b58c;box-shadow:none}
+button{background:#fcf7e9;color:#354b3d;border:1px solid #b9ad90;box-shadow:0 2px 0 #c8b898;font-weight:600;border-radius:12px}
+button:hover:not(:disabled){background:#e8eddc;filter:none}button:active{transform:translateY(1px)}
+button:focus-visible,canvas:focus-visible,a:focus-visible{outline:3px solid #91691f;outline-offset:3px}
+h1,h2{font-family:Georgia,serif;font-weight:500;letter-spacing:-.025em}.eyebrow{color:#766441}
+.primary,.maker-sizes button.selected{background:#3b5944;border-color:#3b5944;color:#fff;box-shadow:0 2px 0 #284133}
+.primary:hover{background:#49664d}dialog{background:#fcf7e9;color:#293f35;border:1px solid #bca97c;border-radius:16px}
+dialog::backdrop{background:#253b3288;backdrop-filter:none}
+#stars,#collection,#best,.scorebar>strong,#stats{display:none}
+#ambience{font-size:.8rem;white-space:nowrap}
+.wb{background:#fcf7e9!important;color:#293f35!important}.wb button{animation:none!important;box-shadow:none!important}.wb .wrong{animation:none!important}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+main{max-width:1100px}.game{background:#fcf8ed;border:1px solid #bca97c;border-radius:12px;box-shadow:0 8px 25px #59442810}
+.topline{margin-bottom:12px}.topline h1{font-size:2rem}.level-picker button{font-size:.85rem}.level-picker strong{font-size:.85rem}
+#level-note{font-size:.75rem;color:#68725d;font-weight:400}.practice-controls label{font-size:.8rem}.practice-controls select{background:#fcf7e9;color:#354b3d;border-color:#b9ad90;font-size:.85rem;padding:7px}
+.scorebar{padding:10px 18px;justify-content:center;background:#f4eedf}#arrows,#stones{color:#7b6b44;letter-spacing:.45em}
+.range{border-block:1px solid #d3c8a7;background:#e6e8d4}#overlay{background:#fcf7e9ed;backdrop-filter:none}#overlay h2{font-size:clamp(1.5rem,3vw,2.3rem)}
+#burst{display:none}.controls{background:#fcf8ed}.controls p{font-weight:500}.controls .hint{color:#697260}
+#range-settings{margin:12px 0;border-block:1px solid #c9ba96;padding:10px 0}#range-settings summary{cursor:pointer;min-height:32px;font-size:.9rem;color:#56654f}#range-settings .practice-controls{margin:10px 0 0}#rest{margin-top:12px;background:none;box-shadow:none}
+@media(max-width:650px){header{flex-wrap:wrap;padding:10px 14px;gap:8px}.identity strong{font-size:1.4rem}.tools{margin-left:auto}.topline h1{font-size:1.65rem}.level-picker{width:auto;gap:9px}.level-picker button{font-size:.75rem;padding:7px}.topline{gap:8px}.controls{padding:10px}.controls p{font-size:.9rem}.range{width:100%}#range-settings{margin:8px 0}.tools button{min-height:40px}}
+@media(orientation:landscape) and (max-height:600px){header{padding:6px 12px}main{display:grid;grid-template-columns:200px minmax(0,1fr);gap:10px;padding:10px}.topline{grid-column:1;display:block}.level-picker{margin-top:14px;flex-wrap:wrap}#range-settings{grid-column:1;grid-row:2;align-self:start}.game{grid-column:2;grid-row:1/4}.range{width:min(100%,68vh * 4 / 3)}.scorebar{padding:4px}.controls{padding:6px 10px}footer{grid-column:1}.sling-page main{display:block}.sling-page .range{width:min(100%,64vh * 4 / 3)}}
+
+@media(orientation:landscape) and (max-height:600px){header .identity strong{font-size:1.25rem}.identity img{width:32px;height:32px}.tools button{min-height:36px;padding:6px 10px}main{grid-template-columns:180px minmax(0,1fr)}.range{width:min(100%,57vh * 4 / 3)}.sling-page .range{width:min(100%,57vh * 4 / 3)}.controls .hint{display:none}.controls button{min-height:38px;padding:6px 10px}.controls p{font-size:.85rem}.controls{padding:6px 10px}.scorebar{font-size:.8rem}.topline h1{font-size:1.65rem}}
+
+/* Background ambience has been retired. */
+#ambience{display:none!important}

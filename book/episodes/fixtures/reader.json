@@ -1,0 +1,287 @@
+{
+  "schema": "family-world-episode-1",
+  "id": "explorer-2026-10-05",
+  "player": "explorer",
+  "date": "2026-10-05",
+  "level": "reader",
+  "title": "The Lantern Garden",
+  "goal": "Find the garden lantern and light the surprise.",
+  "intro": "A dark lantern waits on the hill. Your friends have clues and a tool to help you light it.",
+  "recap": "You found a tool, followed the clue, and lit the lantern together.",
+  "reveal": "Surprise! A tiny glowing garden is growing inside the lantern. Your friends made it for the kingdom.",
+  "hook": "Tomorrow, a tiny path inside the lantern leads somewhere new.",
+  "start": "welcome",
+  "finish": "light",
+  "rooms": [
+    {
+      "id": "welcome",
+      "name": "Lantern trail",
+      "bg": "castle-gate",
+      "friend": "dad",
+      "icon": "🌳",
+      "exits": {
+        "right": "grove"
+      },
+      "lines": [
+        "Our friends need a light for their surprise. Shall we find the lantern together?",
+        "You found the light. Come back whenever you want."
+      ]
+    },
+    {
+      "id": "grove",
+      "name": "Clue grove",
+      "bg": "castle-forest",
+      "friend": "bo",
+      "icon": "🌳",
+      "exits": {
+        "left": "welcome",
+        "right": "hill"
+      },
+      "lines": [
+        "I found a clue beside this path. It will help us reach the surprise.",
+        "You followed my clue and opened the path."
+      ],
+      "door": {
+        "to": "workshop",
+        "label": "Lantern workshop",
+        "wide": [
+          0.22,
+          0.28,
+          0.08,
+          0.12
+        ],
+        "tall": [
+          0.2,
+          0.25,
+          0.1,
+          0.09
+        ]
+      },
+      "exitRequires": {
+        "right": "trail-lock"
+      }
+    },
+    {
+      "id": "workshop",
+      "name": "Lantern workshop",
+      "bg": "workshop",
+      "friend": "robo",
+      "icon": "🌳",
+      "exits": {},
+      "lines": [
+        "There is an extra discovery in my workshop. You can visit whenever you want.",
+        "Your extra discovery can stay in your backpack."
+      ],
+      "door": {
+        "to": "grove",
+        "label": "Back to the grove",
+        "return": true
+      }
+    },
+    {
+      "id": "hill",
+      "name": "Surprise hill",
+      "bg": "castle-moon-hill",
+      "friend": "mom",
+      "icon": "🌳",
+      "exits": {
+        "left": "grove"
+      },
+      "lines": [
+        "The lantern is ready. One final clue will light it.",
+        "Look at the tiny garden glowing inside the lantern."
+      ]
+    }
+  ],
+  "items": {
+    "rope": {
+      "name": "Trail rope",
+      "icon": "rope"
+    },
+    "lantern": {
+      "name": "Garden lantern",
+      "icon": "lantern"
+    },
+    "star": {
+      "name": "Workshop star",
+      "icon": "star",
+      "collection": true
+    },
+    "shell": {
+      "name": "Workshop shell",
+      "icon": "shell",
+      "collection": true
+    }
+  },
+  "puzzles": [
+    {
+      "id": "get-rope",
+      "room": "welcome",
+      "kind": "math",
+      "title": "Lantern number clue",
+      "prompt": "Work out the number to help your friend.",
+      "hint": "Take your time. Try grouping the numbers.",
+      "goal": "Work out the number to help your friend.",
+      "icon": "⭐",
+      "answer": "72",
+      "options": [
+        "72",
+        "73",
+        "71"
+      ],
+      "requires": [],
+      "rewards": [
+        "rope"
+      ],
+      "math": {
+        "type": "fact",
+        "a": 8,
+        "b": 9
+      },
+      "equation": "8 × 9 = ?"
+    },
+    {
+      "id": "clue",
+      "room": "grove",
+      "kind": "tiles",
+      "title": "Read the clue",
+      "prompt": "Build the word on the clue card.",
+      "hint": "Tap each letter to hear its sound. Blend the sounds.",
+      "goal": "Build the word on the clue card.",
+      "icon": "⭐",
+      "answer": "cat",
+      "options": [
+        "cat",
+        "cap"
+      ],
+      "requires": [
+        "get-rope"
+      ],
+      "rewards": [],
+      "words": [
+        "cat"
+      ],
+      "picture": "🐈",
+      "soundSupport": true
+    },
+    {
+      "id": "light",
+      "room": "hill",
+      "kind": "math",
+      "title": "Lantern number clue",
+      "prompt": "Work out the number to help your friend.",
+      "hint": "Take your time. Try grouping the numbers.",
+      "goal": "Work out the number to help your friend.",
+      "icon": "⭐",
+      "answer": "9",
+      "options": [
+        "9",
+        "10",
+        "8"
+      ],
+      "requires": [
+        "trail-lock"
+      ],
+      "rewards": [
+        "lantern"
+      ],
+      "math": {
+        "type": "divide",
+        "a": 72,
+        "b": 8
+      },
+      "equation": "72 ÷ 8 = ?"
+    },
+    {
+      "id": "bonus",
+      "room": "workshop",
+      "kind": "math",
+      "title": "Lantern number clue",
+      "prompt": "Work out the number to help your friend.",
+      "hint": "Take your time. Try grouping the numbers.",
+      "goal": "Work out the number to help your friend.",
+      "icon": "⭐",
+      "answer": "312",
+      "options": [
+        "312",
+        "313",
+        "311"
+      ],
+      "requires": [],
+      "rewards": [
+        "star"
+      ],
+      "math": {
+        "type": "multiply",
+        "a": 24,
+        "b": 13
+      },
+      "optional": true,
+      "equation": "24 × 13 = ?"
+    },
+    {
+      "id": "place",
+      "room": "workshop",
+      "kind": "math",
+      "title": "Find the digit value",
+      "prompt": "Work out the number to help your friend.",
+      "hint": "Take your time. Try grouping the numbers.",
+      "goal": "Work out the number to help your friend.",
+      "icon": "⭐",
+      "answer": "800",
+      "options": [
+        "800",
+        "801",
+        "799"
+      ],
+      "requires": [],
+      "rewards": [
+        "shell"
+      ],
+      "math": {
+        "type": "place",
+        "number": 4836,
+        "digitIndex": 1
+      },
+      "optional": true,
+      "equation": "4836",
+      "number": 4836,
+      "digitIndex": 1
+    }
+  ],
+  "locks": [
+    {
+      "id": "trail-lock",
+      "room": "grove",
+      "item": "rope",
+      "requires": [
+        "clue"
+      ],
+      "label": "Tie the trail rope",
+      "hint": "Find the ribbon or rope, then follow the clue in the grove.",
+      "goal": "Carry your rope to the trail opening",
+      "icon": "rope"
+    }
+  ],
+  "sideQuests": [
+    {
+      "id": "bonus-quest",
+      "title": "Lantern number clue",
+      "puzzle": "bonus"
+    },
+    {
+      "id": "place-quest",
+      "title": "Find the digit value",
+      "puzzle": "place"
+    }
+  ],
+  "learning": {
+    "level": "reader",
+    "taughtLetters": [
+      "M",
+      "O"
+    ],
+    "focus": []
+  },
+  "revealVisual": "garden"
+}

@@ -1,0 +1,38 @@
+/* Review-only field-book design. Geometry, saves and learning rules are unchanged. */
+:root{color:#293f35;background:#eee5d2;font-family:"Avenir Next",system-ui,sans-serif}
+body{color:#293f35;background:radial-gradient(ellipse at 10% 0,#fdf9ed,transparent 60%),#eee5d2}
+header,body.sling-page header{background:#f9f3e5;color:#293f35;border-bottom:1px solid #bca97c}
+header .identity small{color:#66725c;letter-spacing:.14em}
+header button,.tools button{background:#f5eddd;color:#354b3d;border:1px solid #c5b58c;box-shadow:none}
+button{background:#fcf7e9;color:#354b3d;border:1px solid #b9ad90;box-shadow:0 2px 0 #c8b898;font-weight:600;border-radius:12px}
+button:hover:not(:disabled){background:#e8eddc;filter:none}button:active{transform:translateY(1px)}
+button:focus-visible,canvas:focus-visible,a:focus-visible{outline:3px solid #91691f;outline-offset:3px}
+h1,h2{font-family:Georgia,serif;font-weight:500;letter-spacing:-.025em}.eyebrow{color:#766441}
+.primary,.maker-sizes button.selected{background:#3b5944;border-color:#3b5944;color:#fff;box-shadow:0 2px 0 #284133}
+.primary:hover{background:#49664d}dialog{background:#fcf7e9;color:#293f35;border:1px solid #bca97c;border-radius:16px}
+dialog::backdrop{background:#253b3288;backdrop-filter:none}
+#stars,#collection,#best,.scorebar>strong,#stats{display:none}
+#ambience{font-size:.8rem;white-space:nowrap}
+.wb{background:#fcf7e9!important;color:#293f35!important}.wb button{animation:none!important;box-shadow:none!important}.wb .wrong{animation:none!important}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+main{max-width:1180px;padding:24px}.topline{padding:10px 0 22px;border-bottom:1px solid #c9b98f;margin-bottom:22px}
+.topline h1{font-size:clamp(1.6rem,3.2vw,2.5rem)}.score span{border:0;color:#66725c;font-size:.8rem}
+.workspace{grid-template-columns:190px minmax(0,1fr);gap:26px}aside{background:url('/field-sprig.svg') bottom center/140px auto no-repeat;padding-bottom:150px}
+.mission{font-size:1.05rem;font-weight:500;line-height:1.5}.tip{font-size:.8rem}.mode{padding:12px 0}.mode small{font-size:.7rem}
+.board-shell,.maker-board{border:10px solid #fcf8ec;outline:1px solid #bca97c;border-radius:8px;box-shadow:0 10px 26px #513d1b12}
+.maze-tools{gap:7px}.maze-tools button{padding:7px 11px;font-size:.76rem}
+.board-shell,.board-shell:has(.big){max-width:min(100%,66vh)}.maker-head{border-bottom:1px solid #c9b98f;padding:12px 0}.maker-head .eyebrow{color:#766441}
+#win .celebrate{font-size:3rem;background:#e7ead6;border:1px solid #b5b98e;border-radius:50%;width:130px;height:130px;display:grid;place-items:center;margin:auto}
+#win h2{text-align:center}#win-text{font-size:1rem}#rest{width:100%;margin-top:10px;background:transparent;box-shadow:none}
+@media(max-width:750px){header{flex-wrap:wrap;padding:10px 14px;gap:8px}.identity strong{font-size:1.35rem}.utilities{margin-left:auto;gap:5px}.utilities button{min-height:40px}main{padding:14px}.topline{padding:0 0 12px;margin-bottom:12px}.workspace{display:flex;gap:12px}aside{display:grid;grid-template-columns:1fr auto;padding:0;background:none;gap:8px}.mode{border:0;padding:0}.tip{display:none}.board-shell,.board-shell:has(.big){max-width:100%;max-height:65vh}.maze-tools{justify-content:flex-start}.maker-board{width:min(100%,65vh);min-width:0}.maker-head{gap:8px}.maker-head button{font-size:.75rem}.maker-head h2{font-size:1.3rem}}
+@media(orientation:landscape) and (max-height:600px){header{padding:6px 14px}.topline{display:none}.workspace{display:grid;grid-template-columns:160px 1fr;gap:16px}aside{display:flex}.board-shell,.board-shell:has(.big){max-width:65vh;max-height:65vh}.maze-tools{justify-content:center}.maze-tools button{min-height:32px;padding:4px 8px}.maker-board{width:65vh;margin:8px auto}.maker-foot{display:none}}
+
+@media(min-width:751px) and (min-height:601px){header{padding-block:10px}.identity strong{font-size:1.65rem}main{padding-top:16px}.topline{padding:0 0 14px;margin-bottom:16px}.board-shell,.board-shell:has(.big){max-width:min(100%,calc(100dvh - 295px))}.mission{font-size:1rem}aside{gap:12px}}
+@media(max-width:750px){.topline .eyebrow{font-size:.6rem;letter-spacing:.08em}.topline h1{font-size:1.4rem}.score span{font-size:.65rem}.utilities button{padding:6px 10px;min-height:38px}.utilities #sound{max-width:none;white-space:nowrap}.mission{font-size:.9rem}.maze-tools button{min-height:38px;font-size:.7rem}.board-shell{border-width:8px}}
+
+/* Water sits under Hear again (the hub hides the top bar); on a phone it stacks small beside the mission. */
+@media(max-width:750px){aside #mission{grid-row:span 2;align-self:center}aside #ambience{grid-column:2;padding:6px 12px;min-height:0;font-size:.85rem}}
+
+/* Background ambience has been retired. */
+#ambience{display:none!important}

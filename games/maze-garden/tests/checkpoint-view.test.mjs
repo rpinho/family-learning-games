@@ -18,7 +18,7 @@ test('Explorer finds hidden letter stops by tracing; the spoken puzzle still ope
  assert.equal(checkpointMarkers('explorer',a).length,0);
 });
 
-test('Beginner and Admin retain visible puzzle stops',()=>{
+test('Other profiles retain visible puzzle stops',()=>{
  const a={checkpoints:[{cell:1,solved:false},{cell:2,solved:true}]};
  assert.equal(checkpointMarkers('beginner',a),a.checkpoints);
  assert.equal(checkpointMarkers('admin',a),a.checkpoints);

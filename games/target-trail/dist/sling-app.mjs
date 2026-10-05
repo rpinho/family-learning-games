@@ -4,29 +4,33 @@ import {wordBreak,fetchWordLevel,DEFAULT_TRACK,onceThisSession,IDLE_REPEAT_MS,ID
 const $=id=>document.getElementById(id),canvas=$('canvas'),ctx=canvas.getContext('2d');
 let player=null,p=null,busy=false,drag=null,pull={dx:0,dy:0},flight=null,feedback=null,sound=true,voiceEpoch=0,audio,manifest,sfx,parentSum=15,wbLevel=null,midBreakDone=false,breakAt=2+Math.floor(Math.random()*2);
 let voiceBlocked=false,pending=null,idleTimer=null,idleCount=0;
-const valid=id=>Object.hasOwn(PLAYERS,id),wait=ms=>new Promise(r=>setTimeout(r,ms));
+const valid=id=>/^(?:(?:beginner|explorer)(?:_[1-9]\d{0,3})?|admin)$/.test(id),wait=ms=>new Promise(r=>setTimeout(r,ms));
 try{const id=new URL(location.href).searchParams.get('player'),saved=localStorage.getItem('target-player');player=valid(id)?id:valid(saved)?saved:null;sound=localStorage.getItem('target-sound')!=='off';}catch{}
 function log(kind,detail){if(player)void fetch('/api/events?player='+player,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind,detail})}).catch(()=>{});}
 async function request(path,input){const r=await fetch('/api/'+path+'?player='+player,{method:input?'POST':'GET',headers:input?{'Content-Type':'application/json'}:{},body:input?JSON.stringify(input):undefined,cache:'no-store',signal:AbortSignal.timeout(8000)});const data=await r.json();if(!r.ok)throw Error(data.error||'Connection lost. Tap Refresh.');return data;}
 // ---- Speech. CONTENT (what to hit) is essential: it always plays, even with the effects toggle off.
 // Instructions and praise obey the toggle; the controls instruction is said once per session.
-function stopVoice(){voiceEpoch++;audio?.pause();audio=null;try{globalThis.speechSynthesis?.cancel();}catch{}}
-// Public version: browser speech (no local voice cache).
-function utter(line){const u=new SpeechSynthesisUtterance(line);u.lang='en-US';u.rate=.9;const voices=speechSynthesis.getVoices();u.voice=voices.find(v=>v.lang==='en-US'&&v.localService)||voices.find(v=>v.lang==='en-US')||null;return u;}
+function stopVoice(){globalThis.calmBed?.stopSpeech();voiceEpoch++;audio?.pause();audio=null;try{globalThis.speechSynthesis?.cancel();}catch{}}
+function browserVoice(line){return new Promise(done=>{try{const u=new SpeechSynthesisUtterance(line);u.lang='en-US';u.rate=.9;u.onend=u.onerror=done;globalThis.calmBed?.watchSpeech(u);speechSynthesis.speak(u);}catch{done();}});}
+// speak() resolves when its lines are over (the word-break audio-finished contract); a blocked line resolves once retried.
 async function speak(lines,{essential=false,manual=false}={}){
- lines=[].concat(lines).filter(Boolean);if(!lines.length||!essential&&!manual&&!sound||!globalThis.speechSynthesis)return;
+ lines=[].concat(lines).filter(Boolean);if(!lines.length||!essential&&!manual&&!sound)return;
  stopVoice();const epoch=voiceEpoch;
  for(const line of lines){
+  let url=null;try{if(!manifest?.clips?.[line])manifest=await(await fetch('/voice/manifest.json',{cache:'no-store'})).json();url=manifest?.clips?.[line];}catch(e){log('voice','manifest '+e.message);}
   if(epoch!==voiceEpoch)return;
-  const ok=await new Promise(done=>{const u=utter(line);u.onstart=()=>{voiceBlocked=false;pending=null;};u.onend=()=>done(true);u.onerror=e=>{if(e.error==='not-allowed'&&epoch===voiceEpoch){voiceBlocked=true;pending={lines,essential,manual};render();}else if(e.error!=='interrupted'&&e.error!=='canceled')log('voice',e.error);done(false);};speechSynthesis.speak(u);});
-  if(!ok)return;
+  if(!url){log('voice','missing '+line);await browserVoice(line);continue;}
+  const a=audio=new Audio(url);globalThis.calmBed?.watch(a);
+  try{await a.play();voiceBlocked=false;pending=null;}
+  catch(e){if(epoch!==voiceEpoch)return;if(e.name==='NotAllowedError'){voiceBlocked=true;const q=pending={lines,essential,manual};log('voice','blocked, waiting for a tap');render();return new Promise(r=>q.release=r);}else if(e.name!=='AbortError')log('voice',e.message);return;}
+  await new Promise(done=>{a.onended=a.onpause=a.onerror=done;});if(epoch!==voiceEpoch)return;
  }
 }
 function unlock(){try{sfx??=new AudioContext();void sfx.resume();}catch{}}
 // Any tap retries a prompt the browser blocked before the first touch.
-function retryPending(){unlock();if(!pending||drag||needTap())return;const q=pending;pending=null;void speak(q.lines,q);}
+function retryPending(){unlock();if(!pending||drag||needTap())return;const q=pending;pending=null;q.release?.(speak(q.lines,q));}
 for(const type of ['pointerup','keydown'])document.addEventListener(type,e=>{if(e.target===canvas)return;retryPending();},{capture:true});
-function effect(kind){if(!sound)return;try{unlock();const c=sfx,t=c.currentTime,o=c.createOscillator(),g=c.createGain();o.type=kind==='fling'?'triangle':'sine';const [a,b]=kind==='fling'?[220,660]:kind==='pop'?[700,1200]:[180,90];o.frequency.setValueAtTime(a,t);o.frequency.exponentialRampToValueAtTime(b,t+.15);g.gain.setValueAtTime(.12,t);g.gain.exponentialRampToValueAtTime(.001,t+.25);o.connect(g).connect(c.destination);o.start();o.stop(t+.26);}catch{}}
+function effect(kind){if(!sound)return;try{unlock();const c=sfx,t=c.currentTime,o=c.createOscillator(),g=c.createGain();o.type=kind==='fling'?'triangle':'sine';const [a,b]=kind==='fling'?[261.63,329.63]:kind==='pop'?[523.25,523.25]:[293.66,293.66];o.frequency.setValueAtTime(a,t);o.frequency.exponentialRampToValueAtTime(b,t+.15);g.gain.setValueAtTime(.045,t);g.gain.exponentialRampToValueAtTime(.001,t+.25);o.connect(g).connect(c.destination);o.start();o.stop(t+.26);}catch{}}
 const round=()=>p?.sling?.round,live=()=>round()&&!round().done,needTap=()=>voiceBlocked&&live();
 const active=()=>live()&&!busy&&!flight&&!feedback&&!needTap()&&!$('parent').open&&!$('welcome').open&&!document.querySelector('dialog.wb[open]');
 const currentItem=()=>{const r=round();if(!r)return null;const i=feedback?feedback.index:flight?flight.index:Math.min(STONES-1,r.shots.length);return slingItem(r,i);};
@@ -38,8 +42,8 @@ function idleArm(){clearTimeout(idleTimer);if(idleCount>=IDLE_REPEATS)return;idl
 function circle(x,y,r,color){ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();}
 const BALLOONS=['#f25f4c','#3d8bf2','#f2b134','#48b86b','#a066d8'];
 function draw(){
- ctx.clearRect(0,0,800,600);const sky=ctx.createLinearGradient(0,0,0,600);sky.addColorStop(0,'#bfe3ff');sky.addColorStop(1,'#eaf7ff');ctx.fillStyle=sky;ctx.fillRect(0,0,800,600);
- ctx.fillStyle='#8cc56b';ctx.fillRect(0,GROUND,800,600-GROUND);ctx.fillStyle='#6fae50';ctx.fillRect(0,GROUND,800,8);
+ ctx.clearRect(0,0,800,600);const sky=ctx.createLinearGradient(0,0,0,600);sky.addColorStop(0,'#e2e8d7');sky.addColorStop(1,'#f4edd9');ctx.fillStyle=sky;ctx.fillRect(0,0,800,600);
+ ctx.fillStyle='#b2c19f';ctx.fillRect(0,GROUND,800,600-GROUND);ctx.fillStyle='#849b73';ctx.fillRect(0,GROUND,800,8);
  const it=currentItem(),r=round(),feel=slingFeel(r?.track||'letters');
  const preview=drag&&it&&active()?slingShot(it.targets,feel,pull.dx,pull.dy):null,aimed=preview?.target?.id??null;
  if(it?.prompt){ctx.save();ctx.fillStyle='#ffffffee';ctx.strokeStyle='#2d4a1e';ctx.lineWidth=3;const w=Math.min(560,90+it.prompt.length*26);ctx.beginPath();ctx.roundRect(400-w/2+60,18,w,78,20);ctx.fill();ctx.stroke();ctx.fillStyle='#1f3514';ctx.font='800 46px "Avenir Next",system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(it.prompt,460,58,w-24);ctx.restore();}
@@ -63,10 +67,10 @@ function draw(){
 }
 function render(){if(!p)return;const s=p.sling||{},r=s.round,done=!r||r.done,tap=needTap();$('name').textContent=p.name;document.title=p.name+' · Sling Shot';$('sound').textContent=sound?'♪ Effects on':'♪ Effects off';
  $('score').textContent=r?.correct||0;$('stones').textContent=Array.from({length:STONES},(_,i)=>i<(r?.shots.length||0)?'○':'●').join(' ');$('best').textContent=`★ ${s.stars||0}`;
- $('overlay').hidden=!(done||tap)||busy&&!!r&&!tap;$('round-title').textContent=tap?'Ready?':r?.done?`${r.correct} / 5 hits!`:'Pull back. Let go.';$('round-detail').textContent=tap?'Tap to hear what to hit.':r?.done?'Another round has new targets.':'Listen, then hit the right one.';$('start').textContent=tap?'▶ Let’s play':r?.done?'▶ Another round':'▶ Let’s play';$('start').disabled=busy&&!tap;
+ $('overlay').hidden=!(done||tap)||busy&&!!r&&!tap;$('round-title').textContent=tap?'Ready?':r?.done?'A quiet moment':'Pull back. Let go.';$('round-detail').textContent=tap?'Tap to hear what to hit.':r?.done?'Your five stones are saved. Rest, or try a new trail.':'Listen, then hit the right one.';$('start').textContent=tap?'▶ Let’s play':r?.done?'▶ Another round':'▶ Let’s play';$('rest').hidden=!(p?.round?.done||p?.sling?.round?.done);$('start').disabled=busy&&!tap;
  $('stats').textContent=`★ ${s.stars||0} · ${s.rounds||0} rounds${p.id==='admin'?' · ADMIN TEST SAVE':''}`;}
 async function sync(){p=await request('state');render();if(live())announce();}
-async function checkpoint(reason){clearTimeout(idleTimer);try{wbLevel??=await fetchWordLevel('/api/word-break?player='+player,DEFAULT_TRACK[player]);stopVoice();drag=null;await wordBreak({player,level:wbLevel,speak:(line,essential)=>void speak(line,{essential}),effects:()=>sound,log:r=>log('word-break',JSON.stringify(r)),reason});}catch(e){log('word-break-error',e.message);}}
+async function checkpoint(reason){clearTimeout(idleTimer);try{wbLevel??=await fetchWordLevel('/api/word-break?player='+player,DEFAULT_TRACK[player]);stopVoice();drag=null;await wordBreak({player,level:wbLevel,speak:(line,essential)=>speak(line,{essential}),effects:()=>sound,log:r=>log('word-break',JSON.stringify(r)),reason});}catch(e){log('word-break-error',e.message);}}
 // A newer Sling Shot was installed: load it between rounds instead of playing old code.
 function stale(){return p?.slingVersion&&p.slingVersion!==SLING_VERSION;}
 function reloadFresh(){const url=new URL(location.href);url.searchParams.set('v',Date.now());location.replace(url);}
@@ -103,3 +107,5 @@ $('parents').onclick=()=>{if(busy)return;stopVoice();clearTimeout(idleTimer);dra
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState!=='visible'){drag=null;stopVoice();clearTimeout(idleTimer);}else if(player&&!busy&&!document.querySelector('dialog.wb[open]'))void sync().catch(e=>{$('error').textContent=e.message;});});
 window.addEventListener('error',e=>log('error',e.message));window.addEventListener('unhandledrejection',e=>log('error',String(e.reason)));
 if(player){try{localStorage.setItem('target-player',player);}catch{}sync().then(()=>log('open','Sling Shot')).catch(e=>{$('error').textContent=e.message;});}else $('welcome').showModal();draw();
+
+$('rest').onclick=()=>{stopVoice();$('round-title').textContent='Your place is kept.';$('round-detail').textContent='Stay here as long as you like.';};

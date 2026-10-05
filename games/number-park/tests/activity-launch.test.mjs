@@ -3,7 +3,6 @@ import {launchActivity,openActivity} from '../lib/activity-launch.mjs';
 test('A home link opens only a game listed for the selected profile and leaves drawing and other tabs alone',()=>{
  assert.equal(launchActivity('?play=cookies',{id:'explorer'}),'cookies');
  for(const q of ['?play=unknown','?play=cookies&studio=1','?play=cookies&tab=draw'])assert.equal(launchActivity(q,{id:'explorer'}),null);
- // Beginner's Cookie Monster is his own kindergarten sharing game under the same id.
  for(const game of ['cookies','pattern','subtract'])assert.equal(launchActivity('?play='+game,{id:'beginner'}),game);
  assert.equal(launchActivity('?play=multiply',{id:'beginner'}),null);assert.equal(launchActivity('?play=pattern',{id:'explorer'}),null);
  assert.equal(launchActivity('?play=cookies',null),null);assert.equal(launchActivity('',{id:'beginner'}),null);

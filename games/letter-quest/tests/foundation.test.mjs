@@ -1,4 +1,3 @@
-// Helper's uppercase-first practice supersedes the earlier lowercase-first draft.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {foundationState,foundationQuestion,foundationAttempt,FOUNDATION_WORDS} from '../public/foundation.mjs';

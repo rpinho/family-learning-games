@@ -1,4 +1,3 @@
-// Short uppercase CVC practice, directed by Helper's September 7 feedback.
 export const WORD_FAMILIES=[['cat','hat','mat'],['cap','map','tap'],['dog','log','hog'],['sun','run','fun']];
 export const FOUNDATION_WORDS=WORD_FAMILIES.flat();
 export function foundationState(p){return p.foundation||{stage:1,serial:0,streak:0,misses:0,skills:{}};}

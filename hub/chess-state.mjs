@@ -3,7 +3,7 @@ import {FOUNDATION_UNITS,FOUNDATION_LESSONS} from './public/chess/foundations-cu
 import {STEPS,STEP_EXAMPLES,meetsStepGoal,checkingPieceCapture} from './chess-steps.mjs';
 import {STEP_UNITS,STEP_LESSONS,STEP_VOICE} from './public/chess/steps-curriculum.mjs';
 import { randomUUID } from "node:crypto";
-import { actMatch, publicMatch, coachChoice, coachRating, recordAbandoned } from "./chess-match.mjs";
+import { actMatch, publicMatch, coachChoice, practiceRating, recordAbandoned } from "./chess-match.mjs";
 import { readFile } from "node:fs/promises";
 import { Chess } from "./public/chess/rules.mjs";
 import {
@@ -327,7 +327,7 @@ export function publicChess(p, now = Date.now(), settings = {}) {
     game: p.game ? { ...p.game, coaching: undefined, hint: p.game.hint ? {
       ...p.game.hint, ...hintPublic(p.game.hint, now),
     } : null } : null,
-    settings: p.settings,
+    settings: { ...p.settings, coachChatter: settings.coachChatter === 'lively' ? 'lively' : 'quiet' },
     match: publicMatch(p, settings),
   };
 }
@@ -673,7 +673,7 @@ export async function actChess(p, input, { engine, now = Date.now(), settings = 
 // Friendly practice plays like the child's own adaptive coach (slips, rookie traps);
 // Club and Challenge keep the plain limited-strength engine.
 async function practiceReply(b, level, engine, p, settings, rng) {
-  if (level === "friendly") return (await coachChoice(b, coachRating(p, settings), engine, rng)).choice.uci;
+  if (level === "friendly") return (await coachChoice(b, practiceRating(p, settings), engine, rng)).choice.uci;
   return (await engine.analyze(b.fen(), { ms: 300, elo: strength(level) })).best;
 }
 export function gameBoard(g) {

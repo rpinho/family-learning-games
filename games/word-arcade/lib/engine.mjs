@@ -38,8 +38,8 @@ export const WORDS=[
 const FAMILIES=[['at','cat','hat','bat','mat'],['og','dog','log','fog','jog'],['an','pan','fan','can','man'],['ig','pig','big','wig','dig'],['op','hop','mop','top','pop'],['ug','bug','rug','mug','hug'],['et','pet','net','jet','wet'],['in','pin','fin','win','bin'],['ag','bag','tag','rag','wag'],['ip','lip','zip','dip','tip'],['ot','pot','hot','dot','cot'],['am','jam','ham','ram','dam']];
 const CHANGES=[['cat','hat'],['dog','log'],['pin','pan'],['map','cap'],['sun','fun'],['bed','red'],['ship','shop'],['fish','dish'],['ring','king'],['frog','from'],['snail','snarl'],['train','brain']];
 const BEATS=[['cat',1],['rabbit',2],['banana',3],['dog',1],['tiger',2],['elephant',3],['sun',1],['rocket',2],['dinosaur',3],['cup',1],['pencil',2],['butterfly',3]];
-export const LINES=['Welcome to Word Arcade. I am Nova. Pick a game and let us play.','Nice! Your engines are getting stronger.','That word has places to be. Launch it!','Mission control approves. Very fancy flying.','A little help is part of learning.','Not quite. You can try again.','Eight missions complete. Your ship deserves a snack.','Read the word, then choose its picture.','Read the word. Choose a word that rhymes.','Read the ending. Choose the matching cargo dock.','Follow the code key. Build the secret word.','Each row and column needs one of each letter. Tap an empty square, then a letter.','Paint anything you like. Your art is saved, not graded.','Find the word across or down. Tap its letters in order.','Tap once for each syllable. Then check your beat.','Build the sentence. Tap the words in order.','Your progress is saved. Come back whenever you like.'];
-export function fresh(id){if(!['explorer','beginner','admin'].includes(id))throw Error('Unknown player');return {id,name:id==='admin'?'Admin':id==='beginner'?'Beginner':'Explorer',revision:0,xp:0,games:{},serial:0,session:null,art:Array(64).fill(0)};}
+export const LINES=['Hello. I am Nova, and I am glad you are here. Pick a game when you are ready.','That is the one. You looked carefully, like a pilot reading the stars.','Right. One steady look, like tracing a constellation.','Yes. Calm and careful, like a lantern on a dark night.','That one was a little tricky. Here is a clue.','That one was a bit bumpy. Let us look again, slowly.','Eight rounds, done with care. You can rest now, or choose another game.','Read the word, then choose its picture.','Read the word. Choose a word that rhymes.','Read the ending. Choose the matching cargo dock.','Follow the code key. Build the secret word.','Each row and column needs one of each letter. Tap an empty square, then a letter.','Paint anything you like. Your art is saved, not graded.','Find the word across or down. Tap its letters in order.','Tap once for each syllable. Then check your beat.','Build the sentence. Tap the words in order.','Your progress is saved. Come back whenever you like.'];
+export function fresh(id){if(!/^(?:(?:beginner|explorer)(?:_[1-9]\d{0,3})?|admin)$/.test(id))throw Error('Unknown player');return {id,name:id==='admin'?'Alex':String(id).split('_')[0]==='beginner'?'Beginner':'Explorer',revision:0,xp:0,games:{},serial:0,session:null,art:Array(64).fill(0)};}
 export const INSTRUCTIONS={asteroids:'Read the word, then choose its picture.',wordoku:'Each row and column needs one of each letter. Tap an empty square, then a letter.',rhyme:'Listen to the word. Find a word that rhymes.',sort:'Read the ending. Choose the matching cargo dock.',cipher:'Follow the code key. Build the secret word.',pixel:'Paint anything you like. Your art is saved, not graded.'};
 function seeded(seed){let a=seed|0;return()=>{a+=0x6D2B79F5;let t=Math.imul(a^a>>>15,1|a);t^=t+Math.imul(t^t>>>7,61|t);return ((t^t>>>14)>>>0)/4294967296;};}
 const rotate=(a,n)=>a.slice(n%a.length).concat(a.slice(0,n%a.length));
@@ -63,7 +63,7 @@ export function question(game,level,n){
  return q;
 }
 // ctx: {literacy} from the server (read-only Letter Quest levels for Letter Slalom). Saved `play` fields from the
-// removed wind-down are ignored.
+// removed wind-down (2026-09-27) are ignored.
 export function act(p,input,ctx={}){
  if(!input||input.revision!==p.revision)throw Error('Your game changed in another tab. Refresh to continue.');
  const s=p.session;let result={kind:input.kind};
@@ -77,7 +77,7 @@ export function act(p,input,ctx={}){
   p.session={game:input.game,focus:input.focus||'words',mode:input.mode||'practice',deck:input.deck||'words',run:p.serial,round:0,level,score:0,correct:0,assisted:0,phase:'question',help:false,misses:0,draft:[],results:[],started:Date.now()};
   if(input.game==='pixel'){p.session.phase='art';}
   else if(input.game==='slalom'){
-   const lit=ctx.literacy||literacyFrom(null,DEFAULT_TRACK[p.id]||'mixed'),s2=p.session,seed=p.serial*31+(p.id==='beginner'?7:p.id==='explorer'?3:1);
+   const lit=ctx.literacy||literacyFrom(null,DEFAULT_TRACK[p.id]||'mixed'),s2=p.session,seed=p.serial*31+(String(p.id).split('_')[0]==='beginner'?7:String(p.id).split('_')[0]==='explorer'?3:1);
    // letters or words: the start screen's choice is remembered in the save (never for a letters-only player)
    if(input.track!==undefined){if(!['letters','words'].includes(input.track))throw Error('Choose letters or words');if(lit.track!=='letters')p.slalom={...p.slalom,track:input.track};}
    const choice=slalomChoice(p.id,p.slalom,lit.track),level={...lit,track:choice.track};let opts={seed};
@@ -159,7 +159,7 @@ function setup(p){
  if(s.game==='builder'){s.q=builderQuestion(p,WORDS);s.level=s.q.level;}
  else if(['orbit','flashcards'].includes(s.game)){s.q=arcadeQuestion(p,s.game,WORDS,s.deck||'words');s.level=s.q.level;}
  else{
-  const level=s.game==='asteroids'&&s.focus==='words'?1:s.level,n=(s.run-1)*8+s.round+(p.id==='beginner'?3:0);
+  const level=s.game==='asteroids'&&s.focus==='words'?1:s.level,n=(s.run-1)*8+s.round+(String(p.id).split('_')[0]==='beginner'?3:0);
   s.q=question(s.game,level,n);
   if(['asteroids','rhyme','sort'].includes(s.game)){
    const candidates=Array.from({length:144},(_,i)=>question(s.game,level,n+i));

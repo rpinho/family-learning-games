@@ -1,0 +1,20 @@
+[
+  {
+    "file": "hub/public/chess/CHESS-JS-LICENSE.txt",
+    "rule": "email",
+    "sha256": "1bc97e77fbc44b263e74ac7347a25abdc8a8fb11cccd2ed4307a71d499579d4e",
+    "reason": "Required upstream chess.js copyright attribution; public maintainer contact, not household data."
+  },
+  {
+    "file": "hub/public/chess/rules.mjs",
+    "rule": "email",
+    "sha256": "c4f90d5db627b5b231d2f33ff24c6b7b7395618820f25db2f42ff562ebaef8d3",
+    "reason": "Required upstream chess.js copyright attribution; public maintainer contact, not household data."
+  },
+  {
+    "file": "scripts/PUBLIC-PRIVACY.md",
+    "rule": "IP address",
+    "sha256": "2a3a70368b0a706a16d0eb3204f85a2cde5870da63d3aed8f4f802aa6554bb84",
+    "reason": "Pinned OpenCV package version is a four-component release number, not a host IP."
+  }
+]

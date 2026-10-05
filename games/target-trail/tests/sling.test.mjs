@@ -24,7 +24,6 @@ test('Aiming is one direction, forgiving and bounded',()=>{
  assert.ok(slingFeel('letters').radius>slingFeel('words').radius&&slingFeel('letters').magnet&&!slingFeel('words').magnet);
 });
 test('A reasonable pull toward the right target hits at least 90% of the time',()=>{
- // Angle wobble up to +-12 degrees (Beginner) / +-6 (Explorer) and pulls from 25 to 150 px, as a child's finger would.
  for(const [track,mode,wobble] of [['letters','letters',12],['letters','numbers',12],['words','spelling',6],['words','math',6]]){
   let hits=0,n=0;const r=seeded(42);
   for(let seed=1;seed<=40;seed++){const round={seed:seed*131,mode,stage:1,track,letters:[...'FRANCISOETL']};

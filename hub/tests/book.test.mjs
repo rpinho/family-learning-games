@@ -4,10 +4,19 @@ import {spawn} from 'node:child_process';
 import {mkdtemp,mkdir,writeFile,readFile,readdir} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {localDate,noteTarget,cleanNote,shouldOpen,AUTO_OPENS} from '../book-service.mjs';
-import {lastPlace,rememberPlace} from '../public/book.mjs';
+import {localDate,noteTarget,cleanNote,shouldOpen,AUTO_OPENS,mergeArtLibrary} from '../book-service.mjs';
+import {lastPlace,rememberPlace,swipeBack,PLAY_TARGETS,saysGoal,standInDepth,standInSize,STORY_GROUND} from '../public/book.mjs';
+import {repeatOf,cries,REPEAT_MS} from '../public/repeats.mjs';
+import {readLibrary} from '../../book/generate.mjs';
+import {bookPaths} from '../../book/paths.mjs';
 
 const today=localDate(Date.now());
+test('Private release art patches preserve every other library entry and leave the source untouched',()=>{
+ const base={backgrounds:{room:{file:'old.webp'},yard:{file:'yard.webp'}},actors:{friend:{poses:{idle:{}}}},props:{ball:{}}};
+ const patch={backgrounds:{room:{file:'fixed.webp'}}};const out=mergeArtLibrary(base,patch);
+ assert.equal(out.backgrounds.room.file,'fixed.webp');assert.equal(base.backgrounds.room.file,'old.webp');
+ assert.deepEqual(out.backgrounds.yard,base.backgrounds.yard);assert.deepEqual(out.actors,base.actors);assert.deepEqual(out.props,base.props);
+});
 const line=(text,clip)=>({who:'narrator',text,voice:'af_heart',speed:0.95,...(clip?{clip}:{})});
 const scene={bg:'meadow',actors:[{id:'hero',pose:'idle'}],props:[],fx:'none'};
 const chapter=(player,date=today)=>({schema:'family-book-chapter-2',player,name:'Beginner',date,number:1,title:'A Test Day',level:'early',cover:{title:'A Test Day',line:line("Beginner's Book. Chapter 1. A Test Day."),scene},
@@ -27,6 +36,26 @@ async function hub(){
 }
 const post=(base,path,body)=>fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
 
+test('release layout metadata reaches both the library API and existing chapters without a file write',async()=>{
+ const {base,child,book}=await hub();
+ try{
+  const file=join(book,'beginner',today+'.json');
+  for(const bg of ['meadow','castle']){
+   const saved=chapter('beginner');saved.pages[0].scene={...scene,bg};
+   await writeFile(file,JSON.stringify(saved));const before=await readFile(file);
+   const expected=readLibrary(bookPaths({FAMILY_DEPLOY_ROOT:'/nonexistent'})).backgrounds[bg];
+   const library=await(await fetch(base+'/api/book/library')).json();
+   const served=(await(await fetch(base+'/api/book?player=beginner')).json()).chapter;
+   assert.equal(library.backgrounds[bg].groundStart,expected.groundStart);
+   assert.equal(served.art.backgrounds[bg].groundStart,expected.groundStart);
+   assert.equal(served.art.backgrounds[bg].url,'/book-art/'+expected.file);
+   assert.deepEqual(library.backgrounds[bg].standBand,expected.standBand);
+   assert.deepEqual(served.art.backgrounds[bg].keepOut||[],expected.keepOut||[]);
+   assert.deepEqual(await readFile(file),before);
+  }
+ }finally{child.kill();}
+});
+
 test('The hub carries an identical copy of the shared word-break module',async()=>{
  assert.equal(await readFile(new URL('../public/word-break.mjs',import.meta.url),'utf8'),await readFile(new URL('../../games/letter-quest/public/word-break.mjs',import.meta.url),'utf8'));
 });
@@ -45,6 +74,9 @@ test('Today’s chapter opens by itself until finished; keys and words he earns 
   b=await(await fetch(base+'/api/book?player=beginner')).json();
   assert.equal(b.open,false,'after 3 unfinished opens the book waits for tomorrow');assert.equal(b.progress.opens,AUTO_OPENS);
   await post(base,'/api/book?player=beginner',{type:'result',date:today,page:1,result:{kind:'stones',misses:1,ms:5000,earned:{key:'B'}}});
+  const logName=(await readdir(join(data,'logs'))).find(n=>n.endsWith('.jsonl'));
+  const firstLog=(await readFile(join(data,'logs',logName),'utf8')).trim().split('\n').map(JSON.parse).find(r=>r.type==='book'&&r.action==='result');
+  assert.equal(firstLog.misses,1);assert.equal(firstLog.hints,0,'first-answer support is retained in the append-only log');
   await post(base,'/api/book?player=beginner',{type:'result',date:today,page:2,result:{kind:'magic',misses:0,ms:900,earned:{word:'Jump'}}});
   await post(base,'/api/book?player=beginner',{type:'result',date:today,page:2,result:{kind:'magic',earned:{key:'bad key',word:'<script>'}}});
   const done=await(await post(base,'/api/book?player=beginner',{type:'finish',date:today,page:3})).json();
@@ -63,7 +95,7 @@ test('Today’s chapter opens by itself until finished; keys and words he earns 
   for(const bad of ['/book-art/..%2Fbeginner%2Ftoday.json','/book-art/bg/../../x.webp','/book-art/secret/x.webp','/book-art/bg/nothing.webp'])assert.equal((await fetch(base+bad)).status,404,bad);
   for(const f of ['/book.mjs','/book.css','/book-scene.mjs','/word-break.mjs'])assert.equal((await fetch(base+f)).status,200,f);
   for(const f of ['/bedtime.html','/bedtime.mjs','/api/book/bedtime'])assert.notEqual((await fetch(base+f)).status,200,`${f} is gone`);
-  const html=await(await fetch(base+'/')).text();assert.match(html,/id="book-note"/);assert.match(html,/book\.css/);assert.match(html,/id="book-watch"/);assert.doesNotMatch(html,/bedtime/);
+  const html=await(await fetch(base+'/')).text();assert.match(html,/id="daynotes-link"/);assert.match(html,/book\.css/);assert.match(html,/id="book-watch"/);assert.doesNotMatch(html,/bedtime/);
  }finally{child.kill();}
 });
 test('Grown-ups can watch a child’s newest chapter (tonight: tomorrow’s), read-only',async()=>{
@@ -90,8 +122,8 @@ test('Grown-ups’ "Today" notes: saved, attributed by first name, removable',as
  }finally{child.kill();}
 });
 test('Pure helpers: note target, clean notes, auto-open rule, remembered place',()=>{
- const kids=[{id:'a',name:'Ana'},{id:'b',name:'Ben'}];
- assert.equal(noteTarget('Ana won',kids),'a');assert.equal(noteTarget('Ana and Ben swam',kids),null);assert.equal(noteTarget('Banana bread',kids),null);
+ const kids=[{id:'a',name:'Ada'},{id:'b',name:'Robin'}];
+ assert.equal(noteTarget('Ada won',kids),'a');assert.equal(noteTarget('Ada and Robin swam',kids),null);assert.equal(noteTarget('Banana bread',kids),null);
  assert.equal(cleanNote('x'.repeat(300)).length,160);
  assert.equal(shouldOpen(null,null),false);assert.equal(shouldOpen({},{finished:true}),false);assert.equal(shouldOpen({},{opens:2}),true);assert.equal(shouldOpen({},{opens:3}),false);
  const store=new Map(),s={getItem:k=>store.get(k)??null,setItem:(k,v)=>store.set(k,v)};
@@ -109,4 +141,55 @@ test('The book comes first for children; grown-ups get a preview; every page tur
  assert.match(go,/speakAll\(p\.say,my\)/,'a story page speaks its narration as soon as it is shown');assert.match(go,/runBeat\(p,my\)/);
  assert.match(book.slice(book.indexOf('async function runBeat'),book.indexOf('switch(b.kind)')),/speakAll\(p\.say,my\)/,'a beat page speaks too');
  assert.match(book,/AUTO_ADVANCE_MS/);assert.match(book,/prefers|TAP_GUARD_MS/);
+});
+
+test('Tracing never turns the page back: a swipe back only starts on the picture, never on the trace layer or a play thing',async()=>{
+ assert.equal(swipeBack({dx:180,dy:4}),true,'a finger drawn across the picture still turns back');
+ assert.equal(swipeBack({dx:180,dy:4,onPlay:true}),false,'a stroke that began on the trace layer never does');
+ assert.equal(swipeBack({dx:70,dy:200}),false,'a mostly-down stroke is not a swipe');assert.equal(swipeBack({dx:-200,dy:0}),false);assert.equal(swipeBack({dx:40,dy:0}),false);
+ for(const sel of ['canvas','.bk-trace','.bk-ball','button'])assert.ok(PLAY_TARGETS.split(',').includes(sel),sel);
+ const book=await readFile(new URL('../public/book.mjs',import.meta.url),'utf8');
+ const nav=book.slice(book.indexOf('// ---- navigation'),book.indexOf("root.querySelector('.bk-exit')"));
+ assert.match(nav,/closest\?\.\(PLAY_TARGETS\)/,'where the finger went DOWN decides (an accepted trace removes its layer before the lift)');
+ assert.match(nav,/swipeBack\(/);assert.doesNotMatch(nav,/dx>60&&page>0/,'no raw sideways check left');
+ assert.match(book,/cv\.className='bk-trace'/,'the trace layer keeps the class the guard knows');
+});
+
+test('"Goal!" is said once: the Book stays quiet when the kick page\'s own next line says it',async()=>{
+ assert.equal(saysGoal([{text:'Goal! Off we go!'}]),true);assert.equal(saysGoal([{text:'You scored! Off we go!'}]),false);assert.equal(saysGoal([{text:'The goalkeeper waves.'}]),false);assert.equal(saysGoal(undefined),false);
+ const book=await readFile(new URL('../public/book.mjs',import.meta.url),'utf8');
+ const shoot=book.slice(book.indexOf('async function shoot('),book.indexOf('// where the ball waits to be thrown'));
+ assert.match(shoot,/if\(!quiet\)await speak\(ch\.ui\.goal\)/);
+ assert.match(book,/shoot\(el,p,my,ball,aim,\{quiet:saysGoal\(a\.after\)\}\)/,'a kick page: its after lines');
+ assert.match(book,/shoot\(el,p,my,bl,aim,\{quiet:saysGoal\(\[b\.done\]\)\}\)/,'a kick-letter page: its done line');
+});
+test('Repeats: never the same line twice in a row, never a crying friend twice in a row; a replay always speaks',async()=>{
+ const pip=t=>({who:'pip-hat',text:t,voice:'local:pip-1-reactions-v1-x',clip:t+'.wav'}),now=1e6,at=now-1000;
+ assert.equal(cries(pip('Pip!')),true);assert.equal(cries({voice:'af_bella@relaxed'}),false);assert.equal(cries({voice:'local:birdie-book-v1-x'}),false);assert.equal(cries({voice:'x',cry:true}),true);
+ assert.equal(repeatOf(pip('Can I? Please?'),{...pip('Bird starts with P!'),at},now),'same-friend','the begging after the claim');
+ assert.equal(repeatOf({who:'narrator',text:'Goal!',clip:'g.wav'},{who:'narrator',text:'Goal!',clip:'g.wav',at},now),'same-line');
+ assert.equal(repeatOf({who:'narrator',text:'Yes!',clip:'y.wav'},{who:'narrator',text:'Yes!',clip:'y.wav',at:now-REPEAT_MS-1},now),null,'long after, a line may come back');
+ assert.equal(repeatOf({who:'dad',text:'Kick it!',voice:'local:rook-dad'},{who:'dad',text:'Your turn!',voice:'local:rook-dad',at},now),null,'Dad may say two different lines');
+ assert.equal(repeatOf(pip('Oops!'),{who:'narrator',text:'What do you say?',at},now),null);
+ const book=await readFile(new URL('../public/book.mjs',import.meta.url),'utf8'),hunt=await readFile(new URL('../public/hunt.mjs',import.meta.url),'utf8');
+ assert.match(book,/const rep=!again&&repeatOf\(line,prevLine\)/,'the Book checks every line except an explicit replay');
+ assert.match(hunt,/if\(repeatOf\(line,prev\)\)return res\(\)/,'the hunts check every line');
+});
+test('Every module the Book and the hunts import is served (a new file must join the server\'s list)',async()=>{
+ const server=await readFile(new URL('../server.mjs',import.meta.url),'utf8');const list=JSON.parse(server.match(/const files=(\[[^\]]*\])/)[1].replace(/'/g,'"'));
+ for(const f of ['book.mjs','hunt.mjs','book-scene.mjs']){const src=await readFile(new URL('../public/'+f,import.meta.url),'utf8');
+  for(const [,m] of src.matchAll(/from '\.\/([^']+)'/g))assert.ok(list.includes(m),`${f} imports ${m}, which the server does not serve`);}
+});
+test('A story page\'s stand-in goal stands up the field: higher and smaller in perspective, keeper scaled the same',()=>{
+ const {foot,scale}=standInDepth();assert.ok(foot<STORY_GROUND-0.2,'well above the friends\' ground line');assert.ok(foot>0.5,'still on the floor, below the back wall');
+ assert.ok(scale>0.4&&scale<0.7,'smaller with depth');
+ const old=Math.max(201*0.85,240*0.68)/0.9,{h,w}=standInSize(201,1280,800);assert.ok(h<old*0.75,`smaller than the old near goal (${Math.round(h)} vs ${Math.round(old)})`);assert.ok(w<0.34*1280,'narrower than the old least width');
+ assert.ok(Math.abs(h*0.9-201*scale)<1,'the keeper fills it at his own height times the same depth');
+ assert.ok(standInSize(10,1280,800).h>=800*0.11,'never an unreadable goal');
+});
+test('The stand-in goal uses that perspective, and its keeper stands in front of the net at the same depth',async()=>{
+ const book=await readFile(new URL('../public/book.mjs',import.meta.url),'utf8');const gr=book.slice(book.indexOf('function goalRect('),book.indexOf("// ---- a game's things in the picture"));
+ assert.match(gr,/standInSize\(keeperHeight\(el,p\),W,H,\{scale:far\.scale\}\)/);assert.match(gr,/foot=Math\.min\(far\.foot,/,'up the field, never nearer than behind the ball');
+ assert.match(book,/own\*keeperDepth\(p,!g\.drawn\)/,'the keeper shrinks by the same depth');
+ assert.match(book.slice(book.indexOf('function goalFrame('),book.indexOf('function diveBox(')),/insertAdjacentHTML\('afterbegin'/,'the net stays behind the friends (a39fd89)');
 });

@@ -48,5 +48,5 @@
 /* The present is above the family, with every face and the gift visible together. */
 .small-world .map.gift-reveal{top:134px;translate:-50% 0;width:min(640px,88vw);padding:12px 16px}.gift-reveal h2{font-size:22px;margin:0 35px 8px}.gift-reveal .flower-gift{font-size:66px;padding:8px}.gift-reveal p{font-size:16px;line-height:1.2;margin:6px 0}
 .actor::before{content:"";position:absolute;bottom:-1%;left:8%;width:84%;height:4%;border-radius:50%;background:#352a24;opacity:.2;filter:blur(6px)}
-.actor:not(.hero)>img{transform:scaleX(-1)}
+.actor:not(.hero)>img{transform:none}
 .actor img{filter:none}

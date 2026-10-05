@@ -6,6 +6,7 @@ test('Shared word-break copy matches its siblings',async()=>{
  const hash=b=>createHash('sha256').update(b).digest('hex'),mine=hash(await readFile(new URL('../lib/word-break.mjs',import.meta.url)));
  for(const path of ['../../target-trail/dist/word-break.mjs','../../three-in-a-row/dist/word-break.mjs','../../maze-garden/public/word-break.mjs','../../word-arcade/lib/word-break.mjs','../../letter-quest/public/word-break.mjs']){let other;try{other=await readFile(new URL(path,import.meta.url));}catch{continue;}assert.equal(hash(other),mine,path);}
  const lines=new Set(wordBreakLines());for(const track of ['letters','words'])for(let i=0;i<200;i++){const q=wordBreakItem(literacyFrom({completed:40},track));assert.ok(lines.has(q.spoken),q.spoken);}
+ assert.match(await readFile(new URL('../scripts/build-voice.py',import.meta.url),'utf8'),/wordBreakLines\(\)/,'word-break prompts are voiced');
 });
 test('Round breaks: after question 3 and before the finish screen, never on a wind-down or a reload',()=>{
  const s=(round,finished=false,windDown=false,began=1)=>roundSnapshot('beginner',{game:'mix',began,round,finished,windDown});

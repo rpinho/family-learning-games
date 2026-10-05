@@ -1,3 +1,4 @@
+import {SHORTCUTS} from './home-shortcuts.mjs';
 // Activity destinations are separate from storage ownership. Existing saves stay
 // with their original backend even when a game moves to a better home.
 export const CATALOG = [
@@ -49,6 +50,18 @@ export const CATALOG = [
     description: "Hunt for letters and words at home!",
     color: "#ffe7a8",
     icon: "/hunt-icon.svg",
+  },
+  {
+    // Word Arcade's ski run, straight in (skis or snowboard on its start screen). `group` marks it for a future
+    // "Sports / Snow" group card (not built yet: today every item is its own top-level card).
+    id: "letter-slalom",
+    name: "Letter Slalom",
+    description: "Ski down the mountain through the letter you hear.",
+    color: "#d6ecff",
+    icon: "/slalom-logo.svg",
+    game: "word-arcade",
+    query: "play=slalom",
+    group: "snow",
   },
   {
     id: "three-in-a-row",
@@ -143,7 +156,7 @@ export const FAMILIES = {
 };
 export function destination(hash) {
   const [family, activity] = String(hash).replace(/^#/, "").split("/");
-  const item = CATALOG.find((g) => g.id === family);
+  const item = [...CATALOG,...SHORTCUTS].find((g) => g.id === family);
   if (!item) return { type: "home" };
   if (family === "chess") return { type: "chess", item };
   if (family === "hunt") return { type: "hunt", item };

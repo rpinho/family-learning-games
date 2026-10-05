@@ -1,10 +1,10 @@
-// Calm wind-down (from Sage Teacher's session timers, without a timer on
+// Calm wind-down (from guided practice session timers, without a timer on
 // screen). Play time is tracked from saved actions. After WIND_DOWN_MS of
 // continuous play, the round that is finishing becomes the last one for now:
 // the finish screen says "All done for today" and new rounds wait REST_MS.
 // A pause of BREAK_MS starts a fresh stretch. Nothing is ever cut off mid-round.
 // Longest continuous stretches in the Sep 14-26 logs were ~12 minutes, so 20
-// minutes (Sage's middle option) only catches unusually long runs.
+// minutes (the calm theme middle option) only catches unusually long runs.
 export const BREAK_MS=10*60*1000;
 export const WIND_DOWN_MS=20*60*1000;
 export const REST_MS=60*60*1000;

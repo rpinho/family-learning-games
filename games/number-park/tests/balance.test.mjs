@@ -58,15 +58,15 @@ test('beam is level and weights/solutions hidden before answer, even with Help; 
 });
 test('balance uses independent adaptation, manual levels, rushed-tap protection and preserves existing saves',()=>{
  const p=freshProfile('explorer');p.xp=97;p.drawing=[[[1,1],[2,2]]];p.completed={multiply:7};const prior=structuredClone(p);
- act(p,{kind:'start',game:'balance'},10000);assert.equal(p.session.question.level,2);
- act(p,{kind:'challenge-level',delta:1},10001);assert.equal(p.session.question.level,3);
- act(p,{kind:'challenge-level',delta:1},10002);assert.equal(p.session.question.level,4);act(p,{kind:'challenge-level',delta:1},10003);assert.equal(p.session.question.level,5);
+ act(p,{kind:'start',game:'balance'},10000);assert.equal(p.session.question.level,3);
+ act(p,{kind:'challenge-level',delta:1},10001);assert.equal(p.session.question.level,4);
+ act(p,{kind:'challenge-level',delta:1},10002);assert.equal(p.session.question.level,5);
  for(let i=0;i<2;i++){const q=p.session.question;assert.throws(()=>act(p,{kind:'answer',questionId:q.id,answer:3},10003));act(p,{kind:'answer',questionId:q.id,answer:q.options.find(n=>n!==q.answer)},10004);act(p,{kind:'next'},10005);}
- assert.equal(challengeLevel(p,'balance'),5);assert.equal(challengeLevel(p,'multiply'),2);
+ assert.equal(challengeLevel(p,'balance'),5);assert.equal(challengeLevel(p,'multiply'),4);
  assert.equal(p.xp,prior.xp);assert.deepEqual(p.drawing,prior.drawing);assert.deepEqual(p.completed,prior.completed);
  assert.deepEqual(prepareProfile(structuredClone(p)),p);
- const a=freshProfile('explorer');for(let i=0;i<6;i++)a.history.push({ok:true,helped:false,question:{track:EXPLORER_TRACK,skill:'balance'}});assert.equal(challengeLevel(a,'balance'),3);
- for(let i=0;i<2;i++)a.history.push({ok:false,helped:false,durationMs:7000,question:{track:EXPLORER_TRACK,skill:'balance'}});assert.equal(challengeLevel(a,'balance'),2);
+ const a=freshProfile('explorer');for(let i=0;i<6;i++)a.history.push({ok:true,helped:false,question:{track:EXPLORER_TRACK,skill:'balance'}});assert.equal(challengeLevel(a,'balance'),4);
+ for(let i=0;i<2;i++)a.history.push({ok:false,helped:false,durationMs:7000,question:{track:EXPLORER_TRACK,skill:'balance'}});assert.equal(challengeLevel(a,'balance'),3);
 });
 test('all prompts and feedback use the finite voice inventory and content remains voiced with effects off',()=>{
  const clips=new Set([...balanceVoiceLines(),...Array.from({length:1001},(_,i)=>String(i))]);
@@ -86,7 +86,7 @@ test('a complete six-question round earns only existing XP and keeps all prior p
  }
  assert.equal(p.session.finished,true);assert.equal(p.session.correct,6);assert.equal(p.session.independent,6);
  assert.equal(p.xp,107);assert.equal(p.lessons,3);assert.deepEqual(p.completed,{multiply:3,balance:1});
- assert.deepEqual(p.guided,{'2':4});assert.deepEqual(p.drawing,[[[1,1],[2,2]]]);assert.equal(challengeLevel(p,'balance'),3);
+ assert.deepEqual(p.guided,{'2':4});assert.deepEqual(p.drawing,[[[1,1],[2,2]]]);assert.equal(challengeLevel(p,'balance'),4);
  assert.equal(p.session.recap.lines[0],'You solved 6 balance puzzles.');
 });
 
@@ -95,7 +95,7 @@ test('animal feedback names the requested comparison and teaches its own pan dir
   const cat=ANIMALS.find(a=>a.name==='cat'),fox=ANIMALS.find(a=>a.name==='fox');
   const q={mode:'animals',left:swapped?fox:cat,right:swapped?cat:fox,direction,answer:direction==='lighter'?Number(swapped):Number(!swapped)};
   for(const ok of [false,true]){
-   assert.deepEqual(balanceFeedback(q,{ok,answer:q.answer}),[direction==='lighter'?'A cat is lighter.':'A fox is heavier.',direction==='lighter'?'The lighter side goes up.':'The heavier side goes down.']);
+   assert.deepEqual(balanceFeedback(q,{ok,answer:q.answer}),[direction==='lighter'?'A cat is lighter. The lighter pan goes up.':'A fox is heavier. The heavier pan goes down.']);
    assert.match(balanceExplanation(q,{ok}),direction==='lighter'?/cat is lighter/:/fox is heavier/);
   }
   assert.equal(balanceTilt(q,null),0,'the question still conceals the tilt before saving an answer');

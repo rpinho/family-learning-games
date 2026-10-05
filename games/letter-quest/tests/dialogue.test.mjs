@@ -29,6 +29,6 @@ test('The voice inventory includes every reaction and all family name prompts',(
  assert.ok(lines.has(taskPrompt({type:'sequence'})));
  for(const letter of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')assert.ok(lines.has(`The letter ${letter}.`));
  for(const line of Object.values(DIALOGUE).flat())assert.ok(lines.has(line));
- for(const name of ['Explorer','Beginner','Admin','Helper','Rook'])assert.ok(lines.has(`Build ${name}. Start at the left. Tap the letters in order.`));
+ for(const name of ['Explorer','Beginner','Alex','Ada','Rook'])assert.ok(lines.has(`Build ${name}. Start at the left. Tap the letters in order.`));
  assert.ok(lines.has('Find little Z.'));assert.ok(lines.has('Trace 9. Start at the gold dot. Follow the arrow.'));
 });

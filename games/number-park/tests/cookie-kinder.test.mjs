@@ -11,9 +11,9 @@ const deal=(p,now)=>{const q=p.session.question;for(let id=0;id<q.total;id++){co
 const clean=(p,now)=>{deal(p,now);act(p,{kind:'cookie-check',questionId:p.session.question.id},now);};
 const next=p=>act(p,{kind:'next'});
 
-test('Beginner keeps every small-number game and gains Cookie sharing; Explorer keeps his own list',()=>{
+test('Beginner keeps every small-number game and gains Snack Friend; Explorer keeps his own list',()=>{
  const d=gamesFor(freshProfile('beginner'));
- assert.deepEqual(d.slice(0,GAMES.length),GAMES);assert.equal(d.at(-1).id,'cookies');assert.equal(d.at(-1).title,'Cookie sharing');
+ assert.deepEqual(d.slice(0,GAMES.length),GAMES);assert.equal(d.find(g=>g.id==='cookies').title,'Snack Friend');assert.ok(d.some(g=>g.id==='balance-k'));
  assert.equal(gamesFor(freshProfile('explorer')).filter(g=>g.id==='cookies').length,1);
  assert.equal(gamesFor(freshProfile('explorer')).find(g=>g.id==='cookies').title,'Cookie division');
 });
@@ -30,7 +30,8 @@ test('Every kindergarten round is fair sharing of 10 or fewer cookies onto 2 or 
  }
  for(const l of [KINDER_TIP,KINDER_HINT,KINDER_UNEVEN])assert.ok(lines.has(l));
  assert.equal(kinderPrompt(4,2),'Share 4 cookies with 2 friends.');
-
+ // The voice build includes these lines.
+ assert.match(readFileSync(new URL('../scripts/build-voice.py',import.meta.url),'utf8'),/kinderVoiceLines/);
 });
 
 test('A fair share wins at once: no question step, no number choices, no symbols; uneven plates are pointed out',()=>{
@@ -96,5 +97,5 @@ test('Existing Beginner progress is preserved and the parent summary names the k
  assert.equal(p.completed.pattern,22);assert.equal(p.lessons,30);assert.equal(p.history[0].game,'subtract');assert.equal(p.xp,340);
  const s=daySummary(p,'2026-10-01','America/New_York');
  assert.equal(s.levels.kinderCookies.level,KINDER_START);assert.equal(s.levels.cookies,undefined);
- assert.equal(s.games[0].title,'Cookie sharing');
+ assert.equal(s.games[0].title,'Snack Friend');
 });

@@ -1,0 +1,2 @@
+# Preserve upstream vendored modules byte-for-byte.
+hub/public/vendor/** -whitespace

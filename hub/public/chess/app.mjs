@@ -3,6 +3,7 @@ import {requestChess} from './request.mjs';
 import {FOUNDATION_UNITS,FOUNDATION_VOICE} from './foundations-curriculum.mjs';
 import {drawTeachingOverlay,forkTitleIcon,demonstrationMoves} from './teaching.mjs';
 import {STEP_UNITS,STEP_VOICE} from './steps-curriculum.mjs';
+import { createTableFeedback } from './feedback.mjs';
 import { createCoachAudio } from './audio.mjs';
 import { UNITS, LESSONS, lessonFor, NAMES, VOICE, unitsForBand } from "./curriculum.mjs";
 import { coach, piece } from "./art.mjs";
@@ -11,6 +12,7 @@ import { Chess } from "./rules.mjs";
 import { narrationFor, createNarrationGate } from "./narration.mjs";
 import { pathProgress, shortPracticeLesson } from "./path.mjs";
 import { MATCH_VOICE } from "./match-voice.mjs";
+import { createBanterPicker, captureReaction } from "./banter.mjs";
 import { wordBreak, fetchWordLevel, onceThisSession, DEFAULT_TRACK } from "../word-break.mjs";
 const esc = (s) =>
   String(s ?? "").replace(
@@ -41,16 +43,19 @@ export function mountChess(root, { player, name, event = () => {} }) {
     completedNotice = "",
     matchReplay = null,
     recapRunning = null,
+    performanceLine = "",
     receivedAt = Date.now();
   const priorScrollRestoration = history.scrollRestoration;
   history.scrollRestoration = "manual";
   const endpoint = "/api/chess?player=" + encodeURIComponent(player);
+  const tableSound=createTableFeedback();
   const voice=createCoachAudio({event,talking:on=>root.querySelector('.academy-coach')?.classList.toggle('talking',on)});
   let entryCuePending=true;
   const unlockVoice=(event)=>{
     voice.unlock();
     if(!entryCuePending||!profile)return;
     entryCuePending=false;
+    warmReactions();
     if(view==='lesson'&&!event.target.closest('[data-do]'))queueMicrotask(()=>say(profile.session?.phase==='intro'?FOUNDATION_VOICE.ready:currentUnit().cue,{kind:'task'}));
     const g=profile.match?.game;
     if(view==='match'&&g&&!g.result&&g.turns>0&&onceThisSession('chess-match-resume:'+g.id))queueMicrotask(()=>playLine(MATCH_VOICE.resume));
@@ -65,6 +70,12 @@ export function mountChess(root, { player, name, event = () => {} }) {
       .catch(() => {}),
     speechGeneration = 0;
   const allowNarration = createNarrationGate();
+  const pickBanter = createBanterPicker();
+  let captureReacted = false, lastReactionSpeech = -Infinity;
+  const captureKinds = new Set(), captureTurns = {};
+  // Warm optional capture speech after entry's first gesture, not while loading the board.
+  const warmReactions=()=>void voiceReady.then(()=>voice.warm(['youQueen','meQueen','youCapture','meCapture','trade','youCheck','meCheck','pounce','good']
+    .flatMap(kind=>MATCH_VOICE[kind]).map(text=>voiceManifest[text])));
   async function say(text, { force = false, kind = "automatic" } = {}) {
     if ((!profile?.settings.sound && !force) || !text) return;
     if (!allowNarration(text, { force, kind, scope: profile.session?.id || "practice" })) return;
@@ -78,18 +89,24 @@ export function mountChess(root, { player, name, event = () => {} }) {
       return;
     }
     voice.play(source);
+    performanceLine = text;
   }
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-  async function playLine(text, { force = false } = {}) {
+  async function playLine(text, { force = false, automatic = false, priority = false } = {}) {
+    const requestedAt=Date.now();
     if ((!profile?.settings.sound && !force) || !text) return false;
+    if(automatic&&!priority&&(Date.now()-lastReactionSpeech<5000||voice.isPlaying()))return false;
+    if(automatic)lastReactionSpeech=Date.now();
     utterance();
     const generation = speechGeneration;
     if (!manifestReady) await voiceReady;
     if (!alive || generation !== speechGeneration) return false;
+    if(automatic&&Date.now()-requestedAt>1200)return false;
     const source = voiceManifest[text];
     if (!source) { event("chess_voice_unavailable", "missing original clip"); return false; }
-    voice.play(source);
+    voice.play(source,{maxStartDelayMs:automatic?1200:0});
+    performanceLine = text;
     return true;
   }
   async function waitVoice(min = 600) {
@@ -102,21 +119,9 @@ export function mountChess(root, { player, name, event = () => {} }) {
     else await sleep(900);
   }
   function clickSound(win = false) {
-    if (!profile?.settings.sound) return;
-    try {
-      const a = new (window.AudioContext || window.webkitAudioContext)();
-      const o = a.createOscillator(),
-        g = a.createGain();
-      o.connect(g);
-      g.connect(a.destination);
-      o.frequency.value = win ? 660 : 420;
-      g.gain.setValueAtTime(0.035, a.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + 0.14);
-      o.start();
-      o.stop(a.currentTime + 0.15);
-      o.onended = () => a.close();
-    } catch {}
+    tableSound.play({solved:win,enabled:!!profile?.settings.sound,speaking:voice.isPlaying()});
   }
+
   async function load() {
     try {
       const data = await fetchJSON(endpoint,{},8000);
@@ -166,6 +171,9 @@ export function mountChess(root, { player, name, event = () => {} }) {
     analysisView = false;
     exampleView = false;
     utterance();
+    captureReacted = false;
+    performanceLine = "";
+    captureKinds.clear();
     const body = pending;
     const moving = ["move", "game-move", "match-move"].includes(body.type) && boardDispose;
     let preview = null;
@@ -203,13 +211,18 @@ export function mountChess(root, { player, name, event = () => {} }) {
           view = "path";
         }
         busy = false;
-        reaction =
+        const matchKind = body.type === 'match-move' ? profile.match?.game?.react?.kind : null;
+        reaction = captureReacted && body.type === 'match-move' && !profile.match?.game?.result ? 'idle' :
           data.result?.correct === false
             ? "retry"
+            : body.type === 'match-move' && matchKind
+              ? ['youQueen', 'youWin', 'scholar'].includes(matchKind)
+                ? 'dismay' : ['youCapture', 'youCheck', 'youPromote'].includes(matchKind)
+                  ? 'shock' : ['meCapture', 'pounce', 'trade', 'meCheck', 'meWin', 'mePromote'].includes(matchKind)
+                  ? 'smug' : 'nod'
             : ["move", "game-move", "match-move"].includes(body.type)
               ? (profile.session?.phase === "solved" && body.type === "move") ||
-                (body.type === "game-move" && profile.game?.result) ||
-                (body.type === "match-move" && profile.match?.game?.result?.kind === "win")
+                (body.type === "game-move" && profile.game?.result)
                 ? "celebrate"
                 : "nod"
               : "idle";
@@ -228,6 +241,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
         if (body.type.startsWith("match-")) void afterMatch(body.type, data.result || {});
         const narration = body.type.startsWith("match-") ? null : narrationFor(body.type, profile, currentUnit().cue);
         if (narration && data.result?.advanced !== false) say(narration.text, { kind: narration.kind });
+        else if(!narration){const banter=pickBanter(body.type,profile);if(banter)void playLine(banter,{automatic:true});}
         if(profile.session?.phase==='intro'&&['start','settings'].includes(body.type))say(FOUNDATION_VOICE.ready,{kind:'task'});
         event("chess_action", body.type);
       } catch (e) {
@@ -287,7 +301,8 @@ export function mountChess(root, { player, name, event = () => {} }) {
         hintTo: r ? r.hintTo : g.hint?.to,
         showLegalMoves: true,
         onMove: (from, to, promotion) => send("match-move", { from, to, promotion }),
-        onMotion: (kind) => react(kind),
+        onMotion: (kind) => {if(!captureReacted || !['nod','think','land','capture'].includes(kind))react(kind);},
+        onMoveLanded: matchCaptureLanded,
         onSelect: (text, gaze) => {
           const eyes = root.querySelector(".rook-eyes");
           if (eyes && gaze) eyes.style.transform = `translate(${(gaze.x - .5) * 6}px, ${2 + gaze.y * 3}px)`;
@@ -349,11 +364,26 @@ export function mountChess(root, { player, name, event = () => {} }) {
       "react-think",
       "react-capture",
       "react-select",
+      "react-shock",
+      "react-dismay",
+      "react-smug",
     );
     if (!kind || kind === "idle" || kind === "land") return;
     void puppet.getBoundingClientRect();
     puppet.classList.add("react-" + kind);
     if (kind === "celebrate" && view === "lesson") void boardDispose?.celebrate?.();
+  }
+  function matchCaptureLanded(move,{preview}){
+    const g=profile.match?.game;
+    const r=captureReaction(move,g?.side);
+    if(!r)return;
+    captureReacted=true;reaction=r.mood;react(r.mood);
+    event('chess_capture_reaction',JSON.stringify({kind:r.kind,preview,move:move.from+move.to}));
+    if(profile.settings.coachChatter!=='lively')return;
+    captureKinds.add(r.kind);
+    const lines=MATCH_VOICE[r.kind],i=captureTurns[r.kind]??0;
+    captureTurns[r.kind]=i+1;
+    void playLine(lines[i%lines.length],{automatic:true,priority:r.priority});
   }
   const uiIcon = (paths) =>
     `<svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
@@ -383,6 +413,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
     );
   }
   function spokenText() {
+    if(performanceLine)return performanceLine;
     if (view === "match") {
       const g = profile.match?.game;
       return matchReplay?.caption || g?.hint?.voice || g?.react?.line || MATCH_VOICE.howTo;
@@ -536,7 +567,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
   function pathView() {
     const progress = pathProgress(profile);
     const shortPractice = shortPracticeLesson(profile);
-    return `<div class="academy-layout continuous-layout ${['steps','foundations'].includes(profile.settings.band)?'small-steps-path':''}"><section class="academy-path" aria-label="Chess learning path">${profile.session && profile.session.phase !== "summary" ? `<div class="resume-strip">${btn("Continue ➜", "resume", "primary")}</div>` : progress.some(l=>l.current) ? `<div class="resume-strip">${btn("Continue ➜", "lesson:"+progress.find(l=>l.current).id, "primary")}</div>` : ""}${courseUnits().map((u, ui) => `<section class="path-unit" data-unit="${ui}" aria-label="Unit ${ui + 1}: ${esc(u.name)}" style="--unit-color:${u.color}"><header class="unit-heading"><div><small>UNIT ${ui + 1}</small><h2>${esc(u.name)}</h2></div>${btn(glyph("hear"), "hear-unit:" + ui, "text", `aria-label="Hear unit ${ui + 1}"`)}</header><div class="lesson-path">${['steps','foundations'].includes(profile.settings.band)?'<svg viewBox="0 0 440 330" preserveAspectRatio="none" aria-hidden="true" class="path-track"><path d="M220 50C380 80 375 165 235 174S70 240 148 280"/></svg>':'<svg viewBox="0 0 440 660" preserveAspectRatio="none" aria-hidden="true" class="path-track"><path d="M220 50C380 80 375 165 235 174S70 240 148 280S360 340 270 405S70 460 157 516S285 575 220 620"/></svg>'}${progress.filter(l => l.unit === ui).map((l, i) => `<div class="path-stop stop-${i} ${l.current ? "current" : ""}"><button class="path-node ${l.complete ? "complete" : ""} ${l.current ? "current" : ""} ${l.locked ? "locked" : ""}" data-do="lesson:${l.id}" ${l.locked ? "disabled" : ""} ${l.current ? 'aria-current="step"' : ""} aria-label="${l.locked ? "Locked" : l.complete ? "Review" : "Start"} ${esc(l.name)}"><span>${l.locked ? glyph("lock") : l.complete ? "✓" : l.kind === "checkpoint" ? "♜" : "★"}</span></button><div class="node-label"><strong>${esc(l.name)}</strong>${l.complete ? `<span>${"●".repeat(l.complete.best)}${"○".repeat(Math.max(0,(l.complete.bestTotal||5) - l.complete.best))}</span>` : l.current ? `<span class="next-ready">${completedNotice ? "Unlocked!" : "Start here"}</span>${shortPractice ? btn("Short practice", "lesson:"+shortPractice.id, "short-practice", 'aria-label="Try an unseen short lesson"') : ""}` : ""}</div></div>`).join("")}</div></section>`).join("")}<div class="course-finish">${shortPractice&&!progress.some(l=>l.current) ? btn("Short practice", "lesson:"+shortPractice.id, "short-practice", 'aria-label="Try an unseen short lesson"') : ""}${btn("↻ Review", "review", "primary")}</div></section><aside class="academy-sidebar"><div class="path-rook">${coach()}${btn(glyph("hear"), "hear-unit", "text", 'aria-label="Hear Rook explain this unit"')}</div><details class="practice-level"><summary>Practice settings</summary><label for="chess-band">Challenge</label><select id="chess-band"><option value="foundations" ${profile.settings.band === "foundations" ? "selected" : ""}>First moves</option><option value="steps" ${profile.settings.band === "steps" ? "selected" : ""}>Small steps</option><option value="stretch" ${profile.settings.band === "stretch" ? "selected" : ""}>Stretch</option><option value="guided" ${profile.settings.band === "guided" ? "selected" : ""}>Guided</option></select></details>${btn("↻ Review", "review")}</aside></div>`;
+    return `<div class="academy-layout continuous-layout ${['steps','foundations'].includes(profile.settings.band)?'small-steps-path':''}"><section class="academy-path" aria-label="Chess learning path">${profile.session && profile.session.phase !== "summary" ? `<div class="resume-strip">${btn("Continue ➜", "resume", "primary")}</div>` : progress.some(l=>l.current) ? `<div class="resume-strip">${btn("Continue ➜", "lesson:"+progress.find(l=>l.current).id, "primary")}</div>` : ""}${courseUnits().map((u, ui) => `<section class="path-unit" data-unit="${ui}" aria-label="Unit ${ui + 1}: ${esc(u.name)}" style="--unit-color:${u.color}"><header class="unit-heading"><div><small>UNIT ${ui + 1}</small><h2>${esc(u.name)}</h2></div>${btn(glyph("hear"), "hear-unit:" + ui, "text", `aria-label="Hear unit ${ui + 1}"`)}</header><div class="lesson-path">${['steps','foundations'].includes(profile.settings.band)?'<svg viewBox="0 0 440 330" preserveAspectRatio="none" aria-hidden="true" class="path-track"><path d="M220 50C380 80 375 165 235 174S70 240 148 280"/></svg>':'<svg viewBox="0 0 440 660" preserveAspectRatio="none" aria-hidden="true" class="path-track"><path d="M220 50C380 80 375 165 235 174S70 240 148 280S360 340 270 405S70 460 157 516S285 575 220 620"/></svg>'}${progress.filter(l => l.unit === ui).map((l, i) => `<div class="path-stop stop-${i} ${l.current ? "current" : ""}"><button class="path-node ${l.complete ? "complete" : ""} ${l.current ? "current" : ""} ${l.locked ? "locked" : ""}" data-do="lesson:${l.id}" ${l.locked ? "disabled" : ""} ${l.current ? 'aria-current="step"' : ""} aria-label="${l.locked ? "Locked" : l.complete ? "Review" : "Start"} ${esc(l.name)}"><span>${l.locked ? glyph("lock") : l.complete ? "✓" : l.kind === "checkpoint" ? "♜" : "♟"}</span></button><div class="node-label"><strong>${esc(l.name)}</strong>${l.complete ? `<span>${"●".repeat(l.complete.best)}${"○".repeat(Math.max(0,(l.complete.bestTotal||5) - l.complete.best))}</span>` : l.current ? `<span class="next-ready">${completedNotice ? "Ready when you are" : "Start here"}</span>${shortPractice ? btn("Short practice", "lesson:"+shortPractice.id, "short-practice", 'aria-label="Try an unseen short lesson"') : ""}` : ""}</div></div>`).join("")}</div></section>`).join("")}<div class="course-finish">${shortPractice&&!progress.some(l=>l.current) ? btn("Short practice", "lesson:"+shortPractice.id, "short-practice", 'aria-label="Try an unseen short lesson"') : ""}${btn("↻ Review", "review", "primary")}</div></section><aside class="academy-sidebar"><div class="path-rook">${coach()}${btn(glyph("hear"), "hear-unit", "text", 'aria-label="Hear Rook explain this unit"')}</div><details class="practice-level"><summary>Practice settings</summary><label for="chess-band">Challenge</label><select id="chess-band"><option value="foundations" ${profile.settings.band === "foundations" ? "selected" : ""}>First moves</option><option value="steps" ${profile.settings.band === "steps" ? "selected" : ""}>Small steps</option><option value="stretch" ${profile.settings.band === "stretch" ? "selected" : ""}>Stretch</option><option value="guided" ${profile.settings.band === "guided" ? "selected" : ""}>Guided</option></select></details>${btn("↻ Review", "review")}</aside></div>`;
   }
   function lessonView() {
     const s = profile.session;
@@ -548,10 +579,10 @@ export function mountChess(root, { player, name, event = () => {} }) {
     if (s.phase === "intro")
       return `<section class="lesson-intro">${coach()}<h1>${title}</h1>${btn("▶", "begin", "primary large", 'aria-label="Start the puzzles"')}${btn(glyph("hear"), "hear", "text", 'aria-label="Hear the idea"')}</section>`;
     if (s.phase === "summary")
-      return `<section class="lesson-summary">${coach("happy")}<h1>Lesson complete!</h1><div class="summary-stars" aria-label="${s.results.length} positions completed, ${s.results.filter((r) => r.independent).length} without help">${s.results.map((r) => r.independent ? "★" : "☆").join(" ")}</div>${btn("Continue ➜", "path", "primary large")}<details><summary>Practice notes</summary><p>${s.results.filter((r) => r.independent).length} of ${s.results.length} without hints.</p><p>${u.idea}</p></details></section>`;
+      return `<section class="lesson-summary">${coach("happy")}<h1>A good place to pause</h1><div class="summary-stars" aria-label="${s.results.length} positions completed, ${s.results.filter((r) => r.independent).length} without help">${s.results.map((r) => r.independent ? "●" : "○").join(" ")}</div>${btn("Continue ➜", "path", "primary large")}<details><summary>Practice notes</summary><p>${s.results.filter((r) => r.independent).length} of ${s.results.length} without hints.</p><p>${u.idea}</p></details></section>`;
     const f = s.feedback,
       solved = s.phase === "solved";
-    return `<section class="chess-lesson ${['steps','foundations'].includes(s.band)?'small-step-lesson':''}"><header class="lesson-header">${iconButton("close", "path", "Back to lesson path")}<div class="lesson-progress" role="progressbar" aria-label="Lesson progress" aria-valuenow="${s.index + (solved ? 1 : 0)}" aria-valuemin="0" aria-valuemax="${s.total}"><span style="width:${((s.index + (solved ? 1 : 0)) / s.total) * 100}%"></span></div>${btn(glyph(profile.settings.sound ? "hear" : "muted"), "sound", "sound", `aria-label="${profile.settings.sound ? "Mute coaching" : "Enable coaching"}"`)}</header><div class="play-table ${solved ? "solved" : ""}">${arenaHead(shortPrompt(), solved ? "happy" : f?.kind === "incorrect" ? "thinking" : "idle")}<div id="chess-board"></div><div id="board-selection" class="sr-only" aria-live="polite"></div><footer class="board-controls">${iconButton("undo", "restart", "Restart this position", solved ? "disabled" : "")}${solved ? btn("➜", "next", "primary next-puzzle", `aria-label="${s.index + 1 === s.total ? "Finish lesson" : "Next position"}"`) : hintControls()}${!solved&&f?.reason==='unsafe-check'?btn("▶ Why?","unsafe-check","text unsafe-explain",'aria-label="Watch why this check is unsafe"'):!solved&&s.example&&s.errors>=2?btn("▶ Rook","example","text",'aria-label="Watch a similar example"'):""}<details class="board-more"><summary aria-label="More options">•••</summary><div>${f?.refutation ? btn(analysisView ? "Back to puzzle" : "See the reply", "explain", "text") : ""}<p>${esc(title)}</p><p>${esc(s.puzzle.goal)}</p>${solved ? `<ol>${s.solution.map((m) => `<li>${esc(m.text)}</li>`).join("")}</ol>` : ""}<small>${s.puzzle.original?"Original practice position":`Lichess ${s.puzzle.sourceId || s.puzzle.id} · CC0`}</small></div></details></footer></div></section>`;
+    return `<section class="chess-lesson ${['steps','foundations'].includes(s.band)?'small-step-lesson':''}"><header class="lesson-header">${iconButton("close", "path", "Back to lesson path")}<div class="lesson-progress" role="progressbar" aria-label="Lesson progress" aria-valuenow="${s.index + (solved ? 1 : 0)}" aria-valuemin="0" aria-valuemax="${s.total}">${Array.from({length:s.total},(_,i)=>`<i class="lesson-bead ${i<s.index+(solved?1:0)?'done':''}" aria-hidden="true"></i>`).join("")}</div>${btn(glyph(profile.settings.sound ? "hear" : "muted"), "sound", "sound", `aria-label="${profile.settings.sound ? "Mute coaching" : "Enable coaching"}"`)}</header><div class="play-table ${solved ? "solved" : ""}">${arenaHead(shortPrompt(), solved ? "happy" : f?.kind === "incorrect" ? "thinking" : "idle")}<div id="chess-board"></div><div id="board-selection" class="sr-only" aria-live="polite"></div><footer class="board-controls">${iconButton("undo", "restart", "Restart this position", solved ? "disabled" : "")}${solved ? btn("➜", "next", "primary next-puzzle", `aria-label="${s.index + 1 === s.total ? "Finish lesson" : "Next position"}"`) : hintControls()}${!solved&&f?.reason==='unsafe-check'?btn("▶ Why?","unsafe-check","text unsafe-explain",'aria-label="Watch why this check is unsafe"'):!solved&&s.example&&s.errors>=2?btn("▶ Rook","example","text",'aria-label="Watch a similar example"'):""}<details class="board-more"><summary aria-label="More options">•••</summary><div>${f?.refutation ? btn(analysisView ? "Back to puzzle" : "See the reply", "explain", "text") : ""}<p>${esc(title)}</p><p>${esc(s.puzzle.goal)}</p>${solved ? `<ol>${s.solution.map((m) => `<li>${esc(m.text)}</li>`).join("")}</ol>` : ""}<small>${s.puzzle.original?"Original practice position":`Lichess ${s.puzzle.sourceId || s.puzzle.id} · CC0`}</small></div></details></footer></div></section>`;
   }
   function miniBoard(fen) {
     const board = new Chess(fen);
@@ -570,14 +601,14 @@ export function mountChess(root, { player, name, event = () => {} }) {
   function gameView() {
     const g = profile.game;
     if (!g) return playView();
-    return `<section class="chess-lesson practice-game"><header class="lesson-header">${iconButton("close", "play", "Back to practice games")}<span class="game-title">${g.mode === "position" ? `${g.turns} / ${g.target}` : "Rook"}</span>${btn(glyph(profile.settings.sound ? "hear" : "muted"), "sound", "sound", `aria-label="${profile.settings.sound ? "Mute coaching" : "Enable coaching"}"`)}</header><div class="play-table">${arenaHead(g.result || (g.hint?.stage === 3 ? "Follow the arrow" : g.hint?.stage === 2 ? "Tap this piece" : "Your move"), g.result ? "happy" : "idle")}<div id="chess-board"></div><div id="board-selection" class="sr-only" aria-live="polite"></div><footer class="board-controls">${iconButton("undo", "game-undo", "Take back a turn", g.turns < 1 ? "disabled" : "")}${g.result ? btn("➜", "play", "primary next-puzzle", 'aria-label="Choose another game"') : hintControls(true)}<details class="board-more"><summary aria-label="More options">•••</summary><div>${btn("Choose another game", "play", "text")}<p>${gameNotation(g)}</p><p>${esc(g.assessment || "")}</p></div></details></footer></div></section>`;
+    return `<section class="chess-lesson practice-game"><header class="lesson-header">${iconButton("close", "play", "Back to practice games")}<span class="game-title">${g.mode === "position" ? `${g.turns} / ${g.target}` : "Rook"}</span>${btn(glyph(profile.settings.sound ? "hear" : "muted"), "sound", "sound", `aria-label="${profile.settings.sound ? "Mute coaching" : "Enable coaching"}"`)}</header><div class="play-table">${arenaHead(g.result || (g.hint?.stage === 3 ? "Follow the arrow" : g.hint?.stage === 2 ? "Tap this piece" : "Your move"), g.result?.includes("you win") ? "thinking" : g.result ? "happy" : "idle")}<div id="chess-board"></div><div id="board-selection" class="sr-only" aria-live="polite"></div><footer class="board-controls">${iconButton("undo", "game-undo", "Take back a turn", g.turns < 1 ? "disabled" : "")}${g.result ? btn("➜", "play", "primary next-puzzle", 'aria-label="Choose another game"') : hintControls(true)}<details class="board-more"><summary aria-label="More options">•••</summary><div>${btn("Choose another game", "play", "text")}<p>${gameNotation(g)}</p><p>${esc(g.assessment || "")}</p></div></details></footer></div></section>`;
   }
   // ---- Full games against the coach ----
   const sideName = (c) => (c === "w" ? "White" : "Black");
   const REASON = { checkmate: "checkmate", resign: "resigned", stalemate: "stalemate", repetition: "repetition", insufficient: "not enough pieces", fifty: "50 quiet moves", limit: "long game", abandoned: "left unfinished" };
   function matchTitle(g, name) {
     const r = g.result;
-    if (r.kind === "win") return r.reason === "checkmate" ? "Checkmate! You won!" : "You won!";
+    if (r.kind === "win") return r.reason === "checkmate" ? "Checkmate · well played" : "Well played";
     if (r.kind === "loss") return r.reason === "resign" ? "Good game" : `${name} won`;
     return `Draw · ${REASON[r.reason] || "draw"}`;
   }
@@ -587,7 +618,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
   }
   function matchLobby() {
     const M = profile.match, name = esc(M.opponent);
-    return `<section class="match-lobby"><div class="match-hero">${coach("happy")}<div><span class="ac-eyebrow">A REAL GAME</span><h1>Play ${name}</h1><p>A whole game, start to finish.</p></div></div><div class="match-stats"><div><small>Your rating</small><strong>${M.rating}</strong></div><div><small>Wins</small><strong>${M.record.win}</strong></div><div><small>Losses</small><strong>${M.record.loss}</strong></div><div><small>Draws</small><strong>${M.record.draw}</strong></div></div><div class="match-play">${btn("Play ➜", "match-start", "primary large")}<p>You play <strong>${sideName(M.nextSide)}</strong> this game.</p></div>${M.history.length ? `<section class="recent-lessons"><h2>Recent games</h2>${M.history.slice().reverse().map((h) => `<div><span>${h.kind === "win" ? "Won" : h.kind === "loss" ? "Lost" : "Draw"} · ${sideName(h.side)} · ${esc(REASON[h.reason] || "")}</span><strong>${h.ratingAfter}${h.ratingAfter > h.ratingBefore ? " ▲" : h.ratingAfter < h.ratingBefore ? " ▼" : ""}</strong></div>`).join("")}</section>` : ""}<p class="match-more">${btn("Position practice and stronger opponents", "practice", "text")}</p><p class="fine-print">${name} plays on this computer and adjusts after each game: a little harder after you win, a little easier after you lose.</p></section>`;
+    return `<section class="match-lobby"><div class="match-hero">${coach("happy")}<div><span class="ac-eyebrow">A REAL GAME</span><h1>Play ${name}</h1><p>A whole game, start to finish.</p></div></div><details class="table-notebook"><summary>Game notebook</summary><div class="match-stats"><div><small>Your rating</small><strong>${M.rating}</strong></div><div><small>Wins</small><strong>${M.record.win}</strong></div><div><small>Losses</small><strong>${M.record.loss}</strong></div><div><small>Draws</small><strong>${M.record.draw}</strong></div></div></details><div class="match-play">${btn("Play ➜", "match-start", "primary large")}<p>You play <strong>${sideName(M.nextSide)}</strong> this game.</p></div>${M.history.length ? `<details class="table-notebook"><summary>Recent games</summary><section class="recent-lessons"><h2>Recent games</h2>${M.history.slice().reverse().map((h) => `<div><span>${h.kind === "win" ? "Won" : h.kind === "loss" ? "Lost" : "Draw"} · ${sideName(h.side)} · ${esc(REASON[h.reason] || "")}</span><strong>${h.ratingAfter}${h.ratingAfter > h.ratingBefore ? " ▲" : h.ratingAfter < h.ratingBefore ? " ▼" : ""}</strong></div>`).join("")}</section></details>` : ""}<p class="match-more">${btn("Position practice and stronger opponents", "practice", "text")}</p><p class="fine-print">${name} plays on this computer and adjusts after each game: a little harder after you win, a little easier after you lose.</p></section>`;
   }
   function matchView() {
     const M = profile.match, g = M?.game;
@@ -595,12 +626,12 @@ export function mountChess(root, { player, name, event = () => {} }) {
     const name = M.opponent, b = new Chess(g.fen), myTurn = !g.result && b.turn() === g.side;
     const status = matchReplay ? matchReplay.title : g.result ? matchTitle(g, name) : !myTurn ? `${name} is thinking…`
       : g.hint?.to ? "Follow the arrow" : g.hint?.from ? "Look at this piece" : g.hint ? "Here is an idea" : b.isCheck() ? "Check! Save your king" : "Your move";
-    const mood = g.result ? (g.result.kind === "loss" ? "idle" : "happy") : g.react?.kind === "pounce" ? "thinking" : "idle";
+    const mood = g.result ? (g.result.kind === "win" ? "thinking" : g.result.kind === "loss" ? "happy" : "idle") : g.react?.kind === "pounce" ? "thinking" : "idle";
     const stage = g.hint?.stage || 0;
     const controls = g.result
-      ? `${g.recap ? btn('▶ <span>Look at this moment</span>', "match-moment", "hint-button", 'aria-label="Watch one important moment again"') : ""}${btn("Continue ➜", "match-continue", "primary")}`
+      ? `${g.recap ? btn('▶ <span>Look at this moment</span>', "match-moment", "hint-button", 'aria-label="Watch one important moment again"') : ""}${btn("Finish game", "match-continue", "primary")}`
       : `${btn("↶ <span>Undo</span>", "match-undo", "undo-button", `aria-label="Take back your last move (${g.undoLeft} left)" ${g.undoLeft < 1 || !g.turns ? "disabled" : ""}`)}<div class="hint-control">${btn(glyph("hint") + `<span>${stage ? "More help" : "Hint"}</span>`, "match-hint", "hint-button", `aria-label="Get a hint" ${stage >= g.maxHint ? "disabled" : ""}`)}<span class="hint-dots" aria-label="${stage} of ${g.maxHint} hint steps">${[1, 2].map((n) => `<i class="${stage >= n ? "on" : ""}"></i>`).join("")}</span></div><details class="board-more"><summary aria-label="More options">•••</summary><div>${btn("Resign", "match-resign", "text")}<p>${gameNotation(g)}</p></div></details>`;
-    return `<section class="chess-lesson practice-game match-game ${g.result ? "match-over" : ""}"><header class="lesson-header">${iconButton("close", "match-leave", "Back to lessons")}<span class="game-title">${g.result ? `<span class="match-result">${ratingLine(g.result)}</span>` : `${esc(name)} · you play ${sideName(g.side)}`}</span>${btn(glyph(profile.settings.sound ? "hear" : "muted"), "sound", "sound", `aria-label="${profile.settings.sound ? "Mute coaching" : "Enable coaching"}"`)}</header><div class="play-table">${arenaHead(status, mood, name)}<div id="chess-board"></div><div id="board-selection" class="sr-only" aria-live="polite"></div><footer class="board-controls">${controls}</footer></div></section>`;
+    return `<section class="chess-lesson practice-game match-game ${g.result ? "match-over" : ""}"><header class="lesson-header">${iconButton("close", "match-leave", "Back to lessons")}<span class="game-title">${g.result ? `<span class="match-result">A good place to pause</span>` : `${esc(name)} · you play ${sideName(g.side)}`}</span>${btn(glyph(profile.settings.sound ? "hear" : "muted"), "sound", "sound", `aria-label="${profile.settings.sound ? "Mute coaching" : "Enable coaching"}"`)}</header><div class="play-table">${arenaHead(status, mood, name)}<div id="chess-board"></div><div id="board-selection" class="sr-only" aria-live="polite"></div><footer class="board-controls">${controls}</footer></div></section>`;
   }
   async function afterMatch(type, result) {
     const g = profile.match?.game;
@@ -614,7 +645,10 @@ export function mountChess(root, { player, name, event = () => {} }) {
     }
     if (type === "match-ack") return;
     if (g.result) { void runRecap(g.id); return; }
-    if (g.react?.line) void playLine(g.react.line);
+    // A capture was performed at the actual landing, not after the opponent's
+    // animations. Never repeat it here or announce a trade several seconds late.
+    if(captureKinds.size&&['youCapture','youQueen','meQueen','meCapture','trade','pounce'].includes(g.react?.kind))return;
+    if (g.react?.line) void playLine(g.react.line,{automatic:true});
   }
   // After the game: the result line, one short recap sentence and one replayed moment.
   async function runRecap(id) {
@@ -671,7 +705,8 @@ export function mountChess(root, { player, name, event = () => {} }) {
       const level = await fetchWordLevel("/api/word-break?player=" + encodeURIComponent(player), DEFAULT_TRACK[player] || "mixed");
       if (!alive) return;
       answer = await wordBreak({ player, level, reason: "chess-match", effects: () => !!profile.settings.sound,
-        speak: (line, essential) => void playLine(line, { force: essential }),
+        // Settles when the line is over (the word-break audio-finished contract).
+        speak: (line, essential) => playLine(line, { force: essential }).then((started) => (started ? voice.finished() : "muted")),
         log: (r) => event("word-break", JSON.stringify(r)) });
     } catch (e) { event("word-break-error", e.message); }
     finally { busy = false; }
@@ -871,7 +906,7 @@ export function mountChess(root, { player, name, event = () => {} }) {
       strength.onchange = () => send("settings", { strength: strength.value });
   }
   const onVisibility = () => {
-    if (document.hidden) utterance();
+    if (document.hidden) {utterance();tableSound.stop();}
   };
   document.addEventListener("visibilitychange", onVisibility);
   load();
@@ -885,6 +920,8 @@ export function mountChess(root, { player, name, event = () => {} }) {
     root.removeEventListener('pointerdown',unlockVoice,{capture:true});
     root.removeEventListener('keydown',unlockVoice,{capture:true});
     utterance();
+    voice.dispose();
+    tableSound.dispose();
   };
   dispose.busy = () => busy || !!pending;
   dispose.prepareLeave = async () => {

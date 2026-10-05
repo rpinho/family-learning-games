@@ -1,0 +1,230 @@
+{
+  "schema": "family-world-episode-1",
+  "id": "beginner-2026-10-05",
+  "player": "beginner",
+  "date": "2026-10-05",
+  "level": "early",
+  "title": "The Tiny Lantern Path",
+  "goal": "Follow the tiny path inside the lantern and wake the moon flowers.",
+  "intro": "The tiny garden inside the lantern has a glowing path. Your friends have clues and a tool to help you follow it.",
+  "recap": "You counted the stones, heard Bo's clue, tied the vine rope, and woke the moon flowers together.",
+  "reveal": "Surprise! Grown-up lifts a tiny moon lantern. The moon flowers glow and hum a soft goodnight song.",
+  "hook": "Tomorrow, one moon flower has a tiny door hiding under its petals.",
+  "start": "welcome",
+  "finish": "bloom",
+  "rooms": [
+    {
+      "id": "welcome",
+      "name": "Tiny lantern path",
+      "bg": "garden",
+      "friend": "dad",
+      "icon": "🌳",
+      "exits": {
+        "right": "grove"
+      },
+      "lines": [
+        "The tiny path inside the lantern is glowing. Shall we follow it together?",
+        "You found the way. Come back whenever you want."
+      ]
+    },
+    {
+      "id": "grove",
+      "name": "Moss grove",
+      "bg": "castle-forest",
+      "friend": "bo",
+      "icon": "🍄",
+      "exits": {
+        "left": "welcome",
+        "right": "hill"
+      },
+      "lines": [
+        "I hear a clue in the moss. Listen with me, and it will help us cross the stream.",
+        "You heard my clue and tied the rope. The path is open."
+      ],
+      "door": {
+        "to": "workshop",
+        "label": "Robo's acorn workshop",
+        "wide": [
+          0.22,
+          0.28,
+          0.08,
+          0.12
+        ],
+        "tall": [
+          0.2,
+          0.25,
+          0.1,
+          0.09
+        ]
+      },
+      "exitRequires": {
+        "right": "trail-lock"
+      }
+    },
+    {
+      "id": "workshop",
+      "name": "Robo's acorn workshop",
+      "bg": "workshop",
+      "friend": "robo",
+      "icon": "🔧",
+      "exits": {},
+      "lines": [
+        "Beep! There is an extra discovery in my acorn workshop. You can visit whenever you want.",
+        "Your acorn star can stay in your backpack."
+      ],
+      "door": {
+        "to": "grove",
+        "label": "Back to the grove",
+        "return": true
+      }
+    },
+    {
+      "id": "hill",
+      "name": "Moon flower hill",
+      "bg": "castle-moon-hill",
+      "friend": "mom",
+      "icon": "🌙",
+      "exits": {
+        "left": "grove"
+      },
+      "lines": [
+        "Grown-up has a surprise up here. Help me wake the sleepy moon flowers.",
+        "Look how the moon flowers glow. You woke them up!"
+      ]
+    }
+  ],
+  "items": {
+    "rope": {
+      "name": "Vine rope",
+      "icon": "rope"
+    },
+    "lantern": {
+      "name": "Tiny moon lantern",
+      "icon": "lantern"
+    },
+    "star": {
+      "name": "Acorn star",
+      "icon": "star",
+      "collection": true
+    }
+  },
+  "puzzles": [
+    {
+      "id": "stones",
+      "room": "welcome",
+      "kind": "count",
+      "title": "Count the stepping stones",
+      "prompt": "Tap each glowing stone to step along the path.",
+      "hint": "Touch each stone once. We can count them together.",
+      "goal": "Tap each glowing stone to step along the path.",
+      "icon": "✨",
+      "answer": "7",
+      "options": [
+        "7",
+        "8"
+      ],
+      "requires": [],
+      "rewards": [
+        "rope"
+      ],
+      "count": 7,
+      "countVisual": "stone"
+    },
+    {
+      "id": "clue",
+      "room": "grove",
+      "kind": "sound",
+      "title": "Hear the clue",
+      "prompt": "Tap the letter that makes this sound: [[ɑ]].",
+      "hint": "Tap the sound button and listen again.",
+      "goal": "Listen to the clue. Find the matching letter.",
+      "icon": "👂",
+      "answer": "O",
+      "options": [
+        "O",
+        "M"
+      ],
+      "requires": [
+        "stones"
+      ],
+      "rewards": [],
+      "letter": "O",
+      "soundSupport": true
+    },
+    {
+      "id": "bloom",
+      "room": "hill",
+      "kind": "count",
+      "title": "Wake the moon flowers",
+      "prompt": "Tap each moon flower to wake it up.",
+      "hint": "Touch each flower once. We can count them together.",
+      "goal": "Tap each moon flower to wake it up.",
+      "icon": "🌼",
+      "answer": "12",
+      "options": [
+        "12",
+        "13"
+      ],
+      "requires": [
+        "trail-lock"
+      ],
+      "rewards": [
+        "lantern"
+      ],
+      "count": 12,
+      "countVisual": "flower"
+    },
+    {
+      "id": "bonus",
+      "room": "workshop",
+      "kind": "count",
+      "title": "Polish the acorns",
+      "prompt": "Tap each acorn to make it shine.",
+      "hint": "Touch each acorn once. We can count them together.",
+      "goal": "Tap each acorn to make it shine.",
+      "icon": "🌰",
+      "answer": "6",
+      "options": [
+        "6",
+        "5"
+      ],
+      "requires": [],
+      "rewards": [
+        "star"
+      ],
+      "count": 6,
+      "optional": true,
+      "countVisual": "acorn"
+    }
+  ],
+  "locks": [
+    {
+      "id": "trail-lock",
+      "room": "grove",
+      "item": "rope",
+      "requires": [
+        "clue"
+      ],
+      "label": "Tie the vine rope across the stream",
+      "hint": "Find the vine rope on the path, then listen to Bo's clue in the grove.",
+      "goal": "Carry your vine rope to the stream",
+      "icon": "rope"
+    }
+  ],
+  "sideQuests": [
+    {
+      "id": "bonus-quest",
+      "title": "Polish the acorns",
+      "puzzle": "bonus"
+    }
+  ],
+  "learning": {
+    "level": "early",
+    "taughtLetters": [
+      "M",
+      "O"
+    ],
+    "focus": []
+  },
+  "revealVisual": "moon"
+}
