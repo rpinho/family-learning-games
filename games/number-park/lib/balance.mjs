@@ -99,7 +99,7 @@ export function balanceFeedback(q,result){
 export const BALANCE_LEGACY_HELP='Work out each side. Equal weights balance. The heavier side goes down.';
 export function balanceFinishVoiceLines(){
  const lines=new Set([STORY_OPENING,...STORY_PLACES.map((_,i)=>storyLine(i,'mission'))]);
- for(const player of ['explorer','beginner'])for(let correct=0;correct<=6;correct++)for(let independent=0;independent<=correct;independent++)for(const windDown of [false,true])for(const line of roundRecap({game:player==='beginner'?'balance-k':'balance',player,correct,independent,windDown}).lines)lines.add(line);
+ for(const player of ['explorer','beginner'])for(let correct=0;correct<=6;correct++)for(let independent=0;independent<=correct;independent++)for(const windDown of [false,true])for(const line of roundRecap({game:String(player).split('_')[0]==='beginner'?'balance-k':'balance',player,correct,independent,windDown}).lines)lines.add(line);
  return [...lines];
 }
 export const BALANCE_HELP='Place an animal on each pan, guess if you like, then weigh them. Watch which pan goes down.';

@@ -357,6 +357,7 @@ window.addEventListener("unhandledrejection", (e) =>
 try {
   config = await fetchJSON('/api/config',{},8000);
   if(!Array.isArray(config.players)||!config.players.length)throw Error('Could not read your game settings.');
+  if(config.onboardingRequired){location.replace('/onboarding');throw Error('Opening family setup…');}
   const requested = new URL(location.href).searchParams.get("player");
   let saved;try{saved=storage?.getItem("family-games-player");}catch{}
   player = config.players.some((p) => p.id === requested)

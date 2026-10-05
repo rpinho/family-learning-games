@@ -8,7 +8,7 @@ export const clampPattern=n=>Math.max(1,Math.min(PATTERN_MAX,Math.round(Number(n
 export function patternLevel(p={}){
  const rows=(p.history||[]).filter(h=>h.question?.patternVersion===3);
  const manual=p.patternManual;
- let level=p.id==='beginner'?4:2,start=0,streak=0,misses=0;
+ let level=String(p.id).split('_')[0]==='beginner'?4:2,start=0,streak=0,misses=0;
  if(manual&&Number.isInteger(manual.after)&&manual.after>=0&&manual.after<=rows.length){level=clampPattern(manual.level);start=manual.after;}
  for(const h of rows.slice(start)){
   if(h.ok&&!h.helped){misses=0;if(++streak>=5){level=Math.min(PATTERN_MAX,level+1);streak=0;}}

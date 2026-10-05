@@ -26,7 +26,7 @@ export const GAMES=[
  {id:'subtract',icon:'➖',title:'Take away',description:'Move objects. Count what is left.'},
  {id:'pattern',icon:'🔷',title:'Pattern parade',description:'What comes next in the parade?'}
 ];
-export const additionOnly=p=>p.id!=='explorer';
+export const additionOnly=p=>String(p.id).split('_')[0]!=='explorer';
 export const KINDER_GAMES=[...GAMES,KINDER_COOKIE_GAME,KINDER_BALANCE_GAME];
 export const gamesFor=p=>advanced(p)?EXPLORER_GAMES:KINDER_GAMES;
 // Upgrade only the active prompt in memory. Existing scores, history, drawings
@@ -53,7 +53,7 @@ export function prepareProfile(p){
  }
  return p;
 }
-export const freshProfile=id=>({id,name:id==='admin'?'Alex':id==='beginner'?'Beginner':'Explorer',revision:0,xp:0,lessons:0,completed:{},recent:[],history:[],session:null,drawing:[],guided:{},ceiling:id==='explorer'?200:13});
+export const freshProfile=id=>({id,name:id==='admin'?'Alex':String(id).split('_')[0]==='beginner'?'Beginner':'Explorer',revision:0,xp:0,lessons:0,completed:{},recent:[],history:[],session:null,drawing:[],guided:{},ceiling:String(id).split('_')[0]==='explorer'?200:13});
 export const random=seed=>()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
 const shuffle=(a,r)=>a.map(v=>[r(),v]).sort((a,b)=>a[0]-b[0]).map(v=>v[1]);
 export function makeQuestion(p,game,round=0){
@@ -68,7 +68,7 @@ export function makeQuestion(p,game,round=0){
   q={kind,a,b,total,blank,operator:'+',answer:[a,b,total][blank],max};
   if(!additionOnly(p)&&['missing','line'].includes(kind)&&roll(3)===0)q={...q,a:total,b,total:a,operator:'−',answer:[total,b,a][blank]};
   if(kind==='addobjects'){const total=8+roll(6),lo=Math.max(3,total-7),hi=Math.min(7,total-3),a=lo+roll(hi-lo+1),b=total-a;q={kind,a,b,total,blank:2,operator:'+',answer:total,max:13,object:['🍎','⭐','⚽'][roll(3)]};}
-  if(kind==='count')q=countingQuestion(r,round,{stretch:p.id==='beginner'});
+  if(kind==='count')q=countingQuestion(r,round,{stretch:String(p.id).split('_')[0]==='beginner'});
   if(kind==='subtract'){const total=3+roll(8),remove=1+roll(Math.min(5,total));q={kind,total,remove,answer:total-remove,max:10,object:['🍎','⭐','⚽'][roll(3)]};}
   if(kind==='pattern')q=patternQuestion(r,round,p);
   q.fingerprint=JSON.stringify([q.kind,q.a,q.b,q.blank,q.count,q.total,q.remove,q.sequence,q.object,...(q.kind==='count'?[q.mode,q.items,q.layoutSeed]:[])]);

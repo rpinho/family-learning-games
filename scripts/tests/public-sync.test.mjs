@@ -25,3 +25,7 @@ test('a clean final tree cannot hide a privacy hit in an earlier new commit',t=>
  const dir=fixture(t);const git=args=>execFileSync('git',args,{cwd:dir});writeFileSync(join(dir,'safe.txt'),'base');git(['add','.']);git(['commit','-qm','Public base']);const base=git(['rev-parse','HEAD']).toString().trim();writeFileSync(join(dir,'leak.txt'),denied[0]);git(['add','.']);git(['commit','-qm','Synthetic intermediate']);rmSync(join(dir,'leak.txt'));writeFileSync(join(dir,'safe.txt'),'new code');let pushed=false;
  assert.throws(()=>publishPrepared({cwd:dir,base,branch:'public/synthetic',title:'Synthetic sync',gh:'/fixture/gh',run:(exe,args)=>{if(exe==='git'&&args[0]!=='push')git(args);if(args[0]==='push')pushed=true;}}),/leak.txt/);assert.equal(pushed,false);
 });
+
+test('onboarding profile/cast/photo/learner/likeness manifests are always private regardless of the chosen data root',()=>{
+ for(const file of ['private/book/profiles.json','private/book/cast.json','private/book/photos/child/image.jpg','private/learner/child.json','private/book/art/local-references.json'])assert.ok(privacyIssues(file,Buffer.from('{}')).some(x=>x.includes('forbidden runtime/private file')),file);
+});

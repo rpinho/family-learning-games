@@ -3,7 +3,7 @@ import {createWorldModel} from '../../hub/public/world-model.mjs';
 import {exploreWorld,allActions} from '../../hub/world-check.mjs';
 import {canSoundOut,isFamilyWord,hasSound} from '../../hub/public/word-families.mjs';
 export {EPISODE_SCHEMA,episodeDefinition};
-const ID=/^[a-z][a-z0-9-]{0,63}$/;
+const ID=/^[a-z][a-z0-9_-]{0,63}$/;
 export function episodeIssues(e,{library,taughtLetters=[],level=e?.level}={}){
  const out=[],add=m=>out.push(m),arr=x=>Array.isArray(x)?x:[];
  if(!e||e.schema!==EPISODE_SCHEMA)return ['Wrong episode schema'];if(!['rooms','puzzles','locks','sideQuests'].every(k=>Array.isArray(e[k])&&e[k].every(x=>x&&typeof x==='object'&&!Array.isArray(x)))||!e.items||typeof e.items!=='object'||Array.isArray(e.items))return ['Rooms, puzzles, locks, side quests and items must have the declared JSON shape'];

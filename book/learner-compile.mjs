@@ -96,7 +96,7 @@ export async function learnerProfileFor(player,{paths=bookPaths(),now=Date.now()
 if(process.argv[1]===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2),arg=k=>{const i=args.indexOf(k);return i>=0?args[i+1]:null;};
  const paths=bookPaths(),profiles=readProfiles(paths),out=arg('--out')||paths.learner,now=arg('--now')?Date.parse(arg('--now')):Date.now();
- const players=arg('--player')?[arg('--player')]:Object.keys(profiles).filter(id=>!id.startsWith('_')&&(!paths.config?.players||paths.config.players.some(p=>p.id===id)));
+ const players=arg('--player')?[arg('--player')]:Object.keys(profiles).filter(id=>!id.startsWith('_')&&(!paths.config?.players||profiles[id]?.onboarding||paths.config.players.some(p=>p.id===id)));
  if(!players.length){console.error('No players: add book/profiles.json under the deploy root.');process.exit(1);}
  const t0=Date.now(),all=await compileLearners(players,{paths,now});
  for(const p of players)console.log(await writeProfile(all[p],out));

@@ -70,8 +70,8 @@ export function readingState(p){return p.reading||{run:0,step:0,phase:'lobby',fo
 export function readingQuestion(p){
  const s=readingState(p);if(s.question)return s.question;
  const type=s.focus==='mix'?READING_TYPES[s.step%7][0]:s.focus,level=s.skills[type]?.level||1;
- const index=s.focus==='mix'?s.run-1:(s.run-1)*7+s.step,r=random(s.run*7919+s.step*997+(p.id==='beginner'?31:0));
- const pool=READING_WORDS[level-1],pair=pool[(index+(p.id==='beginner'?3:0)+(type==='dictation'?4:type==='write'?7:0))%pool.length],base={id:`reading1:${s.run}:${s.step}`,type,level};
+ const index=s.focus==='mix'?s.run-1:(s.run-1)*7+s.step,r=random(s.run*7919+s.step*997+(String(p.id).split('_')[0]==='beginner'?31:0));
+ const pool=READING_WORDS[level-1],pair=pool[(index+(String(p.id).split('_')[0]==='beginner'?3:0)+(type==='dictation'?4:type==='write'?7:0))%pool.length],base={id:`reading1:${s.run}:${s.step}`,type,level};
  if(['decode','dictation','write'].includes(type)){
   const [word,picture]=pair,tiles=level===3?[...'abcdefghijklmnopqrstuvwxyz']:shuffle([...new Set([...word,...shuffle([...'abcdefghijklmnopqrstuvwxyz'],r).slice(0,4)])],r);
   return {...base,word,picture,answer:word,tiles,prompt:type==='decode'?prompts.decode:type==='write'?`Write the word ${word}. Say it as you write.`:`Build the word ${word}. Listen, then spell it.`,helpLine:`The word is ${word}.`,options:shuffle([pair,...shuffle(pool.filter(w=>w[0]!==word),r).slice(0,level===1?2:3)],r).map(([value,picture])=>({value,picture}))};

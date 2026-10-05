@@ -20,12 +20,12 @@ export function rewriteText(text,prefix){
  return text.replace(/(["'`])\/(?=(?:api|assets|voice|audio|icons|_next)(?:\/|["'`?])|[a-zA-Z0-9_.-]+\.(?:m?js|css|png|svg|ico|json|webmanifest|woff2|wav|mp3)(?:["'`/?])|\?)/g,(_,quote)=>quote+prefix)
   .replace(/url\(\/(?!\/)/g,'url('+prefix);
 }
-export function proxy(req,res,{port,prefix,path,player,players,game,releases={}},log){
+export function proxy(req,res,{port,prefix,path,player,players,game,playerName=player,releases={}},log){
  const attr=v=>String(v||'').replace(/[^\w.:-]/g,'');
  const target=new URL(path,'http://localhost');
  if(target.searchParams.has('player'))target.searchParams.set('player',player);
  const who=target.pathname.match(/^\/api\/([^/]+)/)?.[1];
- if(players.includes(who)&&who!==player){if(/\/events$/.test(target.pathname)){void log({type:'discarded_initial_event',game,player});res.writeHead(200,{'Content-Type':'application/json'});res.end('{"ok":true,"discarded":true}');return;}res.writeHead(409,{'Content-Type':'application/json'});res.end(JSON.stringify({error:'Use Grown-ups on the Games home screen to change player.'}));return;}
+ if((players.includes(who)||/^(?:(?:beginner|explorer)(?:_[1-9]\d{0,3})?|admin)$/.test(who))&&who!==player){if(/\/events$/.test(target.pathname)){void log({type:'discarded_initial_event',game,player});res.writeHead(200,{'Content-Type':'application/json'});res.end('{"ok":true,"discarded":true}');return;}res.writeHead(409,{'Content-Type':'application/json'});res.end(JSON.stringify({error:'Use Grown-ups on the Games home screen to change player.'}));return;}
  const headers={...req.headers,host:`localhost:${port}`,'accept-encoding':'identity','sec-fetch-site':'same-origin'};
  delete headers.cookie;delete headers.authorization;delete headers['if-modified-since'];
  // A conditional request carries the upstream ETag behind ours (dropped when the rewrite has changed since).
@@ -47,8 +47,10 @@ export function proxy(req,res,{port,prefix,path,player,players,game,releases={}}
   const chunks=[];let size=0;r.on('data',b=>{size+=b.length;if(size>12e6){r.destroy();res.destroy();return;}chunks.push(b);});
   r.on('end',()=>{try{
    let b=Buffer.concat(chunks);if(h['content-encoding']==='gzip')b=gunzipSync(b);else if(h['content-encoding']==='br')b=brotliDecompressSync(b);else if(h['content-encoding']==='deflate')b=inflateSync(b);delete h['content-encoding'];
-   let body=b.toString();if(/html|javascript|css|json/.test(type))body=rewriteText(body,prefix);
-   if(/html/.test(type))body=body.replace(/<head([^>]*)>/i,`<head$1><script src="/audio-scope.mjs"></script><script src="/bridge.mjs" data-game="${game}" data-player="${player}" data-prefix="${prefix}" data-hub-release="${attr(releases.hub)}" data-game-release="${attr(releases.game)}"></script><link rel="stylesheet" href="/embedded.css">`);
+   let body=b.toString();
+   if(/json/.test(type)){try{const value=JSON.parse(body);for(const row of [value,value.profile,value.state])if(row?.id===player||row?.player===player)row.name=playerName;body=JSON.stringify(value);}catch{}}
+   if(/html|javascript|css|json/.test(type))body=rewriteText(body,prefix);
+   if(/html/.test(type))body=body.replace(/<head([^>]*)>/i,`<head$1><script src="/audio-scope.mjs"></script><script src="/bridge.mjs" data-game="${game}" data-player="${player}" data-player-name="${String(playerName).replace(/[&<>"\']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\'":"&#39;","\"":"&quot;"}[c]))}" data-prefix="${prefix}" data-hub-release="${attr(releases.hub)}" data-game-release="${attr(releases.game)}"></script><link rel="stylesheet" href="/embedded.css">`);
    let out=Buffer.from(body);if(enc&&out.length>1024){out=compress(out,enc);h['content-encoding']=enc;h.vary='Accept-Encoding';}
    if(key&&(!enc||h['content-encoding']))remember(key,{body:out});
    h['content-length']=out.length;res.writeHead(r.statusCode,h);res.end(req.method==='HEAD'?undefined:out);

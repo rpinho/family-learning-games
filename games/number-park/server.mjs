@@ -35,9 +35,9 @@ const server=http.createServer(async(req,res)=>{
  res.on('close',()=>{if(!res.writableFinished&&url.pathname.startsWith('/api/'))void log({type:'response_interrupted',...diagnostic,path:url.pathname.slice(0,120),ms:Date.now()-began});});
  try{
   if(url.pathname==='/health')return send(res,200,{ok:true,version:VERSION,diagnostics:{ok:!logError,error:logError}});
-  const breakRoute=url.pathname.match(/^\/api\/(beginner|explorer|admin)\/word-break$/);
+  const breakRoute=url.pathname.match(/^\/api\/((?:beginner|explorer)(?:_[1-9]\d{0,3})?|admin)\/word-break$/);
   if(breakRoute){if(req.method!=='GET')return send(res,405,{error:'Read only.'});return send(res,200,await literacy(breakRoute[1]));}
-  const route=url.pathname.match(/^\/api\/(beginner|explorer|admin)(?:\/(action|events|summary))?$/);
+  const route=url.pathname.match(/^\/api\/((?:beginner|explorer)(?:_[1-9]\d{0,3})?|admin)(?:\/(action|events|summary))?$/);
   if(route){
    const [,id,op]=route;
    if(op==='summary'){

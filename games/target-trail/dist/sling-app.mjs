@@ -4,7 +4,7 @@ import {wordBreak,fetchWordLevel,DEFAULT_TRACK,onceThisSession,IDLE_REPEAT_MS,ID
 const $=id=>document.getElementById(id),canvas=$('canvas'),ctx=canvas.getContext('2d');
 let player=null,p=null,busy=false,drag=null,pull={dx:0,dy:0},flight=null,feedback=null,sound=true,voiceEpoch=0,audio,manifest,sfx,parentSum=15,wbLevel=null,midBreakDone=false,breakAt=2+Math.floor(Math.random()*2);
 let voiceBlocked=false,pending=null,idleTimer=null,idleCount=0;
-const valid=id=>Object.hasOwn(PLAYERS,id),wait=ms=>new Promise(r=>setTimeout(r,ms));
+const valid=id=>/^(?:(?:beginner|explorer)(?:_[1-9]\d{0,3})?|admin)$/.test(id),wait=ms=>new Promise(r=>setTimeout(r,ms));
 try{const id=new URL(location.href).searchParams.get('player'),saved=localStorage.getItem('target-player');player=valid(id)?id:valid(saved)?saved:null;sound=localStorage.getItem('target-sound')!=='off';}catch{}
 function log(kind,detail){if(player)void fetch('/api/events?player='+player,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind,detail})}).catch(()=>{});}
 async function request(path,input){const r=await fetch('/api/'+path+'?player='+player,{method:input?'POST':'GET',headers:input?{'Content-Type':'application/json'}:{},body:input?JSON.stringify(input):undefined,cache:'no-store',signal:AbortSignal.timeout(8000)});const data=await r.json();if(!r.ok)throw Error(data.error||'Connection lost. Tap Refresh.');return data;}

@@ -60,14 +60,14 @@ const server=http.createServer(async(req,res)=>{
    res.writeHead(200,{'Content-Type':'audio/wav','Cache-Control':'public, max-age=31536000, immutable'});createReadStream(file).pipe(res);return;}
   // Letter Slalom finish-line friends: the child's own toys as private 3D models (FAMILY_ASSETS3D/companions.json maps
   // player -> model ids; nothing is served unless it is listed there and the file exists). Read-only.
-  const buddyMatch=url.pathname.match(/^\/api\/(explorer|beginner|admin)\/companions$/);
+  const buddyMatch=url.pathname.match(/^\/api\/((?:explorer|beginner)(?:_[1-9]\d{0,3})?|admin)\/companions$/);
   if(buddyMatch){if(req.method!=='GET')return send(res,405,{error:'Read only'});return send(res,200,{friends:(await companions(buddyMatch[1])).map(({id,kind,url})=>({id,kind,url}))});}
   const modelMatch=url.pathname.match(/^\/companion\/([a-z0-9-]{1,40})\.(glb|png)$/);
   if(modelMatch){if(!['GET','HEAD'].includes(req.method))return send(res,405,{error:'Read only'});const file=await companionFile(modelMatch[1],modelMatch[2]);if(!file)return send(res,404,{error:'Not found'});
    const {size}=await stat(file);res.writeHead(200,{'Content-Type':modelMatch[2]==='png'?'image/png':'model/gltf-binary','Content-Length':size,'Cache-Control':'public, max-age=3600'});if(req.method==='HEAD')res.end();else createReadStream(file).pipe(res);return;}
-  const breakMatch=url.pathname.match(/^\/api\/(explorer|beginner|admin)\/word-break$/);
+  const breakMatch=url.pathname.match(/^\/api\/((?:explorer|beginner)(?:_[1-9]\d{0,3})?|admin)\/word-break$/);
   if(breakMatch){if(req.method!=='GET')return send(res,405,{error:'Read only'});return send(res,200,await literacy(breakMatch[1]));}
-  const match=url.pathname.match(/^\/api\/(explorer|beginner|admin)(?:\/(action|events))?$/);
+  const match=url.pathname.match(/^\/api\/((?:explorer|beginner)(?:_[1-9]\d{0,3})?|admin)(?:\/(action|events))?$/);
   if(match){const [,id,op]=match;if(req.method==='GET'&&!op)return send(res,200,{profile:await profile(id),version:VERSION});if(req.method!=='POST'||!op)return send(res,405,{error:'Unsupported method'});
    if(!req.headers['content-type']?.startsWith('application/json'))return send(res,415,{error:'JSON required'});let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>100000)return send(res,413,{error:'Request too large'});}let input;try{input=JSON.parse(raw);}catch{return send(res,400,{error:'Invalid JSON'});}
    if(op==='events'){const allowed=['open','button','error','voice','audio','visibility','pause','gameplay','word-break'];const events=Array.isArray(input.events)?input.events.slice(0,25):[];for(const e of events)if(allowed.includes(e.kind))await log({type:'client',player:id,event:{kind:e.kind,name:String(e.name||'').slice(0,150),game:String(e.game||'').slice(0,25),detail:String(e.detail||'').slice(0,300)}});return send(res,200,{ok:true});}

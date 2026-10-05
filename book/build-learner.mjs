@@ -69,7 +69,7 @@ export async function writeLearner(model,dir){
  await mkdir(dir,{recursive:true,mode:0o700});const file=join(dir,model.player+'.json');
  await writeFile(file+'.tmp',JSON.stringify(model,null,1),{mode:0o600});await rename(file+'.tmp',file);return file;
 }
-export function bookPlayers(paths,profiles){return Object.keys(profiles).filter(id=>!paths.config?.players||paths.config.players.some(p=>p.id===id));}
+export function bookPlayers(paths,profiles){return Object.keys(profiles).filter(id=>!id.startsWith('_')&&(!paths.config?.players||profiles[id]?.onboarding||paths.config.players.some(p=>p.id===id)));}
 if(process.argv[1]===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2),arg=k=>{const i=args.indexOf(k);return i>=0?args[i+1]:null;};
  const paths=bookPaths(),profiles=readProfiles(paths),out=arg('--out')||paths.learner;

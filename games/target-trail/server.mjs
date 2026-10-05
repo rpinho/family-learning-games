@@ -26,7 +26,7 @@ const server=http.createServer(async(req,res)=>{
  try{
   if(u.pathname==='/health')return reply(res,200,{ok:true,version:VERSION,diagnostics:{ok:!logError,error:logError}});
   if(['/api/state','/api/action','/api/events','/api/word-break'].includes(u.pathname)){
-   const player=u.searchParams.get('player');if(!Object.hasOwn(PLAYERS,player))return reply(res,400,{error:'Choose a player.'});
+   const player=u.searchParams.get('player');if(!/^(?:(?:beginner|explorer)(?:_[1-9]\d{0,3})?|admin)$/.test(player))return reply(res,400,{error:'Choose a player.'});
    if(u.pathname==='/api/word-break'){if(req.method!=='GET')return reply(res,405,{error:'Read only.'});return reply(res,200,await literacy(player));}
    if(req.method==='GET'&&u.pathname==='/api/state'){queue=queue.catch(()=>{}).then(async()=>{try{reply(res,200,publicState(await load(player)));}catch{reply(res,500,{error:'Could not load. Try Refresh.'});}});return;}
    if(req.method!=='POST'||u.pathname==='/api/state')return reply(res,405,{error:'Unsupported method.'});

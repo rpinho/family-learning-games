@@ -34,7 +34,7 @@ export const STORY_LINES={
  collected:'A letter key! Into our extremely important adventure pockets.',
  finished:'You finished our story! Nine rescues, one excellent team. The sandwiches never stood a chance.'
 };
-export function storyState(p){return p.story||{chapter:0,position:15,collected:0,moves:0,mistakes:0,hints:0,guided:p.id==='beginner',done:false,history:[]};}
+export function storyState(p){return p.story||{chapter:0,position:15,collected:0,moves:0,mistakes:0,hints:0,guided:String(p.id).split('_')[0]==='beginner',done:false,history:[]};}
 export function storyBoard(p){
  const s=storyState(p),chapter=s.chapter,local=chapter%STORY_RESCUES,voyage=Math.floor(chapter/STORY_RESCUES)+1,episode=STORY_CHAPTERS[Math.floor(local/3)],word=episode.words[(local+voyage-1)%3];
  let blocked=[6,8,11,13],positions=[[10,2,12,18,9],[17,9,1,12,5],[12,5,19,2,10]][chapter%3];

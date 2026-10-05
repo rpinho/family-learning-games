@@ -8,7 +8,7 @@ export const PLAYERS={beginner:'Beginner',explorer:'Explorer',admin:'Admin · Al
 export const WORDS={start:'Drag to aim. Lift your finger to shoot.',ready:'Ready for five arrows?',bull:'Bullseye!',done:'Five arrows! Ready for another round?',higher:'Try a little higher.',lower:'Try a little lower.',left:'Try a little left.',right:'Try a little right.',hit:'Nice shot!',move:'This target moves. Take your time.'};
 export const THEMES=[{name:'Golden hour',sky:'#fff0c6',floor:'#f4bb63',ink:'#17455b',accent:'#e76836'},{name:'Blue lagoon',sky:'#d2f7ff',floor:'#67d2d1',ink:'#123f69',accent:'#e75e5e'},{name:'Night lights',sky:'#17254c',floor:'#334b85',ink:'#fff2ca',accent:'#ffd36d'},{name:'Berry bright',sky:'#f9d9f3',floor:'#bb94d9',ink:'#49346d',accent:'#e55683'}];
 export const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-export const freshProfile=id=>({id,name:PLAYERS[id],revision:0,level:id==='explorer'?3:1,rounds:0,shots:0,bullseyes:0,best:0,bestByLevel:{},stars:0,streak:0,struggles:0,round:null,history:[]});
+export const freshProfile=id=>({id,name:PLAYERS[id]||PLAYERS[String(id).split('_')[0]],revision:0,level:String(id).split('_')[0]==='explorer'?3:1,rounds:0,shots:0,bullseyes:0,best:0,bestByLevel:{},stars:0,streak:0,struggles:0,round:null,history:[]});
 export const targetsFor=(r,index,time)=>r.rules===2?movingTargets(r,index,time):[targetAt(targetFor(r,index),time)];
 export function scoreShot(r,index,input){
  if(r.rules!==2){const target=targetAt(targetFor(r,index),input.elapsed);return {x:input.x,y:input.y,target,...scoreAim(input.x,input.y,target)};}
@@ -29,7 +29,7 @@ const fail=(message,status=400)=>{throw Object.assign(Error(message),{status});}
 function startRound(p,reason){
  if(reason&&p.round&&!p.round.done){p.cancelledRounds??=[];p.cancelledRounds.push({id:p.round.id,reason,level:p.round.level,mode:p.round.mode||'aim',shots:p.round.shots.length,score:p.round.score,at:new Date().toISOString()});p.cancelledRounds=p.cancelledRounds.slice(-20);}
  p.learning??=learningDefaults(p.id);
- p.round={id:`r-${p.revision}`,rules:2,motion:3,mode:p.mode||'learn',readingLevel:p.learning.level,sequence:p.rounds,seed:(p.rounds+1)*9013+(p.id==='explorer'?79:31),level:p.level,theme:p.rounds%THEMES.length,shots:[],score:0,done:false};
+ p.round={id:`r-${p.revision}`,rules:2,motion:3,mode:p.mode||'learn',readingLevel:p.learning.level,sequence:p.rounds,seed:(p.rounds+1)*9013+(String(p.id).split('_')[0]==='explorer'?79:31),level:p.level,theme:p.rounds%THEMES.length,shots:[],score:0,done:false};
 }
 export function slingState(p){return p.sling??={rounds:0,stones:0,correct:0,stars:0,best:0,stages:{},round:null,history:[]};}
 // literacy is injected by the server from Letter Quest (read-only); clients cannot supply it.
@@ -37,7 +37,7 @@ function startSling(p,literacy){
  const s=slingState(p),track=SLING_TRACK[p.id]||'mixed',modes=MODES[track],mode=modes[s.rounds%modes.length];
  if(mode==='spelling')s.stages.spelling??=Math.max(1,Math.min(3,literacy?.wordLevel||1));
  const stage=s.stages[mode]||1;
- s.round={id:`s-${p.revision}`,track,mode,stage,seed:(s.rounds+1)*7919+(p.id==='explorer'?53:17),wordOffset:s.rounds*3,shots:[],score:0,correct:0,done:false,
+ s.round={id:`s-${p.revision}`,track,mode,stage,seed:(s.rounds+1)*7919+(String(p.id).split('_')[0]==='explorer'?53:17),wordOffset:s.rounds*3,shots:[],score:0,correct:0,done:false,
   ...(mode==='letters'?{letters:(literacy?.letters||[]).filter(c=>/^[A-Z]$/.test(c)).slice(0,26)}:{}),...(mode==='spelling'?{words:spellingWords(stage)}:{})};
 }
 export function action(p,input){

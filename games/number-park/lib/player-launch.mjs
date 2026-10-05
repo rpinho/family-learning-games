@@ -1,6 +1,6 @@
 export const PLAYER_KEY='number-park-player';
 export const PARENT_PLAYER_KEY='number-park-parent-player';
-const players=['beginner','explorer','admin'];
+const players={includes:id=>/^(?:(?:beginner|explorer)(?:_[1-9]\d{0,3})?|admin)$/.test(id)};
 // Device-local launch preference, not authentication or saved learning progress.
 // Explicit parent links configure a device; installed start_url '/' reuses it.
 // An explicit parent-menu choice also overrides a stale installed shortcut's query.

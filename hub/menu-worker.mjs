@@ -8,7 +8,7 @@ const service=menuOrderService(workerData);
 // Each child's private skills profile (age, child-context priorities, outside-report focus) is re-read on every
 // scan, so a new report counts without a restart. Missing or malformed = neutral.
 async function profileFor(player){
- if(!workerData.skillsDir||!/^[a-z0-9-]{1,40}$/.test(player))return null;
+ if(!workerData.skillsDir||!/^[a-z0-9_-]{1,40}$/.test(player))return null;
  try{return JSON.parse(await readFile(join(workerData.skillsDir,player+'.json'),'utf8'));}catch{return null;}
 }
 parentPort.on('message',async()=>{

@@ -15,7 +15,7 @@ export const EXPLORER_GAMES=[
  COOKIE_GAME,
  {id:'balance',icon:'⚖️',title:'Balance scale',description:'Compare animals and make the numbers balance.'}
 ];
-export const advanced=p=>p.id==='explorer';
+export const advanced=p=>String(p.id).split('_')[0]==='explorer';
 // Only this track's attempts inform its difficulty, independently per skill.
 // Neither old preschool play nor guided tracing can establish mastery here.
 const cookieRow=h=>h.question?.track===EXPLORER_TRACK&&h.question.skill==='cookies';

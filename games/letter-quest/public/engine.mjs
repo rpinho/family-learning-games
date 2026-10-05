@@ -41,7 +41,7 @@ export const KINGDOMS = [
  {name:'Memory Castle',gem:'Emerald',color:'#3fcdb5',icon:'🏰',intro:'Remember a letter. Build a word.'},
  {name:'Reading Rainbow',gem:'Diamond',color:'#a4d7e6',icon:'★',intro:'Small steps have brought you a long way.'}
 ];
-export function freshProfile(id='explorer') {return {id,name:id==='beginner'?'Beginner':id==='demo'?'Explorer':id==='admin'?'Alex':'Explorer',seq:0,xp:0,gems:0,completed:0,inLesson:0,league:0,leagueBase:0,crowns:0,chests:0,skills:{},history:[],settings:{leftHanded:id!=='beginner',sound:true},revision:0};}
+export function freshProfile(id='explorer') {return {id,name:String(id).split('_')[0]==='beginner'?'Beginner':id==='demo'?'Explorer':id==='admin'?'Alex':'Explorer',seq:0,xp:0,gems:0,completed:0,inLesson:0,league:0,leagueBase:0,crowns:0,chests:0,skills:{},history:[],settings:{leftHanded:String(id).split('_')[0]!=='beginner',sound:true},revision:0};}
 export function resetProgress(p){return {...freshProfile(p.id),settings:{...p.settings},revision:p.revision+1,ignoreAttemptsThroughRevision:p.ignoreAttemptsThroughRevision||0};}
 export const FAMILY_NAMES=['Explorer','Beginner','Alex','Ada'];
 export const WORDS=[
@@ -98,7 +98,7 @@ export function skill(p,key){return p.skills[key]||{level:0,streak:0,seen:0,hits
 export function nextChallenge(p){
  const challenge=buildChallenge(p);
  // Invalidate pre-redesign tabs even when the saved revision hasn't changed.
- const guided=challenge.type==='trace'&&p.id==='beginner';
+ const guided=challenge.type==='trace'&&String(p.id).split('_')[0]==='beginner';
  return {...challenge,...(guided?{guided:true,level:0,probe:false}:{}),id:challenge.id+(guided?':rail1:story1':':story1')};
 }
 function matchRules(d){
@@ -138,17 +138,17 @@ function buildChallenge(p){
   const char=p.retryTrace;
   return {id:`${p.revision}:${p.seq}`,type:'trace',char,level:skill(p,`trace:${char}`).level,paths:GLYPHS[char],retry:true};
  }
- if(p.id==='explorer'&&!p.foundation?.reviewComplete){const q=foundationQuestion(p);return {...q,id:`foundation1:${p.revision}:${p.seq}`,type:'gap',word:q.word.toUpperCase(),blank:q.position,char:q.answer,focus:'uppercase-cvc',level:Math.min(2,q.stage-1)};}
- const advanced=['explorer','beginner'].includes(p.id)&&p.seq>=13;
- const hard=p.id==='explorer'&&advanced;
+ if(String(p.id).split('_')[0]==='explorer'&&!p.foundation?.reviewComplete){const q=foundationQuestion(p);return {...q,id:`foundation1:${p.revision}:${p.seq}`,type:'gap',word:q.word.toUpperCase(),blank:q.position,char:q.answer,focus:'uppercase-cvc',level:Math.min(2,q.stage-1)};}
+ const advanced=/^(?:beginner|explorer)(?:_[1-9]\d{0,3})?$/.test(p.id)&&p.seq>=13;
+ const hard=String(p.id).split('_')[0]==='explorer'&&advanced;
  const r=rng(p.seq*7919+p.completed*101+37);
  const type=p.seq>0 && p.seq%13===0?'name':advanced?['find','spell','trace','gap','sequence','trace'][p.seq%6]:p.seq%3===0?'find':'trace';
  if(type==='spell'||type==='gap'){
   const recent=p.history.filter(h=>h.key.startsWith(type+':')).slice(-4),independent=recent.filter(h=>h.ok&&!h.helped).length;
-  const tier=p.id==='beginner'?1:recent.length>=3?(independent>=3?3:independent<=1?1:2):hard?2:1;
+  const tier=String(p.id).split('_')[0]==='beginner'?1:recent.length>=3?(independent>=3?3:independent<=1?1:2):hard?2:1;
   const pool=shuffle(WORDS.filter(w=>w.tier===tier),r).sort((a,b)=>skill(p,`${type}:${a.word}`).seen-skill(p,`${type}:${b.word}`).seen);
   const {word,picture}=pool[0],blank=Math.floor(r()*word.length),char=word[blank];
-  const gentle=p.id==='beginner',bank=shuffle([...new Set([...word,...shuffle([...alphabet.toLowerCase()].filter(c=>!word.includes(c)),r).slice(0,2)])],r);
+  const gentle=String(p.id).split('_')[0]==='beginner',bank=shuffle([...new Set([...word,...shuffle([...alphabet.toLowerCase()].filter(c=>!word.includes(c)),r).slice(0,2)])],r);
   return {id:`variety6:${p.revision}:${p.seq}`,type,word,picture,blank,char,level:gentle?0:2,memory:!gentle,probe:!gentle,reusable:type==='spell',options:type==='spell'?gentle?bank:[...'abcdefghijklmnopqrstuvwxyz']:shuffle([char,...shuffle([...alphabet.toLowerCase()].filter(c=>c!==char),r).slice(0,gentle?1:3)],r)};
  }
  if(type==='sequence'){
@@ -166,12 +166,12 @@ function buildChallenge(p){
  }
  const ranked=shuffle(chars,r).map(c=>({c,s:skill(p,`${type}:${c}`)})).sort((a,b)=>(a.s.level*4+a.s.seen*.5-Math.min(20,p.seq-a.s.last)*.2)-(b.s.level*4+b.s.seen*.5-Math.min(20,p.seq-b.s.last)*.2));
  const char=ranked[0].c,s=ranked[0].s;
- const level=hard&&type==='trace'?Math.max(2,s.level):advanced&&type==='find'&&s.seen===0?(p.id==='beginner'?1:2):s.level;
+ const level=hard&&type==='trace'?Math.max(2,s.level):advanced&&type==='find'&&s.seen===0?(String(p.id).split('_')[0]==='beginner'?1:2):s.level;
  const all=Object.keys(GLYPHS).filter(c=>c!==char && (/^[a-z]$/.test(char)?/^[a-z]$/:/^[0-9]$/.test(char)?/^[0-9]$/:/^[A-Z]$/).test(c));
  const found={id:`${advanced?'variety6:':''}${p.revision}:${p.seq}`,type,char,level,probe:advanced&&(type==='find'||hard&&type==='trace'),options:shuffle([char,...shuffle(all,r).slice(0,level>=2?3:1)],r),paths:GLYPHS[char]};
  // look-alike letters (b/d/p, M/N/W). Pattern borrowed from Duolingo ABC's
  // "tap the letter every time you see it" item.
- if(type==='find'&&p.id==='beginner'&&(p.seq*7+p.completed)%2===0)return {...found,id:`${found.id}:spot1`,spot:true,grid:spotGrid(char,r)};
+ if(type==='find'&&String(p.id).split('_')[0]==='beginner'&&(p.seq*7+p.completed)%2===0)return {...found,id:`${found.id}:spot1`,spot:true,grid:spotGrid(char,r)};
  return found;
 }
 const CONFUSABLE={b:'dpqh',d:'bpqa',p:'qbd',q:'pgd',m:'nwh',n:'mhu',u:'nvy',w:'mvu',v:'wyu',i:'ljt',l:'itj',t:'lif',e:'cao',c:'eo',a:'odg',o:'acd',g:'qjy',h:'nbk',j:'ig',k:'hx',f:'tl',r:'nv',s:'zc',x:'kz',y:'vgj',z:'sx',
@@ -250,7 +250,7 @@ function assessTraceModel(paths,strokes,level=0){
 }
 export function applyAttempt(p,challenge,payload){
  // Assistance is determined on the server; clients cannot claim independent
- const guided=challenge.type==='trace'&&p.id==='beginner';
+ const guided=challenge.type==='trace'&&String(p.id).split('_')[0]==='beginner';
  if(guided)payload={...payload,helped:true};
  if(wasHinted(p,`lesson:${challenge.id}`))payload={...payload,helped:true};
  if(challenge.duel&&p.duel?.hintedRound===p.duel?.round)payload={...payload,helped:true};

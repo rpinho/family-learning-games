@@ -32,5 +32,5 @@ export function drawingIdeasFor(art){
  const group=GROUPS[recent];
  return [...IDEAS.filter(x=>x[0]===group),...IDEAS.filter(x=>x[0]!==group)].map(x=>x[1]);
 }
-export const drawingModes=player=>player==='beginner'?['trace','shapes']:['trace','shapes','missions'];
+export const drawingModes=player=>String(player).split('_')[0]==='beginner'?['trace','shapes']:['trace','shapes','missions'];
 export const initialDrawingMode=()=> 'trace';

@@ -8,7 +8,7 @@ import Slalom,{SlalomStart} from './Slalom';
 import {CoachVoice} from '../lib/voice.mjs';
 import {ArcadeAudio,audioPreferences} from '../lib/arcade-audio.mjs';
 import {wordBreak,fetchWordLevel,DEFAULT_TRACK} from '../lib/word-break.mjs';
-const PLAYERS=['explorer','beginner','admin'];
+const PLAYERS={includes:id=>/^(?:(?:beginner|explorer)(?:_[1-9]\d{0,3})?|admin)$/.test(id)};
 function Boot({text}){return <section className="slalom-boot" aria-live="polite"><div className="slalom-boot-hill" aria-hidden="true"><span>⛷️</span><span>🏂</span></div><h1>Letter Slalom</h1><p>{text}</p></section>;}
 export default function SlalomApp(){
  const [p,setP]=useState(null),[id,setId]=useState(null),[phase,setPhase]=useState('boot'),[busy,setBusy]=useState(false),[paused,setPaused]=useState(false),[error,setError]=useState('');

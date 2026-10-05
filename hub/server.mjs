@@ -1,4 +1,6 @@
 import http from 'node:http';
+import {bookPaths,readProfiles} from '../book/paths.mjs';
+import {onboardingService} from './onboarding-service.mjs';
 import {createHash} from 'node:crypto';
 import {readFile,writeFile,rename,appendFile,mkdir} from 'node:fs/promises';
 import {readFileSync,writeFileSync,renameSync} from 'node:fs';
@@ -27,6 +29,17 @@ const config=process.env.FAMILY_CONFIG?JSON.parse(await readFile(process.env.FAM
 if(!config.players?.length||config.players.some(p=>!/^\w{1,24}$/.test(p.id)||typeof p.name!=='string')||ids.some(id=>!Number.isInteger(config.games[id])||config.games[id]<1024||config.games[id]>65535))throw Error('Invalid local hub configuration');
 // An immutable release overlay can hold reviewed household home choices without changing saves.
 let homeShortcuts={};try{homeShortcuts=JSON.parse(await readFile(join(here,'home-shortcuts.json'),'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}
+const deploymentRoot=process.env.FAMILY_DEPLOY_DIR?resolve(process.env.FAMILY_DEPLOY_DIR,'..'):null;
+const staging=process.env.FAMILY_CHANNEL==='staging';
+const profilePaths=bookPaths({...process.env,FAMILY_DATA:data,FAMILY_DEPLOY_ROOT:process.env.FAMILY_DEPLOY_ROOT||deploymentRoot||data,
+ FAMILY_BOOK:process.env.FAMILY_BOOK||(deploymentRoot?join(deploymentRoot,...(staging?['staging-data','book']:['book'])):undefined),
+ FAMILY_LEARNER:process.env.FAMILY_LEARNER||(deploymentRoot?join(deploymentRoot,...(staging?['staging-data','learner']:['learner'])):undefined)});
+const basePlayers=structuredClone(config.players);
+function applyProfiles(profiles){
+ const children=Object.entries(profiles).filter(([id,p])=>/^(?:beginner|explorer)(?:_[1-9]\d{0,3})?$/.test(id)&&p?.onboarding).map(([id,p])=>({...basePlayers.find(x=>x.id===id)||basePlayers.find(x=>x.id===id.split('_')[0]),id,name:p.name,level:p.level==='reader'?3:1,world:p.level==='reader'?'castle':'small'}));
+ config.players.splice(0,config.players.length,...basePlayers.filter(p=>!children.some(c=>c.id===p.id)&&(!children.length||!['beginner','explorer'].includes(p.id))),...children);
+}
+applyProfiles(readProfiles(profilePaths));
 const players=config.players.map(p=>p.id);
 // Only this machine's own names and addresses. The network interfaces are re-read every few seconds, so a new
 // address (a new router, a VPN) works without a restart. FAMILY_EXTRA_HOSTS (comma or space separated) adds
@@ -61,26 +74,34 @@ const releaseOf=game=>game==='hub'?HUB_RELEASE:String(currentReleases()[game]||'
 // skill evidence). The reasons go to the diagnostics log, never to the page.
 const shortcutsFor=p=>releasedShortcuts(Array.isArray(homeShortcuts[p.id])?homeShortcuts[p.id]:Array.isArray(p.homeShortcuts)?p.homeShortcuts:[],SHORTCUTS,deployDir);
 const newGamesFor=p=>homeShortcuts.newGames?.[p.id]||{};
-const homeSettings=Object.fromEntries(config.players.map(p=>[p.id,{shortcuts:shortcutsFor(p),newGames:newGamesFor(p),nudges:Array.isArray(homeShortcuts.nudge?.[p.id])?homeShortcuts.nudge[p.id]:[]}]));
+const homeSettings=()=>Object.fromEntries(config.players.map(p=>[p.id,{shortcuts:shortcutsFor(p),newGames:newGamesFor(p),nudges:Array.isArray(homeShortcuts.nudge?.[p.id])?homeShortcuts.nudge[p.id]:[]}]));
 const menuTimeZone=process.env.FAMILY_TZ||Intl.DateTimeFormat().resolvedOptions().timeZone;
 // Analytic nudges read an optional private skills profile at <skills dir>/<player>.json.
 // The profile stays outside the release and is re-read on each scan; missing = neutral.
-const learnerDir=process.env.FAMILY_LEARNER||(deployDir?join(deployDir,'..',channel==='staging'?join('staging-data','learner'):'learner'):join(data,'learner'));
+const learnerDir=process.env.FAMILY_LEARNER||(deployDir?join(deployDir,'..',channel==='staging'?join('staging-data','learner'):'learner'):profilePaths.learner);
 const skillsDir=process.env.FAMILY_SKILLS||(deployDir?join(deployDir,'..','skills-focus'):join(data,'skills-focus'));
-const menu=cachedMenuOrderService({players,home:homeSettings,timeZone:menuTimeZone,skillsDir,onHome:(player,h)=>void log({type:'menu_home',player,day:h.day,order:h.order,nudge:h.nudge,forgotten:h.forgotten,why:h.why,skills:h.skills,analytics:h.analytics}),onError:detail=>void log({type:'menu_refresh_error',detail}),sources:{...Object.fromEntries(ids.map(id=>[id,join(config.gameData?.[id]||join(data,'..',id),'logs')])),hub:join(data,'logs')}});
+const makeMenu=()=>cachedMenuOrderService({players,home:homeSettings(),timeZone:menuTimeZone,skillsDir,onHome:(player,h)=>void log({type:'menu_home',player,day:h.day,order:h.order,nudge:h.nudge,forgotten:h.forgotten,why:h.why,skills:h.skills,analytics:h.analytics}),onError:detail=>void log({type:'menu_refresh_error',detail}),sources:{...Object.fromEntries(ids.map(id=>[id,join(config.gameData?.[id]||join(data,'..',id),'logs')])),hub:join(data,'logs')}});
+let menu=makeMenu();
 // The Book: chapters are generated nightly into the deployment's book directory (read-only here).
 // Staging reads its own copy (staging-data/book), like its copy of the saves.
-const bookDir=process.env.FAMILY_BOOK||(deployDir?join(deployDir,'..',channel==='staging'?join('staging-data','book'):'book'):join(data,'book'));
+const bookDir=process.env.FAMILY_BOOK||(deployDir?join(deployDir,'..',channel==='staging'?join('staging-data','book'):'book'):profilePaths.book);
 const timeZone=process.env.FAMILY_TZ||Intl.DateTimeFormat().resolvedOptions().timeZone;
 // Private 3D toys (GLB) for the living book, next to the deployment (never in the repository).
 const assets3d=process.env.FAMILY_ASSETS3D||(deployDir?join(deployDir,'..','assets3d'):join(data,'assets3d'));
 const review=bookReviewService({bookDir,config,timeZone});
-const book=bookService({data,bookDir,players,config,log,timeZone,assets3d});
-const world=worldService({bookDir,config,book,authorized:review.authorized});
+let book=bookService({data,bookDir,players,config,log,timeZone,assets3d});
+let world=worldService({bookDir,config,book,authorized:review.authorized});
 // Day notes: the grown-ups' page (/daynotes) about each child's day, woven into that night's chapter (book/daynotes.mjs).
-const daynotes=dayNotesService({dir:dayNotesStore({deployDir,channel,bookDir}),config,timeZone,log});
+let daynotes=dayNotesService({dir:dayNotesStore({deployDir,channel,bookDir}),config,timeZone,log});
 const listen=listenService({settings:listenSettings({deployDir}),players,log});
-const chess=chessService({data,players,log,settingsFor:Object.fromEntries(config.players.map(p=>[p.id,{coachChatter:process.env.FAMILY_COACH_CHATTER,...(p.chess||{})}]))});
+const chessSettings=Object.fromEntries(config.players.map(p=>[p.id,{coachChatter:process.env.FAMILY_COACH_CHATTER,...(p.chess||{})}]));
+const chess=chessService({data,players,log,settingsFor:chessSettings});
+const onboarding=onboardingService({paths:{...profilePaths,book:bookDir,profiles:join(bookDir,'profiles.json'),cast:join(bookDir,'cast.json'),learner:learnerDir},authorized:review.authorized,onSave:async profiles=>{
+ applyProfiles(profiles);players.splice(0,players.length,...config.players.map(p=>p.id));
+ menu.close();menu=makeMenu();Object.assign(chessSettings,Object.fromEntries(config.players.map(p=>[p.id,{coachChatter:process.env.FAMILY_COACH_CHATTER,...(p.chess||{})}])));
+ book=bookService({data,bookDir,players,config,log,timeZone,assets3d});world=worldService({bookDir,config,book,authorized:review.authorized});
+ daynotes=dayNotesService({dir:dayNotesStore({deployDir,channel,bookDir}),config,timeZone,log});
+}});
 // A hub preview: the whole request goes to the preview's own hub (same path, same body; the answer comes back as is).
 function forward(req,res,port){const headers={...req.headers};
  const up=http.request({host:'127.0.0.1',port,path:req.url,method:req.method,headers,timeout:30000},r=>{res.writeHead(r.statusCode,r.headers);r.pipe(res);});
@@ -101,7 +122,7 @@ const server=http.createServer(async(req,res)=>{
   if(pv?.kind==='hub')return forward(req,res,pv.preview.port);
   const match=u.pathname.match(/^\/g\/([a-z-]+)\/(\w+)\/(.*)$/);
   if(match){const [,game,player,path]=match;
-   if(pv?.kind==='game'&&ids.includes(game)&&players.includes(player))return proxy(req,res,{game,player,players,port:pv.preview.port,prefix:`/g/${game}/${player}/`,path:'/'+path+(u.search||''),releases:{hub:HUB_RELEASE,game:'preview:'+pv.preview.name}},log);if(!ids.includes(game)||!players.includes(player))return send(res,404,{error:'Unknown game or player.'});if(!['GET','HEAD','OPTIONS'].includes(req.method))touch(game);return proxy(req,res,{game,player,players,port:config.games[game],prefix:`/g/${game}/${player}/`,path:'/'+path+u.search,releases:{hub:HUB_RELEASE,game:releaseOf(game)}},log);}
+   if(pv?.kind==='game'&&ids.includes(game)&&players.includes(player))return proxy(req,res,{game,player,players,playerName:config.players.find(p=>p.id===player)?.name,port:pv.preview.port,prefix:`/g/${game}/${player}/`,path:'/'+path+(u.search||''),releases:{hub:HUB_RELEASE,game:'preview:'+pv.preview.name}},log);if(!ids.includes(game)||!players.includes(player))return send(res,404,{error:'Unknown game or player.'});if(!['GET','HEAD','OPTIONS'].includes(req.method))touch(game);return proxy(req,res,{game,player,players,playerName:config.players.find(p=>p.id===player)?.name,port:config.games[game],prefix:`/g/${game}/${player}/`,path:'/'+path+u.search,releases:{hub:HUB_RELEASE,game:releaseOf(game)}},log);}
   // Some SSR runtimes construct import paths at runtime from "/" + asset name.
   // Keep their router separators intact and scope those requests using the
   // same-origin embedding document/module, never a caller-selected upstream.
@@ -111,6 +132,7 @@ const server=http.createServer(async(req,res)=>{
   }
   if(u.pathname==='/__deploy/version'&&req.method==='GET'){const g=u.searchParams.get('game'),idle=Number(u.searchParams.get('idle'));if(Number.isFinite(idle)&&idle>=0&&idle<120)touch(g,Date.now()-idle*1000);const games=Object.fromEntries(ids.map(id=>[id,releaseOf(id)]));return send(res,200,{hub:HUB_RELEASE,games,channel});}
   if(u.pathname.startsWith('/api/')&&!['GET','HEAD'].includes(req.method))touch('hub');
+  if(u.pathname==='/api/onboarding'||u.pathname.startsWith('/onboarding')){const handled=await onboarding.handle(req,res,u);if(handled!==false)return;}
   if(u.pathname==='/api/chess')return await chess.handle(req,res,u);
   if(u.pathname.startsWith('/api/listen')){const handled=await listen.handle(req,res,u);if(handled!==false)return;}
   if(u.pathname==='/pond/companions.json'&&req.method==='GET'){try{return send(res,200,JSON.parse(await readFile(join(data,'pond-companions.json'),'utf8')));}catch{return send(res,200,{});}}
@@ -121,7 +143,7 @@ const server=http.createServer(async(req,res)=>{
   if(u.pathname.startsWith('/api/book')||u.pathname.startsWith('/book-voice/')||u.pathname.startsWith('/book-art/')||u.pathname.startsWith('/book-3d/')){const handled=await book.handle(req,res,u);if(handled!==false)return;}
   if(u.pathname==='/health')return send(res,200,{ok:true,version:HUB_VERSION,release:HUB_RELEASE||null,channel:channel||null,physicsVersion:VERSION,diagnostics:{ok:!logError,error:logError}});
   if(/^\/(?:voice|chess-voice)\/(manifest\.json|[a-f0-9]{16}\.wav)$/.test(u.pathname)&&req.method==='GET'){try{const bytes=await readFile(join(data,u.pathname.slice(1)));res.writeHead(200,{'Content-Type':u.pathname.endsWith('.wav')?'audio/wav':'application/json','Content-Length':bytes.length,...(u.pathname.endsWith('.wav')?{'Cache-Control':'private, max-age=31536000, immutable'}:{})});res.end(bytes);}catch(e){if(e.code==='ENOENT')send(res,404,{error:'Use device narration.'});else throw e;}return;}
-  if(u.pathname==='/api/config'&&req.method==='GET')return send(res,200,{players:await Promise.all(config.players.map(async p=>({...p,world:await world.preview(p.id),worldQuest:await world.available(p.id),homeShortcuts:shortcutsFor(p),homeNewGames:newGamesFor(p)}))),menuTimeZone,version:HUB_VERSION,release:HUB_RELEASE});
+  if(u.pathname==='/api/config'&&req.method==='GET')return send(res,200,{players:await Promise.all(config.players.map(async p=>({...p,world:await world.preview(p.id),worldQuest:await world.available(p.id),homeShortcuts:shortcutsFor(p),homeNewGames:newGamesFor(p)}))),onboardingRequired:(await onboarding.store.read()).required,menuTimeZone,version:HUB_VERSION,release:HUB_RELEASE});
   if(u.pathname.startsWith('/api/')){
    const player=u.searchParams.get('player');if(!players.includes(player))return send(res,400,{error:'Choose a player.'});
    // The shared end-of-game word break follows each child's Letter Quest progress (read only).

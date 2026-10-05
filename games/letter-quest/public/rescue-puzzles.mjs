@@ -31,7 +31,7 @@ const dirs=[[0,-1],[1,0],[0,1],[-1,0]];
 function rng(seed){let x=seed>>>0;return()=>{x=(Math.imul(x,1664525)+1013904223)>>>0;return x/4294967296;};}
 function hash(text){let h=2166136261;for(const c of text)h=Math.imul(h^c.charCodeAt(0),16777619);return h>>>0;}
 export function puzzleTier(p,type,history=p.rescue?.history||[]){
- const base=p.id==='beginner'?1:2,cap=3;
+ const base=String(p.id).split('_')[0]==='beginner'?1:2,cap=3;
  const runs=history.filter(h=>h.engine===2&&h.type===type),last=runs.at(-1);
  if(!last)return base;
  if(last.helpCount>=3||last.blocked>=8)return Math.max(1,last.tier-1);

@@ -6,7 +6,7 @@
 // voice clips exist ahead of time.
 export const HERO='Explorer';
 export const STORY_OPENING=`${HERO} the baker set off on a journey.`;
-export const tellsStory=p=>p.id==='explorer';
+export const tellsStory=p=>String(p.id).split('_')[0]==='explorer';
 export const PLACES=[
  {icon:'🏠',where:'In the little bakery'},
  {icon:'🧺',where:'At the village market'},

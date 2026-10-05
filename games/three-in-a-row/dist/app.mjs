@@ -2,7 +2,7 @@ import {calmSound} from '/calm-sound.mjs';
 const calm=calmSound(new URL('./water.m4a',import.meta.url).href);
 import {PLAYERS,LEVELS,WORDS,youMark,other,forkRoutes} from '/engine.mjs';
 import {wordBreak,fetchWordLevel,DEFAULT_TRACK,onceThisSession,IDLE_REPEAT_MS,IDLE_REPEATS,mediaSettled} from '/word-break.mjs';
-const $=id=>document.getElementById(id),valid=id=>Object.hasOwn(PLAYERS,id);let wbLevel=null,breaking=false;
+const $=id=>document.getElementById(id),valid=id=>/^(?:(?:beginner|explorer)(?:_[1-9]\d{0,3})?|admin)$/.test(id);let wbLevel=null,breaking=false;
 let player=null,p=null,busy=false,botTimer,voiceEpoch=0,audio,manifest,sound=true,lastSpeech='',parentSum=15;
 try{const requested=new URL(location.href).searchParams.get('player'),saved=localStorage.getItem('three-player');player=valid(requested)?requested:valid(saved)?saved:null;sound=localStorage.getItem('three-sound')!=='off';}catch{}
 document.addEventListener('pointerdown',()=>{calm.setEnabled(sound);calm.start();});

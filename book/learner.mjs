@@ -178,7 +178,8 @@ export function buildLearner({player,name,profile={},now=Date.now(),saves={},wor
  return {
   schema:LEARNER_SCHEMA,player,name,age:num(profile.age)||null,builtAt:new Date(now).toISOString(),
   sources:Object.fromEntries(GAMES.map(g=>[g,!!saves[g]])),
-  interests:uniq([...list(profile.interests),...favourites]),
+  onboarding:profile.onboarding?{startingSkills:profile.startingSkills,placement:profile.placement}:null,
+  interests:uniq([...list(profile.interests),...list(profile.favourites),...favourites]),
   companions:list(profile.companions),
   literacy:{track:lit.track,letters:lit.letters,lower:lit.lower,learning:lit.learning,lettersMastered,
    ...assessment,sentenceLevel:1,

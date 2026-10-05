@@ -80,7 +80,7 @@ const server=http.createServer(async(req,res)=>{
    if(url.pathname.endsWith('.wav'))res.setHeader('Cache-Control','public, max-age=31536000, immutable');
    res.setHeader('Content-Length',bytes.length);res.end(req.method==='HEAD'?undefined:bytes);return;
   }
-  const match=url.pathname.match(/^\/api\/(explorer|beginner|admin)\/(state|attempt|settings|chest|promote|advance|reset|skip|duel|adventure|quest|hint|story|maze|soccer|reading|rescue|rest|summary)$/);
+  const match=url.pathname.match(/^\/api\/((?:explorer|beginner)(?:_[1-9]\d{0,3})?|admin)\/(state|attempt|settings|chest|promote|advance|reset|skip|duel|adventure|quest|hint|story|maze|soccer|reading|rescue|rest|summary)$/);
   if(match){
    const [,id,action]=match;
    if(action==='summary'){

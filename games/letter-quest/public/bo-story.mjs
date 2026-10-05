@@ -3,8 +3,8 @@
 // the next stop of the walk, and the letter he actually practised. It only
 // ever grows and never gates anything. Finite lines, so voice clips exist.
 import {lessonRecap} from './recap.mjs';
-export const tellsBoStory=id=>id==='beginner'||id==='admin';
-const team=id=>id==='beginner'?'Beginner and Loona':'Loona';
+export const tellsBoStory=id=>String(id).split('_')[0]==='beginner'||id==='admin';
+const team=id=>String(id).split('_')[0]==='beginner'?'Beginner and Loona':'Loona';
 export const BO_PLACES=[
  {icon:'🏡',walk:'set off from the cozy doghouse'},
  {icon:'🌳',walk:'walked into the berry forest'},
@@ -16,7 +16,7 @@ export const BO_PLACES=[
  {icon:'⭐',walk:'watched the stars from the hill'}
 ];
 export const placeLine=(id,place)=>`${team(id)} ${BO_PLACES[place].walk}.`;
-export const letterLine=(id,letter)=>`${id==='beginner'?'They':'Loona'} found the letter ${letter}.`;
+export const letterLine=(id,letter)=>`${String(id).split('_')[0]==='beginner'?'They':'Loona'} found the letter ${letter}.`;
 // A beat told with today's names (older saves stored lines that said Bo).
 export const beatLines=(id,b)=>[placeLine(id,b.place),...(b.letter?[letterLine(id,b.letter)]:[])];
 // Called when a lesson completes (after its last attempt is in history).

@@ -86,7 +86,7 @@ export default function Home(){
   void openActivity(game,p,start).then(ok=>{if(ok){setOpen(true);event('open','activity_deep_link',game);}else activityOpened.current=null;});
  },[p,player,initialized,busy,error]);
  const start=async(game:string)=>{stopVoice();const data=await act({kind:'start',game});if(data)setOpen(true);return data;};
- const s=p?.session,q=s?.question,older=player==='explorer';
+ const s=p?.session,q=s?.question,older=String(player).split('_')[0]==='explorer';
  useEffect(()=>{if(!open||tab!=='play')return;const frame=requestAnimationFrame(()=>document.querySelector('.playboard')?.scrollIntoView({block:'start'}));return()=>cancelAnimationFrame(frame);},[open,tab,q?.kind==='balance'?q?.id:null]);
  const [visible,setVisible]=useState(true);
  const advanceState=useRef<any>(null);

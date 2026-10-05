@@ -5,7 +5,7 @@
 // Every sentence comes from a finite list so the voice clips exist in advance.
 export const LESSON_SIZE=5;
 export const FEEDER={name:'Loona',icon:'🐶',treat:'🦴'};
-export const feeds=id=>id==='beginner'||id==='admin';
+export const feeds=id=>String(id).split('_')[0]==='beginner'||id==='admin';
 const plural=(n,one,many=one+'s')=>`${n} ${n===1?one:many}`;
 const kind=key=>/^(find|sequence):/.test(key)?'found':key.startsWith('trace:')?'traced':'words';
 // A letter grid ("tap every D") feeds one treat per letter found.

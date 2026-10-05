@@ -4,7 +4,7 @@ import {randomUUID} from 'node:crypto';
 import {createWorldModel} from './public/world-model.mjs';
 export function worldStore({bookDir,players,definitions={}}){
  const dir=join(bookDir,'world');let queue=Promise.resolve();
- const file=(player,preview)=>{if(!players.includes(player)||!/^\w{1,24}$/.test(player))throw Object.assign(Error('Choose a player.'),{status:400});if(typeof preview==='string'&&!/^[a-z0-9-]{1,90}$/.test(preview))throw Error('Invalid preview');return join(dir,player+(preview==='published'?'.published':typeof preview==='string'&&preview.startsWith('future-')?'.preview-'+preview.slice(7):typeof preview==='string'?'.review-'+preview:preview?'.preview':'')+'.json');};
+ const file=(player,preview)=>{if(!players.includes(player)||!/^\w{1,24}$/.test(player))throw Object.assign(Error('Choose a player.'),{status:400});if(typeof preview==='string'&&!/^[a-z0-9_-]{1,90}$/.test(preview))throw Error('Invalid preview');return join(dir,player+(preview==='published'?'.published':typeof preview==='string'&&preview.startsWith('future-')?'.preview-'+preview.slice(7):typeof preview==='string'?'.review-'+preview:preview?'.preview':'')+'.json');};
  // Copy the old preview verbatim once. It remains a private backup; a canonical save always wins.
  async function migrate(player){
   const target=file(player,false);

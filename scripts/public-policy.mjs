@@ -11,9 +11,9 @@ if(local.replacements&&!local.replacements.every(p=>Array.isArray(p)&&p.length==
 const common=[["6d616e2077697468207468652079656c6c6f7720686174", "grown-up"], ["636f6f6b69652d6d6f6e73746572", "snack-friend"], ["636f6f6b6965206d6f6e73746572", "Snack Friend"], ["6269672d70696b61636875", "pip"], ["63686172697a617264", "dragon"], ["706f6b656d6f6e", "forest-friend"], ["706f6bc3a96d6f6e", "forest-friend"], ["70696b61636875", "pip"], ["67656f726765", "bo"], ["626c756579", "pip"], ["70696b61", "Pip"]].map(([a,b])=>[decode(a),b]);
 export const replacements=[...common,...(local.replacements||[])].sort((a,b)=>b[0].length-a[0].length);
 export const denied=replacements.filter(([a])=>a!==decode('70696b61')).map(([a])=>a).concat([decode('7461696c7363616c65')]);
-export const privatePath=/(^|\/)(?:node_modules|\.data|logs|\.openai|\.env[^/]*|voice|voices|__pycache__|profiles|chapters|day-notes|learner-data)(?:\/|$)|\.(?:jsonl|pem|key|mov|pdf|map|pyc|glb)$/i;
+export const privatePath=/(^|\/)(?:node_modules|\.data|logs|\.openai|\.env[^/]*|voice|voices|__pycache__|profiles|chapters|day-notes|learner-data|learner|photos)(?:\/|$)|\.(?:jsonl|pem|key|mov|pdf|map|pyc|glb)$/i;
 export function privacyIssues(file,bytes){
- const issues=[];if(privatePath.test(file))issues.push(file+': forbidden runtime/private file');
+ const issues=[];if(privatePath.test(file)||/(?:^|\/)(?:profiles|cast|local-references)\.json$/i.test(file))issues.push(file+': forbidden runtime/private file');
  const text=bytes.toString('utf8'),hay=(file+'\n'+text).toLowerCase();
  if(denied.some(term=>hay.includes(term)))issues.push(file+': forbidden identity or character term');
  for(const [pattern,label] of [

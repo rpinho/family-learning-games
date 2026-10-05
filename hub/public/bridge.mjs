@@ -1,9 +1,12 @@
 // Classic script injected before each app's own scripts. Preferences are scoped
 // to app + player; authoritative progress stays in the original app servers.
 (() => {
-  const { game, player, prefix, hubRelease = "", gameRelease = "" } =
+  const { game, player, playerName = player, prefix, hubRelease = "", gameRelease = "" } =
     document.currentScript.dataset;
   document.documentElement.dataset.familyGame = game;
+  // Old games keep their preset selectors; give the mounted child's id an option too.
+  function childOption(){if(!/^(?:beginner|explorer)_[1-9]\d{0,3}$/.test(player))return;for(const select of document.querySelectorAll('select'))if([...select.options].some(o=>o.value==='admin')&&[...select.options].some(o=>o.value==='beginner'||o.value==='explorer')&&![...select.options].some(o=>o.value===player)){const option=document.createElement('option');option.value=player;option.textContent=playerName;select.append(option);select.value=player;}}
+  new MutationObserver(childOption).observe(document.documentElement,{childList:true,subtree:true});
   const keys = new Set([
     "letter-quest-player",
     "word-arcade-player",

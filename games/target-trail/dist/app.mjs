@@ -5,7 +5,7 @@ let player=null,p=null,busy=false,aim={x:400,y:240},drag=null,flight=null,feedba
 let changing=false,sceneEpoch=0,pendingShot=null,wbLevel=null,midBreakDone=false;const breakAt=2+Math.floor(Math.random()*2);
 // Word breaks: one mid-way through the first round of a visit, then one after every round.
 async function checkpoint(reason){try{wbLevel??=await fetchWordLevel('/api/word-break?player='+player,DEFAULT_TRACK[player]);stopVoice();drag=null;await wordBreak({player,level:wbLevel,speak:(line,essential)=>speak(line,false,true,essential),effects:()=>sound,log:r=>log('word-break',JSON.stringify(r)),reason});}catch(e){log('word-break-error',e.message);}}
-const valid=id=>Object.hasOwn(PLAYERS,id),wait=ms=>new Promise(r=>setTimeout(r,ms));
+const valid=id=>/^(?:(?:beginner|explorer)(?:_[1-9]\d{0,3})?|admin)$/.test(id),wait=ms=>new Promise(r=>setTimeout(r,ms));
 try{const id=new URL(location.href).searchParams.get('player'),saved=localStorage.getItem('target-player');player=valid(id)?id:valid(saved)?saved:null;sound=localStorage.getItem('target-sound')!=='off';}catch{}
 function log(kind,detail){if(player)void fetch('/api/events?player='+player,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind,detail})}).catch(()=>{});}
 async function request(path,input){const r=await fetch('/api/'+path+'?player='+player,{method:input?'POST':'GET',headers:input?{'Content-Type':'application/json'}:{},body:input?JSON.stringify(input):undefined,cache:'no-store',signal:AbortSignal.timeout(8000)});const data=await r.json();if(!r.ok)throw Error(data.error||'Connection lost. Tap Refresh.');return data;}

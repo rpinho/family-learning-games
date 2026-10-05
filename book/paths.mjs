@@ -10,7 +10,7 @@ import {join,resolve} from 'node:path';
 import {homedir} from 'node:os';
 const exp=p=>String(p).replace(/^~(?=\/|$)/,homedir());
 export function bookPaths(env=process.env){
- const root=resolve(exp(env.FAMILY_DEPLOY_ROOT||join(homedir(),'.local/share/family-games')));
+ const root=resolve(exp(env.FAMILY_DEPLOY_ROOT||(env.FAMILY_DATA?exp(env.FAMILY_DATA):join(homedir(),'.local/share/family-games'))));
  let deploy=null;try{deploy=JSON.parse(readFileSync(join(root,'deploy.json'),'utf8'));}catch{}
  const data={};
  if(deploy?.games)for(const [id,g] of Object.entries(deploy.games))data[id]=exp(g.data);
@@ -18,7 +18,8 @@ export function bookPaths(env=process.env){
  const configFile=env.FAMILY_CONFIG||(data.hub&&join(data.hub,'config.json'));
  try{if(configFile)config=JSON.parse(readFileSync(configFile,'utf8'));}catch{}
  for(const [id,dir] of Object.entries(config?.gameData||{}))data[id]??=exp(dir);
- if(env.FAMILY_DATA)data.hub??=exp(env.FAMILY_DATA);
+ if(env.FAMILY_DATA){data.hub??=exp(env.FAMILY_DATA);for(const id of ['letter-quest','word-arcade','number-park','maze-garden','three-in-a-row','target-trail'])data[id]??=join(root,id);}
+ for(const [id,key] of Object.entries({'letter-quest':'LETTER_QUEST_DATA','word-arcade':'WORD_ARCADE_DATA','number-park':'NUMBER_PARK_DATA','maze-garden':'MAZE_DATA_DIR','three-in-a-row':'TTT_DATA','target-trail':'TARGET_DATA'}))if(env[key])data[id]=exp(env[key]);
  const book=resolve(exp(env.FAMILY_BOOK||join(root,'book')));
  return {root,data,config,book,voice:join(book,'voice'),learner:resolve(exp(env.FAMILY_LEARNER||join(root,'learner'))),
   profiles:join(book,'profiles.json'),cast:join(book,'cast.json'),voiceRenderers:join(book,'voice-renderers.json'),notes:data.hub?join(data.hub,'book-notes.json'):null,

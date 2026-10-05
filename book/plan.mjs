@@ -250,7 +250,7 @@ export function planChapter(model,{date,profile={},cast=null,collection={},life=
  // The grown-ups take turns leading the adventure (balanced by date); the other may appear too.
  const grownups=gl.map(g=>({id:g.id,name:g.name,...(g.alsoCalled?{alsoCalled:g.alsoCalled}:{}),...(g.note?{note:g.note}:{})}));
  const lead=grownups.find(g=>g.id===leadOf(gl).id)||grownups[0];
- return {grownups,lead,player:model.player,name:model.name,date,level:early?'early':'reader',sibling:profile.sibling||null,companion,cast:members,props:chooseProps(model,cast),interests,
+ return {grownups,lead,player:model.player,name:model.name,age:profile.age||model.age||null,grade:profile.grade||null,startingSkills:profile.startingSkills||null,placement:profile.placement||null,date,level:early?'early':'reader',sibling:profile.sibling||null,companion,cast:members,props:chooseProps(model,cast),interests,
   arc:profile.arc||null,compass:profile.compass||[],themes:chooseThemes(life,r,used.themes),blockedSeeds:[...(profile.details||[]).filter(d=>used.details.has(d.id)),...(life?.themes||[]).filter(t=>used.themes.has(t.id||t.seed))],collection:{keys:collection?.keys||[],words:collection?.words||[]},
   ...base,magic:base.magic||[],actions:ACTIONS,minActions:early?2:1,
   dadLines:(model.recent?.dadLines||[]).map(l=>l.text),yesterday:model.recent?.yesterday||null,play:model.recent?.play||[],

@@ -7,7 +7,7 @@ export const AT_WORDS=[['cat','🐱'],['hat','🎩'],['mat',''],['bat','🦇'],[
 export const EXTRA_WORDS=[['map','🗺️'],['cap','🧢'],['tap','🚰'],['log','🪵']].map(([word,picture])=>({word,picture,tier:1}));
 export const namePositionLine=(name,position)=>`${name[position].toUpperCase()} is letter number ${position+1} in ${name}.`;
 export function familyNameQuestion(player,serial=0){
- const names=player==='beginner'?['Robin','River','Alex','Ada']:FAMILY;
+ const names=String(player).split('_')[0]==='beginner'?['Robin','River','Alex','Ada']:FAMILY;
  const slot=serial%NAME_BAG.length,name=names[NAME_BAG[slot]],ownTurn=Math.floor(serial/10)*6+NAME_BAG.slice(0,slot).filter(n=>n===0).length;
  const focus=Math.floor(serial/10)%name.length;
  const char=name[focus].toUpperCase(),unique=[...name.toUpperCase()].filter(c=>c===char).length===1;

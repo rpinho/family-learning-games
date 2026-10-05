@@ -27,7 +27,7 @@ const server=http.createServer(async(req,res)=>{res.setHeader('X-Content-Type-Op
  try{const url=new URL(req.url,`http://${req.headers.host}`);if(!allowedHosts().has(url.hostname.toLowerCase()))return send(res,403,{error:'Local access only'});
  if(req.headers.origin&&req.headers.origin!==url.origin)return send(res,403,{error:'Origin mismatch'});
  if(url.pathname==='/api/health')return send(res,200,{version:VERSION,name:'Maze Garden'});
- if(url.pathname.startsWith('/api/')){const player=url.searchParams.get('player');if(!Object.hasOwn(PLAYERS,player))return send(res,400,{error:'Choose a player'});
+ if(url.pathname.startsWith('/api/')){const player=url.searchParams.get('player');if(!/^(?:(?:beginner|explorer)(?:_[1-9]\d{0,3})?|admin)$/.test(player))return send(res,400,{error:'Choose a player'});
  if(req.method==='GET'&&url.pathname==='/api/state')return send(res,200,{...load(player),serverNow:Date.now()});
  if(req.method==='GET'&&url.pathname==='/api/word-break')return send(res,200,literacy(player));
  if(req.method!=='POST'||req.headers['content-type']!=='application/json')return send(res,405,{error:'Use JSON POST'});
