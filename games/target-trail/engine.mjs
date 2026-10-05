@@ -4,7 +4,7 @@ import {scoreStone as legacyScoreStone} from './sling-legacy.mjs';
 export {FLIGHT_MS,challengeFor,movingTargets,aimAt,learningDefaults,READING_NAMES,voiceLines,cueLine,nameLine} from './challenges.mjs';
 export const VERSION='target-trail-2026-09-26-sling-aim-voice';
 export {SLING_VERSION};
-export const PLAYERS={beginner:'Beginner',explorer:'Explorer',admin:'Admin · Admin'};
+export const PLAYERS={beginner:'Beginner',explorer:'Explorer',admin:'Admin · Alex'};
 export const WORDS={start:'Drag to aim. Lift your finger to shoot.',ready:'Ready for five arrows?',bull:'Bullseye!',done:'Five arrows! Ready for another round?',higher:'Try a little higher.',lower:'Try a little lower.',left:'Try a little left.',right:'Try a little right.',hit:'Nice shot!',move:'This target moves. Take your time.'};
 export const THEMES=[{name:'Golden hour',sky:'#fff0c6',floor:'#f4bb63',ink:'#17455b',accent:'#e76836'},{name:'Blue lagoon',sky:'#d2f7ff',floor:'#67d2d1',ink:'#123f69',accent:'#e75e5e'},{name:'Night lights',sky:'#17254c',floor:'#334b85',ink:'#fff2ca',accent:'#ffd36d'},{name:'Berry bright',sky:'#f9d9f3',floor:'#bb94d9',ink:'#49346d',accent:'#e55683'}];
 export const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));

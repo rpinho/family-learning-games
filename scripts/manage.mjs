@@ -12,9 +12,9 @@ if(command==='setup'){
  console.log('Ready. Run npm start.');
 }else if(command==='test'){
  // Run app suites sequentially: several existing integration tests share fixture ports.
- for(const [game]of games){const files=(await readdir(resolve(root,'games',game,'tests'))).filter(f=>f.endsWith('.test.mjs')).map(f=>'tests/'+f);await run(process.execPath,['--test',...files],game);}
- const hubTests=(await readdir(resolve(root,'hub','tests'))).filter(f=>f.endsWith('.test.mjs')).map(f=>'tests/'+f);await run(process.execPath,['--test',...hubTests],'hub');
- const bookTests=(await readdir(resolve(root,'book','tests'))).filter(f=>f.endsWith('.test.mjs')).map(f=>'tests/'+f);await run(process.execPath,['--test',...bookTests],'book');
+ for(const [game]of games){const files=(await readdir(resolve(root,'games',game,'tests'))).filter(f=>f.endsWith('.test.mjs')).map(f=>'tests/'+f);await run(process.execPath,['--test','--test-concurrency=4',...files],game);}
+ const hubTests=(await readdir(resolve(root,'hub','tests'))).filter(f=>f.endsWith('.test.mjs')).map(f=>'tests/'+f);await run(process.execPath,['--test','--test-concurrency=4',...hubTests],'hub');
+ const bookTests=(await readdir(resolve(root,'book','tests'))).filter(f=>f.endsWith('.test.mjs')).map(f=>'tests/'+f);await run(process.execPath,['--test','--test-concurrency=4',...bookTests],'book');
 }else if(command==='start'){
  let stopping=false;
  function stop(code=0){if(stopping)return;stopping=true;for(const p of children)p.kill('SIGTERM');setTimeout(()=>process.exit(code),700);}

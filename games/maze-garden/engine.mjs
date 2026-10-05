@@ -2,7 +2,7 @@ export const VERSION = 'maze-garden-2026-09-27-request-history';
 export const MAX_LEVEL = 27;
 export const baseline = player => player==='explorer'?12:player==='beginner'?6:6;
 export const gridSize = level => 9+2*(Math.max(1,Math.min(MAX_LEVEL,level))-1);
-export const PLAYERS = {explorer:'Explorer',beginner:'Beginner',admin:'Admin · Admin'};
+export const PLAYERS = {explorer:'Explorer',beginner:'Beginner',admin:'Admin · Alex'};
 export const THEMES = [
  {name:'Garden trails',animal:'🐰',goal:'🥕',wall:'#17734d',floor:'#efffe7',accent:'#f7ab28',back:'#b4e5bc'},
  {name:'Coral coves',animal:'🐢',goal:'🏝️',wall:'#146784',floor:'#e2faff',accent:'#ff8d6b',back:'#95dfe9'},
@@ -107,7 +107,7 @@ function makerState(p){return p.maker??={size:makerSizeForLevel(p.level),draft:[
 export function makerComplete(p){const m=makerState(p),a=m.challenge;if(!a||a.finished||a.trail.at(-1)!==a.goal||pendingPuzzle(a))return false;a.finished=true;m.completed++;return true;}
 export function recalibrate(p,seed){if(p.calibration===2)return false;if(p.active)(p.archivedMazes??=[]).push(p.active);p.calibration=2;p.level=Math.max(baseline(p.player),Math.min(MAX_LEVEL,p.level||1));p.streak=0;p.struggles=0;p.active=startMaze(p,seed);return true;}
 export function puzzleFor(player,seed,index){const r=random(seed+index*101),pick=a=>a[Math.floor(r()*a.length)];if(player==='explorer'){
- const names=['ALEXANDRA','ALEXANDRA','JAMIE','CHARLIE','JESSICA'],name=pick(names),position=Math.floor(r()*name.length),answer=name[position];
+ const names=['EXPLORER','EXPLORER','BEGINNER','ALEX','ADA'],name=pick(names),position=Math.floor(r()*name.length),answer=name[position];
  const options=shuffle([...new Set([answer,...shuffle('ACDFIMNORST'.split(''),r)])].slice(0,3),r);
  return {prompt:`Find ${answer.toLowerCase()}.`,spoken:`Find the lowercase letter ${answer}.`,context:`${name.slice(0,position)}[${answer}]${name.slice(position+1)}`,options:options.map(x=>x.toLowerCase()),answer:answer.toLowerCase()};
  }if(index%2){const a=pick(['🔴','⭐','🟦']),b=pick(['🟢','🌙','🔶']);return {prompt:'What comes next?',spoken:'What comes next in the pattern?',context:`${a} ${b} ${a} ${b} ${a} ?`,options:shuffle([a,b,'💜'],r),answer:b};}

@@ -1235,3 +1235,10 @@ span.book-face{display:inline-flex;align-items:center;justify-content:center;bac
 .book-watch-btn{display:inline-block;border:0;border-radius:12px;padding:10px 14px;background:#ffe07a;color:#3a2200;font-weight:800;text-decoration:none;cursor:pointer;font-size:1rem}
 .book-watch-home{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 18px}
 .book-watch-home h2{margin:0 8px 0 0;font-size:1.2rem}
+
+/* Show each family's full choice grid without a narrow scrolling menu. */
+.family-catalog{max-width:1600px;padding:18px 26px}
+.family-catalog .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-top:18px}
+.family-catalog .card .game-preview{aspect-ratio:1.7}
+.family-catalog .card{min-height:0;padding:16px}
+@media(max-width:600px){.family-catalog{padding:14px 12px}.family-catalog .cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.family-catalog .card{padding:10px}.family-catalog .card h2{font-size:19px}.family-catalog .card p{font-size:12px}}

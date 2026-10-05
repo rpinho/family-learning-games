@@ -74,7 +74,7 @@ test('Server persists progress, isolates players, rejects replay and cross-site 
   assert.ok(rows.some(r=>r.type==='protocol_error'&&r.reason==='https_sent_to_http_port'));
   const recorded=rows.find(r=>r.type==='client_events');assert.equal(recorded.events[0].reason,'feedback');assert.equal(recorded.events[0].password,undefined);
   const childSave=await readFile(path.join(data,'explorer.json'),'utf8');
-  let admin=await (await fetch(base+'/api/admin/state')).json();assert.equal(admin.profile.name,'Admin');
+  let admin=await (await fetch(base+'/api/admin/state')).json();assert.equal(admin.profile.name,'Alex');
   for(let i=0;i<5;i++){
    const c=admin.challenge;const response=await post('/api/admin/attempt',{challengeId:c.id,answer:c.word||c.char,strokes:c.paths,durationMs:6000,helped:false});
    assert.equal(response.status,200);admin=await response.json();

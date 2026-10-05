@@ -60,3 +60,9 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## Optional living-world renderer
+
+The unmodified Three.js modules in `hub/public/vendor/three/` retain the upstream MIT notice in [LICENSE.txt](hub/public/vendor/three/LICENSE.txt). No household 3D models are redistributed.
+
+The calm ambient sounds, harp plucks and neutral feedback are original oscillator/noise synthesis. The public World scenery consists of newly authored geometric SVG placeholders and the existing fictional Bo, Pip, hero and guide sprites. It contains no photographed people or household paintings.

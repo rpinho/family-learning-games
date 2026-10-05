@@ -1,3 +1,4 @@
+import {readingAssessment} from './learner-reading.mjs';
 // The Book, layer 1: the learner model. One compact JSON per child, rebuilt nightly from every
 // game's save (read-only), recent word-break log rows, the parent recap, dad's "Today" lines and the
 // book's own chapter history. Pure functions only: all file access lives in build-learner.mjs.
@@ -17,26 +18,9 @@ const recentAt=(at,now,days)=>{const t=typeof at==='number'?at:Date.parse(at);re
 // ---------- words ----------
 // Per-word tallies from every reading surface. A word is "mastered" after repeated clean reads and
 // "stuck" when misses keep pace with hits.
-export function wordTallies({lq,wa,wordBreaks=[],recapStuck=[]}){
- const t={};const add=(w,hits,errors)=>{w=String(w||'').toLowerCase();if(!/^[a-z]{2,10}$/.test(w))return;const x=t[w]??={hits:0,errors:0};x.hits+=hits;x.errors+=errors;};
- for(const src of [obj(lq?.foundation).skills,obj(wa?.foundation).skills,obj(wa?.builder).skills,...Object.values(obj(wa?.drills)).map(d=>obj(d).skills)])
-  for(const [w,s] of Object.entries(obj(src)))add(w,num(s.hits),num(s.errors));
- const reading=obj(lq?.reading);
- for(const run of [...list(reading.history),{results:reading.results}])for(const r of list(run?.results)){const w=r?.question?.word;if(!w)continue;if(r.ok&&!num(r.mistakes))add(w,1,0);else add(w,r.ok?1:0,Math.max(1,num(r.mistakes)));}
- for(const h of list(lq?.history)){const m=String(h.key||'').match(/^(?:spell|gap):([a-z]+)$/i);if(m)add(m[1],h.ok?1:0,h.ok?0:1);}
- for(const b of wordBreaks)if(b.kind==='read-word')add(b.answer,b.misses?0:1,Math.min(3,num(b.misses)));
- for(const line of recapStuck){const m=String(line).match(/word ([a-z]+): (\d+) miss/i);if(m)add(m[1],0,num(m[2]));}
- return t;
-}
-export function wordStatus(tallies){
- const mastered=[],stuck=[];
- for(const [w,{hits,errors}] of Object.entries(tallies)){
-  if(hits>=2&&errors*2<=hits)mastered.push(w);
-  else if(errors>=2&&errors>=hits)stuck.push(w);
- }
- const score=w=>tallies[w].errors-tallies[w].hits;
- return {mastered:mastered.sort(),stuck:stuck.sort((a,b)=>score(b)-score(a)||a.localeCompare(b)).slice(0,12)};
-}
+// Compatibility helpers report reading evidence only; cumulative save counters are intentionally ignored.
+export function wordTallies({evidence=[],player,now=Date.now()}={}){return readingAssessment(evidence,player,now).readingEvidence;}
+export function wordStatus(tallies){const mastered=[],stuck=[];for(const [w,s]of Object.entries(tallies)){if(s.attempts>=5&&s.masteryReads>=4&&s.masteryDays>=2&&s.rate>=.8)mastered.push(w);else if(s.attempts>=4&&s.rawRate<=1/3)stuck.push(w);}return {mastered:mastered.sort(),stuck};}
 
 // ---------- maths ----------
 // Cookie division progress, same ladder as Number Park's advanced track (track-agnostic: any
@@ -169,7 +153,7 @@ export function sageSummary(sage){
   recentMisses:list(sage.recentMisses).map(short).slice(-8),
   worked:list(sage.worked).map(String).slice(0,12)};
 }
-export function buildLearner({player,name,profile={},now=Date.now(),saves={},wordBreaks=[],recap=null,notes=[],chapters=[],opens=[],playDate=null,timeZone='UTC',sage=null}){
+export function buildLearner({player,name,profile={},now=Date.now(),saves={},wordBreaks=[],recap=null,notes=[],chapters=[],opens=[],playDate=null,timeZone='UTC',sage=null,evidence=[]}){
  const lq=saves['letter-quest'],np=saves['number-park'],wa=saves['word-arcade'];
  const advanced=profile.mathTrack?profile.mathTrack==='facts':num(profile.age)>=7;
  const recapKid=list(recap?.kids).find(k=>k.player===player)||null;
@@ -177,13 +161,14 @@ export function buildLearner({player,name,profile={},now=Date.now(),saves={},wor
  const lit=literacyFrom(lq||null,profile.track||(advanced?'words':'letters'));
  const skills=obj(lq?.skills);
  const lettersMastered=uniq(Object.entries(skills).filter(([k,s])=>/^find:[A-Za-z]$/.test(k)&&num(s.level)>=3).map(([k])=>k.slice(5)));
- const tallies=wordTallies({lq,wa,wordBreaks,recapStuck}),words=wordStatus(tallies);
+ const assessment=readingAssessment(evidence,player,now,{timeZone});
+ const tallies=assessment.readingEvidence,words={mastered:assessment.wordsMastered,stuck:assessment.wordsStuck};
  const sentenceBreaks=wordBreaks.filter(b=>b.kind==='sentence');
  const week=activity(saves,now);
  const favourites=Object.entries(week).filter(([,n])=>n>=5).sort((a,b)=>b[1]-a[1]).map(([g])=>FAVOURITE_THEMES[g]).filter(Boolean);
  const stuck=[
   ...lit.learning.slice(0,6).map(c=>({area:'letters',item:c,detail:`still learning ${/[a-z]/.test(c)?'little':'big'} ${c.toUpperCase()}`})),
-  ...words.stuck.slice(0,6).map(w=>({area:'words',item:w,detail:`${tallies[w].errors} misses, ${tallies[w].hits} clean reads`})),
+  ...words.stuck.slice(0,6).map(w=>({area:'words',item:w,detail:`${tallies[w].attempts} first answers, ${tallies[w].firstTry} clean reads`})),
   ...recapStuck.slice(0,6).map(line=>({area:'recap',item:null,detail:line})),
   ...list(sageSummary(sage)?.practising).slice(0,4).map(line=>({area:'sage',item:null,detail:`Sage: still practising ${line}`}))
  ];
@@ -196,7 +181,7 @@ export function buildLearner({player,name,profile={},now=Date.now(),saves={},wor
   interests:uniq([...list(profile.interests),...favourites]),
   companions:list(profile.companions),
   literacy:{track:lit.track,letters:lit.letters,lower:lit.lower,learning:lit.learning,lettersMastered,
-   wordLevel:lit.wordLevel,sentenceLevel:lit.sentenceLevel,wordsMastered:words.mastered.slice(0,40),wordsStuck:words.stuck,
+   ...assessment,sentenceLevel:1,
    sentenceBreaks:{tried:sentenceBreaks.length,clean:sentenceBreaks.filter(b=>!num(b.misses)).length}},
   math:mathModel({np,recapLevels:recapKid?.apps?.['number-park']?.levels&&Object.keys(recapKid.apps['number-park'].levels).length?recapKid.apps['number-park'].levels:null,advanced}),
   games:{
@@ -211,7 +196,7 @@ export function buildLearner({player,name,profile={},now=Date.now(),saves={},wor
   activity7d:week,
   sage:sageSummary(sage),
   stuck,
-  tricks:[...detectTricks({profile,wordBreaks}),...(harderBursts(mg,now)?[{id:'harder-tapping',text:'taps "harder" many times in a row in Maze Garden to skip ahead',source:'logs',evidence:{bursts:harderBursts(mg,now)}}]:[])],
+  tricks:[...detectTricks({profile,wordBreaks}),...assessment.readingTricks,...(harderBursts(mg,now)?[{id:'harder-tapping',text:'taps "harder" many times in a row in Maze Garden to skip ahead',source:'logs',evidence:{bursts:harderBursts(mg,now)}}]:[])],
   story:storyState({saves,chapters}),
   recent:{yesterday,playDate,play:playDate?playOn({saves,opens,date:playDate,timeZone}):[],dadLines:notes.filter(n=>(playDate?n.date>=playDate:recentAt(n.at,now,3))&&(!n.player||n.player===player)).map(n=>({date:n.date,text:n.text})).slice(-6)}
  };

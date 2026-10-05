@@ -1,0 +1,235 @@
+{
+  "schema": "family-world-episode-1",
+  "id": "beginner-2026-10-05",
+  "player": "beginner",
+  "date": "2026-10-05",
+  "level": "early",
+  "title": "The Lantern Garden",
+  "goal": "Find the garden lantern and light the surprise.",
+  "intro": "A dark lantern waits on the hill. Your friends have clues and a tool to help you light it.",
+  "recap": "You found a tool, followed the clue, and lit the lantern together.",
+  "reveal": "Surprise! Grown-up opens the lantern. A tiny glowing garden is growing inside.",
+  "hook": "Tomorrow, a tiny path inside the lantern leads somewhere new.",
+  "start": "welcome",
+  "finish": "light",
+  "rooms": [
+    {
+      "id": "welcome",
+      "name": "Lantern trail",
+      "bg": "castle-gate",
+      "friend": "dad",
+      "icon": "🌳",
+      "exits": {
+        "right": "grove"
+      },
+      "lines": [
+        "Our friends need a light for their surprise. Shall we find the lantern together?",
+        "You found the light. Come back whenever you want."
+      ]
+    },
+    {
+      "id": "grove",
+      "name": "Clue grove",
+      "bg": "castle-forest",
+      "friend": "bo",
+      "icon": "🌳",
+      "exits": {
+        "left": "welcome",
+        "right": "hill"
+      },
+      "lines": [
+        "I found a clue beside this path. It will help us reach the surprise.",
+        "You followed my clue and opened the path."
+      ],
+      "door": {
+        "to": "workshop",
+        "label": "Lantern workshop",
+        "wide": [
+          0.22,
+          0.28,
+          0.08,
+          0.12
+        ],
+        "tall": [
+          0.2,
+          0.25,
+          0.1,
+          0.09
+        ]
+      },
+      "exitRequires": {
+        "right": "trail-lock"
+      }
+    },
+    {
+      "id": "workshop",
+      "name": "Lantern workshop",
+      "bg": "workshop",
+      "friend": "robo",
+      "icon": "🌳",
+      "exits": {},
+      "lines": [
+        "There is an extra discovery in my workshop. You can visit whenever you want.",
+        "Your extra discovery can stay in your backpack."
+      ],
+      "door": {
+        "to": "grove",
+        "label": "Back to the grove",
+        "return": true
+      }
+    },
+    {
+      "id": "hill",
+      "name": "Surprise hill",
+      "bg": "castle-moon-hill",
+      "friend": "mom",
+      "icon": "🌳",
+      "exits": {
+        "left": "grove"
+      },
+      "lines": [
+        "Grown-up has a surprise waiting. Help me light the lantern.",
+        "Look at the tiny garden glowing inside the lantern."
+      ]
+    }
+  ],
+  "items": {
+    "rope": {
+      "name": "Strong ribbon",
+      "icon": "rope"
+    },
+    "lantern": {
+      "name": "Garden lantern",
+      "icon": "lantern"
+    },
+    "star": {
+      "name": "Workshop star",
+      "icon": "star",
+      "collection": true
+    },
+    "shell": {
+      "name": "Workshop shell",
+      "icon": "shell",
+      "collection": true
+    }
+  },
+  "puzzles": [
+    {
+      "id": "ribbon",
+      "room": "welcome",
+      "kind": "count",
+      "title": "Pack the lights",
+      "prompt": "Tap each light to pack it into the lantern.",
+      "hint": "Touch each light once. We can count them together.",
+      "goal": "Tap each light to pack it into the lantern.",
+      "icon": "⭐",
+      "answer": "8",
+      "options": [
+        "8",
+        "9"
+      ],
+      "requires": [],
+      "rewards": [
+        "rope"
+      ],
+      "count": 8,
+      "countVisual": "light"
+    },
+    {
+      "id": "clue",
+      "room": "grove",
+      "kind": "sound",
+      "title": "Hear the clue",
+      "prompt": "Tap the letter that makes this sound: [[m]].",
+      "hint": "Tap the sound button and listen again.",
+      "goal": "Listen to the clue. Find the matching letter.",
+      "icon": "⭐",
+      "answer": "M",
+      "options": [
+        "M",
+        "O"
+      ],
+      "requires": [
+        "ribbon"
+      ],
+      "rewards": [],
+      "letter": "M",
+      "soundSupport": true
+    },
+    {
+      "id": "light",
+      "room": "hill",
+      "kind": "count",
+      "title": "Pack the lights",
+      "prompt": "Tap each light to pack it into the lantern.",
+      "hint": "Touch each light once. We can count them together.",
+      "goal": "Tap each light to pack it into the lantern.",
+      "icon": "⭐",
+      "answer": "10",
+      "options": [
+        "10",
+        "11"
+      ],
+      "requires": [
+        "trail-lock"
+      ],
+      "rewards": [
+        "lantern"
+      ],
+      "count": 10,
+      "countVisual": "light"
+    },
+    {
+      "id": "bonus",
+      "room": "workshop",
+      "kind": "count",
+      "title": "Pack the lights",
+      "prompt": "Tap each light to pack it into the lantern.",
+      "hint": "Touch each light once. We can count them together.",
+      "goal": "Tap each light to pack it into the lantern.",
+      "icon": "⭐",
+      "answer": "5",
+      "options": [
+        "5",
+        "6"
+      ],
+      "requires": [],
+      "rewards": [
+        "star"
+      ],
+      "count": 5,
+      "optional": true,
+      "countVisual": "light"
+    }
+  ],
+  "locks": [
+    {
+      "id": "trail-lock",
+      "room": "grove",
+      "item": "rope",
+      "requires": [
+        "clue"
+      ],
+      "label": "Tie the trail rope",
+      "hint": "Find the ribbon or rope, then follow the clue in the grove.",
+      "goal": "Carry your rope to the trail opening",
+      "icon": "rope"
+    }
+  ],
+  "sideQuests": [
+    {
+      "id": "bonus-quest",
+      "title": "Pack the lights",
+      "puzzle": "bonus"
+    }
+  ],
+  "learning": {
+    "level": "early",
+    "taughtLetters": [
+      "M",
+      "O"
+    ],
+    "focus": []
+  },
+  "revealVisual": "garden"
+}

@@ -20,3 +20,8 @@ test('How-to-play lines are gated once per session, never said directly',()=>{
 test('Blocked autoplay retries the pending question on the next touch',()=>{
  assert.match(app,/NotAllowedError/);assert.match(app,/\['pointerup','touchend','click'\]/);
 });
+test('Word-break lines report when they are over (audio-finished contract), including a retried blocked question',()=>{
+ assert.match(app,/speak:\(line,essential\)=>say\(line,essential\)/);
+ assert.match(app,/const el=audio;return audio\.play\(\)\.then\(\(\)=>mediaSettled\(el\),e=>\{if\(e\?\.name==='NotAllowedError'\)return essential\?retryOnTouch\(text\):'blocked';return fallback\(text,essential\);\}\);\}return fallback\(text,essential\);\}/);
+ assert.match(app,/release\(t\?say\(t,true\):'stopped'\);/);assert.match(app,/return pendingDone;\}/);assert.match(app,/speechSynthesis\.speak\(u\);return over;\}/);
+});

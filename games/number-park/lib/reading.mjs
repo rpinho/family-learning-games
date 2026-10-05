@@ -1,10 +1,10 @@
 // A bounded, explicit beginner path. Practice stars are not a reading rating.
 export const PHONEMES={m:'m',a:'æ',s:'s',t:'t',p:'p',i:'ɪ',n:'n',c:'k',o:'ɑ',d:'d',g:'ɡ',h:'h',e:'ɛ',r:'ɹ'};
 export const PACKS=[
- {name:'First sounds',newSounds:['m','a','s','t'],pairs:[['mat','sat'],['sat','mat']],words:['mat','sat','am','at'],stories:['Sam sat.']},
- {name:'More little words',newSounds:['p','i','n'],pairs:[['map','nap'],['tap','tip'],['pan','pin'],['sit','sat']],words:['map','nap','tap','tip','pan','pin','sit','tin','pat','pit'],stories:['Pat sat.','Sam sat.']},
- {name:'Word explorers',newSounds:['c','o','d','g'],pairs:[['cat','cot'],['cap','cat'],['dog','dot'],['pan','can']],words:['cat','cot','cap','dog','dot','can','dig','tag','got','cop'],stories:['Sam can dig.','Pat can nap.']},
- {name:'Read little stories',newSounds:['h','e','r'],pairs:[['hat','hot'],['hen','pen'],['rat','ram'],['pet','pot']],words:['hat','hot','hen','pen','rat','ram','pet','pot','red','net','ten','hop','ran','ham'],stories:['Sam can hop.','Sam ran.']},
+ {name:'First sounds',newSounds:['m','a','s','t'],pairs:[['mat','sat'],['sat','mat']],words:['mat','sat','am','at'],stories:['Alex sat.']},
+ {name:'More little words',newSounds:['p','i','n'],pairs:[['map','nap'],['tap','tip'],['pan','pin'],['sit','sat']],words:['map','nap','tap','tip','pan','pin','sit','tin','pat','pit'],stories:['Bo sat.','Alex sat.']},
+ {name:'Word explorers',newSounds:['c','o','d','g'],pairs:[['cat','cot'],['cap','cat'],['dog','dot'],['pan','can']],words:['cat','cot','cap','dog','dot','can','dig','tag','got','cop'],stories:['Alex can dig.','Bo can nap.']},
+ {name:'Read little stories',newSounds:['h','e','r'],pairs:[['hat','hot'],['hen','pen'],['rat','ram'],['pet','pot']],words:['hat','hot','hen','pen','rat','ram','pet','pot','red','net','ten','hop','ran','ham'],stories:['Alex can hop.','Alex ran.']},
 ];
 export const soundKey=l=>'Reading sound '+l+'.';
 export const wordKey=w=>'Reading word '+w+'.';

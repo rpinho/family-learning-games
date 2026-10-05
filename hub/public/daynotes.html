@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Day Notes</title>
+<link rel="icon" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/daynotes.css">
+</head>
+<body>
+<main id="app">
+  <section id="gate" class="card" hidden>
+    <h1>Grown-ups</h1>
+    <p id="gate-question"></p>
+    <p id="gate-code" class="gate-code"></p>
+    <form id="gate-form">
+      <input id="gate-answer" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="12" aria-label="Answer" required>
+      <label class="remember"><input id="gate-remember" type="checkbox" checked> Remember this phone</label>
+      <p id="gate-error" role="status"></p>
+      <div class="row"><a class="ghost" href="/">Back to the games</a><button type="submit" class="primary">Continue</button></div>
+    </form>
+  </section>
+
+  <section id="notes" hidden>
+    <header class="top">
+      <div>
+        <h1>Today for the Book</h1>
+        <p class="sub" id="today"></p>
+      </div>
+      <a class="ghost small" href="/">Games</a>
+    </header>
+
+    <form id="note-form" class="card">
+      <div class="chips" id="children" role="radiogroup" aria-label="About"></div>
+      <textarea id="note-text" maxlength="400" rows="4" placeholder="What happened today? (tap the microphone on the keyboard to talk)"></textarea>
+      <div class="chips from" id="from" role="radiogroup" aria-label="From">
+        <span class="label">From</span>
+        <button type="button" class="chip" data-from="dad" role="radio">Dad</button>
+        <button type="button" class="chip" data-from="mom" role="radio">Mom</button>
+      </div>
+      <label class="remember"><input id="note-memory" type="checkbox"> Just for the Book's memory (don't tell it)</label>
+      <button id="save" type="submit" class="primary big">Save</button>
+      <p id="status" role="status"></p>
+    </form>
+
+    <p class="hint">Tonight's chapter turns one note into part of the story. Private things (doctors, school worries, sleep) are never told as written: they become a gentle story, or are left out.</p>
+
+    <h2>Today</h2>
+    <ul id="today-list" class="list"></ul>
+    <h2 id="earlier-title" hidden>Earlier, still waiting</h2>
+    <ul id="earlier-list" class="list"></ul>
+  </section>
+</main>
+<script type="module" src="/daynotes.mjs"></script>
+</body>
+</html>

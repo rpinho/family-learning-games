@@ -1,3 +1,6 @@
+import {roundRecap} from './recap.mjs';
+import {STORY_OPENING,storyLine,PLACES as STORY_PLACES} from './story.mjs';
+import {weightVoiceLines} from './balance-weights.mjs';
 // Rounded illustrative adult weights, not a claim that every animal weighs the same.
 // Species ranges: https://animaldiversity.org/accounts/ and
 // https://animals.sandiegozoo.org/animals/ (fox, cat, panda, lion, elephant, etc.).
@@ -68,16 +71,49 @@ export function balanceExplanation(q,result){
  if(q.mode==='complete')return `${expressionText(q.left)} = ${q.left.value}. ${q.right.a} + ${result.answer} = ${q.left.value}.`;
  return `${expressionText(q.left)} = ${q.left.value}. ${expressionText(q.right)} = ${q.right.value}.`;
 }
-const expressionSpeech=e=>[String(e.a),e.op==='×'?'times':e.op==='−'?'minus':'plus',String(e.b)];
 const animalComparison=q=>`${animalName(q.answer===0?q.left:q.right)} is ${q.direction}.`;
+export const ANIMAL_PROMPT='Place an animal on each pan. Which pan do you think will go down? You can guess, then weigh them.';
+export const animalPrompt=q=>`${animalName(q.left)} and ${animalName(q.right).toLowerCase()}. ${ANIMAL_PROMPT}`;
+export const balanceObservationPrompt=q=>q.kinderBalance?'Who weighs more? Watch the scale, then tap the animal.':q.direction==='lighter'?'Which is lighter? Watch the scale, then tap the lighter animal.':'Which is heavier? Watch the scale, then tap the heavier animal.';
+export const ANIMAL_OBSERVE='Watch the scale settle. The heavier pan goes down and the lighter pan goes up.';
+const totalPrompt=w=>`The left pan weighs ${w.target}. Can you make the other side ${w.target}?`;
+export function weightPrompt(w){
+ if(w.mode==='free')return `Can you make each pan weigh ${w.target}? Drag weights onto both pans.`;
+ const pair=w.label.match(/^(\d+) \+ (\d+)$/);
+ if(pair&&w.target<=50)return `${Math.min(Number(pair[1]),Number(pair[2]))} plus ${Math.max(Number(pair[1]),Number(pair[2]))} is ${w.target}. Can you make the other side ${w.target}?`;
+ const product=w.label.match(/^(\d+) × (\d+)$/);
+ if(product)return `${product[1]} times ${product[2]} is ${w.target}. Can you make the other side ${w.target}?`;
+ return totalPrompt(w);
+}
 export function balancePrompt(q){
- if(q.mode==='animals')return [q.prompt,`${animalName(q.left)}.`,`${animalName(q.right)}.`];
- return [q.prompt,'On the left.',...expressionSpeech(q.left),'On the right.',String(q.right.a),q.right.op==='×'?'times':q.right.op==='−'?'minus':'plus',q.mode==='complete'?'What number?':String(q.right.b)];
+ if(q.weights)return [weightPrompt(q.weights)];
+ if(q.mode==='animals')return [animalPrompt(q)];
+ return [q.mode==='complete'?'Work out the left side, then choose the missing number to make the scale balance.':'Work out both sides. Which side will go down, or will they balance?'];
 }
 export function balanceFeedback(q,result){
- if(q.mode==='animals')return [animalComparison(q),q.direction==='lighter'?'The lighter side goes up.':'The heavier side goes down.'];
- if(q.mode==='complete'&&!result.ok)return ['Use this number to balance.',String(result.answer)];
- return [q.left.value===q.right.value?'Both sides are equal.':'The heavier side goes down.'];
+ if(q.weights&&result.draft)return ['Both pans have the same weight. You made the scale balance.'];
+ if(q.mode==='animals')return [`${animalComparison({...q,answer:result.answer??q.answer})} ${q.direction==='lighter'?'The lighter pan goes up.':'The heavier pan goes down.'}`];
+ if(q.mode==='complete'&&!result.ok)return ['Use the number shown to make both sides equal.'];
+ return [q.left.value===q.right.value?'Both sides are equal. The pans are level.':'The heavier pan goes down. Watch the scale settle.'];
 }
-export const BALANCE_HELP='Work out each side. Equal weights balance. The heavier side goes down.';
-export function balanceVoiceLines(){return ['Which is lighter?','Which is heavier?','Which side is heavier?','What number makes it balance?','On the left.','On the right.','times','plus','minus','What number?','The lighter side goes up.','The heavier side goes down.','Both sides are equal.','Use this number to balance.',BALANCE_HELP,...ANIMALS.flatMap(a=>[`${animalName(a)}.`,animalLine(a),`${animalName(a)} is lighter.`,`${animalName(a)} is heavier.`])];}
+export const BALANCE_LEGACY_HELP='Work out each side. Equal weights balance. The heavier side goes down.';
+export function balanceFinishVoiceLines(){
+ const lines=new Set([STORY_OPENING,...STORY_PLACES.map((_,i)=>storyLine(i,'mission'))]);
+ for(const player of ['explorer','beginner'])for(let correct=0;correct<=6;correct++)for(let independent=0;independent<=correct;independent++)for(const windDown of [false,true])for(const line of roundRecap({game:player==='beginner'?'balance-k':'balance',player,correct,independent,windDown}).lines)lines.add(line);
+ return [...lines];
+}
+export const BALANCE_HELP='Place an animal on each pan, guess if you like, then weigh them. Watch which pan goes down.';
+export function balanceVoiceLines(){
+ const lines=[balanceObservationPrompt({kinderBalance:true}),balanceObservationPrompt({direction:'lighter'}),balanceObservationPrompt({direction:'heavier'}),...balanceFinishVoiceLines(),BALANCE_LEGACY_HELP,'Both pans have the same weight. You made the scale balance.',...weightVoiceLines(),ANIMAL_PROMPT,ANIMAL_OBSERVE,BALANCE_HELP,...balancePrompt({mode:'complete'}),...balancePrompt({mode:'compare'}),'Use the number shown to make both sides equal.','Both sides are equal. The pans are level.','The heavier pan goes down. Watch the scale settle.'];
+ for(const a of ANIMALS)for(const direction of ['lighter','heavier'])lines.push(`${animalName(a)} is ${direction}. The ${direction} pan goes ${direction==='lighter'?'up':'down'}.`);
+ // Exhaustive current puzzle domain, rather than samples from a seeded generator.
+ for(let target=47;target<=200;target++)lines.push(totalPrompt({target}));
+ const freeTargets=new Set(Array.from({length:189},(_,i)=>i+12));
+ for(let a=21;a<=49;a++)for(let b=6;b<=9;b++)freeTargets.add(a*b);
+ for(const target of freeTargets)lines.push(weightPrompt({mode:'free',target}));
+ for(let target=12;target<=50;target++)for(let a=3;a<=Math.floor(target/2);a++)lines.push(weightPrompt({mode:'fixed',target,label:`${a} + ${target-a}`}));
+ for(let a=6;a<=9;a++)for(let b=2;b<=5;b++)lines.push(weightPrompt({mode:'fixed',target:a*b,label:`${a} × ${b}`}));
+ for(let a=21;a<=49;a++)for(let b=6;b<=9;b++)lines.push(weightPrompt({mode:'fixed',target:a*b,label:`${a} × ${b}`}));
+ for(const left of ANIMALS)for(const right of ANIMALS)if(left.name!==right.name)lines.push(animalPrompt({left,right}));
+ return [...new Set(lines)];
+}

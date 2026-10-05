@@ -1,11 +1,10 @@
-// Keep challenge control independent from rushed taps.
 // game as the older cookie track, but only fair sharing of a few cookies onto
 // 2 (later 3) plates, one for you, one for me. No division sign, no remainders,
 // no number buttons and no "how many each?" question: the plates count out loud
 // as each cookie lands, and the round checks itself when the tray is empty.
 // Its rows carry their own track, so the older track's levels never read them.
 export const KINDER_TRACK='kinder-cookies-1';
-export const KINDER_COOKIE_GAME={id:'cookies',icon:'🍪',title:'Cookie sharing',description:'Share the cookies. One for you, one for me!'};
+export const KINDER_COOKIE_GAME={id:'cookies',icon:'🍪',title:'Snack Friend',description:'Share the cookies. One for you, one for me!'};
 // Every level stays at 10 cookies or fewer.
 export const KINDER_LEVELS={
  1:{plates:[2,2],each:[1,2]}, // 2 or 4 cookies, 2 plates

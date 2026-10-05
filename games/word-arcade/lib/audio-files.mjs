@@ -1,6 +1,7 @@
 import {TRACKS,LASERS} from './arcade-audio.mjs';
-export const AUDIO_FILES=new Set([...TRACKS,...LASERS].filter(x=>x.file).map(x=>x.file.split('/').at(-1)).concat('CREDITS.md'));
-export const PRIVATE_AUDIO_FILES=new Set();
+export const CALM_FILES=['c4','d4','e4','g4','a4','c5'].map(n=>`calm-harp-${n}.m4a`).concat('calm-harp-strum.m4a','calm-soft.m4a');
+export const AUDIO_FILES=new Set([...TRACKS,...LASERS].filter(x=>x.file).map(x=>x.file.split('/').at(-1)).concat('CREDITS.md',...CALM_FILES));
+export const PRIVATE_AUDIO_FILES=new Set([...AUDIO_FILES].filter(name=>name.startsWith('synthesis-')));
 export function audioRange(header,size){
   if(!header)return {start:0,end:size-1,partial:false};
   const match=/^bytes=(\d*)-(\d*)$/.exec(header);

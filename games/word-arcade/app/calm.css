@@ -1,0 +1,49 @@
+/* The calm Word Arcade (idea/20260929-word-arcade-calm), in the manner of the calm theme night variant: the same worlds and
+   games, on a deep calm night-blue with antique gold and cream; a book serif for titles (the words he reads stay in the
+   reading font); no neon, no points or XP on screen (still saved, never shown), slow glints instead of bursts. */
+:root{--bg:#141c2e;--text:#efe7d4;--muted:#b3ab96;--cyan:#d9bd7c;--line:#4a4636;
+ --arcade-bg:#121a2b;--arcade-panel:#1b2437;--arcade-cyan:#d9bd7c;--arcade-gold:#e7c77a;--arcade-violet:#b7a6d8;
+ --calm-gold:#b88a3a;--calm-cream:#f4e6c8;--calm-serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua","Noto Serif",Tinos,Georgia,serif}
+body{background:radial-gradient(ellipse at 50% -10%,#24304a,transparent 60%),radial-gradient(circle at 20% 30%,rgba(231,199,122,.06) 0 1px,transparent 1.5px) 0 0/140px 140px,radial-gradient(circle at 70% 60%,rgba(239,231,212,.07) 0 1px,transparent 1.5px) 0 0/190px 190px,#121a2b}
+.active-player-banner{background:#1b2437!important;border-bottom:1.5px solid var(--calm-gold)!important;box-shadow:none!important;font-family:var(--calm-serif)!important;font-weight:600!important;letter-spacing:.04em;color:var(--calm-cream)!important}
+.arcade-v2 h1,.arcade-v2 h2,.arcade-v2 .eyebrow,.lobby-header span,.mission-brief h1,.mission-brief span,.slalom-app h1,.slalom-app h2,.slalom-start p{font-family:var(--calm-serif)!important;font-weight:600!important;letter-spacing:.01em}
+.arcade-v2 .eyebrow,.lobby-header span{letter-spacing:.22em!important;color:var(--calm-gold)!important}
+/* no points, no XP, no reward numbers on screen (the saves still keep them) */
+.xp,.lobby-xp,.game-score b,.game-score>b+*,.complete strong,.result-panel>span:first-child{display:none!important}
+.game-score{font-family:var(--calm-serif);color:var(--muted)}
+.complete .medal{color:var(--calm-gold);text-shadow:none;animation:calm-glint 4s ease-in-out infinite}
+/* buttons: quiet night-blue with a gold edge; the chosen one is a cream medallion */
+.arcade-v2 button,.slalom-app button{box-shadow:none!important;text-shadow:none!important;transition:background .6s ease,color .6s ease,transform .5s ease,opacity .6s ease!important}
+.arcade-v2 button:not(.ship):not(.projectile){border-color:rgba(184,138,58,.55)!important}
+.arcade-v2 button.primary,.arcade-v2 button.active,.arcade-v2 button.selected,.arcade-v2 button[aria-pressed="true"],.slalom-ride.chosen,.slalom-mode.chosen,.slalom-btn{background:radial-gradient(circle at 38% 32%,#fffaf0,var(--calm-cream) 62%,#ead6ae)!important;color:#2f4a33!important;border:2px solid var(--calm-gold)!important}
+/* the worlds: calmer light, no glow */
+.arcade-v2 *{text-shadow:none}
+.orb,.nova-orb,.planet-core{filter:saturate(.55) brightness(.95)}
+.space-arena,.flight-game,.orbit-game,.sort-game,.rally{filter:saturate(.7)}
+/* motion: nothing shakes or pops; things settle */
+@keyframes calm-glint{0%,100%{opacity:.55}50%{opacity:1}}
+.arcade-v2 [class*="shake"],.arcade-v2 [class*="wiggle"],.arcade-v2 .burst,.arcade-v2 .confetti{animation:calm-glint 1.6s ease-in-out 1!important}
+/* the Letter Slalom's start and overlays: a printed card on the snow */
+.slalom-start,.slalom-recap,.slalom-warmup,.slalom-ready{font-family:var(--calm-serif)}
+.slalom-ride,.slalom-mode{background:linear-gradient(#fbf3e1,#f1e3c3)!important;border:2px solid rgba(184,138,58,.7)!important;color:#2f4a33!important}
+.slalom-ride span:last-child,.slalom-mode span:last-child{font-family:var(--calm-serif)!important;font-weight:600!important}
+.slalom-hud button,.slalom-top button{background:rgba(244,230,200,.92)!important;border:1.5px solid var(--calm-gold)!important;color:#2f4a33!important}
+.slalom-prompt,.slalom-hint{font-family:var(--calm-serif)}
+/* only the round is shown in a game's header (no points) */
+.game-score{font-size:0!important}.game-score span{font-size:14px;font-family:var(--calm-serif);color:var(--muted)}
+/* the slalom's start: a still, warm morning in the valley */
+.slalom-start,.slalom-app .slalom-loading{background:linear-gradient(#dfe6ee,#efe7db 70%,#f3ece1)!important;color:#2f4a33}
+.slalom-start p{color:#2f4a33!important}
+.slalom-app{background:#ece6de!important}
+
+/* Activity choices use the full width; no short shelf or paginated set. */
+.live-game-grid{grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.live-game-card .live-cover.distinct-cover{height:100px;gap:5px}
+.live-game-card .identity-icon{font-size:48px}
+.live-game-card .identity-example{font-size:17px;padding:3px 8px}
+.live-game-card .live-card-copy{padding:12px}
+.live-game-card .live-card-copy h3{font-size:20px;margin:4px 0}
+.live-game-card .live-card-copy p{font-size:13px;min-height:0;margin:6px 0}
+@media(max-width:500px){.live-game-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.live-game-card .live-card-copy h3{font-size:17px}}
+.deck-grid{grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.deck-card{display:block}.deck-card .deck-picture{height:100px;margin:0 0 12px}

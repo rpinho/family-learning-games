@@ -88,4 +88,4 @@ export function storyAction(p,input){
  }
  return result;
 }
-export function storyVoiceLines(){return [...Object.values(STORY_LINES),...STORY_CHAPTERS.flatMap(e=>[e.intro,e.win]),...['Explorer','Beginner','Admin','Explorer'].map(name=>`${name}, our adventure begins!`)]}
+export function storyVoiceLines(){return [...Object.values(STORY_LINES),...STORY_CHAPTERS.flatMap(e=>[e.intro,e.win]),...['Explorer','Beginner','Alex','Explorer'].map(name=>`${name}, our adventure begins!`)]}

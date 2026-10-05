@@ -25,3 +25,7 @@ test('Printed words with picture names still receive word narration',()=>{
  assert.deepEqual(guessVoiceLines('1044'),['I see the number.','1','0','4','4']);
  assert.deepEqual(guessVoiceLines('K'),['Is it the letter K?']);
 });
+
+test('number drawings through 1000 use a single whole-number clip instead of digit concatenation',()=>{
+ for(const number of ['101','315','999','1000']){assert.deepEqual(guessVoiceLines(number),[number]);assert.deepEqual(labelVoiceLines(number),[number]);}
+});

@@ -1,5 +1,5 @@
 export const VERSION='three-in-a-row-2026-10-03-fork-feedback';
-export const PLAYERS={beginner:'Beginner',explorer:'Explorer',admin:'Admin · Admin'};
+export const PLAYERS={beginner:'Beginner',explorer:'Explorer',admin:'Admin · Alex'};
 export const LEVELS=['','Friendly','Clever','Perfect'];
 export const LINES=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 export const WORDS={start:'You are X. Make three in a row.',turn:'Your turn.',win:'Three in a row! You did it.',lose:'Rook made a row. Let’s try again.',draw:'A draw! Neither player made a row.',find:'Find the move that makes three Xs.',block:'Two Os! Block their row.',fork:'Make two ways to win.',correct:'You found it!',winLesson:'Three Xs in a row!',blockLesson:'You stopped their row!',forkLesson:'Two ways to win. Rook can block only one.',retry:'Look again. Try another square.',forkZero:'That makes no winning threat. Look for two.',forkOne:'That makes one winning threat. Look for two.',hint:'Try the glowing square.',level:'Rook will think a little harder next game.',practice:'Practice complete. Ready to play?',saved:'Your game is saved.'};

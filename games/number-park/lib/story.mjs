@@ -4,8 +4,8 @@
 // line about what he actually did, at the next stop of the journey. It only
 // ever grows and never gates anything. Lines come from a finite list so the
 // voice clips exist ahead of time.
-export const HERO='the baker';
-export const STORY_OPENING=`The baker set off on a journey.`;
+export const HERO='Explorer';
+export const STORY_OPENING=`${HERO} the baker set off on a journey.`;
 export const tellsStory=p=>p.id==='explorer';
 export const PLACES=[
  {icon:'🏠',where:'In the little bakery'},
@@ -23,7 +23,7 @@ export const DEEDS={
  rows:'baked cookies in neat rows',
  bags:'packed the cookies into bags',
  fix:'fixed the messy plates',
- leftover:'gave the extra cookies to Cookie Buddy',
+ leftover:'gave the extra cookies to Snack Friend',
  multiply:'counted the trays with times tables',
  factor:'found the missing number in a recipe',
  sums:'added up the flour sacks',
@@ -36,7 +36,6 @@ function deedFor(game,entries){
  if(game!=='cookies')return DEEDS[game]?game:'mission';
  const tally={};
  for(const h of entries){const m=h.question?.mode;const k=m==='mixed'?'fix':m;if(DEEDS[k])tally[k]=(tally[k]||0)+1;}
- // The rarest kind is the one worth telling ("gave the extras to Cookie Buddy").
  const order=['leftover','fix','bags','rows','share'];
  return order.find(k=>tally[k])||'share';
 }

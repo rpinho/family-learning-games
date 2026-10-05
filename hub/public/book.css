@@ -1,3 +1,6 @@
+/* Centring uses the `translate` property, never `transform`: an animation on `transform` (a hop, a nudge, a
+   wiggle, a settle) REPLACES a transform-based centring, so the element jumped half its width sideways and back
+   for every cycle (2026-09-28: "the letters bounced" after tracing). `translate` composes with them. */
 /* The Book: a full-screen, narrated picture book. Scenes are composed from a picture library. */
 .bk-capture .bk-chrome{display:none}
 .bk-blocked::before{content:"";position:absolute;bottom:-1%;left:8%;width:84%;height:4%;border-radius:50%;background:#352a24;opacity:.23;filter:blur(7px)}
@@ -22,10 +25,17 @@
 .bk{position:fixed;inset:0;z-index:50;background:#1b2433;overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none;font-family:"Nunito","Trebuchet MS",system-ui,sans-serif;color:#fff}
 .bk-page{position:absolute;inset:0;animation:bk-in .55s ease both}
 .bk-page.out{animation:bk-out .35s ease both}
-@keyframes bk-in{from{opacity:0;transform:scale(1.03)}to{opacity:1;transform:none}}
+@keyframes bk-in{from{opacity:0}to{opacity:1}}
 @keyframes bk-out{to{opacity:0}}
+.bk-painted-target{position:absolute;z-index:4;background:transparent;border:0;border-radius:45%;padding:0;cursor:pointer;touch-action:manipulation}
+.bk-target-ring{position:absolute;border-radius:50%;pointer-events:none}
+.bk-painted-target:focus-visible .bk-target-ring,.bk-painted-target.glow .bk-target-ring{outline:3px solid #fff8cc;outline-offset:1px}
+.bk-painted-target.used .bk-target-ring{box-shadow:0 0 0 2px #fff8ccb0,0 0 10px 2px #fff3a080}
 .bk-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:bk-drift 24s ease-in-out infinite alternate}
 @keyframes bk-drift{from{transform:scale(1.02) translateX(-.6%)}to{transform:scale(1.08) translateX(.6%)}}
+/* A small camera settle belongs to the new picture, not its words or controls. */
+.bk-page.scene-change .bk-bg{animation:bk-scene-settle .8s ease-out both,bk-drift 24s ease-in-out .8s infinite alternate}
+@keyframes bk-scene-settle{from{transform:scale(1.04) translateX(.3%)}to{transform:scale(1.02) translateX(-.6%)}}
 .bk-actor,.bk-prop{position:absolute;transform-origin:50% 100%;pointer-events:none}
 .bk-actor img,.bk-prop img{width:100%;height:100%;object-fit:contain;display:block;filter:drop-shadow(0 6px 6px rgba(0,0,0,.25))}
 .bk-actor{animation:bk-pop .6s cubic-bezier(.3,1.6,.5,1) both}
@@ -38,6 +48,10 @@
 @keyframes bk-float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-6%) rotate(2deg)}}
 @keyframes bk-talk{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-2.5%) scale(1.02,.98)}}
 @keyframes bk-hop{0%,100%{transform:translateY(0)}40%{transform:translateY(-14%)}}
+.bk-prop.train.cars{overflow:visible}
+.bk-car{position:absolute;bottom:0;height:100%;overflow:hidden}
+.bk-car.wagon{clip-path:inset(50% 0 0 0)}
+.bk-car img{height:100%;max-width:none;object-fit:fill;display:block;filter:drop-shadow(0 6px 6px rgba(0,0,0,.25))}
 .bk-prop.train{animation:bk-chug 1s ease-in-out infinite,bk-arrive 1.6s ease-out both}
 @keyframes bk-chug{0%,100%{translate:0 0}50%{translate:0 -1%}}
 @keyframes bk-arrive{from{transform:translateX(-60vw)}to{transform:none}}
@@ -46,19 +60,19 @@
 @keyframes bk-twinkle{0%,100%{opacity:0;transform:scale(.4)}50%{opacity:1;transform:scale(1)}}
 .bk-fx.burst i{animation:bk-burst 1.3s ease-out forwards}
 @keyframes bk-burst{0%{opacity:1;transform:translate(0,0) scale(.3)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1.2)}}
-.bk-caption{position:absolute;left:50%;top:max(14px,env(safe-area-inset-top));transform:translateX(-50%);background:rgba(255,250,236,.93);color:#2b2118;border-radius:22px;padding:.2em .7em;font-weight:900;font-size:clamp(26px,6.5vmin,56px);box-shadow:0 6px 18px rgba(0,0,0,.25);max-width:88vw;text-align:center;cursor:pointer;border:0}
+.bk-caption{position:absolute;left:50%;top:max(14px,env(safe-area-inset-top));translate:-50% 0;background:rgba(255,250,236,.93);color:#2b2118;border-radius:22px;padding:.2em .7em;font-weight:900;font-size:clamp(26px,6.5vmin,56px);box-shadow:0 6px 18px rgba(0,0,0,.25);max-width:88vw;text-align:center;cursor:pointer;border:0}
 .bk-early .bk-caption{font-size:clamp(56px,16vmin,140px);padding:.05em .45em;line-height:1.1}
 .bk-chrome{position:absolute;inset:0;pointer-events:none}
 .bk-chrome button{pointer-events:auto}
 .bk-exit,.bk-hear{position:absolute;top:max(10px,env(safe-area-inset-top));width:48px;height:48px;border-radius:50%;border:0;background:rgba(0,0,0,.35);color:#fff;font-size:22px;cursor:pointer}
 .bk-exit{left:10px}.bk-hear{right:10px}
-.bk-dots{position:absolute;left:50%;bottom:max(8px,env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:6px;pointer-events:none}
+.bk-dots{position:absolute;left:50%;bottom:max(8px,env(safe-area-inset-bottom));translate:-50% 0;display:flex;gap:6px;pointer-events:none}
 .bk-dots i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.45)}.bk-dots i.done{background:#ffd54a}.bk-dots i.now{background:#fff;transform:scale(1.35)}
 .bk-keys{position:absolute;top:max(12px,env(safe-area-inset-top));right:66px;display:flex;gap:4px;pointer-events:none}
 .bk-keys b{background:linear-gradient(#ffe27a,#e0a92a);color:#5a3a00;border-radius:10px;padding:2px 7px;font-size:18px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
-.bk-tapnext{position:absolute;right:16px;bottom:34px;font-size:40px;opacity:0;transition:opacity .4s;pointer-events:none;animation:bk-nudge 1.2s ease-in-out infinite}
+.bk-tapnext{position:absolute;right:16px;bottom:34px;font-size:40px;opacity:0;transition:opacity .4s;pointer-events:none;animation:bk-tapnext-nudge 1.2s ease-in-out infinite}
 .bk-tapnext.on{opacity:.9}
-@keyframes bk-nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(8px)}}
+@keyframes bk-tapnext-nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(8px)}}
 /* cover */
 .bk-cover{position:absolute;inset:0;display:grid;place-items:center;text-align:center;background:radial-gradient(ellipse at 50% 40%,rgba(0,0,0,.05),rgba(0,0,0,.45))}
 .bk-cover .card{background:rgba(255,250,236,.94);color:#2b2118;border-radius:28px;padding:18px 26px 22px;max-width:min(90vw,640px);box-shadow:0 12px 40px rgba(0,0,0,.35)}
@@ -72,6 +86,8 @@
 .bk-btn.word{font-size:clamp(24px,6vmin,48px);padding:.2em .6em;border-radius:14px}
 .bk-btn.stone{background:radial-gradient(circle at 40% 35%,#d9d4c7,#8f8a80);color:#2d2a25;border-radius:48% 52% 45% 55%/55% 45% 55% 45%}
 .bk-btn.sign{background:linear-gradient(#c98b4c,#9a6230);color:#fff8e6;border-radius:10px;text-shadow:0 2px 0 rgba(0,0,0,.3)}
+/* Sign words he must read: big and plain (decodable three-letter words fit easily). */
+.bk-btn.sign.word{font-size:max(40px,14vmin);padding:.1em .45em;background:#fff3d6;color:#2a1a08;text-shadow:none;border:4px solid #9a6230}
 .bk-btn.ball{border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#e6e6e6 60%,#bbb);color:#1c2b3a}
 .bk-btn.key{background:linear-gradient(#ffe27a,#e0a92a);color:#5a3a00}
 .bk-btn.right,.bk-btn.lit{background:linear-gradient(#ffe27a,#f5b82e);color:#4a2c00;transform:scale(1.08)}
@@ -82,45 +98,51 @@
 @keyframes bk-wiggle{20%{transform:rotate(-8deg)}40%{transform:rotate(7deg)}60%{transform:rotate(-5deg)}80%{transform:rotate(3deg)}}
 .bk-btn.no{background:linear-gradient(#ff6b5b,#d8322b);color:#fff;font-size:clamp(48px,13vmin,110px);padding:.05em .5em;animation:bk-bob 1.2s ease-in-out infinite}
 .bk-btn.ok{font-size:clamp(18px,4vmin,28px);min-height:auto;min-width:auto;padding:.4em .8em;background:rgba(255,250,240,.85)}
-.bk-board{position:absolute;left:50%;top:12%;transform:translateX(-50%);background:#1f3b2b;border:8px solid #8a5a2b;border-radius:16px;color:#fffbe6;font-weight:900;font-size:clamp(34px,9vmin,84px);padding:.1em .5em;display:flex;gap:.3em;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,.35);white-space:nowrap}
+.bk-board{position:absolute;left:50%;top:12%;translate:-50% 0;background:#1f3b2b;border:8px solid #8a5a2b;border-radius:16px;color:#fffbe6;font-weight:900;font-size:clamp(34px,9vmin,84px);padding:.1em .5em;display:flex;gap:.3em;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,.35);white-space:nowrap}
 .bk-board.buzz{animation:bk-wiggle .5s ease 2}
 .bk-board .pic{font-size:.9em}
 .bk-board button{all:unset;cursor:pointer;padding:0 .1em;border-radius:10px}
-.bk-glyph{position:absolute;left:50%;top:10%;transform:translateX(-50%);font-weight:900;font-size:clamp(120px,34vmin,300px);line-height:1;color:#ffe27a;-webkit-text-stroke:6px #7a4a00;paint-order:stroke;text-shadow:0 10px 30px rgba(0,0,0,.35);cursor:pointer;background:none;border:0;font-family:inherit;animation:bk-pop .7s cubic-bezier(.3,1.6,.5,1) both}
-.bk-glyph.tapped{animation:bk-hop .5s ease 2}
-.bk-magic{position:absolute;left:50%;top:14%;transform:translateX(-50%);border:0;cursor:pointer;font-family:inherit;font-weight:900;font-size:clamp(40px,11vmin,96px);padding:.1em .6em;border-radius:18px;background:linear-gradient(#fff6d6,#ffe07a);color:#3a2200;box-shadow:0 0 0 0 rgba(255,215,90,.9),0 10px 30px rgba(0,0,0,.35);animation:bk-glow 1.3s ease-in-out infinite}
-.bk-magic small{display:block;font-size:.28em;letter-spacing:.14em;text-transform:uppercase;color:#9a5a00}
+.bk-glyph{position:absolute;left:50%;top:10%;translate:-50% 0;font-weight:900;font-size:clamp(120px,34vmin,300px);line-height:1;color:#ffe27a;-webkit-text-stroke:6px #7a4a00;paint-order:stroke;text-shadow:0 10px 30px rgba(0,0,0,.35);cursor:pointer;background:none;border:0;font-family:inherit;animation:bk-pop .7s cubic-bezier(.3,1.6,.5,1) both}
+.bk-glyph.tapped{animation:bk-settle .35s ease-out 1}
+/* 2026-09-28: success is one short settle, once (see the centring note at the top). */
+@keyframes bk-settle{0%{transform:scale(1.1)}100%{transform:scale(1)}}
+.bk-glyph.tapped.bk-nudge,.bk-glyph.listening.bk-nudge{animation:none}
+.bk-magic{position:absolute;left:50%;top:14%;translate:-50% 0;border:0;cursor:pointer;font-family:inherit;font-weight:900;font-size:clamp(36px,8.5vmin,76px);padding:.05em .5em;border-radius:18px;background:linear-gradient(#fff6d6,#ffe07a);color:#3a2200;box-shadow:0 0 0 0 rgba(255,215,90,.9),0 10px 30px rgba(0,0,0,.35);animation:bk-glow 1.3s ease-in-out infinite}
+.bk-magic small{display:block;padding:0 1.4em;font-size:.28em;letter-spacing:.14em;text-transform:uppercase;color:#9a5a00}
 .bk-magic.read{animation:bk-hop .5s ease 2;background:linear-gradient(#fffbe6,#ffd54a)}
 .bk-things{position:absolute;left:5%;right:5%;top:18%;height:42%}
-.bk-thing{position:absolute;border:0;background:none;cursor:pointer;padding:0;transform:translate(-50%,-50%)}
+.bk-thing{position:absolute;border:0;background:none;cursor:pointer;padding:0;translate:-50% -50%}
 .bk-thing img,.bk-thing span{display:block;width:100%;height:100%;object-fit:contain;font-size:inherit;filter:drop-shadow(0 4px 4px rgba(0,0,0,.25))}
 .bk-thing b{position:absolute;right:-8%;top:-8%;background:#ffd54a;color:#4a2c00;border-radius:50%;width:1.4em;height:1.4em;display:grid;place-items:center;font-size:clamp(18px,4vmin,30px);box-shadow:0 2px 6px rgba(0,0,0,.3)}
-.bk-thing.counted{animation:bk-hop .4s ease}
+.bk-thing.counted{animation:bk-hop .4s ease;pointer-events:none}
 .bk-plates{position:absolute;left:4%;right:4%;top:40%;display:flex;justify-content:center;gap:3vmin}
-.bk-plate{width:clamp(70px,16vmin,140px);height:clamp(70px,16vmin,140px);border-radius:50%;background:radial-gradient(#fff,#e9e2d4);box-shadow:0 6px 16px rgba(0,0,0,.3);display:flex;flex-wrap:wrap;align-content:center;justify-content:center;font-size:clamp(16px,4vmin,30px)}
-.bk-pizza{position:absolute;left:50%;top:10%;transform:translateX(-50%);width:clamp(110px,26vmin,230px);border:0;background:none;cursor:pointer}
-.bk-pizza img{width:100%}.bk-pizza b{position:absolute;inset:auto 0 -10px 0;text-align:center;font-size:clamp(20px,5vmin,34px);text-shadow:0 2px 4px #000}
-.bk-slots{position:absolute;left:50%;top:10%;transform:translateX(-50%);display:flex;gap:.3em;flex-wrap:wrap;justify-content:center;background:rgba(255,248,225,.95);color:#3a2200;border-radius:16px;padding:.25em .5em;font-weight:900;font-size:clamp(22px,5.5vmin,44px);max-width:92vw;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+/* (plates are drawn pictures now: .bk-table .bk-plate) */
+
+
+.bk-slots{position:absolute;left:50%;top:10%;translate:-50% 0;display:flex;gap:.3em;flex-wrap:wrap;justify-content:center;background:rgba(255,248,225,.95);color:#3a2200;border-radius:16px;padding:.25em .5em;font-weight:900;font-size:clamp(22px,5.5vmin,44px);max-width:92vw;box-shadow:0 8px 24px rgba(0,0,0,.3)}
 .bk-slots span{min-width:2.2em;border-bottom:4px solid #c9a24a;text-align:center}
-.bk-quest{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(255,250,236,.96);color:#2b2118;border-radius:26px;padding:20px 24px;max-width:min(90vw,560px);text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.4);animation:bk-pop .6s ease both}
+.bk-quest{position:absolute;left:50%;top:50%;translate:-50% -50%;background:rgba(255,250,236,.96);color:#2b2118;border-radius:26px;padding:20px 24px;max-width:min(90vw,560px);text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.4);animation:bk-pop .6s ease both}
 .bk-quest h2{margin:.1em 0 .3em;font-size:clamp(24px,5vmin,40px)}.bk-quest p{font-size:clamp(18px,3.6vmin,26px);margin:.3em 0 .8em}
 .bk-quest .bk-btn{font-size:clamp(22px,4.5vmin,34px);padding:.3em .9em;min-height:auto}
 .bk-key-fly{position:absolute;left:50%;top:45%;font-size:clamp(60px,14vmin,120px);animation:bk-keyfly 1.6s ease-in forwards;pointer-events:none}
-@keyframes bk-keyfly{0%{transform:translate(-50%,-50%) scale(.3)}40%{transform:translate(-50%,-50%) scale(1.3)}100%{transform:translate(30vw,-45vh) scale(.3);opacity:.2}}
-.bk-preview-bar{position:absolute;left:50%;top:max(10px,env(safe-area-inset-top));transform:translateX(-50%);background:rgba(0,0,0,.45);border-radius:14px;padding:4px 12px;font:700 13px system-ui;letter-spacing:.08em;pointer-events:none}
+@keyframes bk-keyfly{0%{translate:-50% -50% scale(.3)}40%{translate:-50% -50% scale(1.3)}100%{transform:translate(30vw,-45vh) scale(.3);opacity:.2}}
+.bk-preview-bar{position:absolute;left:50%;top:max(10px,env(safe-area-inset-top));translate:-50% 0;background:rgba(0,0,0,.45);border-radius:14px;padding:4px 12px;font:700 13px system-ui;letter-spacing:.08em;pointer-events:none}
 @media (prefers-reduced-motion:reduce){.bk *,.bk *::before{animation:none!important;transition:none!important}.bk-fx{display:none}}
 /* v2.1: he plays (kick, throw, drive), more motion, parallax */
 .bk-bg{translate:calc(var(--px,0)*-18px) calc(var(--py,0)*-10px);transition:translate .4s ease-out}
 .bk-layer{position:absolute;inset:0;pointer-events:none;translate:calc(var(--px,0)*10px) calc(var(--py,0)*5px);transition:translate .4s ease-out}
-.bk-actor{animation:bk-enter .9s cubic-bezier(.25,1.3,.45,1) both}
-@keyframes bk-enter{from{opacity:0;transform:translateX(var(--from,0)) translateY(4%)}60%{opacity:1}to{opacity:1;transform:none}}
+/* Friends appear where they stand (a short rise and fade): they never walk in across each other (2026-09-29: the
+   walk-in from the sides put Dad over Beginner for half a second on every page). */
+.bk-actor{animation:bk-enter .7s ease-out both}
+@keyframes bk-enter{from{opacity:0;transform:translateY(3%)}to{opacity:1;transform:none}}
 @keyframes bk-bob{0%,100%{transform:translateY(0) rotate(-1.2deg) scale(1,1)}25%{transform:translateY(-2.5%) rotate(0deg) scale(.99,1.02)}50%{transform:translateY(0) rotate(1.2deg) scale(1.02,.98)}75%{transform:translateY(-2%) rotate(0deg) scale(1,1.01)}}
 @keyframes bk-talk{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5%) scale(1.04,.96)}}
-.bk-actor.keeper-ready>div{animation:bk-sway 1.1s ease-in-out infinite}
+.bk-actor.keeper-ready>div{animation:none}
 @keyframes bk-sway{0%,100%{transform:translateX(-12%) rotate(-3deg)}50%{transform:translateX(12%) rotate(3deg)}}
 .bk-ball{position:absolute;border:0;background:none;padding:0;cursor:pointer;touch-action:none;z-index:5}
 .bk-ball img,.bk-ball span{width:100%;height:100%;object-fit:contain;display:block;font-size:inherit;filter:drop-shadow(0 8px 6px rgba(0,0,0,.35))}
-.bk-ball b{position:absolute;inset:18%;display:grid;place-items:center;border-radius:50%;background:rgba(255,236,120,.95);color:#3a2200;font-weight:900;font-size:clamp(26px,7vmin,60px);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+/* The letter he must read: a solid badge, dark ink, as big as the ball allows (>= 12% of the short side on a phone). */
+.bk-ball b{position:absolute;inset:8%;display:grid;place-items:center;border-radius:50%;background:#fff3b0;color:#231400;font-weight:900;line-height:1;font-size:max(26px,calc(var(--s,80px)*.68));box-shadow:0 2px 8px rgba(0,0,0,.3)}
 .bk-ball.pulse{animation:bk-ballpulse 1.1s ease-in-out infinite}
 @keyframes bk-ballpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1) translateY(-6%)}}
 .bk-ball.glow b{animation:bk-glow 1s ease-in-out infinite}
@@ -129,10 +151,248 @@
 .bk-goal{position:absolute;border:6px solid #fff;border-bottom:0;border-radius:4px 4px 0 0;background:repeating-linear-gradient(45deg,rgba(255,255,255,.35) 0 2px,transparent 2px 12px),repeating-linear-gradient(-45deg,rgba(255,255,255,.35) 0 2px,transparent 2px 12px);box-shadow:0 6px 12px rgba(0,0,0,.15)}
 .bk-net{position:absolute;border-radius:6px;background:radial-gradient(circle,rgba(255,255,255,.7),transparent 70%);animation:bk-net .8s ease-out both;pointer-events:none}
 @keyframes bk-net{0%{transform:scale(.6);opacity:1}100%{transform:scale(1.4);opacity:0}}
-.bk-goaltext{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);font-weight:900;font-size:clamp(56px,18vmin,160px);color:#ffe27a;-webkit-text-stroke:5px #7a4a00;paint-order:stroke;text-shadow:0 10px 30px rgba(0,0,0,.35);animation:bk-goalpop 1.6s cubic-bezier(.3,1.6,.5,1) both;pointer-events:none}
-@keyframes bk-goalpop{0%{transform:translate(-50%,-50%) scale(.2)}30%{transform:translate(-50%,-50%) scale(1.15)}80%{opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:0}}
+.bk-goaltext{position:absolute;left:50%;top:38%;translate:-50% -50%;font-weight:900;font-size:clamp(56px,18vmin,160px);color:#ffe27a;-webkit-text-stroke:5px #7a4a00;paint-order:stroke;text-shadow:0 10px 30px rgba(0,0,0,.35);animation:bk-goalpop 1.6s cubic-bezier(.3,1.6,.5,1) both;pointer-events:none}
+@keyframes bk-goalpop{0%{translate:-50% -50% scale(.2)}30%{translate:-50% -50% scale(1.15)}80%{opacity:1}100%{translate:-50% -50% scale(1);opacity:0}}
 .bk-btn.go{font-size:clamp(34px,9vmin,72px);padding:.15em .6em;background:linear-gradient(#7be07b,#2e9e3e);color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.3);animation:bk-ballpulse 1.1s ease-in-out infinite}
 .bk-puffs{position:absolute;left:20%;bottom:40%;pointer-events:none}
 .bk-puffs i{position:absolute;width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.85);animation:bk-puff 1.4s ease-out infinite}
 .bk-puffs i:nth-child(2){animation-delay:.45s}.bk-puffs i:nth-child(3){animation-delay:.9s}
 @keyframes bk-puff{from{transform:translate(0,0) scale(.3);opacity:.9}to{transform:translate(40vw,-18vh) scale(1.6);opacity:0}}
+
+/* Layout rules (v2.2): play things never sit on the characters. Wide screens: the characters stand either side of
+   the middle band where he counts and shares; tall screens: the play things go above the characters. */
+@media (min-aspect-ratio:21/20){.bk-things{left:27%;right:27%}.bk-plates{left:27%;right:27%;flex-wrap:wrap}}
+@media (max-aspect-ratio:21/20){.bk-things{top:9%;height:30%}.bk-plates{top:31%;flex-wrap:wrap}}
+.bk-btn.go{position:absolute;right:5%;top:24%}
+
+/* Say it aloud (v2.2): the word or letter is the talk button. */
+.bk-mic-badge{position:absolute;right:-.35em;top:-.35em;font-size:clamp(20px,4.5vmin,36px);background:#fff;border-radius:50%;width:1.6em;height:1.6em;display:grid;place-items:center;box-shadow:0 3px 10px rgba(0,0,0,.3);pointer-events:none}
+.bk-mic-badge:empty{display:none}
+.bk-magic,.bk-glyph{position:absolute}
+.bk-magic.listening,.bk-glyph.listening{animation:none;box-shadow:0 0 0 calc(6px + var(--lvl,0)*26px) rgba(255,90,70,.55),0 10px 30px rgba(0,0,0,.35);transition:box-shadow .08s}
+.bk-glyph.listening{border-radius:24px;background:rgba(255,255,255,.12)}
+.bk-magic.thinking .bk-mic-badge,.bk-glyph.thinking .bk-mic-badge{animation:bk-think .6s ease-in-out infinite alternate}
+@keyframes bk-think{from{transform:scale(.8);opacity:.5}to{transform:scale(1.1);opacity:1}}
+.soft-miss{animation:bk-softmiss .5s ease}
+@keyframes bk-softmiss{0%,100%{translate:0}30%{translate:-6px}60%{translate:6px}}
+.bk-heard{position:absolute;left:50%;top:4%;translate:-50% 0;background:rgba(0,0,0,.6);color:#fff;border-radius:12px;padding:4px 12px;font:700 15px system-ui;pointer-events:none;z-index:6}
+.bk-card{position:absolute;inset:0;background:rgba(20,26,40,.72);display:grid;place-items:center;z-index:8;padding:16px}
+.bk-card-in{background:#fffaf0;color:#2b2118;border-radius:24px;max-width:min(560px,92vw);padding:18px 20px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.4)}
+.bk-card-mic{font-size:clamp(48px,12vmin,90px);position:relative;display:inline-block}
+.bk-card-mic::after{content:"";position:absolute;left:-8%;right:-8%;top:48%;height:8px;background:#d9362b;border-radius:4px;transform:rotate(-35deg)}
+.bk-card h2{font-size:clamp(22px,5vmin,34px);margin:.2em 0 .4em}
+.bk-card .grown{font-size:14px;line-height:1.4;color:#5a4a3a;text-align:left}
+.bk-card-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+.bk-card-btns .bk-btn{font-size:clamp(20px,4.5vmin,30px);min-height:auto;padding:.3em .8em}
+
+/* Quest hints and the note for Dad (v2.2) */
+.bk-hint{display:flex;align-items:center;justify-content:center;gap:.4em;font-weight:900;font-size:clamp(26px,6vmin,44px);min-height:0}
+.bk-hint .pic{font-size:1.8em}
+.bk-hintbtn{font-size:clamp(20px,4vmin,28px)!important;min-height:auto!important;padding:.25em .8em!important;background:#e8f4ff!important}
+.bk-dadnote{font-size:14px!important;color:#6a5a4a;font-style:italic}
+
+/* Letter shape (v2.2): the big letter with its lowercase, and the finger trace over it */
+.bk-glyph small.lc{font-size:.5em;margin-left:.12em;-webkit-text-stroke-width:4px}
+.bk-trace{position:absolute;z-index:6;touch-action:none;cursor:crosshair}
+
+/* The words of a line that could not be heard (no clip, or sound refused): shown, never read by a device voice. */
+.bk-words{position:absolute;left:50%;top:max(12px,env(safe-area-inset-top));translate:-50% 0;max-width:min(720px,calc(100% - 120px));background:rgba(20,16,30,.84);color:#fff7dc;font:800 clamp(18px,3.6vmin,28px)/1.3 inherit;padding:8px 16px;border-radius:14px;text-align:center;z-index:9;pointer-events:none}
+
+/* A reminder without words: the things to tap pulse once (a line is never said twice on a page). */
+.bk-nudge{animation:bk-nudge .9s ease-in-out 2}
+@keyframes bk-nudge{50%{transform:scale(1.08);filter:brightness(1.15) drop-shadow(0 0 12px rgba(255,220,90,.9))}}
+
+/* ---- Quest beats (an older reader's book plays like a game) ---- */
+.bk-board.bk-puzzle{flex-direction:column;align-items:center;gap:.05em;white-space:nowrap}
+.bk-board.bk-puzzle small{font-size:.38em;letter-spacing:.12em;text-transform:uppercase;opacity:.8}
+.bk-board.bk-puzzle.route div,.bk-board.bk-puzzle.playcard div{font-size:.62em;line-height:1.25;padding:0 .2em;border-radius:10px}
+.bk-board.bk-puzzle div.won{background:rgba(255,213,74,.35);box-shadow:0 0 0 3px #ffd54a}
+.bk-board.bk-puzzle.playcard{background:#23452a;border-color:#e8e8e8;background-image:repeating-linear-gradient(90deg,transparent 0 22%,rgba(255,255,255,.18) 22% 23%)}
+.bk-btn.ball.route{font-size:clamp(40px,9vmin,80px);background:radial-gradient(circle at 35% 30%,#fff,#eef3ff 60%,#c9d6f2)}
+.bk-box.left b{background:#d9412b}
+.bk-btn.fork{display:flex;flex-direction:column;align-items:center;gap:4px;padding:.2em .5em;border-radius:24px;min-width:clamp(120px,30vmin,220px)}
+.bk-btn.fork .pic{font-size:clamp(48px,11vmin,96px);line-height:1}
+.bk-btn.fork small{font-size:clamp(15px,3.2vmin,24px);font-weight:800;color:#3b3a55}
+.bk-btn.fork.used{opacity:.35;transform:scale(.92)}
+.bk-item-fly{filter:drop-shadow(0 0 18px #9fd0ff)}
+.bk-spellbook{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:0 0 8px;padding:6px 10px;border-radius:14px;background:linear-gradient(#26407a,#1a2c57);font-size:30px;box-shadow:inset 0 0 0 2px #c9a24a}
+
+/* ---- Spellbook theme (a young wizard's book: blue, gold trim, a map for the page trail) ---- */
+.bk-theme-spellbook{background:#0f1c3a}
+.bk-theme-spellbook .bk-cover{background:radial-gradient(ellipse at 50% 40%,rgba(10,20,60,.05),rgba(8,14,40,.6))}
+.bk-theme-spellbook .bk-cover .card{background:linear-gradient(160deg,#1d3470,#13244f);color:#f4ecd8;border:3px solid #c9a24a;box-shadow:0 0 0 6px #13244f,0 0 0 8px #c9a24a,0 16px 44px rgba(0,0,0,.5)}
+.bk-theme-spellbook .bk-cover .kicker{color:#9fd0ff}
+.bk-theme-spellbook .bk-cover h1{font-family:Georgia,"Times New Roman",serif;letter-spacing:.01em}
+.bk-theme-spellbook .bk-cover .card::before{content:"✦ ✧ ✦";display:block;color:#c9a24a;letter-spacing:.4em;font-size:14px}
+.bk-theme-spellbook .bk-quest{background:linear-gradient(160deg,#1d3470,#13244f);color:#f4ecd8;border:3px solid #c9a24a}
+.bk-theme-spellbook .bk-quest h2{color:#9fd0ff}
+.bk-theme-spellbook .bk-board{background:#13244f;border-color:#c9a24a}
+.bk-theme-spellbook .bk-btn.ball{background:radial-gradient(circle at 35% 30%,#fff,#e3ecff 60%,#9fb6e6);color:#13244f}
+/* the page trail becomes a map route: a dashed line with a star for where he is */
+.bk-theme-spellbook .bk-dots{gap:0;align-items:center;padding:4px 10px;border-radius:14px;background:rgba(15,28,58,.55)}
+.bk-theme-spellbook .bk-dots i{width:16px;height:3px;border-radius:2px;background:rgba(159,208,255,.35);margin:0 2px}
+.bk-theme-spellbook .bk-dots i.done{background:#c9a24a}
+.bk-theme-spellbook .bk-dots i.now{width:18px;height:18px;border-radius:0;background:none;transform:none;position:relative}
+.bk-theme-spellbook .bk-dots i.now::after{content:"★";position:absolute;inset:-4px 0 0;color:#ffd54a;font-size:18px;font-style:normal;line-height:18px;text-align:center;text-shadow:0 0 8px #ffd54a}
+.bk-theme-spellbook .bk-words,.bk-theme-spellbook .bk-caption{font-family:Georgia,"Times New Roman",serif}
+
+/* golden letter keys */
+.bk-keys-golden .bk-keys b{background:linear-gradient(#fff2a8,#f0c02a 55%,#c98f12);color:#4a2e00;box-shadow:0 0 10px rgba(255,210,60,.7),0 2px 6px rgba(0,0,0,.3)}
+.bk-keys-golden .bk-key-fly{filter:drop-shadow(0 0 16px #ffd54a)}
+
+.bk-board u.pv{text-decoration:none;color:#ffd54a;border-bottom:.08em solid #ffd54a}
+
+/* A letters book ends with the Letter Hunt: one clean card, buttons stacked (never on top of each other) */
+.bk-quest.bk-hunt-end{display:flex;flex-direction:column;align-items:center;gap:.2em;width:min(92vw,520px);max-height:92vh;overflow:auto;box-sizing:border-box}
+.bk-hunt-letter{font-weight:900;font-size:clamp(64px,16vmin,120px);line-height:1;color:#c8341f;text-shadow:0 3px 0 #ffd54a}
+.bk-hunt-letter small{font-size:.5em;margin-left:.15em;color:#7a4a22}
+.bk-hunt-end p{margin:.1em 0 .5em}
+.bk-end-btns{display:flex;flex-direction:column;align-items:stretch;gap:12px;width:100%}
+.bk-end-btns .bk-btn{display:block;text-align:center;text-decoration:none;margin:0}
+.bk-end-btns .bk-btn.big{font-size:clamp(24px,5.2vmin,38px);padding:.45em .8em;background:linear-gradient(#8ee07a,#3aa84a);color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.bk-end-btns .bk-done{font-size:clamp(18px,3.8vmin,26px)}
+/* The closing card is centred without transform (its pop-in animation also sets transform, which undid the
+   translate(-50%,-50%) and pushed the card to the bottom right, over the picture: 2026-09-28). */
+.bk-quest{left:0;right:0;top:0;bottom:0;margin:auto;width:fit-content;height:fit-content;max-height:92vh;overflow:auto;transform:none;translate:none}
+
+/* The key ring: his golden keys out of the goal (e.g. 2 of 7); today's key slides on at the end */
+.bk-keyring{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px;margin:.2em auto .4em;padding:4px 10px;border-radius:999px;background:rgba(255,236,170,.55);box-shadow:inset 0 0 0 2px #e0b53a;max-width:100%}
+.bk-keyring .ring{font-size:18px;filter:saturate(0) brightness(.7);margin-right:2px}
+.bk-keyring b{position:relative;font-size:clamp(22px,5vmin,34px);line-height:1;filter:drop-shadow(0 0 6px rgba(255,200,40,.8))}
+.bk-keyring b i{position:absolute;right:-2px;bottom:-4px;font-style:normal;font-weight:900;font-size:.45em;color:#5a3a00;background:#fff3b0;border-radius:6px;padding:0 3px}
+.bk-keyring b.empty{filter:grayscale(1) opacity(.28)}
+.bk-keyring b.new{animation:bk-keyslide 1.4s cubic-bezier(.2,.8,.3,1.2) .6s both}
+.bk-keyring em{flex-basis:100%;text-align:center;font-style:normal;font-weight:900;font-size:clamp(14px,3vmin,18px);color:#6a4a10}
+@keyframes bk-keyslide{from{transform:translate(-120px,-60px) rotate(-200deg) scale(1.8);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.bk-keyring b.new{animation:none}}
+.bk-glyph.traced{animation:bk-settle .35s ease-out 1}
+
+/* Traced: visibly accepted at once (gold-green with a tick), whatever the sound is doing */
+.bk-glyph.traced{color:#b8f27a;-webkit-text-stroke-color:#2f6b16}
+.bk-glyph.traced::after{content:"✓";position:absolute;right:-.15em;top:-.1em;font-size:.35em;color:#2f9a2a;-webkit-text-stroke:3px #fff;paint-order:stroke}
+
+/* A game's things in the picture (count, share, remainder): drawn library pictures placed by table() in book.mjs,
+   resting on the ground; the number badge is the only thing that is not a picture. */
+.bk-table{position:absolute;inset:0;pointer-events:none;z-index:4}
+.bk-table>*{position:absolute;pointer-events:auto;border:0;background:none;padding:0;margin:0;cursor:pointer;translate:none;display:block}
+.bk-table img.art{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 4px 4px rgba(0,0,0,.25));pointer-events:none}
+.bk-table .food{position:absolute;left:16%;right:16%;top:14%;bottom:18%;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:0 4%;pointer-events:none}
+.bk-table .food img{width:30%;height:auto;max-height:60%;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
+.bk-table .bk-box .food{top:30%;bottom:8%}
+.bk-table b{position:absolute;right:-6%;top:-6%;background:#ffd54a;color:#4a2c00;border-radius:50%;min-width:1.4em;height:1.4em;display:grid;place-items:center;font-size:clamp(16px,3.6vmin,28px);font-weight:900;box-shadow:0 2px 6px rgba(0,0,0,.3);pointer-events:none}
+.bk-table .bk-pizza.empty img.art{opacity:.35}
+/* a thing drawn at its real size (a little dumbbell): a finger-sized tap area around it, the number above it */
+.bk-table>.real::before{content:"";position:absolute;inset:-22px -12px -10px}
+.bk-table>.real b{right:auto;top:auto;left:50%;bottom:100%;translate:-50% -12%}
+
+/* Keep the apparatus above its mats inside the wide crop. */
+.bk-page[data-scene="gym-bars-home"] .bk-bg{object-position:center top;animation:none;translate:none}
+.bk-play.bk-kick-letters{height:14%;padding-bottom:32px;gap:18px}
+.bk-letter-pick{min-width:48px;min-height:48px;font-size:32px;border-radius:12px}
+.bk-letter-pick[aria-pressed="true"]{outline:3px solid var(--gold,#b88a3a);outline-offset:3px}
+/* board puzzles (2026-10-01): a small wooden chessboard with painted pieces, a pencil labyrinth on paper */
+.bk-board.bk-chess,.bk-board.bk-maze{top:5%;padding:0;font-size:16px;display:block;white-space:normal;box-sizing:border-box}
+.bk-board.bk-chess{background:#6b4423;border:10px solid #8a5a2b;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.35),inset 0 0 0 2px #4a2e16}
+.bk-chess .grid{display:grid;grid-template-columns:repeat(var(--n),1fr);grid-template-rows:repeat(var(--n),1fr);width:100%;height:100%;border-radius:4px;overflow:hidden}
+.bk-chess .sq{position:relative;display:flex;align-items:flex-end;justify-content:center}
+.bk-chess .sq.light{background:radial-gradient(circle at 30% 25%,#f6e3bf,#e8cc98)}
+.bk-chess .sq.dark{background:radial-gradient(circle at 30% 25%,#b98455,#9c6a3e)}
+.bk-chess .sq.target::after,.bk-chess .sq.won::after,.bk-chess .sq.hit::after,.bk-chess .sq.miss::after{content:'';position:absolute;inset:4%;border:max(3px,.5vmin) solid rgba(216,67,58,.9);border-radius:8%;z-index:1;pointer-events:none}
+.bk-chess .sq.won::after{border-color:#ffd54a;box-shadow:0 0 12px rgba(255,213,74,.8)}
+.bk-chess .sq.miss::after{border-color:rgba(90,90,90,.7)}
+.bk-chess .piece{position:absolute;inset:4% 0 6%;display:flex;align-items:flex-end;justify-content:center;pointer-events:auto;z-index:2}
+.bk-chess .piece img.pc{width:auto;max-width:96%;object-fit:contain;filter:drop-shadow(0 3px 2px rgba(0,0,0,.35))}
+.bk-chess .dot{all:unset;position:absolute;left:50%;top:50%;width:46%;height:46%;translate:-50% -50%;border-radius:50%;background:var(--c);box-shadow:0 0 0 3px #fff,0 3px 8px rgba(0,0,0,.35);cursor:pointer;z-index:3}
+.bk-board.bk-maze{background:#fbf5e6;border:none;border-radius:6px;box-shadow:0 10px 26px rgba(0,0,0,.3);background-image:repeating-linear-gradient(0deg,transparent 0 23px,rgba(120,150,190,.12) 23px 24px)}
+.bk-maze svg{width:100%;height:100%;display:block}
+.bk-maze .walls line{stroke:#3d3a36;stroke-width:.11;stroke-linecap:round}
+.bk-maze .door circle{fill:var(--c);stroke:#fff;stroke-width:.07}
+.bk-maze .door path{stroke:var(--c);stroke-width:.12;stroke-linecap:round}
+.bk-maze .star{fill:#f2c230;stroke:#b8860b;stroke-width:.05}
+.bk-maze .star.won{animation:bk-hop .6s ease 2;filter:drop-shadow(0 0 .2px #ffd54a)}
+.bk-maze .paths polyline{fill:none;stroke:var(--c);stroke-width:.26;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
+.bk-maze .paths .end{stroke:#3d3a36;stroke-width:.1;stroke-linecap:round;fill:none}
+.bk-maze .paths .gone{transition:opacity .5s;opacity:0}
+.bk-btn.board{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px;box-sizing:border-box;width:clamp(72px,15vmin,112px);height:clamp(72px,15vmin,112px);min-width:0;min-height:0;font-size:clamp(13px,2.6vmin,20px);overflow:hidden}
+.bk-btn.board small{font-size:.8em;font-weight:800;text-transform:capitalize;line-height:1}
+.bk-btn.board.capture img.pc{height:58%!important;width:auto;max-width:70%;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
+.bk-btn.board .swatch{display:block;width:54%;height:54%;border-radius:50%;background:var(--c);box-shadow:0 0 0 3px #fff,0 2px 6px rgba(0,0,0,.3)}
+.bk-table .bk-share-basket .food img{width:28%}
+.bk-theme-spellbook .bk-board.bk-chess{background:#6b4423;border-color:#8a5a2b}
+.bk-theme-spellbook .bk-board.bk-maze{background-color:#fbf5e6;border:none}
+.bk-table .bk-captured{pointer-events:none}
+.bk-table .bk-captured img.art{width:100%;height:100%;object-fit:contain;object-position:bottom;filter:drop-shadow(0 3px 2px rgba(0,0,0,.35))}
+.bk-table .bk-gap{visibility:hidden}
+.bk-btn.board.captures b{font-size:1.9em;line-height:1}
+
+/* A turning point remains a full painting with the family in the foreground. */
+.bk-adventure-choice{position:absolute;inset:12% 4% auto;display:block!important;z-index:8;text-align:center;pointer-events:auto}
+.bk-adventure-choice h2{font-size:clamp(19px,3.2vw,30px);line-height:1.2;color:#34281d;text-shadow:0 1px 4px #fff;margin:0 0 10px}
+.bk-route-buttons{display:flex;justify-content:center;gap:12px}
+.bk-route{width:min(38vw,240px);min-height:110px;display:flex!important;flex-direction:column;align-items:center;gap:6px;padding:8px!important;font-size:clamp(16px,2.5vw,24px)!important;line-height:1.15}
+.bk-route img{width:100%;height:clamp(65px,12vh,110px);object-fit:cover;border-radius:12px}
+.bk-route .pic{font-size:clamp(42px,8vh,72px)}
+.bk-route:disabled{opacity:.65}
+.bk-travel{position:absolute;top:9%;left:5%;right:5%;text-align:center;font-size:clamp(15px,2.4vw,23px);font-weight:700;color:#3b3022;text-shadow:0 1px 4px #fff;z-index:6;pointer-events:none}
+/* Evidence for capture arithmetic, large enough to inspect rather than guess. */
+.bk-capture-groups{position:absolute;z-index:5;top:29%;left:8%;width:84%;display:flex;justify-content:center;gap:8%;pointer-events:none}
+.bk-capture-groups section{text-align:center;color:#fff5d9;text-shadow:0 2px 3px #302318;font-size:clamp(16px,2.8vmin,25px)}
+.bk-capture-groups section>div{display:flex;justify-content:center;align-items:flex-end;gap:1.5vmin;margin-top:8px}
+.bk-captured-piece{height:12vh;width:auto;max-width:20vw;object-fit:contain;filter:drop-shadow(0 4px 3px #0005)}
+@media(orientation:landscape){.bk-capture-groups{top:44%;left:28%;width:44%;gap:12%}.bk-captured-piece{height:14vh}}
+
+@media(orientation:portrait){.bk-page[data-beat="captures"] .bk-play{top:46%;bottom:auto;height:auto;padding:0 12px}.bk-page[data-beat="captures"] .bk-play .bk-btn{width:clamp(64px,18vw,92px);height:clamp(64px,18vw,92px)}}
+@media(orientation:portrait){.bk-page[data-beat="kick-letter"] .bk-play{top:33%;bottom:auto}}
+/* Spelling a name with letter tiles (a spell beat with variant "letters", 2026-10-04: ADA, ALEX): the answer
+   slots and all seven tiles sit in the TOP band, above everyone's heads, in one row on a laptop and on a tablet, so
+   the family keeps its normal size (never shrunk to make room for the game). */
+.bk-page[data-beat="letters"] .bk-slots{top:7%;font-size:clamp(18px,4.2vmin,34px);flex-wrap:nowrap;padding:.15em .45em;gap:.25em}
+.bk-page[data-beat="letters"] .bk-slots span{min-width:1.45em}
+.bk-page[data-beat="letters"] .bk-play{top:calc(7% + clamp(40px,7.5vmin,62px));bottom:auto;height:auto;padding:0 10px;gap:clamp(6px,1.4vmin,12px);flex-wrap:nowrap}
+.bk-page[data-beat="letters"] .bk-play .bk-btn.word{min-width:0;min-height:0;width:clamp(44px,min(11.5vw,11vh),88px);height:clamp(44px,min(11.5vw,11vh),88px);padding:0;font-size:clamp(22px,min(6vw,6vh),44px)}
+
+.bk-adventure .bk-page[data-beat="count"] .bk-play{top:16%;bottom:auto;height:auto;padding:0 12px}
+.bk-adventure .bk-page[data-beat="count"] .bk-calm-done{top:18%;bottom:auto;right:5%}
+
+.bk-adventure .bk-page[data-beat="share"] .bk-play,.bk-adventure .bk-page[data-beat="remainder"] .bk-play{top:16%;bottom:auto;height:auto;padding:0 12px}
+.bk-adventure .bk-table b{font-size:clamp(25px,5vmin,38px)}
+
+.bk-route img.symbol{object-fit:contain}
+
+/* No room beside the game's buttons: they sit just above the family (book.mjs clearOfUI, 2026-10-02). */
+.bk-page.bk-play-high .bk-play{bottom:35%;height:auto;padding:0 12px}
+
+/* Captured pieces show their points (2026-10-02). */
+.bk-piece{margin:0;position:relative;display:flex;flex-direction:column;align-items:center}
+.bk-piece figcaption{position:absolute;right:-.5em;bottom:-.1em;min-width:1.6em;padding:.05em .4em;border-radius:999px;background:#fff6d6;color:#3a2200;font-weight:900;font-size:clamp(18px,3.4vmin,30px);text-shadow:none;box-shadow:0 2px 0 rgba(0,0,0,.25)}
+
+/* The castle door opens with the golden keys (book.mjs gateOpen, 2026-10-02). */
+.bk-gate{position:absolute;z-index:1;perspective:1200px;pointer-events:none;overflow:hidden;border-radius:50% 50% 0 0/22% 22% 0 0}
+.bk-gate-in{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 75%,#fffbe0 0%,#ffd76e 38%,#a8691f 78%,#5a3410 100%);opacity:0;transition:opacity 1.2s ease .4s}
+.bk-gate.open .bk-gate-in{opacity:1}
+.bk-gate-gift{position:absolute;left:50%;bottom:3%;height:80%;max-width:94%;object-fit:contain;translate:-50% 35%;opacity:0;transition:translate 1.5s cubic-bezier(.2,.9,.3,1.15) 1.1s,opacity .9s ease 1.1s;filter:drop-shadow(0 0 22px #fff6c8)}
+.bk-gate.open .bk-gate-gift{translate:-50% 0;opacity:1}
+.bk-door{position:absolute;top:0;width:50%;height:100%;background-repeat:no-repeat;transition:transform 2s cubic-bezier(.55,0,.2,1)}
+.bk-door.l{left:0;transform-origin:left center}.bk-door.r{right:0;transform-origin:right center}
+.bk-gate.open .bk-door.l{transform:rotateY(78deg)}.bk-gate.open .bk-door.r{transform:rotateY(-78deg)}
+.bk-gate.still .bk-door,.bk-gate.still .bk-gate-in,.bk-gate.still .bk-gate-gift{transition:none}
+.bk-gate-key{position:absolute;z-index:7;font-size:clamp(30px,5.5vmin,54px);line-height:1;transition:transform .7s cubic-bezier(.3,.7,.3,1);pointer-events:none;filter:drop-shadow(0 0 8px #ffd34d)}
+.bk-gate-key.in{animation:bk-key-turn .35s ease forwards}
+@keyframes bk-key-turn{50%{scale:1.35}to{scale:1;filter:drop-shadow(0 0 18px #fff2a0) brightness(1.35)}}
+.bk-gate-key.gone{opacity:0;transition:opacity .6s ease}
+
+/* The end card sits above the open castle door (2026-10-02, Alex: "overlap"). */
+.bk-quest{z-index:9}
+
+/* A somersault: his picture rolls a full turn with a hop (book.mjs somersault). */
+.bk-actor.bk-roll{animation:bk-roll 1.2s cubic-bezier(.45,.05,.4,1) both;transform-origin:50% 55%}
+@keyframes bk-roll{0%{transform:translateY(0) rotate(0)}20%{transform:translateY(-14%) rotate(40deg)}60%{transform:translateY(-22%) rotate(270deg)}85%{transform:translateY(0) rotate(360deg)}92%{transform:translateY(0) rotate(360deg) scaleY(.92)}100%{transform:translateY(0) rotate(360deg)}}
+
+/* His golden cape, behind him from the shoulders (book.mjs CAPE_SVG). */
+.bk-actor .bk-cape{position:absolute;left:-22%;width:144%;top:19%;height:70%;z-index:-1;filter:drop-shadow(0 3px 3px #0004)}
+.bk-actor>div{position:relative;isolation:isolate}
+/* Every spoken answer has its equivalent tap from the first moment. */
+.bk-tap-answer{position:absolute;z-index:12;right:20px;top:130px;min-width:64px;min-height:64px;font-size:28px;background:#fff5df;border:2px solid #a88755;border-radius:16px}
+button.family-tap{outline:3px solid #e4af51;outline-offset:2px;filter:brightness(1.08)}
+
+.reading-support{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-top:6px;font-size:16px;line-height:1.2;white-space:normal}.reading-sound{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:2px;background:#fff7df;border:1px solid #8c7046;border-radius:9px;color:#18324a;cursor:pointer}.reading-sound:focus-visible{outline:3px solid #327fc1}.bk-magic .reading-support{max-width:240px}

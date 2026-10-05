@@ -1,0 +1,997 @@
+{
+  "description": "Wholly synthetic advancing-question snapshots, generated from four invented rounds. No household observations.",
+  "rows": [
+    {
+      "type": "action",
+      "input": {
+        "kind": "answer",
+        "questionId": "synthetic-0",
+        "answer": "cat",
+        "durationMs": 3000
+      },
+      "before": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "synthetic-0",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "cat",
+          "options": [
+            "cat",
+            "dog"
+          ]
+        },
+        "gates": [
+          {
+            "id": "synthetic-0",
+            "kind": "read-word",
+            "game": "slalom",
+            "answer": "cat",
+            "options": [
+              "cat",
+              "dog"
+            ]
+          }
+        ]
+      },
+      "after": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "next-0",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "dog",
+          "options": [
+            "cat",
+            "dog"
+          ]
+        }
+      },
+      "result": {
+        "ok": true
+      },
+      "expected": {
+        "id": "synthetic-0",
+        "kind": "read-word",
+        "game": "slalom",
+        "answer": "cat",
+        "options": [
+          "cat",
+          "dog"
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "input": {
+        "kind": "answer",
+        "questionId": "synthetic-1",
+        "answer": "sun",
+        "durationMs": 3000
+      },
+      "before": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "synthetic-1",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "dog",
+          "options": [
+            "dog",
+            "sun"
+          ]
+        },
+        "gates": [
+          {
+            "id": "synthetic-1",
+            "kind": "read-word",
+            "game": "slalom",
+            "answer": "dog",
+            "options": [
+              "dog",
+              "sun"
+            ]
+          }
+        ]
+      },
+      "after": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "next-1",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "sun",
+          "options": [
+            "dog",
+            "sun"
+          ]
+        }
+      },
+      "result": {
+        "ok": false
+      },
+      "expected": {
+        "id": "synthetic-1",
+        "kind": "read-word",
+        "game": "slalom",
+        "answer": "dog",
+        "options": [
+          "dog",
+          "sun"
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "input": {
+        "kind": "answer",
+        "questionId": "synthetic-2",
+        "answer": "sun",
+        "durationMs": 3000
+      },
+      "before": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "synthetic-2",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "sun",
+          "options": [
+            "sun",
+            "pin"
+          ]
+        },
+        "gates": [
+          {
+            "id": "synthetic-2",
+            "kind": "read-word",
+            "game": "slalom",
+            "answer": "sun",
+            "options": [
+              "sun",
+              "pin"
+            ]
+          }
+        ]
+      },
+      "after": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "next-2",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "pin",
+          "options": [
+            "sun",
+            "pin"
+          ]
+        }
+      },
+      "result": {
+        "ok": true
+      },
+      "expected": {
+        "id": "synthetic-2",
+        "kind": "read-word",
+        "game": "slalom",
+        "answer": "sun",
+        "options": [
+          "sun",
+          "pin"
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "input": {
+        "kind": "answer",
+        "questionId": "synthetic-3",
+        "answer": "cat",
+        "durationMs": 3000
+      },
+      "before": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "synthetic-3",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "pin",
+          "options": [
+            "pin",
+            "cat"
+          ]
+        },
+        "gates": [
+          {
+            "id": "synthetic-3",
+            "kind": "read-word",
+            "game": "slalom",
+            "answer": "pin",
+            "options": [
+              "pin",
+              "cat"
+            ]
+          }
+        ]
+      },
+      "after": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "next-3",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "cat",
+          "options": [
+            "pin",
+            "cat"
+          ]
+        }
+      },
+      "result": {
+        "ok": false
+      },
+      "expected": {
+        "id": "synthetic-3",
+        "kind": "read-word",
+        "game": "slalom",
+        "answer": "pin",
+        "options": [
+          "pin",
+          "cat"
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "input": {
+        "kind": "answer",
+        "questionId": "synthetic-4",
+        "answer": "cat",
+        "durationMs": 3000
+      },
+      "before": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "synthetic-4",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "cat",
+          "options": [
+            "cat",
+            "dog"
+          ]
+        },
+        "gates": [
+          {
+            "id": "synthetic-4",
+            "kind": "read-word",
+            "game": "slalom",
+            "answer": "cat",
+            "options": [
+              "cat",
+              "dog"
+            ]
+          }
+        ]
+      },
+      "after": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "next-4",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "dog",
+          "options": [
+            "cat",
+            "dog"
+          ]
+        }
+      },
+      "result": {
+        "ok": true
+      },
+      "expected": {
+        "id": "synthetic-4",
+        "kind": "read-word",
+        "game": "slalom",
+        "answer": "cat",
+        "options": [
+          "cat",
+          "dog"
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "input": {
+        "kind": "answer",
+        "questionId": "synthetic-5",
+        "answer": "sun",
+        "durationMs": 3000
+      },
+      "before": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "synthetic-5",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "dog",
+          "options": [
+            "dog",
+            "sun"
+          ]
+        },
+        "gates": [
+          {
+            "id": "synthetic-5",
+            "kind": "read-word",
+            "game": "slalom",
+            "answer": "dog",
+            "options": [
+              "dog",
+              "sun"
+            ]
+          }
+        ]
+      },
+      "after": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "next-5",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "sun",
+          "options": [
+            "dog",
+            "sun"
+          ]
+        }
+      },
+      "result": {
+        "ok": false
+      },
+      "expected": {
+        "id": "synthetic-5",
+        "kind": "read-word",
+        "game": "slalom",
+        "answer": "dog",
+        "options": [
+          "dog",
+          "sun"
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "input": {
+        "kind": "answer",
+        "questionId": "synthetic-6",
+        "answer": "sun",
+        "durationMs": 3000
+      },
+      "before": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "synthetic-6",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "sun",
+          "options": [
+            "sun",
+            "pin"
+          ]
+        },
+        "gates": [
+          {
+            "id": "synthetic-6",
+            "kind": "read-word",
+            "game": "slalom",
+            "answer": "sun",
+            "options": [
+              "sun",
+              "pin"
+            ]
+          }
+        ]
+      },
+      "after": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "next-6",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "pin",
+          "options": [
+            "sun",
+            "pin"
+          ]
+        }
+      },
+      "result": {
+        "ok": true
+      },
+      "expected": {
+        "id": "synthetic-6",
+        "kind": "read-word",
+        "game": "slalom",
+        "answer": "sun",
+        "options": [
+          "sun",
+          "pin"
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "input": {
+        "kind": "answer",
+        "questionId": "synthetic-7",
+        "answer": "cat",
+        "durationMs": 3000
+      },
+      "before": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "synthetic-7",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "pin",
+          "options": [
+            "pin",
+            "cat"
+          ]
+        },
+        "gates": [
+          {
+            "id": "synthetic-7",
+            "kind": "read-word",
+            "game": "slalom",
+            "answer": "pin",
+            "options": [
+              "pin",
+              "cat"
+            ]
+          }
+        ]
+      },
+      "after": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "next-7",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "cat",
+          "options": [
+            "pin",
+            "cat"
+          ]
+        }
+      },
+      "result": {
+        "ok": false
+      },
+      "expected": {
+        "id": "synthetic-7",
+        "kind": "read-word",
+        "game": "slalom",
+        "answer": "pin",
+        "options": [
+          "pin",
+          "cat"
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "input": {
+        "kind": "answer",
+        "questionId": "synthetic-8",
+        "answer": "cat",
+        "durationMs": 3000
+      },
+      "before": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "synthetic-8",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "cat",
+          "options": [
+            "cat",
+            "dog"
+          ]
+        },
+        "gates": [
+          {
+            "id": "synthetic-8",
+            "kind": "read-word",
+            "game": "slalom",
+            "answer": "cat",
+            "options": [
+              "cat",
+              "dog"
+            ]
+          }
+        ]
+      },
+      "after": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "next-8",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "dog",
+          "options": [
+            "cat",
+            "dog"
+          ]
+        }
+      },
+      "result": {
+        "ok": true
+      },
+      "expected": {
+        "id": "synthetic-8",
+        "kind": "read-word",
+        "game": "slalom",
+        "answer": "cat",
+        "options": [
+          "cat",
+          "dog"
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "input": {
+        "kind": "answer",
+        "questionId": "synthetic-9",
+        "answer": "sun",
+        "durationMs": 3000
+      },
+      "before": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "synthetic-9",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "dog",
+          "options": [
+            "dog",
+            "sun"
+          ]
+        },
+        "gates": [
+          {
+            "id": "synthetic-9",
+            "kind": "read-word",
+            "game": "slalom",
+            "answer": "dog",
+            "options": [
+              "dog",
+              "sun"
+            ]
+          }
+        ]
+      },
+      "after": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "next-9",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "sun",
+          "options": [
+            "dog",
+            "sun"
+          ]
+        }
+      },
+      "result": {
+        "ok": false
+      },
+      "expected": {
+        "id": "synthetic-9",
+        "kind": "read-word",
+        "game": "slalom",
+        "answer": "dog",
+        "options": [
+          "dog",
+          "sun"
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "input": {
+        "kind": "answer",
+        "questionId": "synthetic-10",
+        "answer": "sun",
+        "durationMs": 3000
+      },
+      "before": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "synthetic-10",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "sun",
+          "options": [
+            "sun",
+            "pin"
+          ]
+        },
+        "gates": [
+          {
+            "id": "synthetic-10",
+            "kind": "read-word",
+            "game": "slalom",
+            "answer": "sun",
+            "options": [
+              "sun",
+              "pin"
+            ]
+          }
+        ]
+      },
+      "after": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "next-10",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "pin",
+          "options": [
+            "sun",
+            "pin"
+          ]
+        }
+      },
+      "result": {
+        "ok": true
+      },
+      "expected": {
+        "id": "synthetic-10",
+        "kind": "read-word",
+        "game": "slalom",
+        "answer": "sun",
+        "options": [
+          "sun",
+          "pin"
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "input": {
+        "kind": "answer",
+        "questionId": "synthetic-11",
+        "answer": "cat",
+        "durationMs": 3000
+      },
+      "before": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "synthetic-11",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "pin",
+          "options": [
+            "pin",
+            "cat"
+          ]
+        },
+        "gates": [
+          {
+            "id": "synthetic-11",
+            "kind": "read-word",
+            "game": "slalom",
+            "answer": "pin",
+            "options": [
+              "pin",
+              "cat"
+            ]
+          }
+        ]
+      },
+      "after": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "next-11",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "cat",
+          "options": [
+            "pin",
+            "cat"
+          ]
+        }
+      },
+      "result": {
+        "ok": false
+      },
+      "expected": {
+        "id": "synthetic-11",
+        "kind": "read-word",
+        "game": "slalom",
+        "answer": "pin",
+        "options": [
+          "pin",
+          "cat"
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "input": {
+        "kind": "answer",
+        "questionId": "synthetic-12",
+        "answer": "cat",
+        "durationMs": 3000
+      },
+      "before": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "synthetic-12",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "cat",
+          "options": [
+            "cat",
+            "dog"
+          ]
+        },
+        "gates": [
+          {
+            "id": "synthetic-12",
+            "kind": "read-word",
+            "game": "slalom",
+            "answer": "cat",
+            "options": [
+              "cat",
+              "dog"
+            ]
+          }
+        ]
+      },
+      "after": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "next-12",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "dog",
+          "options": [
+            "cat",
+            "dog"
+          ]
+        }
+      },
+      "result": {
+        "ok": true
+      },
+      "expected": {
+        "id": "synthetic-12",
+        "kind": "read-word",
+        "game": "slalom",
+        "answer": "cat",
+        "options": [
+          "cat",
+          "dog"
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "input": {
+        "kind": "answer",
+        "questionId": "synthetic-13",
+        "answer": "sun",
+        "durationMs": 3000
+      },
+      "before": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "synthetic-13",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "dog",
+          "options": [
+            "dog",
+            "sun"
+          ]
+        },
+        "gates": [
+          {
+            "id": "synthetic-13",
+            "kind": "read-word",
+            "game": "slalom",
+            "answer": "dog",
+            "options": [
+              "dog",
+              "sun"
+            ]
+          }
+        ]
+      },
+      "after": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "next-13",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "sun",
+          "options": [
+            "dog",
+            "sun"
+          ]
+        }
+      },
+      "result": {
+        "ok": false
+      },
+      "expected": {
+        "id": "synthetic-13",
+        "kind": "read-word",
+        "game": "slalom",
+        "answer": "dog",
+        "options": [
+          "dog",
+          "sun"
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "input": {
+        "kind": "answer",
+        "questionId": "synthetic-14",
+        "answer": "sun",
+        "durationMs": 3000
+      },
+      "before": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "synthetic-14",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "sun",
+          "options": [
+            "sun",
+            "pin"
+          ]
+        },
+        "gates": [
+          {
+            "id": "synthetic-14",
+            "kind": "read-word",
+            "game": "slalom",
+            "answer": "sun",
+            "options": [
+              "sun",
+              "pin"
+            ]
+          }
+        ]
+      },
+      "after": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "next-14",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "pin",
+          "options": [
+            "sun",
+            "pin"
+          ]
+        }
+      },
+      "result": {
+        "ok": true
+      },
+      "expected": {
+        "id": "synthetic-14",
+        "kind": "read-word",
+        "game": "slalom",
+        "answer": "sun",
+        "options": [
+          "sun",
+          "pin"
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "input": {
+        "kind": "answer",
+        "questionId": "synthetic-15",
+        "answer": "cat",
+        "durationMs": 3000
+      },
+      "before": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "synthetic-15",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "pin",
+          "options": [
+            "pin",
+            "cat"
+          ]
+        },
+        "gates": [
+          {
+            "id": "synthetic-15",
+            "kind": "read-word",
+            "game": "slalom",
+            "answer": "pin",
+            "options": [
+              "pin",
+              "cat"
+            ]
+          }
+        ]
+      },
+      "after": {
+        "game": "slalom",
+        "run": 1,
+        "q": {
+          "id": "next-15",
+          "kind": "read-word",
+          "game": "slalom",
+          "answer": "cat",
+          "options": [
+            "pin",
+            "cat"
+          ]
+        }
+      },
+      "result": {
+        "ok": false
+      },
+      "expected": {
+        "id": "synthetic-15",
+        "kind": "read-word",
+        "game": "slalom",
+        "answer": "pin",
+        "options": [
+          "pin",
+          "cat"
+        ]
+      }
+    }
+  ]
+}

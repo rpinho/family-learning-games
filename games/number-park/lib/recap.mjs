@@ -1,5 +1,5 @@
 // End-of-round recap: one or two short sentences of what the child did, shown
-// and spoken once when a six-question round finishes. Borrowed from Sage
+// and spoken once when a six-question round finishes. Borrowed from guided practice
 // Teacher's session wrap-up, kept short on purpose (a parent turned that
 // tutor's verbosity down). Every sentence comes from a finite list so the
 // voice clips can be generated ahead of time.
@@ -8,6 +8,7 @@ const plural=(n,one,many=one+'s')=>`${n} ${n===1?one:many}`;
 // Main sentence per game. Explorer (older) games first, then the little games.
 const MAIN={
  balance:n=>`You solved ${plural(n,'balance puzzle')}.`,
+ 'balance-k':n=>`You solved ${plural(n,'balance puzzle')}.`,
  multiply:n=>`You solved ${plural(n,'times-table fact')}.`,
  factor:n=>`You found ${plural(n,'missing factor')}.`,
  sums:n=>`You solved ${plural(n,'sum')}.`,

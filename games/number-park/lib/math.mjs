@@ -1,9 +1,11 @@
+import {KINDER_BALANCE_GAME,kinderBalanceQuestion} from './balance-kinder.mjs';
+import {validWeightDraft,weightTotals,weightsSolved} from './balance-weights.mjs';
 import {SHAPES,validGuidedShape,nextShape,checkShapeCopy} from './shapes.mjs';
 import {validNumberTrace,nextTraceNumber,traceNumber,numberPaths,TRACE_MAX} from './number-trace.mjs';
 import {checkCopy} from './copy-practice.mjs';
 import {FREE_DRAWING_SPACE,validFreeInk} from './drawing-space.mjs';
 import {countingQuestion,countingOptions} from './counting.mjs';
-import {patternQuestion} from './play-practice.mjs';
+import {patternQuestion,patternLevel,clampPattern} from './play-practice.mjs';
 import {advanced,EXPLORER_GAMES,challengeQuestion,cookieProgress,EXPLORER_TRACK,CHALLENGE_SKILLS,CHALLENGE_MAX,challengeLevel,clampChallenge} from './explorer.mjs';
 import {validCookieDraft,cookieCounts,isDragCookie,initialCookieDraft,askOptions,bagsValid,unevenMessage,askRetryMessage,slotsFor,MONSTER_TOO_MANY,PREDICT_RIGHT} from './cookie-division.mjs';
 import {KINDER_COOKIE_GAME,isKinder,nextKinderQuestion,kinderQuestion,kinderProgress,clampLevel,KINDER_UNEVEN} from './cookie-kinder.mjs';
@@ -14,7 +16,7 @@ import {readingAction} from './reading.mjs';
 import {validBuild,buildFeedback,buildValue} from './place-build.mjs';
 import {artAction} from './art.mjs';
 import {planningAction} from './planning.mjs';
-export const VERSION='number-park-2026-10-01-kinder-cookies';
+export const VERSION='number-park-2026-10-03-balance-v3';
 export const GAMES=[
  {id:'mix',icon:'🎲',title:'Little sums',description:'A mix just like the first unit.'},
  {id:'line',icon:'📏',title:'Number hop',description:'Slide to the missing number.'},
@@ -25,8 +27,7 @@ export const GAMES=[
  {id:'pattern',icon:'🔷',title:'Pattern parade',description:'What comes next in the parade?'}
 ];
 export const additionOnly=p=>p.id!=='explorer';
-// Beginner/Admin: the seven small-number games plus Cookie sharing's kindergarten sharing.
-export const KINDER_GAMES=[...GAMES,KINDER_COOKIE_GAME];
+export const KINDER_GAMES=[...GAMES,KINDER_COOKIE_GAME,KINDER_BALANCE_GAME];
 export const gamesFor=p=>advanced(p)?EXPLORER_GAMES:KINDER_GAMES;
 // Upgrade only the active prompt in memory. Existing scores, history, drawings
 // and completed questions remain untouched; ordinary next writes persist it.
@@ -44,18 +45,21 @@ export function prepareProfile(p){
   cookie.cookieDraft=initialCookieDraft(cookie.question);
   cookie.started=Date.now();cookie.helped=false;delete cookie.cookieChecks;delete cookie.cookieMessage;
  }
- const s=p.session;if(!additionOnly(p)||!s||s.finished)return p;
+ const s=p.session;
+ if(!advanced(p)&&s?.game==='pattern'&&!s.finished&&!s.result&&s.question?.patternVersion!==3){s.question=makeQuestion(p,'pattern',s.round);s.question.id+=':pattern3';s.helped=false;}
+ if(!additionOnly(p)||!s||s.finished)return p;
  if(!s.result&&s.game!=='subtract'&&s.question.operator==='−'){
   s.question=makeQuestion(p,s.game,s.round);s.question.id+=':addition2';s.helped=false;
  }
  return p;
 }
-export const freshProfile=id=>({id,name:id==='admin'?'Admin':id==='beginner'?'Beginner':'Explorer',revision:0,xp:0,lessons:0,completed:{},recent:[],history:[],session:null,drawing:[],guided:{},ceiling:id==='explorer'?200:13});
+export const freshProfile=id=>({id,name:id==='admin'?'Alex':id==='beginner'?'Beginner':'Explorer',revision:0,xp:0,lessons:0,completed:{},recent:[],history:[],session:null,drawing:[],guided:{},ceiling:id==='explorer'?200:13});
 export const random=seed=>()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
 const shuffle=(a,r)=>a.map(v=>[r(),v]).sort((a,b)=>a[0]-b[0]).map(v=>v[1]);
 export function makeQuestion(p,game,round=0){
  const r=random((p.revision+1)*7919+(p.history.length+1)*101+round*37),max=13;
  if(advanced(p))return challengeQuestion(p,game,round,r);
+ if(game==='balance-k'){const q=kinderBalanceQuestion(r,round);q.id=`${p.revision}:${p.history.length}:${round}:bk`;return q;}
  if(game==='cookies'){const q=nextKinderQuestion(p,r);q.id=`${p.revision}:${p.history.length}:${round}:k1`;return q;}
  const roll=n=>Math.floor(r()*n);let q;
  for(let trial=0;trial<120;trial++){
@@ -64,21 +68,21 @@ export function makeQuestion(p,game,round=0){
   q={kind,a,b,total,blank,operator:'+',answer:[a,b,total][blank],max};
   if(!additionOnly(p)&&['missing','line'].includes(kind)&&roll(3)===0)q={...q,a:total,b,total:a,operator:'−',answer:[total,b,a][blank]};
   if(kind==='addobjects'){const total=8+roll(6),lo=Math.max(3,total-7),hi=Math.min(7,total-3),a=lo+roll(hi-lo+1),b=total-a;q={kind,a,b,total,blank:2,operator:'+',answer:total,max:13,object:['🍎','⭐','⚽'][roll(3)]};}
-  if(kind==='count')q=countingQuestion(r,round);
+  if(kind==='count')q=countingQuestion(r,round,{stretch:p.id==='beginner'});
   if(kind==='subtract'){const total=3+roll(8),remove=1+roll(Math.min(5,total));q={kind,total,remove,answer:total-remove,max:10,object:['🍎','⭐','⚽'][roll(3)]};}
   if(kind==='pattern')q=patternQuestion(r,round,p);
   q.fingerprint=JSON.stringify([q.kind,q.a,q.b,q.blank,q.count,q.total,q.remove,q.sequence,q.object,...(q.kind==='count'?[q.mode,q.items,q.layoutSeed]:[])]);
   if(!p.recent.includes(q.fingerprint))break;
  }
  if(q.kind!=='pattern')q.options=shuffle([q.answer,...shuffle(Array.from({length:q.max+1},(_,i)=>i).filter(n=>n!==q.answer),r).slice(0,2)],r);
- if(['count','addobjects'].includes(q.kind))q.options=countingOptions(q.answer,r);
+ if(['count','addobjects'].includes(q.kind))q.options=countingOptions(q.answer,r,q.max);
  q.id=`${p.revision}:${p.history.length}:${round}`;return q;
 }
 export function publicState(p,now=Date.now()){const state=structuredClone(p);if(state.session?.question&&(!state.session.helped||state.session.question.kind==='cookies')&&!state.session.result){delete state.session.question.answer;if(state.session.question.kind==='cookies')delete state.session.question.leftover;if(state.session.question.skill==='worth'){delete state.session.question.explain;if(state.session.question.placeMode==='which'){delete state.session.question.lit;delete state.session.question.place;delete state.session.question.digit;}}}
  const q=state.session?.question;
  if(q?.kind==='balance'&&!state.session.result){
   delete q.answer;delete q.fingerprint;
-  delete q.left.kg;delete q.right.kg;delete q.left.value;delete q.right.value;
+  if(q.left) {if(!state.session.balanceExperiment?.weighed)delete q.left.kg;delete q.left.value;}if(q.right){if(!state.session.balanceExperiment?.weighed)delete q.right.kg;delete q.right.value;}
   if(q.mode==='complete')delete q.right.b;
  }
  state.resting=resting(p,now);return state;}
@@ -153,7 +157,7 @@ export function action(p,input,now=Date.now(),services={}){
    if(!Number.isInteger(input.perPlate)||input.perPlate<0||input.perPlate>12||!Number.isInteger(input.leftover)||input.leftover<0||input.leftover>=q.plates)fail('Choose cookies per plate and the leftovers.');
    counts=Array(q.plates).fill(input.perPlate);
    if(input.perPlate===q.answer&&input.leftover===q.leftover)correct=true;
-   else{s.cookieChecks=(s.cookieChecks||0)+1;const used=input.perPlate*q.plates+input.leftover;s.cookieMessage=q.mode==='snack'?`Your plan uses ${used} cookies. First subtract the ${q.eaten} Buddy ate.`:`Your plan uses ${used} cookies. Compare it with ${q.total}.`;}
+   else{s.cookieChecks=(s.cookieChecks||0)+1;const used=input.perPlate*q.plates+input.leftover;s.cookieMessage=q.mode==='snack'?`Your plan uses ${used} cookies. First subtract the ${q.eaten} Monster ate.`:`Your plan uses ${used} cookies. Compare it with ${q.total}.`;}
   }
   if(correct){
    const helped=s.helped||!!s.cookieChecks,xp=helped?4:10;
@@ -180,8 +184,26 @@ export function action(p,input,now=Date.now(),services={}){
    s.question={...kinderQuestion(level,r),id:`${p.revision}:${p.history.length}:${s.round}:k1:${level}`};
    s.helped=false;s.started=now;delete s.cookieChecks;delete s.cookieMessage;openCookieRound(s);
   }
+ }else if(input.kind==='pattern-level'){
+  const s=p.session,q=s?.question;
+  if(advanced(p)||![1,-1].includes(input.delta)||!s||s.finished||s.result||q?.kind!=='pattern')fail('Choose easier or harder.');
+  const from=patternLevel(p),level=clampPattern(from+input.delta);
+  p.patternManual={level,after:(p.history||[]).filter(h=>h.question?.patternVersion===3).length,at:new Date(now).toISOString()};
+  p.patternChanges=[...(p.patternChanges||[]),{from,to:level,at:new Date(now).toISOString()}].slice(-50);
+  s.question=makeQuestion(p,s.game,s.round);s.helped=false;s.started=now;
+ }else if(input.kind==='balance-experiment'){
+  const s=p.session,q=s?.question,e=input.experiment;
+  if(!s||s.finished||s.result||q?.kind!=='balance'||q.mode!=='animals'||input.questionId!==q.id||!e||!Array.isArray(e.slots)||e.slots.length!==2||!e.slots.every(n=>n===null||n===0||n===1)||e.slots[0]!==null&&e.slots[0]===e.slots[1]||![null,0,1].includes(e.guess)||typeof e.weighed!=='boolean'||e.weighed&&e.slots.some(n=>n===null)||s.balanceExperiment?.weighed)fail('Place each animal on one pan before weighing.');
+  s.balanceExperiment={slots:[...e.slots],guess:e.guess,weighed:e.weighed};
+ }else if(input.kind==='balance-k-place'){
+  const s=p.session,q=s?.question;
+  if(!s||s.finished||s.result||!q.kinderBalance||q.mode!=='blocks'||input.questionId!==q.id||!Number.isInteger(input.count)||input.count<0||input.count>10||Math.abs(input.count-(s.balanceCount||0))!==1)fail('Move one block at a time.');
+  s.balanceCount=input.count;
+  if(input.count===q.target){
+   const helped=s.helped,xp=helped?4:10;s.result={ok:true,answer:q.target,xp,helped};p.xp+=xp;s.correct++;s.independent+=Number(!helped);
+   p.history.push({at:new Date(now).toISOString(),game:s.game,question:q,answer:q.target,ok:true,helped,count:input.count,durationMs:Math.max(0,Math.min(86400000,now-s.started))});p.history=p.history.slice(-2000);p.recent=[...p.recent,q.fingerprint].slice(-12);
+  }
  }else if(input.kind==='challenge-level'){
-  // Explorer's Easier/Harder (2026-10-01, mirrors the kindergarten cookie control): applies at once to
   // the current unanswered question; later rounds adapt from the chosen level. Earned history stays.
   const s=p.session,q=s?.question;
   if(!advanced(p)||![1,-1].includes(input.delta)||!s||s.finished||s.result||q?.track!==EXPLORER_TRACK||!CHALLENGE_SKILLS.includes(q.skill))fail('Choose easier or harder.');
@@ -189,7 +211,7 @@ export function action(p,input,now=Date.now(),services={}){
   const rows=(p.history||[]).filter(h=>h.question?.track===EXPLORER_TRACK&&h.question.skill===q.skill).length;
   p.challengeManual={...(p.challengeManual||{}),[q.skill]:{level,after:rows,at:new Date(now).toISOString()}};
   p.challengeChanges=[...(p.challengeChanges||[]),{at:new Date(now).toISOString(),skill:q.skill,from,to:level}].slice(-50);
-  s.question=makeQuestion(p,s.game,s.round);s.helped=false;s.started=now;
+  s.question=makeQuestion(p,s.game,s.round);delete s.balanceDraft;delete s.balanceExperiment;s.helped=false;s.started=now;
  }else if(input.kind==='place-check'){
   const s=p.session,q=s?.question;if(!s||s.finished||s.result||q.kind!=='place'||q.placeMode!=='build'||input.questionId!==q.id)fail('Open a block-building round first.');
   if(!validBuild(input.counts))fail('Build the number with the blocks first.');
@@ -200,14 +222,27 @@ export function action(p,input,now=Date.now(),services={}){
    p.history.push({at:new Date(now).toISOString(),game:s.game,question:q,answer:buildValue(input.counts),counts:[...input.counts],ok:true,helped,placeChecks:s.placeChecks||0,durationMs:Math.max(0,Math.min(86400000,now-s.started))});p.history=p.history.slice(-2000);
    p.recent=[...p.recent,q.fingerprint].slice(-12);delete s.placeMessage;delete s.placeLines;
   }else{s.placeChecks=(s.placeChecks||0)+1;s.placeMessage=feedback.message;s.placeLines=feedback.lines;s.placeParts=feedback.parts;}
+ }else if(input.kind==='balance-place'){
+  const s=p.session,q=s?.question;
+  if(!s||s.finished||s.result||!q.weights||q.kind!=='balance'||input.questionId!==q.id)fail('Open a number scale first.');
+  if(!validWeightDraft(q.weights,input.draft))fail('Use the weights in the tray.');
+  s.balanceDraft=[...input.draft];
+  if(weightsSolved(q.weights,s.balanceDraft)){
+   const helped=s.helped,xp=helped?4:10,totals=weightTotals(q.weights,s.balanceDraft);
+   s.result={ok:true,answer:q.weights.target,xp,helped,draft:[...s.balanceDraft],totals};
+   p.xp+=xp;s.correct++;s.independent+=Number(!helped);
+   p.history.push({at:new Date(now).toISOString(),game:s.game,question:q,answer:q.weights.target,draft:[...s.balanceDraft],totals,ok:true,helped,durationMs:Math.max(0,Math.min(86400000,now-s.started))});p.history=p.history.slice(-2000);
+   p.recent=[...p.recent,q.fingerprint].slice(-12);
+  }
  }else if(input.kind==='answer'){
   const s=p.session;if(!s||s.finished||s.result||input.questionId!==s.question.id)fail('This question is already finished.');
-  const q=s.question;if(q.kind==='cookies')fail('Share the cookies on the plates first.');if(q.placeMode==='build')fail('Build the number with the blocks first.');if(q.kind==='pattern'?!q.options.includes(input.answer):!Number.isInteger(input.answer)||input.answer<0||input.answer>q.max)fail('Choose a valid answer.');
+  const q=s.question;if(q.kinderBalance&&q.mode==='blocks')fail('Move the counting blocks first.');if(q.kind==='cookies')fail('Share the cookies on the plates first.');if(q.placeMode==='build')fail('Build the number with the blocks first.');if(q.kind==='pattern'?!q.options.includes(input.answer):!Number.isInteger(input.answer)||input.answer<0||input.answer>q.max)fail('Choose a valid answer.');
   if(q.kind==='subtract'&&input.removedIndices!==undefined&&(!Array.isArray(input.removedIndices)||input.removedIndices.length>q.total||new Set(input.removedIndices).size!==input.removedIndices.length||!input.removedIndices.every(i=>Number.isInteger(i)&&i>=0&&i<q.total)))fail('Invalid removed objects.');
   if(q.kind==='balance'&&!q.options.includes(input.answer))fail('Choose one of the answers.');
   const ok=input.answer===q.answer,independent=ok&&!s.helped,xp=ok?(independent?10:4):0;
   s.result={ok,answer:q.answer,xp,helped:s.helped,...(q.placeMode==='which'||q.kind==='balance'?{picked:input.answer}:{})};p.xp+=xp;s.correct+=Number(ok);s.independent+=Number(independent);
   p.history.push({at:new Date(now).toISOString(),game:s.game,question:q,answer:input.answer,ok,helped:s.helped,durationMs:Math.max(0,Math.min(86400000,now-s.started))});p.history=p.history.slice(-2000);
+  if(q.kind==='balance'&&q.mode==='animals'&&s.balanceExperiment)p.history.at(-1).experiment=structuredClone(s.balanceExperiment);
   if(q.kind==='subtract'&&input.removedIndices!==undefined)p.history.at(-1).removedIndices=[...input.removedIndices];
   p.recent=[...p.recent,q.fingerprint].slice(-12);
  }else if(input.kind==='next'){
@@ -225,7 +260,7 @@ export function action(p,input,now=Date.now(),services={}){
     s.recap=roundRecap({game:s.game,advanced:advanced(p),correct:s.correct,independent:s.independent,entries,player:p.id,levelUps:s.levelUps||0,windDown});
     if(tellsStory(p))s.story=addStoryBeat(p,s.game,entries,now);
    }
-  else{s.round++;s.question=makeQuestion(p,s.game,s.round);s.helped=false;s.result=null;s.started=now;delete s.cookieChecks;delete s.cookieMessage;delete s.placeChecks;delete s.placeMessage;delete s.placeLines;delete s.placeParts;openCookieRound(s);}
+  else{delete s.balanceExperiment;delete s.balanceCount;delete s.balanceDraft;s.round++;s.question=makeQuestion(p,s.game,s.round);s.helped=false;s.result=null;s.started=now;delete s.cookieChecks;delete s.cookieMessage;delete s.placeChecks;delete s.placeMessage;delete s.placeLines;delete s.placeParts;openCookieRound(s);}
 
  }else if(input.kind==='drawing'){
   if(!validFreeInk(input.strokes))fail('Drawing is too large or invalid.');

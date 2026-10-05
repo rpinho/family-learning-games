@@ -1,4 +1,10 @@
-// Reusable bounded story graphs: maps, path lint, conditional payoffs and consequence ledgers.
+// game". Architecture from a Fable 5.1 second opinion: CODE OWNS THE GRAPH, the model only fills in text.
+//   kit:      one world per arc: places (painted views) + map edges + how you travel along each edge.
+//   skeleton: a fixed "branch and bottleneck" shape the code lays over the kit and the day's beats.
+//   story:    the model's text for each node (same page format as a linear chapter, plus a choice on fork nodes).
+//   paths:    every route through the graph, flattened to a linear chapter so the existing lint checks each one.
+//   ledger:   what he carries from chapter to chapter (item / ally / knowledge), at most two flags a chapter.
+
 // ---------- kit ----------
 // {id, title, places:[{id, bg, name}], edges:[[a,b,"how you get there"]]}
 export function kitIssues(kit,{backgrounds=null}={}){
@@ -61,7 +67,7 @@ export const conditionalPayoffs=(story,node,flag)=>(story.nodes?.[node]?.pages||
 // set is read later, choices that differ (a different place and at least one flag), at most two flags a chapter.
 export function graphIssues(story,sk,kit){
  const out_pre=[];
- // Mirrored branches need distinct narration.
+ // on both routes): no line may appear word for word on both branches.
  {const text=id=>new Set((story.nodes?.[id]?.pages||[]).flatMap(pg=>(pg.say||[]).map(l=>String(Array.isArray(l)?l[1]:l?.text||'').trim().toLowerCase())).filter(Boolean));
   const branches=sk.nodes.filter(n=>n.role==='branch').map(n=>n.id);
   for(let a=0;a<branches.length;a++)for(let b=a+1;b<branches.length;b++){const A=text(branches[a]);for(const t of text(branches[b]))if(A.has(t))out_pre.push(`${branches[a]} and ${branches[b]} both say "${t.slice(0,50)}": give each branch its own version for its place`);}}

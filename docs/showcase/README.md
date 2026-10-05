@@ -16,21 +16,9 @@ The normal world demonstrates a fictional partially restored map. A separate `re
 
 ## Edition differences
 
-The ten game stills come from **current immutable live builds**, run as separate loopback previews with fresh empty data directories and neutral Explorer labels. Their release IDs and capture receipts stay in the private review folder. The preview CLI copies household data and had no free slots, so it was not used; no existing preview or household service was changed.
+The public sync includes the live calm theme, both home pages, balance and pattern activities, and the World and quest engines. The Book retains the original fictional painted cast and scenery. Runtime World demos use independently authored geometric counting scenes, while this showcase retains its standalone fictional Castle Kingdom presentation.
 
-The public source has **not** been bulk-synchronized from private history. Earlier v2 notes overstated visual parity. These gaps remain:
-
-| Public component | Current live visuals shown here that the public copy lacks |
-| --- | --- |
-| Letter Quest | Calm study, illustrated activity choices and paper lesson styling |
-| Word Arcade | New mission-control/calm visual layer; the Word Reactor activity retains its space palette |
-| Number Park | Later activity artwork and styling, and the revised Balance scale layout |
-| Maze Garden | Calm stylesheet and atmosphere layer |
-| Three in a Row | Calm paper layout and controls |
-| Target Trail and Sling | Calm range layouts and atmosphere layer |
-| Hub, Rook Academy and Soccer Club | Calm home and later visual refinements |
-
-The new fictional Book art, scene blocking, capture flag and runnable Castle Kingdom preview **are included** in this PR. Identity labels are supplied before browser rendering; no gameplay artwork or mechanics are replaced. Scores, the drawing and map progress are synthetic. No narration cache is copied or fabricated. Missing optional narration can produce the app's own notice; this silent showcase makes no claim of voice or audio parity.
+Scores, drawings and map progress in captures are synthetic. Household profiles, play history, daily quests, recordings and artwork are excluded. Optional private narration and installation configuration are supplied locally; the silent showcase does not claim voice or audio parity.
 
 ## Capture and encoding
 

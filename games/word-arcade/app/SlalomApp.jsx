@@ -19,7 +19,7 @@ export default function SlalomApp(){
    if(!r.ok){if(d.profile){current.current=d.profile;setP(d.profile);}throw Error(d.error);}current.current=d.profile;setP(d.profile);return d;}
   catch(e){void event('error','request',e.message);return null;}finally{lock.current=false;setBusy(false);}}
  function submitGate(questionId,answer,durationMs,hinted=false){const task=gateQueue.current.then(async()=>{for(let i=0;i<6;i++){for(let w=0;w<60&&lock.current;w++)await new Promise(r=>setTimeout(r,100));const res=await action({kind:'answer',gate:true,questionId,answer,durationMs,...(hinted?{hinted:true}:{})});if(res)return res;if(current.current?.session?.q?.id!==questionId)return null;await new Promise(r=>setTimeout(r,700*(i+1)));}return null;});gateQueue.current=task.catch(()=>{});return task;}
- async function checkpoint(reason,item){voice.current?.stop();try{const who=current.current.id,lvl=await fetchWordLevel(`/api/${who}/word-break`,DEFAULT_TRACK[who]);await wordBreak({player:who,level:lvl,effects:()=>!!audio.current?.prefs?.effects,speak:(line,essential)=>{if(soundRef.current||essential)void voice.current?.speak(line,essential);},log:r=>void event('word-break',reason,JSON.stringify(r)),reason,...(item?{item}:{})});}catch(e){void event('error','word-break',e.message);}}
+ async function checkpoint(reason,item){voice.current?.stop();try{const who=current.current.id,lvl=await fetchWordLevel(`/api/${who}/word-break`,DEFAULT_TRACK[who]);await wordBreak({player:who,level:lvl,effects:()=>!!audio.current?.prefs?.effects,speak:(line,essential)=>{if(soundRef.current||essential)return voice.current?.speakToEnd(line,essential);},log:r=>void event('word-break',reason,JSON.stringify(r)),reason,...(item?{item}:{})});}catch(e){void event('error','word-break',e.message);}}
  // leaving goes back to the Games home screen when inside the hub
  function exit(){voice.current?.stop();try{if(window.parent!==window){window.parent.location.hash='';return;}}catch{}setPhase('start');}
  async function start(ride,track){voice.current?.stop();void audio.current?.unlock();const d=await action({kind:'start',game:'slalom',...(ride?{ride}:{}),...(track?{track}:{})});if(d){setPaused(false);setPhase('run');void event('button','slalom_start',[ride||'',track||''].join(' ').trim());}}
@@ -27,7 +27,9 @@ export default function SlalomApp(){
   const q=new URLSearchParams(location.search).get('player'),who=PLAYERS.includes(q)?q:'explorer';
   voice.current=new CoachVoice(setError,(kind,detail)=>void event('voice',kind,JSON.stringify(detail)));
   audio.current=new ArcadeAudio({record:(name,detail)=>void event('audio',name,JSON.stringify(detail))});
-  let prefs=audioPreferences();try{prefs=audioPreferences(JSON.parse(localStorage.getItem(`word-arcade-audio-v1:${who}`)));}catch{}audio.current.configure(prefs);
+  let prefs=audioPreferences();try{prefs=audioPreferences(JSON.parse(localStorage.getItem(`word-arcade-audio-v1:${who}`)));}catch{}
+  // the calm slalom: a snowy valley's soft wind unless a grown-up chose another bed or music
+  if(prefs.track==='calm-night'||prefs.track==='calm-meadow')prefs={...prefs,track:'calm-snow'};audio.current.configure(prefs);
   (async()=>{try{const r=await fetch(`/api/${who}`),d=await r.json();if(!r.ok)throw Error(d.error);current.current=d.profile;setId(who);setP(d.profile);setPhase('start');void event('open','slalom',`${innerWidth}×${innerHeight}`);
     // while the child chooses skis or snowboard: the voice list and the 3D code arrive in the background
     void voice.current.ready;void import('./slalom-scene.mjs');}
@@ -36,7 +38,7 @@ export default function SlalomApp(){
   return()=>{document.removeEventListener('visibilitychange',hidden);voice.current?.stop();voice.current?.player?.remove();audio.current?.dispose();};
  // eslint-disable-next-line react-hooks/exhaustive-deps
  },[]);
- const name=id==='admin'?'Admin':p?.name||'';
+ const name=id==='admin'?'Admin · Alex':p?.name||'';
  return <div className="slalom-app" onPointerDownCapture={()=>void audio.current?.unlock()}>
   {id&&<div className="active-player-banner" data-player={id} aria-label="Active player">{name}</div>}
   {(phase==='boot'||!p)&&<Boot text={error?`${error} Tap Games and try again.`:'Waxing the skis…'}/>}

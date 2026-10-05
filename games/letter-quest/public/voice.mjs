@@ -1,3 +1,4 @@
+import {mediaSettled} from './word-break.mjs';
 export const briefLine=text=>text?.match(/^.*?[.!?](?:\s|$)/)?.[0].trim()||text;
 export const SHORT_FEEDBACK=['Nice!','Got it!','Well done!','Try again.'];
 export class CoachVoice {
@@ -35,6 +36,12 @@ export class CoachVoice {
     this.stop();this.mode='manual';
     return this.play(text,this.generation);
   }
+  // Audio-finished contract (word breaks): resolves once this line is over: ended, stopped or replaced, failed or blocked.
+  async speakToEnd(text){
+    const starting=this.speak(text),generation=this.generation;
+    if(!await starting)return generation===this.generation?'failed':'stopped';
+    return generation===this.generation?mediaSettled(this.player):'stopped';
+  }
   instruction(text,{key='',essential=true}={}){
     if(!text)return;
     if(!essential&&key&&this.seenInstructions.has(key)){this.record('voice_skip',{reason:'familiar_instruction'});return;}
@@ -43,11 +50,12 @@ export class CoachVoice {
     // A small settling gap prevents clipped prompts when the child navigates quickly.
     this.promptTimer=setTimeout(()=>{this.promptTimer=null;void this.play(text,generation);},250);
   }
-  feedback(ok=true){
+  feedback(ok=true,text=null){
     const now=Date.now();
-    if(this.mode||this.queued||now-this.lastSpeech<3000||now-this.lastFeedback<15000){this.record('voice_skip',{reason:'breathing_room'});return;}
+    const lively=this.manifest?.performance==='lively';
+    if(this.mode||this.queued||now-this.lastSpeech<(lively?0:3000)||now-this.lastFeedback<(lively?6500:15000)){this.record('voice_skip',{reason:'breathing_room'});return;}
     this.lastFeedback=now;this.stop();this.mode='feedback';
-    return this.play(ok?SHORT_FEEDBACK[this.feedbackIndex++%3]:SHORT_FEEDBACK[3],this.generation);
+    return this.play(lively&&text?text:ok?SHORT_FEEDBACK[this.feedbackIndex++%3]:SHORT_FEEDBACK[3],this.generation);
   }
   letter(text){
     if(this.mode!=='letter')this.stop();

@@ -1,0 +1,203 @@
+/* The calm Book (idea/20260928-book-calm): a printed storybook around the Book's own 2D pictures.
+   Parchment and antique gold, a book serif, round medallions, almost no chrome. Things drift and settle (0.3-0.8 s);
+   nothing shakes, pops or bursts. Loaded after book.css: it restyles, it never moves the picture's people. */
+:root{--parch:#f4e6c8;--parch-2:#ead6ae;--ink:#2f3b2a;--ink-soft:#5b5a43;--gold:#b88a3a;--gold-hi:#e7c77a;--gold-lo:#7d5a1e;--green:#2f4a33;
+ --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua","Noto Serif",Tinos,Georgia,serif;--ease:cubic-bezier(.25,.1,.25,1)}
+.bk{font-family:var(--serif);background:#2a2418}
+
+/* the frame: a thin parchment margin with a gold line and small corner ornaments; the picture shows through */
+.bk::after{content:"";position:absolute;inset:0;z-index:40;pointer-events:none;
+ border:7px solid var(--parch);outline:1.5px solid var(--gold);outline-offset:-10px;
+ box-shadow:inset 0 0 0 1px rgba(125,90,30,.35),inset 0 0 40px rgba(60,40,10,.28)}
+.bk::before{content:"";position:absolute;inset:3px;z-index:41;pointer-events:none;
+ background:
+  radial-gradient(circle at 14px 14px,var(--gold-hi) 0 3px,var(--gold) 3.5px 5px,transparent 5.5px) top left/28px 28px no-repeat,
+  radial-gradient(circle at 14px 14px,var(--gold-hi) 0 3px,var(--gold) 3.5px 5px,transparent 5.5px) top right/28px 28px no-repeat,
+  radial-gradient(circle at 14px 14px,var(--gold-hi) 0 3px,var(--gold) 3.5px 5px,transparent 5.5px) bottom left/28px 28px no-repeat,
+  radial-gradient(circle at 14px 14px,var(--gold-hi) 0 3px,var(--gold) 3.5px 5px,transparent 5.5px) bottom right/28px 28px no-repeat}
+
+/* a medallion: cream disc, gold ring, a soft shadow; the medallion's thing is the only content */
+.bk-exit,.bk-hear,.bk-open,.bk-tapnext,.bk-btn,.bk-done,.bk-hunt,.bk-hintbtn,.bk-calm-done,.bk-calm-pick button{
+ font-family:var(--serif);color:var(--green);
+ background:radial-gradient(circle at 38% 32%,#fffaf0,var(--parch) 62%,var(--parch-2));
+ border:2.5px solid var(--gold);box-shadow:0 0 0 3px rgba(255,248,230,.55),0 0 0 4.5px rgba(125,90,30,.55),0 5px 14px rgba(40,25,5,.35);
+ transition:transform .5s var(--ease),opacity .6s var(--ease),background .6s var(--ease),box-shadow .6s var(--ease)}
+.bk-exit,.bk-hear{width:44px;height:44px;top:max(18px,env(safe-area-inset-top));font-size:0;color:var(--gold-lo);opacity:.92}
+.bk-exit{left:18px}.bk-hear{right:18px}
+.bk-exit::before{content:"";position:absolute;inset:0;background:
+ linear-gradient(45deg,transparent 46%,var(--gold-lo) 46% 54%,transparent 54%) center/18px 18px no-repeat,
+ linear-gradient(-45deg,transparent 46%,var(--gold-lo) 46% 54%,transparent 54%) center/18px 18px no-repeat}
+.bk-hear::before{content:"";position:absolute;inset:0;background:no-repeat center/22px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237d5a1e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 10v4h4l5 4V6L8 10z' fill='%237d5a1e'/%3E%3Cpath d='M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12'/%3E%3C/svg%3E")}
+.bk-exit:active,.bk-hear:active,.bk-btn:active{transform:scale(.97)}
+
+/* page dots: a gold thread with small beads */
+.bk-dots{gap:0;bottom:max(16px,env(safe-area-inset-bottom));align-items:center;padding:0 6px;
+ background:linear-gradient(var(--gold),var(--gold)) center/100% 1.5px no-repeat}
+.bk-dots i{width:9px;height:9px;margin:0 5px;background:var(--parch);border:1.5px solid var(--gold);box-sizing:border-box;transition:background .6s var(--ease),transform .6s var(--ease)}
+.bk-dots i.done{background:var(--gold)}.bk-dots i.now{background:var(--gold-hi);transform:scale(1.3)}
+.bk-tapnext{font-size:0;width:52px;height:52px;border-radius:50%;animation:bk-calm-breathe 3.2s ease-in-out infinite}
+.bk-tapnext::before{content:"";position:absolute;inset:0;background:no-repeat center/24px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232f4a33' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h13M13 6l6 6-6 6'/%3E%3C/svg%3E")}
+
+/* words on the page: a printed ribbon of parchment */
+.bk-caption,.bk-words,.bk-heard,.bk-slots,.bk-magic{font-family:var(--serif)}
+.bk-caption{background:linear-gradient(var(--parch),var(--parch-2));color:var(--ink);border:1.5px solid var(--gold);border-radius:6px;
+ font-weight:600;letter-spacing:.01em;box-shadow:0 4px 14px rgba(40,25,5,.3),inset 0 0 0 3px rgba(255,248,230,.6);animation:bk-calm-in .7s var(--ease) both}
+.bk-heard{background:rgba(244,230,200,.92);color:var(--ink);border:1px solid var(--gold);font:600 15px var(--serif)}
+
+/* the cover and the closing cards: a printed page */
+.bk-cover{background:radial-gradient(ellipse at 50% 45%,rgba(20,14,4,.05),rgba(20,14,4,.42))}
+.bk-cover .card,.bk-quest,.bk-card{background:linear-gradient(var(--parch),var(--parch-2));color:var(--ink);border-radius:10px;
+ border:1.5px solid var(--gold);box-shadow:0 0 0 5px rgba(244,230,200,.9),0 0 0 6.5px var(--gold),0 14px 40px rgba(20,12,2,.45);animation:bk-calm-in .8s var(--ease) both}
+.bk-cover .kicker{color:var(--gold-lo);font:600 13px var(--serif);letter-spacing:.22em}
+.bk-cover h1,.bk-quest h2{font-family:var(--serif);font-weight:600;color:var(--green);letter-spacing:.01em}
+.bk-cover h1::after,.bk-quest h2::after{content:"";display:block;width:120px;height:10px;margin:.35em auto 0;background:
+ linear-gradient(var(--gold),var(--gold)) center/100% 1px no-repeat,radial-gradient(circle,var(--gold) 0 3px,transparent 3.5px) center/10px 10px no-repeat}
+.bk-open{width:84px;height:84px;border-radius:50%;font-size:0;position:relative}
+.bk-open::before{content:"";position:absolute;inset:0;background:no-repeat center/44px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='%232f4a33' stroke-width='2.2' stroke-linejoin='round'%3E%3Cpath d='M24 13c-5-4-12-4-18-2v26c6-2 13-2 18 2 5-4 12-4 18-2V11c-6-2-13-2-18 2z' fill='%23fffaf0'/%3E%3Cpath d='M24 13v26'/%3E%3Cpath d='M10 17c3-1 7-1 10 1M10 23c3-1 7-1 10 1M28 18c3-2 7-2 10-1M28 24c3-2 7-2 10-1' stroke='%23b88a3a' stroke-width='1.6'/%3E%3C/svg%3E")}
+.bk-quest p,.bk-dadnote{font-family:var(--serif);color:var(--ink-soft)}
+.bk-done,.bk-hunt,.bk-hintbtn{border-radius:999px;font-weight:600;padding:.35em 1em}
+.bk-hunt.big{background:radial-gradient(circle at 38% 32%,#fffaf0,#f3e1b5 62%,#e5c98c)}
+.bk-hunt-letter{font-family:var(--serif);color:var(--green);background:radial-gradient(circle at 38% 32%,#fffaf0,var(--parch) 62%,var(--parch-2));
+ border:3px solid var(--gold);box-shadow:0 0 0 5px rgba(255,248,230,.6),0 0 0 7px rgba(125,90,30,.5)}
+
+/* answer medallions: round for a letter or a number, a soft pill for a word */
+.bk-play{gap:3.2vmin}
+.bk-btn{border-radius:50%;font-weight:600;color:var(--green)}
+.bk-btn.word,.bk-btn.sign,.bk-btn.sign.word,.bk-btn.fork,.bk-btn.ok,.bk-btn.go{border-radius:999px;color:var(--green);text-shadow:none;
+ background:radial-gradient(circle at 38% 32%,#fffaf0,var(--parch) 62%,var(--parch-2));border:2.5px solid var(--gold)}
+.bk-btn.ball{background:radial-gradient(circle at 36% 30%,#fff,#f1eadb 60%,#cfc3a6)}
+.bk-btn.stone{border:2.5px solid #8f8470}
+.bk-btn.key{background:radial-gradient(circle at 38% 32%,#fff3c8,#e7c77a 60%,#b88a3a);color:#4a3208}
+.bk-btn.no{background:radial-gradient(circle at 38% 32%,#fff1ea,#f3c9b8 62%,#dfa48c);color:#6e2a16;animation:none}
+.bk-btn.right,.bk-btn.lit{background:radial-gradient(circle at 38% 32%,#fffbe8,#f1dc9c 60%,#d9b565);color:var(--green);transform:scale(1.04);
+ box-shadow:0 0 0 3px rgba(255,248,230,.7),0 0 0 5px var(--gold),0 0 26px rgba(231,199,122,.75),0 5px 14px rgba(40,25,5,.3)}
+.bk-btn.used{opacity:.3}
+.bk-btn.glow{animation:bk-calm-breathe 2.4s ease-in-out infinite}
+.bk-btn.wiggle{animation:bk-calm-dim .8s var(--ease)}
+.bk-board{background:#2f4a33;border:6px solid var(--gold);border-radius:8px;font-family:var(--serif);font-weight:600;box-shadow:inset 0 0 0 2px rgba(0,0,0,.25),0 8px 22px rgba(20,12,2,.35)}
+.bk-board.buzz{animation:bk-calm-dim 1s var(--ease) 1}
+.bk-slots{background:linear-gradient(var(--parch),var(--parch-2));color:var(--ink);border:1.5px solid var(--gold);border-radius:8px}
+.bk-slots span{border-bottom-color:var(--gold)}
+.bk-glyph{font-family:var(--serif);font-weight:600;color:#f3dd9e;-webkit-text-stroke:5px var(--gold-lo)}
+.bk-ball b{font-family:var(--serif);font-weight:700}
+
+/* the key ring: a real brass ring, each key a small brass key with its letter engraved */
+.bk-keyring{background:none;box-shadow:none;border:0;gap:2px;position:relative;padding:18px 16px 6px}
+.bk-keyring::before{content:"";position:absolute;left:50%;top:2px;width:34px;height:34px;translate:-50% 0;border-radius:50%;
+ border:4px solid #b88a3a;box-shadow:inset 0 0 0 1.5px #e7c77a,0 2px 3px rgba(40,25,5,.4)}
+.bk-keyring b{font-size:0;width:30px;height:62px;display:inline-grid;place-items:end center;position:relative;background:no-repeat top/30px 62px
+ url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 62'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' x2='1'%3E%3Cstop offset='0' stop-color='%23f2d58a'/%3E%3Cstop offset='.5' stop-color='%23c9993f'/%3E%3Cstop offset='1' stop-color='%238a6420'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='15' cy='11' r='9' fill='none' stroke='url(%23g)' stroke-width='4'/%3E%3Crect x='12.5' y='19' width='5' height='36' rx='2' fill='url(%23g)'/%3E%3Crect x='17' y='45' width='7' height='4' rx='1' fill='url(%23g)'/%3E%3Crect x='17' y='51' width='5' height='4' rx='1' fill='url(%23g)'/%3E%3C/svg%3E");
+ transform-origin:50% 0;animation:bk-calm-sway 5s ease-in-out infinite;transition:opacity .6s var(--ease)}
+.bk-keyring b:nth-child(2n){animation-delay:-1.3s}.bk-keyring b:nth-child(3n){animation-delay:-2.6s}
+.bk-keyring b i{font:700 12px var(--serif);font-style:normal;color:#4a3208;position:absolute;top:6px;left:0;right:0;text-align:center}
+.bk-keyring b.empty{opacity:.28;filter:grayscale(.6)}
+.bk-keyring b.new{animation:bk-calm-keyon 1.6s var(--ease) both,bk-calm-sway 5s 1.6s ease-in-out infinite}
+.bk-keyring em{display:block;font:italic 600 13px var(--serif);color:var(--ink-soft);margin-top:2px}
+.bk-keys b{font-size:0;background:none;box-shadow:none;padding:0;width:22px;height:40px;position:relative;
+ background:no-repeat center/22px 40px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 62'%3E%3Ccircle cx='15' cy='11' r='9' fill='none' stroke='%23d9b565' stroke-width='4'/%3E%3Crect x='12.5' y='19' width='5' height='36' rx='2' fill='%23d9b565'/%3E%3Crect x='17' y='45' width='7' height='4' rx='1' fill='%23d9b565'/%3E%3C/svg%3E")}
+.bk-keys{top:max(22px,env(safe-area-inset-top));right:74px}
+.bk-keys-golden .bk-keys b{background:no-repeat center/22px 40px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 62'%3E%3Ccircle cx='15' cy='11' r='9' fill='none' stroke='%23f2d58a' stroke-width='4'/%3E%3Crect x='12.5' y='19' width='5' height='36' rx='2' fill='%23f2d58a'/%3E%3Crect x='17' y='45' width='7' height='4' rx='1' fill='%23f2d58a'/%3E%3C/svg%3E");box-shadow:none}
+
+/* effects: only a slow, gentle glint */
+.bk-fx i{animation:bk-calm-glint 5.5s ease-in-out infinite;filter:saturate(.5) sepia(.35)}
+.bk-fx.burst i{animation:bk-calm-glint 3.2s ease-in-out 1 both}
+.bk-puffs,.bk-net,.bk-goaltext{animation-duration:1.4s!important}
+
+/* the "Done" medallion and the easier / harder offer (the calm voice hands the task over; he says when he is done) */
+.bk-calm-done{position:absolute;right:max(26px,4vw);bottom:max(46px,8vh);z-index:30;min-width:88px;height:56px;border-radius:999px;padding:0 1.1em;
+ font:600 clamp(20px,4.4vmin,30px) var(--serif);cursor:pointer;animation:bk-calm-in .7s var(--ease) both}
+.bk-calm-done[hidden]{display:none}
+.bk-calm-done.glow{animation:bk-calm-breathe 2.4s ease-in-out infinite}
+.bk-calm-pick{display:flex;gap:18px;justify-content:center;margin:12px 0 6px}
+.bk-calm-pick button{width:92px;height:92px;border-radius:50%;cursor:pointer;display:grid;place-items:center;font:600 15px var(--serif);padding:8px}
+.bk-calm-pick button b{display:block;font-size:30px;line-height:1;font-weight:600}
+.bk-calm-pick button.picked{box-shadow:0 0 0 3px rgba(255,248,230,.7),0 0 0 5px var(--gold),0 0 24px rgba(231,199,122,.8)}
+.bk-calm-note{font:italic 600 15px var(--serif);color:var(--ink-soft);margin:6px 0 0}
+
+/* motion: drift and settle; the same names as book.css, so every old shake, pop and burst becomes a calm one */
+@keyframes bk-calm-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes bk-calm-breathe{0%,100%{box-shadow:0 0 0 3px rgba(255,248,230,.55),0 0 0 4.5px rgba(125,90,30,.55),0 5px 14px rgba(40,25,5,.35)}50%{box-shadow:0 0 0 3px rgba(255,248,230,.75),0 0 0 5px var(--gold),0 0 22px rgba(231,199,122,.7),0 5px 14px rgba(40,25,5,.3)}}
+@keyframes bk-calm-dim{0%,100%{opacity:1}40%{opacity:.55}}
+@keyframes bk-calm-glint{0%,100%{opacity:0;transform:scale(.8)}45%,55%{opacity:.75;transform:scale(1)}}
+@keyframes bk-calm-sway{0%,100%{rotate:-3deg}50%{rotate:3deg}}
+@keyframes bk-calm-keyon{from{opacity:0;transform:translateY(-14px) rotate(-12deg)}to{opacity:1;transform:none}}
+@keyframes bk-pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes bk-hop{0%,100%{transform:translateY(0)}50%{transform:translateY(-3%)}}
+@keyframes bk-wiggle{0%,100%{opacity:1}40%{opacity:.55}}
+@keyframes bk-softmiss{0%,100%{opacity:1}40%{opacity:.6}}
+@keyframes bk-burst{0%{opacity:0;transform:scale(.8)}40%{opacity:.7;transform:scale(1)}100%{opacity:0;transform:translateY(-8px) scale(1)}}
+@keyframes bk-glow{0%,100%{filter:none}50%{filter:drop-shadow(0 0 10px rgba(231,199,122,.8))}}
+@keyframes bk-ballpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+@keyframes bk-nudge{50%{filter:drop-shadow(0 0 10px rgba(231,199,122,.7))}}
+@keyframes bk-tapnext-nudge{0%,100%{opacity:.85}50%{opacity:1}}
+@keyframes bk-goalpop{0%{translate:-50% -50%;opacity:0}30%{opacity:1}100%{translate:-50% -50%;opacity:0}}
+@keyframes bk-net{0%{opacity:.7}100%{opacity:0}}
+@keyframes bk-think{from{opacity:.6}to{opacity:1}}
+@keyframes bk-settle{0%{transform:scale(1.03)}100%{transform:scale(1)}}
+@keyframes bk-keyfly{0%{opacity:0;translate:-50% -50%}30%{opacity:1}100%{opacity:0;translate:-50% -50%}}
+@keyframes bk-keyslide{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
+@keyframes bk-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-.8%)}}
+@keyframes bk-talk{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.6%)}}
+@keyframes bk-enter{from{opacity:0;transform:translateY(3%)}to{opacity:1;transform:none}}
+@keyframes bk-arrive{from{opacity:0;transform:translateX(-4vw)}to{opacity:1;transform:none}}
+.bk-actor{animation-duration:.8s!important;animation-timing-function:var(--ease)!important}
+.bk-actor>div{animation-duration:4.8s!important}
+.bk-actor.talking>div{animation-duration:1.6s!important}
+.bk-actor.hop>div,.bk-actor.hop{animation-duration:1.2s!important}
+.bk-page.out{animation-duration:.6s!important}
+@media (prefers-reduced-motion:reduce){.bk-keyring b,.bk-tapnext{animation:none}}
+/* (book.css's badge on each key and its glow give way to the engraved brass key) */
+.bk-keyring b{filter:none}
+.bk-keyring b i{background:none;bottom:auto;right:0;padding:0;border-radius:0;font-size:12px}
+.bk-keyring b.empty{filter:grayscale(.6) opacity(.3)}
+.bk-cover .card{text-align:center}.bk-cover .card>img{display:block;margin:4px auto 0}.bk-open{display:block;margin:12px auto 0;animation:bk-calm-breathe 3.2s ease-in-out infinite}
+/* the keys hang from a brass rod (a ring at its end), each on its own little loop */
+.bk-keyring{padding:14px 18px 6px}
+.bk-keyring::before{left:10px;right:10px;top:8px;width:auto;height:4px;translate:none;border:0;border-radius:3px;background:linear-gradient(#f2d58a,#b88a3a 60%,#7d5a1e);box-shadow:0 1px 2px rgba(40,25,5,.35)}
+.bk-keyring::after{content:"";position:absolute;left:2px;top:1px;width:14px;height:14px;border-radius:50%;border:3px solid #b88a3a;box-shadow:inset 0 0 0 1px #e7c77a}
+.bk-keyring b{margin-top:2px}
+/* the task's own letters, words and numbers stay in the school's reading font (a child learning letter shapes traces
+   and reads the shapes he is taught); the serif is for the book around them */
+.bk-btn,.bk-glyph,.bk-ball b,.bk-board,.bk-slots,.bk-hunt-letter,.bk-thing b{font-family:"Nunito","Trebuchet MS",system-ui,sans-serif}
+.bk-btn{font-weight:800}.bk-glyph{font-weight:900}
+/* the spellbook's page path: a gold thread with a small star, on parchment */
+.bk-theme-spellbook .bk-dots{background:rgba(244,230,200,.85);border:1px solid var(--gold);padding:3px 10px;border-radius:999px}
+.bk-theme-spellbook .bk-dots i{background:rgba(125,90,30,.28)}
+.bk-theme-spellbook .bk-dots i.done{background:var(--gold)}
+.bk-theme-spellbook .bk-dots i.now::after{color:var(--gold);text-shadow:none}
+.bk-preview-bar{background:rgba(47,59,42,.75);font-family:var(--serif);font-weight:600}
+.bk-words{background:linear-gradient(var(--parch),var(--parch-2));color:var(--ink);border:1.5px solid var(--gold);font-family:var(--serif)}
+.bk-card{background:rgba(42,36,24,.55)}
+.bk-card-in{background:linear-gradient(var(--parch),var(--parch-2));color:var(--ink);border:1.5px solid var(--gold);border-radius:10px;font-family:var(--serif)}
+/* the spellbook's night card (the calm theme night variant): cream words on navy */
+.bk-theme-spellbook .bk-quest p,.bk-theme-spellbook .bk-dadnote,.bk-theme-spellbook .bk-quest h2{color:#f1e7cc}
+/* listening for "done": a small green dot breathing beside the word */
+.bk-calm-done.listening{padding-right:1.8em;position:absolute}
+.bk-calm-done.listening::after{content:"";position:absolute;right:.7em;top:50%;width:.42em;height:.42em;margin-top:-.21em;border-radius:50%;background:#5f8f5a;animation:bk-calm-dot 1.8s ease-in-out infinite}
+@keyframes bk-calm-dot{0%,100%{opacity:.35}50%{opacity:1}}
+.bk-theme-spellbook .bk-cover h1,.bk-theme-spellbook .bk-cover h1::after{color:#f4ecd8}
+/* one style for the whole chapter (2026-09-29): the things he counts wear the book's number medallion, and the key
+   that flies to the ring is the same engraved brass key (never the old yellow badge or an emoji key) */
+.bk-table b,.bk-thing b{background:radial-gradient(circle at 38% 32%,#fffaf0,var(--parch) 62%,var(--parch-2));color:var(--green);
+ border:2px solid var(--gold);box-shadow:0 0 0 2px rgba(255,248,230,.55),0 3px 8px rgba(40,25,5,.3);font-weight:800}
+.bk-key-fly{font-size:0;width:clamp(48px,11vmin,90px);height:clamp(96px,22vmin,180px);translate:-50% -50%;
+ background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 62'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' x2='1'%3E%3Cstop offset='0' stop-color='%23f2d58a'/%3E%3Cstop offset='.5' stop-color='%23c9993f'/%3E%3Cstop offset='1' stop-color='%238a6420'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='15' cy='11' r='9' fill='none' stroke='url(%23g)' stroke-width='4'/%3E%3Crect x='12.5' y='19' width='5' height='36' rx='2' fill='url(%23g)'/%3E%3Crect x='17' y='45' width='7' height='4' rx='1' fill='url(%23g)'/%3E%3Crect x='17' y='51' width='5' height='4' rx='1' fill='url(%23g)'/%3E%3C/svg%3E");animation:bk-keyfly 1.6s var(--ease) forwards}
+.bk-keys-golden .bk-key-fly{filter:drop-shadow(0 0 12px rgba(231,199,122,.8))}
+/* a short screen (a phone turned sideways, 412 px tall): the cover card and the closing card fit without scrolling */
+@media (max-height:520px){
+ .bk-cover .card{padding:8px 22px 10px}
+ .bk-cover .kicker{font-size:11px}
+ .bk-cover h1{font-size:clamp(22px,5.4vmin,32px);margin:.1em 0 .1em}
+ .bk-cover h1::after,.bk-quest h2::after{margin-top:.15em;height:8px}
+ .bk-keyring{padding:10px 14px 0;margin:.1em auto .2em}
+ .bk-keyring b{width:20px;height:42px;background-size:20px 42px}
+ .bk-keyring b i{font-size:10px;top:3px}
+ .bk-keyring em{font-size:12px;margin-top:0}
+ .bk-cover .card>img{height:min(15vh,64px)!important}
+ .bk-open{width:58px;height:58px;margin-top:4px}
+ .bk-open::before{background-size:30px}
+ .bk-quest{padding-top:8px;padding-bottom:8px}
+ .bk-calm-pick{margin:4px 0 2px;gap:12px}
+ .bk-calm-pick button{width:64px;height:64px;font-size:12px;padding:4px}
+ .bk-calm-pick button svg{width:24px;height:24px}
+}

@@ -2,7 +2,7 @@
 
 ![Family Learning Games — gameplay previews from the collection](docs/media/social-preview.png)
 
-**One app. Ten games, The Book, and a Castle Kingdom preview.** A single home screen brings together reading, numbers, free drawing, mazes, chess, strategy, soccer, and an illustrated story with little games inside it. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, not a public online classroom or hosted play service.
+**One app. Ten games, The Book and fictional demo worlds.** A single home screen brings together reading, numbers, free drawing, mazes, chess, strategy, soccer, and an illustrated story with little games inside it. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, not a public online classroom or hosted play service.
 
 After setup, open **http://localhost:4810/**. Choose a player once; their name stays large at the top and their progress stays separate. Use **Games** to return home, **Refresh** to reload, and **Grown-ups** to change the device's player or switch the main menu between gameplay screenshots and illustrated logos. The artwork choice is saved for that player on that device; activity-variant menus retain their gameplay previews. Main-menu order adapts per player from recent local play sessions, including older activities that now belong to Maze Garden or Soccer Club. The menu opens immediately using its last known order (or the default), updates preferences in the background for the next visit, and stays still while choosing.
 
@@ -12,7 +12,7 @@ After setup, open **http://localhost:4810/**. Choose a player once; their name s
 
 [Watch the 34-second highlight video](docs/media/highlights.mp4) · Silent · Fictional cast and empty preview saves
 
-**Gallery build note:** these captures show the current live calm editions. The public Letter Quest, Word Arcade, Number Park, Maze Garden, Three in a Row, Target Trail/Sling, and hub/chess/soccer interfaces still lack some of those newer visual layers. This PR adds the fictional Book cast and Castle Kingdom demo; it does not synchronize the other applications. [Exact edition differences](docs/showcase/README.md#edition-differences).
+**Edition note:** this edition includes the live calm theme, home pages and current game engines. The Book keeps the original fictional painted cast; the World and quest engines use geometric demo scenes. The showcase’s Castle Kingdom preview is a separate fictional presentation.
 
 ## Ten games and The Book
 
@@ -102,6 +102,8 @@ The Book uses original painted scenes and a fictional boy, older sister, guide a
 
 *Actual gameplay from an isolated, generic Admin demo. Click a card for its game guide. No children's profiles or drawings are shown; the house doodle is newly scripted; screenshots are not evidence of learning outcomes.*
 
+The current edition also includes the calm theme, two home pages, balance challenges, expanded patterns, and a World with inventories, room paths and revision-checked quests. The [fictional demo worlds](hub/WORLD.md) use the original public cast and placeholder scenes. Private daily content, artwork and recordings are supplied separately by each installation.
+
 ### Made for playing together
 
 - **Touch-friendly:** drag objects, trace paths, steer a spaceship, and aim with a finger.
@@ -130,10 +132,10 @@ The Book uses original painted scenes and a fictional boy, older sister, guide a
 
 ### One-command first run
 
-With **Node.js 22.13 or newer**, npm, and Git installed, paste this one command into Terminal (macOS/Linux) or PowerShell 7:
+With **Node.js 22.13 or newer**, npm, and Git installed, copy this repository’s clone URL from GitHub’s Code menu, replace REPOSITORY_URL below, and paste this command into Terminal (macOS/Linux) or PowerShell 7:
 
 ```sh
-git clone https://github.com/rpinho/family-learning-games.git && cd family-learning-games && npm run play
+git clone REPOSITORY_URL && cd family-learning-games && npm run play
 ```
 
 This downloads the collection, installs locked dependencies, builds the two React interfaces, and starts the hub plus the game servers. The hub and other games need only Node. Open **http://localhost:4810/** in Chrome, Edge, or another modern browser. Keep the terminal running; Ctrl+C stops the servers. Later, run `npm start` in the same folder; no reinstall is necessary. An existing `family-learning-games` folder is not overwritten.
@@ -144,7 +146,7 @@ If you download the repository ZIP instead, unzip it, open a terminal in its fol
 
 Give your agent this request:
 
-> Install and run https://github.com/rpinho/family-learning-games locally. Read its AGENTS.md and README first. Check Node/npm, use a new folder, run npm run play, verify all ten games through the hub and the optional Book preview, and give me the single home-screen link. Keep it private and preserve any existing saves.
+> Install and run this repository locally (use its clone URL from the Code menu). Read its AGENTS.md and README first. Check Node/npm, use a new folder, run npm run play, verify all ten games through the hub and the optional Book preview, and give me the single home-screen link. Keep it private and preserve any existing saves.
 
 [AGENTS.md](AGENTS.md) contains the installation, verification, data-preservation and privacy instructions. No API key or paid AI service is needed to run the games.
 

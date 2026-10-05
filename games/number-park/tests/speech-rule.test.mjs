@@ -10,7 +10,7 @@ test('Content always speaks; how-to instructions once per session and only with 
  assert.deepEqual(planSpeech(['Put the groups together. How many?'],{sound:true,firstTime}).say,['How many?'],'instruction not repeated');
  assert.deepEqual(planSpeech(['Tap and count.'],{sound:false,firstTime}).say,[],'instructions obey the sound button');
  assert.deepEqual(planSpeech(['Take away 2. How many are left?'],{sound:false,firstTime}).say,['Take away 2. How many are left?'],'content plays with sound off');
- assert.ok(speechParts(['Share 10 cookies with 3 friends. Extras go to Cookie Buddy.']).includes('Extras go to Cookie Buddy.'));
+ assert.ok(speechParts(['Share 10 cookies with 3 friends. Extras go to Snack Friend.']).includes('Extras go to Snack Friend.'));
 });
 test('Number Park follows the rule where it speaks',async()=>{
  const read=f=>readFile(new URL('../'+f,import.meta.url),'utf8'),page=await read('app/page.tsx'),planning=await read('app/planning.tsx'),reading=await read('app/reading.tsx');
@@ -19,4 +19,5 @@ test('Number Park follows the rule where it speaks',async()=>{
  assert.match(page,/useState\(true\)/);assert.match(page,/speak=\{text=>speak\(text\)\}/);
  assert.match(planning,/firstTime\.current\(line\)/);assert.match(planning,/!active\|\|!visible\|\|!sound/);
  assert.match(reading,/planSpeech\(prompt\(\)/);
+ assert.match(await read('scripts/build-voice.py'),/speechParts/);
 });

@@ -45,7 +45,7 @@ test('the ledger: a choice sets a flag once, tomorrow pays off the oldest unpaid
 test('the brief names every node, its place and scene, how they travel, the mirrored challenge, the choices and the payoff',async()=>{
  const {adventureBrief}=await import('../adventure/brief.mjs');
  const sk=skeleton(kit,beats,{rand:()=>0.5});
- const t=adventureBrief({sk,kit,plan:{beats},payoff:{label:'a glowing lantern',kind:'item'},chooser:'Ada'});
+ const t=adventureBrief({sk,kit,plan:{beats},payoff:{label:'a glowing lantern',kind:'item'},chooser:'Explorer'});
  for(const n of sk.nodes)assert.match(t,new RegExp(`"${n.id}"`));
  assert.match(t,/they arrive (down the zigzag path|through the cool dark tunnel)/);assert.match(t,/same kind of challenge in a different skin/);
  assert.match(t,/ends with a CHOICE/);assert.match(t,/a glowing lantern/);assert.match(t,/never a right and a wrong one/);

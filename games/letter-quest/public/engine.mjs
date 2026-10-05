@@ -41,9 +41,9 @@ export const KINGDOMS = [
  {name:'Memory Castle',gem:'Emerald',color:'#3fcdb5',icon:'🏰',intro:'Remember a letter. Build a word.'},
  {name:'Reading Rainbow',gem:'Diamond',color:'#a4d7e6',icon:'★',intro:'Small steps have brought you a long way.'}
 ];
-export function freshProfile(id='explorer') {return {id,name:id==='beginner'?'Beginner':id==='demo'?'Explorer':id==='admin'?'Admin':'Explorer',seq:0,xp:0,gems:0,completed:0,inLesson:0,league:0,leagueBase:0,crowns:0,chests:0,skills:{},history:[],settings:{leftHanded:id!=='beginner',sound:true},revision:0};}
+export function freshProfile(id='explorer') {return {id,name:id==='beginner'?'Beginner':id==='demo'?'Explorer':id==='admin'?'Alex':'Explorer',seq:0,xp:0,gems:0,completed:0,inLesson:0,league:0,leagueBase:0,crowns:0,chests:0,skills:{},history:[],settings:{leftHanded:id!=='beginner',sound:true},revision:0};}
 export function resetProgress(p){return {...freshProfile(p.id),settings:{...p.settings},revision:p.revision+1,ignoreAttemptsThroughRevision:p.ignoreAttemptsThroughRevision||0};}
-export const FAMILY_NAMES=['Explorer','Beginner','Admin','Helper'];
+export const FAMILY_NAMES=['Explorer','Beginner','Alex','Ada'];
 export const WORDS=[
  ['cat','🐱',1],['dog','🐶',1],['sun','☀️',1],['hat','🎩',1],['bus','🚌',1],['pig','🐷',1],['cup','☕',1],['bed','🛏️',1],['hen','🐔',1],['fox','🦊',1],['ant','🐜',1],['bat','🦇',1],
  ['moon','🌙',2],['fish','🐟',2],['frog','🐸',2],['milk','🥛',2],['duck','🦆',2],['star','⭐',2],['book','📖',2],['tree','🌳',2],['ship','🚢',2],['crab','🦀',2],['drum','🥁',2],['flag','🚩',2],
@@ -169,7 +169,6 @@ function buildChallenge(p){
  const level=hard&&type==='trace'?Math.max(2,s.level):advanced&&type==='find'&&s.seen===0?(p.id==='beginner'?1:2):s.level;
  const all=Object.keys(GLYPHS).filter(c=>c!==char && (/^[a-z]$/.test(char)?/^[a-z]$/:/^[0-9]$/.test(char)?/^[0-9]$/:/^[A-Z]$/).test(c));
  const found={id:`${advanced?'variety6:':''}${p.revision}:${p.seq}`,type,char,level,probe:advanced&&(type==='find'||hard&&type==='trace'),options:shuffle([char,...shuffle(all,r).slice(0,level>=2?3:1)],r),paths:GLYPHS[char]};
- // Beginner: about half of the letter finds become "tap every one" grids with
  // look-alike letters (b/d/p, M/N/W). Pattern borrowed from Duolingo ABC's
  // "tap the letter every time you see it" item.
  if(type==='find'&&p.id==='beginner'&&(p.seq*7+p.completed)%2===0)return {...found,id:`${found.id}:spot1`,spot:true,grid:spotGrid(char,r)};
@@ -251,7 +250,6 @@ function assessTraceModel(paths,strokes,level=0){
 }
 export function applyAttempt(p,challenge,payload){
  // Assistance is determined on the server; clients cannot claim independent
- // mastery for the perfect, model-generated strokes in Beginner's guided mode.
  const guided=challenge.type==='trace'&&p.id==='beginner';
  if(guided)payload={...payload,helped:true};
  if(wasHinted(p,`lesson:${challenge.id}`))payload={...payload,helped:true};
@@ -283,7 +281,6 @@ export function applyAttempt(p,challenge,payload){
  if(result.ok){p.inLesson++;if(p.inLesson>=5){p.inLesson=0;p.completed++;p.xp+=20;lesson=true;if(p.completed%3===0){p.chests++;chest=true;}}}
  p.history.push({at:new Date().toISOString(),key,...(challenge.word?{word:challenge.word}:{}),...(challenge.spot?{spot:true}:{}),...(guided?{practice:'guided-tracing'}:{}),ok:result.ok,helped:!!payload.helped,score:Math.round(result.score*100),durationMs:Math.round(payload.durationMs),level:s.level});
  p.history=p.history.slice(-2000);
- // A finished lesson adds the next beat of Bo's story.
  const storyBeat=lesson&&tellsBoStory(p.id)?addBoBeat(p):null;
  p.questBook??={moves:0,words:0,matches:0,claimed:[]};
  if(result.ok){p.questBook.moves++;if(['spell','gap'].includes(challenge.type))p.questBook.words++;}

@@ -1,13 +1,13 @@
 // Bounded, parent-directed repetition. Counters persist across maze levels;
 // names practice spelling/position, separately from ordinary word reading.
 // Fictional spelling examples, not player identities or a real family.
-export const FAMILY=['Alexandra','Jamie','Charlie','Jessica'];
+export const FAMILY=['River','Robin','Alex','Ada'];
 const NAME_BAG=[0,1,0,2,0,3,0,1,0,0];
 export const AT_WORDS=[['cat','🐱'],['hat','🎩'],['mat',''],['bat','🦇'],['rat','🐀']].map(([word,picture])=>({word,picture,tier:1,family:'at'}));
 export const EXTRA_WORDS=[['map','🗺️'],['cap','🧢'],['tap','🚰'],['log','🪵']].map(([word,picture])=>({word,picture,tier:1}));
 export const namePositionLine=(name,position)=>`${name[position].toUpperCase()} is letter number ${position+1} in ${name}.`;
 export function familyNameQuestion(player,serial=0){
- const names=player==='beginner'?['Jamie','Alexandra','Charlie','Jessica']:FAMILY;
+ const names=player==='beginner'?['Robin','River','Alex','Ada']:FAMILY;
  const slot=serial%NAME_BAG.length,name=names[NAME_BAG[slot]],ownTurn=Math.floor(serial/10)*6+NAME_BAG.slice(0,slot).filter(n=>n===0).length;
  const focus=Math.floor(serial/10)%name.length;
  const char=name[focus].toUpperCase(),unique=[...name.toUpperCase()].filter(c=>c===char).length===1;

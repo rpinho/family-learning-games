@@ -1,6 +1,5 @@
 export const COOKIE_GAME={id:'cookies',icon:'🍪',title:'Cookie division',description:'Share cookies equally onto plates.'};
 
-// Levels 1-3 deal a pile. Levels 4-5 start from Cookie Buddy's lopsided
 // plates: the child must work out the fair amount and move cookies between
 // plates, so difficulty comes from reasoning rather than more dragging.
 const RANGES={
@@ -10,7 +9,6 @@ const RANGES={
   4:{plates:[3,4],each:[4,6],mode:'fix'},
   5:{plates:[4,5],each:[4,6],mode:'mixed'},
   // Level 6, the top of the ladder: remainders. Cookies that can't be shared
-  // go to Cookie Buddy ("13 ÷ 4 = 3 r 1"). Never below level 6.
   6:{plates:[3,5],each:[3,6],mode:'leftover'}
 };
 export const COOKIE_MAX_LEVEL=6;
@@ -26,7 +24,6 @@ export const DRAG_MODES=['share','fix','mixed','bags','rows','leftover'];
 // 'own' (the quiet mastery check) move up a level.
 export const FADE=['show','hide','own'];
 export const STAGE_WINS=2,MASTERY_RUN=5;
-// Cookie Buddy's spot counts as one more plate in a leftover round.
 export const slotsFor=q=>q.mode==='leftover'?q.plates+1:q.plates;
 
 export const isDragCookie=q=>!q.mode||DRAG_MODES.includes(q.mode);
@@ -36,20 +33,20 @@ export const isDragCookie=q=>!q.mode||DRAG_MODES.includes(q.mode);
 export const FIX_PROMPT='Move cookies until every plate is the same.';
 export const MIXED_PROMPT='Make every plate the same. Count carefully.';
 // Older saved rounds still carry the longer wording; their clips stay available.
-export const LEGACY_PROMPTS=['Cookie Buddy piled the cookies unevenly. Move cookies between the plates until every friend has the same.','Some cookies are on the plates and some are still on the tray. Make every plate the same. The plates hide their numbers, so count carefully.'];
+export const LEGACY_PROMPTS=['Snack Friend piled the cookies unevenly. Move cookies between the plates until every friend has the same.','Some cookies are on the plates and some are still on the tray. Make every plate the same. The plates hide their numbers, so count carefully.'];
 export const COOKIE_HINTS={
  share:'Give one cookie to each plate, then go around again.',
  fix:'Find the fullest plate. Move one cookie to the plate with the fewest. Keep going.',
  mixed:'Put the tray cookies on the smallest plates first. Then move one from a full plate to a small plate.',
  bags:'Fill one bag until it is full. Then start the next bag.',
  rows:'Put one cookie in each row. Then go around again.',
- leftover:'Give every friend the same. Cookies you cannot share go to Cookie Buddy.',
+ leftover:'Give every friend the same. Cookies you cannot share go to Snack Friend.',
  remainder:'Make full, equal plates. Count the cookies left over.',
- snack:'First take away the cookies Buddy ate. Then share the rest.'
+ snack:'First take away the cookies Monster ate. Then share the rest.'
 };
 
 export const bagsPrompt=size=>`Each bag holds ${size} cookies. Fill the bags.`;
-const legacyBagsPrompt=size=>`Cookie Buddy is packing bags. Each bag holds ${size} cookies. Fill the bags. How many bags do you need?`;
+const legacyBagsPrompt=size=>`Snack Friend is packing bags. Each bag holds ${size} cookies. Fill the bags. How many bags do you need?`;
 // Rows (arrays): the baking-tray picture of division. "12 cookies in 3 equal
 // rows" is 12 ÷ 3, and the finished tray also shows 3 × 4 = 12.
 export const rowsPrompt=(total,rows)=>`Put ${total} cookies in ${rows} equal rows.`;
@@ -63,8 +60,8 @@ export const PREDICT_BAGS='How many bags will you fill?';
 export const PREDICT_ROWS='How many cookies will go in each row?';
 export const predictLine=q=>q.mode==='bags'?PREDICT_BAGS:q.mode==='rows'?PREDICT_ROWS:PREDICT_EACH;
 export const PREDICT_RIGHT='You knew it!';
-export const leftoverPrompt=(total,plates)=>`Share ${total} cookies with ${plates} friends. Extras go to Cookie Buddy.`;
-export const MONSTER_TOO_MANY='Cookie Buddy has enough for one more each. Share them!';
+export const leftoverPrompt=(total,plates)=>`Share ${total} cookies with ${plates} friends. Extras go to Snack Friend.`;
+export const MONSTER_TOO_MANY='Snack Friend has enough for one more each. Share them!';
 export const MONSTER_SHORT='Make every plate the same first.';
 export const unevenMessage=q=>q.mode==='rows'?'Not equal yet. Move one from a long row to a short row.':'Not equal yet. Move one from a fuller plate to a smaller plate.';
 export const askRetryMessage=q=>q.mode==='bags'?'Count the full bags.':q.mode==='rows'?'Count the cookies in one row.':'Count the cookies on one plate.';
@@ -77,7 +74,7 @@ export function cookiePrompt(total,plates,mode='share',baked=total,eaten=0,bagSi
  if(mode==='leftover')return leftoverPrompt(total,plates);
  if(mode==='fix')return FIX_PROMPT;
  if(mode==='mixed')return MIXED_PROMPT;
- if(mode==='snack')return `Cookie Buddy baked ${baked} cookies and ate ${eaten}. Share the rest with ${plates} friends. How many does each friend get, and how many are left over?`;
+ if(mode==='snack')return `Snack Friend baked ${baked} cookies and ate ${eaten}. Share the rest with ${plates} friends. How many does each friend get, and how many are left over?`;
  if(mode==='remainder')return `Share ${total} cookies with ${plates} friends. How many does each friend get, and how many are left over?`;
  return `Share ${total} cookies equally onto ${plates} plates.`;
 }
@@ -94,7 +91,6 @@ export function cookieVoiceLines(){
  }
  return [...lines];
 }
-// Build Cookie Buddy's lopsided start: begin fair, then make random unfair
 // moves. Guarantees the start is not already fair and that at least one plate
 // is two or more away from the fair amount, so a single move never solves it.
 export function messyStart(plates,each,random,moves,tray=0){

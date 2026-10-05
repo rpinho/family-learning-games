@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 // Rebuild every child's learner model from the games' saves and logs. Read-only on saves.
-// Usage: node book/build-learner.mjs [--player id] [--out dir]
+// Usage: node book/build-learner.mjs [--player id] [--out dir] [--dry-run] [--now ISO]
 import {readFile,readdir,writeFile,rename,mkdir} from 'node:fs/promises';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {readEvidence,readBook,compileLearners} from './learner-compile.mjs';
+import {wordTags} from '../hub/skill-items.mjs';
 import {buildLearner,GAMES} from './learner.mjs';
 import {bookPaths,readProfiles,localDate,addDays} from './paths.mjs';
 
 const readJSON=async(file,fallback=null)=>{try{return JSON.parse(await readFile(file,'utf8'));}catch{return fallback;}};
 export async function saveOf(dir,player){if(!dir)return null;return readJSON(join(dir,player+'.json'));}
 // Word-break results from the last `days` days of a game's diagnostics (any of the row shapes the games use).
-export async function wordBreakRows(dir,player,{days=7,now=Date.now()}={}){
+export async function wordBreakRows(dir,player,{days=30,now=Date.now()}={}){
  const logs=join(dir||'','logs');let names=[];try{names=await readdir(logs);}catch{return [];}
  const since=new Date(now-days*864e5).toISOString().slice(0,10);
  const out=[];
@@ -19,10 +21,10 @@ export async function wordBreakRows(dir,player,{days=7,now=Date.now()}={}){
   for(const line of text.split('\n')){
    if(!line.includes('word-break')&&!line.includes('word_break'))continue;
    let r;try{r=JSON.parse(line);}catch{continue;}
-   if(r.player!==player||!/word.?break/i.test(String(r.type||'')+' '+String(r.kind||'')))continue;
-   let d=r.detail;if(typeof d==='string'){try{d=JSON.parse(d);}catch{continue;}}
+   if(r.player!==player||!/word.?break/i.test(String(r.type||'')+' '+String(r.kind||'')+' '+String(r.event?.kind||'')))continue;
+   let d=r.detail||r.event?.detail;if(typeof d==='string'){try{d=JSON.parse(d);}catch{continue;}}
    if(!d||typeof d!=='object'||!d.kind)continue;
-   out.push({at:r.at,kind:d.kind,answer:d.answer,misses:Number(d.misses)||0,ms:Number(d.ms)||0,reason:d.reason||''});
+   out.push({at:r.at,kind:d.kind,answer:d.answer,misses:Number(d.misses)||0,ms:Number(d.ms)||0,reason:d.reason||'',firstTapMs:d.firstTapMs??null,hints:d.hints??null});
   }
  }
  return out;
@@ -58,7 +60,10 @@ export async function learnerFor(player,{paths=bookPaths(),profiles=readProfiles
  const today=localDate(now,paths.timeZone),date=chapterDate||today;
  const recap=await latestRecap(paths.recap,player,addDays(date,-1));
  const playDate=addDays(date,-1);
- return buildLearner({player,name,profile,now,saves,wordBreaks,recap,notes:await readNotes(paths.notes),chapters:await recentChapters(paths.book,player,date),opens:await hubOpens(paths.data.hub,player,playDate,paths.timeZone),playDate,timeZone:paths.timeZone,sage:await readJSON(join(paths.learner,player+'-sage.json'))});
+ const book=await readBook(paths,player);
+ const evidence=[...await readEvidence(paths,[player],{now,days:30}),...book.evidence];
+ for(const [i,b]of wordBreaks.entries())if(b.kind==='read-word')evidence.push({player,source:'word-break',at:Date.parse(b.at),item:`wb:${b.at}:${i}`,ok:!b.misses,help:!!b.hints,tags:wordTags(b.answer),readTask:true,choices:3,ms:b.firstTapMs??(b.misses?null:b.ms)});
+ return buildLearner({player,name,profile,now,saves,wordBreaks,evidence,recap,notes:await readNotes(paths.notes),chapters:await recentChapters(paths.book,player,date),opens:await hubOpens(paths.data.hub,player,playDate,paths.timeZone),playDate,timeZone:paths.timeZone,sage:await readJSON(join(paths.learner,player+'-sage.json'))});
 }
 export async function writeLearner(model,dir){
  await mkdir(dir,{recursive:true,mode:0o700});const file=join(dir,model.player+'.json');
@@ -70,5 +75,5 @@ if(process.argv[1]===fileURLToPath(import.meta.url)){
  const paths=bookPaths(),profiles=readProfiles(paths),out=arg('--out')||paths.learner;
  const players=arg('--player')?[arg('--player')]:bookPlayers(paths,profiles);
  if(!players.length){console.error('No players: add book/profiles.json under the deploy root.');process.exit(1);}
- for(const p of players){const m=await learnerFor(p,{paths,profiles,chapterDate:arg('--date')||undefined});console.log(await writeLearner(m,out));}
+ for(const p of players){const now=arg('--now')?Date.parse(arg('--now')):Date.now();const m=await learnerFor(p,{paths,profiles,now,chapterDate:arg('--date')||undefined});if(args.includes('--dry-run')){const old=await readJSON(join(paths.learner,p+'.json'),{});const compiled=(await compileLearners([p],{paths,now,bookModels:{[p]:m}}))[p],oldProfile=await readJSON(join(paths.learner,p+'-learner.json'),{});console.log(JSON.stringify({player:p,before:old.literacy,after:m.literacy,bookPlan:{before:oldProfile.bookPlan,after:compiled.bookPlan}},null,2));}else console.log(await writeLearner(m,out));}
 }

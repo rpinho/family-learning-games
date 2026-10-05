@@ -1,14 +1,20 @@
+import './audio-scope.mjs';
+import {smartHomeGames} from './home-shortcuts.mjs';
+import {homePages, homePins, activeNewGames, attachHomeSwipe} from './home-pages.mjs';
 import {createMenuCache} from './menu-cache.mjs';
 import {fetchJSON} from './save-request.mjs';
 import { mountSoccer } from "./soccer-mode.mjs";
 import { CATALOG, FAMILIES, destination, movedRoute } from "./catalog.mjs";
-import { mountChess } from "./chess/app.mjs";
 import { parentChallenge, parentAnswerMatches, menuStyle, gameArtwork } from "./menu-options.mjs";
-import { loadBook as readBook, mountBook, lastPlace, rememberPlace } from "./book.mjs";
+import { lastPlace, rememberPlace } from "./places.mjs";
 import {createReleaseLoader} from './release-loader.mjs';
 const clientRelease = document.querySelector('meta[name="family-release"]')?.content || '';
-const bookCode = createReleaseLoader({loadedRelease:clientRelease,readRelease:async()=> (await fetchJSON('/__deploy/version',{},5000)).hub,reload:()=>location.reload(),load:async()=>readBook});
-const loadBook = async (...a) => (await bookCode())?.(...a);
+// The book and chess load only when opened (the home screen stays light on a slow connection).
+const bookApp = createReleaseLoader({loadedRelease:clientRelease,readRelease:async()=> (await fetchJSON('/__deploy/version',{},5000)).hub,reload:()=>location.reload(),load:()=>import('./book.mjs')});
+const loadBook = async (...a) => (await bookApp())?.loadBook(...a);
+const mountBook = async (...a) => (await bookApp())?.mountBook(...a);
+// Session-start auto-open asks only whether an unread chapter is waiting (no chapter download).
+const peekBook = (p) => fetchJSON(`/api/book?player=${encodeURIComponent(p)}&peek=1`, {}, 6000).catch(() => null);
 import { mountHunt } from "./hunt.mjs";
 const $ = (s) => document.querySelector(s),
   main = $("#main");
@@ -22,6 +28,9 @@ let config,
 let storage;try{storage=localStorage;}catch{}
 const menuOrders = createMenuCache({storage});
 let leaveCheck=null;
+// The home page he last saw in this page load ("" = page 1, "more" = page 2), for a game family's back link.
+// Nothing is stored: a new visit always opens on Today.
+let lastMenu="";
 // The Book opens by itself once per page load (and at most a few times a day, server-side), before any game.
 const bookChecked=new Set();let renderSeq=0;
 const games = CATALOG.map((g) => [g.id, g.name, g.description, g.color]);
@@ -44,7 +53,13 @@ export function event(kind, detail = "", stack = "") {
 function safeLeave(){
   return leaveCheck ||= checkLeave().finally(()=>{leaveCheck=null;});
 }
+function silence(){
+  try{frame?.contentWindow?.familyAudio?.stop();}catch{}
+  frame?.contentWindow?.postMessage({type:"family-audio-stop"},location.origin);
+  globalThis.familyAudio?.stop();
+}
 async function checkLeave() {
+  silence();
   if (dispose?.prepareLeave) {
     try {
       let timer;
@@ -81,6 +96,7 @@ async function checkLeave() {
   );
 }
 function stop() {
+  silence();
   dispose?.();
   dispose = null;
   frame = null;
@@ -113,25 +129,42 @@ async function render() {
   }
   const seq = ++renderSeq;
   // Grown-ups' preview of a child's book: the same player, same narration, nothing saved.
-  const watch = location.hash.match(/^#book\/([\w-]+)$/);
+  // (#book/<child>/p<page>/<YYYY-MM-DD>: a given day's chapter, for grown-ups and the layout checks)
+  const watch = location.hash.match(/^#book\/([\w-]+)(?:\/p(\d{1,2}))?(?:\/(\d{4}-\d{2}-\d{2}))?$/);
   if (watch && config.players.some((k) => k.id === watch[1] && k.id !== "admin")) {
-    const book = await loadBook(watch[1], { preview: true });
+    const book = await loadBook(watch[1], { preview: true, date: watch[3] || "" });
     if (seq !== renderSeq) return;
     if (book?.chapter) {
-      dispose = mountBook(main, { player: watch[1], book, preview: true, onDone: () => { dispose = null; location.hash = ""; } });
+      dispose = await mountBook(main, { player: watch[1], book, preview: true, startPage: watch[2] ? Number(watch[2]) - 1 : 0, onDone: () => { dispose = null; location.hash = ""; } });
       return;
     }
     main.innerHTML = `<section class="error"><h1>No chapter yet.</h1><p>The next chapter is written overnight.</p><a class="back-link" href="#">← Back</a></section>`;
     return;
   }
+  // Returning from a World stays on home for this visit, including when turning to page two.
+  if (location.hash === "#games") bookChecked.add(player);
   if (player !== "admin" && !bookChecked.has(player)) {
     bookChecked.add(player);
-    const book = await loadBook(player);
+    const peek = await peekBook(player);
+    if (seq !== renderSeq) return;
+    const book = peek?.open ? await loadBook(player) : null;
     if (seq !== renderSeq) return;
     if (book?.open && book.chapter) {
-      dispose = mountBook(main, { player, book, event, onDone: () => { dispose = null; afterBook(); } });
+      dispose = await mountBook(main, { player, book, event, onDone: () => { dispose = null; afterBook(); } });
       return;
     }
+  }
+  // His own book, any time: the "My Book" card opens today's chapter (a finished one can be read again).
+  if (location.hash === "#my-book" && player !== "admin") {
+    const book = await loadBook(player);
+    if (seq !== renderSeq) return;
+    if (book?.chapter) {
+      const again = book.progress?.finished ? { ...book, progress: { ...book.progress, page: 0 } } : book;
+      dispose = await mountBook(main, { player, book: again, event, onDone: () => { dispose = null; location.hash = ""; } });
+      return;
+    }
+    main.innerHTML = `<section class="error"><h1>Your next chapter is being written.</h1><p>It will be ready in the morning.</p><a class="back-link" href="#">← Back</a></section>`;
+    return;
   }
   const dest = destination(location.hash),
     game = dest.item?.id,
@@ -143,6 +176,8 @@ async function render() {
     return;
   }
   if (dest.type === "chess") {
+    const { mountChess } = await import("./chess/app.mjs");
+    if (seq !== renderSeq) return;
     dispose = mountChess(main, { player, name: p.name, event });
     return;
   }
@@ -159,7 +194,7 @@ async function render() {
     return;
   }
   if (dest.type === "family") {
-    main.innerHTML = `<section class="catalog family-catalog family-${game}"><a class="back-link" href="#">← All games</a><h1>${esc(item.name)}</h1><p>Choose your adventure. Each one keeps your progress.</p><div class="cards">${dest.modes.map((m) => `<a class="card activity-card" style="--tint:${item.color}" href="#${game}/${m.id}"><img class="game-preview" src="/previews/${m.preview}.jpg" alt="" width="640" height="400"><h2>${m.name}</h2><p>${m.description}</p><strong>Let’s play →</strong></a>`).join("")}</div></section>`;
+    main.innerHTML = `<section class="catalog family-catalog family-${game}"><a class="back-link" href="#${lastMenu}">← Games</a><h1>${esc(item.name)}</h1><p>Choose your adventure. Each one keeps your progress.</p><div class="cards">${dest.modes.map((m) => `<a class="card activity-card" style="--tint:${item.color}" href="#${game}/${m.id}"><img class="game-preview" src="/previews/${m.preview}.jpg" alt="" width="640" height="400"><h2>${m.name}</h2><p>${m.description}</p><strong>Let’s play →</strong></a>`).join("")}</div></section>`;
     return;
   }
   if (dest.type === "frame") {
@@ -176,24 +211,40 @@ async function render() {
   // Paint immediately. Updated preferences apply only on the NEXT menu visit.
   const order = menuOrders.current(player);
   void menuOrders.refresh(player);
-  const orderedGames = [...CATALOG].sort((a, b) => {
+  const catalog = [...CATALOG].sort((a, b) => {
     const rank = id => order.includes(id) ? order.indexOf(id) : order.length + CATALOG.findIndex(g => g.id === id);
     return rank(a.id) - rank(b.id);
   });
-  const style = menuStyle(player, p.menuStyle, storage);
+  // The main menu always shows the illustrated logos (the children pick by them); a game's own menu keeps its
+  // screenshots. There is no per-device choice any more, so there is nothing to reset.
+  const style = "logos";
+  const homeDay = new Intl.DateTimeFormat('en-CA', {timeZone: config.menuTimeZone || 'UTC', year:'numeric', month:'2-digit', day:'2-digit'}).format(new Date());
+  const newCards = new Set(activeNewGames(p.homeNewGames, homeDay));
+  const card = item => { const art = gameArtwork(item, style); return `<a class="card" href="${item.href || '#'+item.id}" data-game="${item.id}" style="--tint:${item.color}"><img class="${art.className}${item.painted ? ' world-painting' : ''}" src="${art.src}" alt="" width="192" height="192"><h2>${esc(item.name)}</h2>${newCards.has(item.id) ? '<span class="new-game">New</span>' : ""}<p>${esc(item.description || "")}</p></a>`; };
+  // One list: frequent now, a forgotten favourite or two and one nudge (computed in the background; the last list
+  // fetched is used, so cards never move while he is choosing), shown over two pages so neither is too busy.
+  const ordered = smartHomeGames(catalog, p.homeShortcuts, menuOrders.home(player));
+  const book = homePins(p);
+  const pages = homePages(ordered, { lead: book.length, nudge: menuOrders.nudge(player), newGames: p.homeNewGames, day: homeDay, familyOrder: menuOrders.familyOrder(player), columns: matchMedia('(max-width:1000px)').matches ? 3 : 5 });
+  const second = location.hash === "#more";
+  lastMenu = second ? "more" : "";
+  const shown = second ? pages.second : [...book, ...pages.first];
   const kids = config.players.filter((k) => k.id !== "admin");
-  const watchCards = player === "admin" ? `<div class="book-watch-home"><h2>📖 The Book</h2>${kids.map((k) => `<a class="book-watch-btn" href="#book/${esc(k.id)}">Watch ${esc(k.name)}'s book →</a>`).join("")}</div>` : "";
-  main.innerHTML = `<section class="catalog menu-${style}"><h1>What shall we play?</h1><p>Your games. Your next adventure.</p>${watchCards}<div class="cards">${orderedGames.map(item => { const art = gameArtwork(item, style); return `<a class="card" href="#${item.id}" data-game="${item.id}" style="--tint:${item.color}"><img class="${art.className}" src="${art.src}" alt="" width="${style === "logos" ? 192 : 640}" height="${style === "logos" ? 192 : 400}"><h2>${item.name}</h2><p>${item.description}</p></a>`; }).join("")}</div><footer><span>One app · Your progress stays with you.</span><button id="grown-ups">Grown-ups</button></footer></section>`;
+  const watchCards = player === "admin" && !second ? `<div class="book-watch-home"><h2>📖 The Book</h2>${kids.map((k) => `<a class="book-watch-btn" href="#book/${esc(k.id)}">Watch ${esc(k.name)}'s book →</a>`).join("")}</div>` : "";
+  const pager = second
+    ? `<nav class="home-pager"><a class="pager-btn back" href="#">← Back</a></nav>`
+    : `<nav class="home-pager"><a class="pager-btn more" href="#more">More games →</a></nav>`;
+  main.innerHTML = `<section class="catalog calm-home home-page-${second ? 2 : 1} menu-${style}"><h1>${second ? "More games" : "A place to explore."}</h1><p>${second ? "Take your time." : "Choose a little adventure. Take your time."}</p>${watchCards}<div class="cards">${shown.map(card).join("")}</div>${pager}<footer><span>Your place is kept.</span><button id="grown-ups">Grown-ups</button></footer></section>`;
+  attachHomeSwipe(main.querySelector(".calm-home"), second ? {prev: () => { location.hash = ""; }} : {next: () => { location.hash = "#more"; }});
   $("#grown-ups").onclick = () => {
     gateAttempts = 0;
     newParentChallenge();
     $("#gate-form").hidden = false;
     $("#parent-options").hidden = true;
-    $("#menu-style").value = style;
     $("#parents").showModal();
     $("#gate-answer").focus();
   };
-  event("home");
+  event("home", second ? "page2" : "page1");
 }
 // After today's chapter: back to where he was (the page he opened, or the game he last played).
 function afterBook() {
@@ -229,41 +280,14 @@ $("#gate-form").onsubmit = (e) => {
   }
   $("#gate-form").hidden = true;
   $("#parent-options").hidden = false;
-  $("#menu-style").focus();
-  void loadNotes();
-  $("#book-watch").innerHTML = config.players.filter((k) => k.id !== "admin").map((k) => `<button type="button" class="book-watch-btn" data-watch="${esc(k.id)}">Watch ${esc(k.name)}'s book</button>`).join("");
+  $("#gate-cancel").focus();
+  $("#world-previews").innerHTML = config.players.filter(k=>k.id!=="admin"&&k.id===player).map(k=>`<a class="book-watch-btn" href="/world?player=${encodeURIComponent(k.id)}&amp;preview=${k.worldQuest?0:1}">🌍 ${esc(k.name)}'s ${k.world==='small'?'World':'Castle Kingdom'}${k.worldQuest?'':' · Preview'}</a>`).join("");
+  $("#book-watch").innerHTML = config.players.filter((k) => k.id !== "admin").map((k) => `<button type="button" class="book-watch-btn" data-watch="${esc(k.id)}">Watch ${esc(k.name)}'s book</button><a class="book-watch-btn book-cards-link" href="/api/book/cards?player=${encodeURIComponent(k.id)}" target="_blank" rel="noopener">🖨️ ${esc(k.name)}'s word cards</a>`).join("");
   $("#book-watch").querySelectorAll("[data-watch]").forEach((b) => (b.onclick = () => { $("#parents").close(); location.hash = "book/" + b.dataset.watch; }));
 };
-// Grown-ups: one line about today becomes part of the next chapter.
-async function loadNotes(body) {
-  try {
-    const r = await fetch("/api/book/notes", body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});
-    const j = await r.json();
-    if (!r.ok) throw Error(j.error || "Could not save.");
-    const today = (j.notes || []).filter((n) => n.date === j.today);
-    $("#book-notes").innerHTML = today.map((n) => `<li><span>${esc(n.text)}</span><button type="button" data-remove="${esc(n.id)}" aria-label="Remove">✕</button></li>`).join("");
-    $("#book-notes").querySelectorAll("[data-remove]").forEach((b) => (b.onclick = () => void loadNotes({ remove: b.dataset.remove })));
-    $("#book-note-status").textContent = "";
-    return true;
-  } catch (e) {
-    $("#book-note-status").textContent = e.message;
-    return false;
-  }
-}
-$("#book-note-add").onclick = async () => {
-  const text = $("#book-note").value.trim();
-  if (!text) return;
-  if (await loadNotes({ text })) $("#book-note").value = "";
-};
-$("#book-note").onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); $("#book-note-add").click(); } };
+// Grown-ups: day notes about each child's day live on their own phone-friendly page (linked from the options).
 $("#gate-cancel").onclick = $("#parent-done").onclick = () => $("#parents").close();
 $("#change-player").onclick = () => { $("#parents").close(); choose(); };
-$("#menu-style").onchange = () => {
-  const style = $("#menu-style").value;
-  if (!["logos", "screenshots"].includes(style)) return;
-  try { localStorage.setItem("family-games-menu-style:" + player, style); } catch {}
-  render();
-};
 $("#home").onclick = async () => {
   if (!(await safeLeave())) return;
   if(!config?.players?.length)return location.reload();
@@ -341,6 +365,8 @@ try {
       ? saved
       : null;
   if (player){try{storage?.setItem("family-games-player", player);}catch{}void menuOrders.refresh(player);}
+  // A new visit always opens on page 1, even from a saved or shared page-2 address.
+  if (location.hash === "#more") history.replaceState(null, "", location.pathname + location.search);
   render();
 } catch (e) {
   main.innerHTML = `<section class="error"><h1>Let’s reconnect.</h1><p>${esc(e.message)}</p><p>Make sure your game server is on, then tap Refresh.</p></section>`;
@@ -367,3 +393,8 @@ if (document.modelContext?.registerTool) {
     ).catch(() => {});
   } catch {}
 }
+
+// had been loaded the day before): coming back to the app on a later day reloads it, so today's chapter is the one.
+{const day=()=>new Date().toLocaleDateString('en-CA');let loaded=day();
+ const check=()=>{if(document.visibilityState==='visible'&&day()!==loaded){loaded=day();location.reload();}};
+ document.addEventListener('visibilitychange',check);addEventListener('focus',check);addEventListener('pageshow',check);setInterval(check,10*60*1000);}

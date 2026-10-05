@@ -11,11 +11,11 @@ test('Fictional names are weighted and all positional answers are unambiguous',(
   assert.equal(q.name[Number(q.answer)].toUpperCase(),q.char);assert.equal(q.options.length,q.name.length);assert.equal(new Set(q.options).size,q.name.length);
   if(q.mode==='locate')assert.equal([...q.name.toUpperCase()].filter(c=>c===q.char).length,1);
   assert.ok(lines.has(q.prompt));assert.ok(lines.has(mazeLearning(q).line));for(const a of q.options)assert.ok(lines.has(mazeTapLine(a,q)));
-  if(q.name==='Alexandra')positions.add(q.focus);
+  if(q.name==='River')positions.add(q.focus);
  }
- assert.deepEqual(counts,{Alexandra:600,Jamie:200,Charlie:100,Jessica:100});assert.equal(positions.size,9);
- const first=familyNameQuestion('explorer');assert.equal(first.char,'A');assert.equal(mazeLearning(first).line,'A is letter number 1 in Alexandra.');
- assert.equal(familyNameQuestion('beginner').name,'Jamie');
+ assert.deepEqual(counts,{River:600,Robin:200,Alex:100,Ada:100});assert.equal(positions.size,5);
+ const first=familyNameQuestion('explorer');assert.equal(first.char,'R');assert.equal(mazeLearning(first).line,'R is letter number 1 in River.');
+ assert.equal(familyNameQuestion('beginner').name,'Robin');
 });
 test('Word weighting preserves -at practice and variety, avoiding the last two ordinary targets',()=>{
  let recent=[],at=0;const words=new Set(),pool=MAZE_WORDS.filter(w=>w.tier===1);

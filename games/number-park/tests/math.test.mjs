@@ -4,9 +4,9 @@ import {GAMES,freshProfile,makeQuestion,action,publicState} from '../lib/math.mj
 import {GuidedTrace,railPoints} from '../lib/guided-trace.mjs';
 import {readFile} from 'node:fs/promises';
 const act=(p,input)=>action(p,{...input,revision:p.revision});
-test('every game has valid varied questions, always within the fixed ceiling',()=>{
+test('every game has valid varied questions, within each game’s ceiling',()=>{
  for(const g of GAMES){const p=freshProfile('beginner'),unique=new Set();
-  for(let i=0;i<200;i++){p.revision=i;const q=makeQuestion(p,g.id,i);unique.add(q.fingerprint);assert.equal(q.options.length,['pattern','count','addobjects'].includes(q.kind)?4:3);assert.equal(new Set(q.options).size,q.options.length);assert.ok(q.options.includes(q.answer));if(q.kind!=='pattern'){assert.ok(q.answer>=0&&q.answer<=13);assert.ok(q.options.every(n=>n>=0&&n<=13));if(q.kind==='subtract')assert.equal(q.total-q.remove,q.answer);else if(q.kind!=='count')assert.equal(q.operator==='−'?q.a-q.b:q.a+q.b,q.total);}p.recent=[...p.recent,q.fingerprint].slice(-12);}
+  for(let i=0;i<200;i++){p.revision=i;const q=makeQuestion(p,g.id,i);unique.add(q.fingerprint);assert.equal(q.options.length,['pattern','count','addobjects'].includes(q.kind)?4:3);assert.equal(new Set(q.options).size,q.options.length);assert.ok(q.options.includes(q.answer));if(q.kind!=='pattern'){const max=q.kind==='count'?16:13;assert.ok(q.answer>=0&&q.answer<=max);assert.ok(q.options.every(n=>n>=0&&n<=max));if(q.kind==='subtract')assert.equal(q.total-q.remove,q.answer);else if(q.kind!=='count')assert.equal(q.operator==='−'?q.a-q.b:q.a+q.b,q.total);}p.recent=[...p.recent,q.fingerprint].slice(-12);}
   assert.ok(unique.size>10,g.id);
  }
 });

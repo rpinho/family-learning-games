@@ -1,0 +1,287 @@
+{
+  "schema": "family-world-episode-1",
+  "id": "explorer-2026-10-05",
+  "player": "explorer",
+  "date": "2026-10-05",
+  "level": "reader",
+  "title": "The Path Inside the Lantern",
+  "goal": "Follow the tiny path inside the lantern and light the glow meadow.",
+  "intro": "Last time, a tiny path appeared inside the garden lantern. Tonight the lantern door is open just a crack. Your friends have clues and a tool to help you follow the path.",
+  "recap": "You won a vine rope, read the map clue, crossed the tiny path, and lit the glow meadow together.",
+  "reveal": "Surprise! The whole glow meadow lights up. Hundreds of tiny fireflies rise and make a shining crown in the air, just your size, Knight. Your friends planted the meadow for you.",
+  "hook": "Tomorrow, one firefly flies away with a tiny note. Where is it going?",
+  "start": "welcome",
+  "finish": "light",
+  "rooms": [
+    {
+      "id": "welcome",
+      "name": "Lantern gate",
+      "bg": "castle-gate",
+      "friend": "dad",
+      "icon": "🏮",
+      "exits": {
+        "right": "grove"
+      },
+      "lines": [
+        "Look, Knight! The lantern door is open, and the tiny path is inside. Solve my number clue to win a rope for the trail.",
+        "You won the vine rope. The tiny path is waiting. Come back whenever you want."
+      ]
+    },
+    {
+      "id": "grove",
+      "name": "Tiny moss path",
+      "bg": "castle-forest",
+      "friend": "bo",
+      "icon": "🌿",
+      "exits": {
+        "left": "welcome",
+        "right": "hill"
+      },
+      "lines": [
+        "Everything is tiny in here! I found a clue card on this mossy path. Read it, then tie your rope across the gap.",
+        "You read the map and tied the rope. Now we can cross to the meadow!"
+      ],
+      "door": {
+        "to": "workshop",
+        "label": "Robo's acorn workshop",
+        "wide": [
+          0.22,
+          0.28,
+          0.08,
+          0.12
+        ],
+        "tall": [
+          0.2,
+          0.25,
+          0.1,
+          0.09
+        ]
+      },
+      "exitRequires": {
+        "right": "path-lock"
+      }
+    },
+    {
+      "id": "workshop",
+      "name": "Robo's acorn workshop",
+      "bg": "workshop",
+      "friend": "robo",
+      "icon": "🌰",
+      "exits": {},
+      "lines": [
+        "Beep! Welcome to my workshop inside an acorn. I have extra treasures hidden here. You can visit whenever you want.",
+        "Your extra treasure can stay in your backpack. Beep boop!"
+      ],
+      "door": {
+        "to": "grove",
+        "label": "Back to the moss path",
+        "return": true
+      }
+    },
+    {
+      "id": "hill",
+      "name": "Glow meadow",
+      "bg": "castle-moon-hill",
+      "friend": "mom",
+      "icon": "✨",
+      "exits": {
+        "left": "grove"
+      },
+      "lines": [
+        "You made it to the glow meadow, Knight. One last number clue will wake up the light.",
+        "Look at the meadow glowing all around you."
+      ]
+    }
+  ],
+  "items": {
+    "rope": {
+      "name": "Vine rope",
+      "icon": "rope"
+    },
+    "lantern": {
+      "name": "Meadow light",
+      "icon": "lantern"
+    },
+    "star": {
+      "name": "Acorn star",
+      "icon": "star",
+      "collection": true
+    },
+    "shell": {
+      "name": "Acorn shell",
+      "icon": "shell",
+      "collection": true
+    }
+  },
+  "puzzles": [
+    {
+      "id": "get-rope",
+      "room": "welcome",
+      "kind": "math",
+      "title": "Rope number clue",
+      "prompt": "Dad has 7 coils of vine rope. Each coil has 8 knots. How many knots are there?",
+      "hint": "Think of 7 groups of 8. You can start with 7 times 7 and add one more 7.",
+      "goal": "Win the vine rope for the tiny path.",
+      "icon": "⭐",
+      "answer": "56",
+      "options": [
+        "56",
+        "54",
+        "63"
+      ],
+      "requires": [],
+      "rewards": [
+        "rope"
+      ],
+      "math": {
+        "type": "fact",
+        "a": 7,
+        "b": 8
+      },
+      "equation": "7 × 8 = ?"
+    },
+    {
+      "id": "clue",
+      "room": "grove",
+      "kind": "tiles",
+      "title": "Read the clue card",
+      "prompt": "Build the word on Bo's clue card.",
+      "hint": "Tap each letter to hear its sound. Blend the sounds: m, a, p.",
+      "goal": "Read the clue card to find the way.",
+      "icon": "⭐",
+      "answer": "map",
+      "options": [
+        "map",
+        "mop"
+      ],
+      "requires": [
+        "get-rope"
+      ],
+      "rewards": [],
+      "words": [
+        "map"
+      ],
+      "picture": "🗺️",
+      "soundSupport": true
+    },
+    {
+      "id": "light",
+      "room": "hill",
+      "kind": "math",
+      "title": "Meadow light clue",
+      "prompt": "Mom has 63 fireflies. They share 9 flowers equally. How many fireflies go on each flower?",
+      "hint": "Which number times 9 makes 63? Count by nines.",
+      "goal": "Wake up the glow meadow.",
+      "icon": "⭐",
+      "answer": "7",
+      "options": [
+        "7",
+        "8",
+        "6"
+      ],
+      "requires": [
+        "path-lock"
+      ],
+      "rewards": [
+        "lantern"
+      ],
+      "math": {
+        "type": "divide",
+        "a": 63,
+        "b": 9
+      },
+      "equation": "63 ÷ 9 = ?"
+    },
+    {
+      "id": "bonus",
+      "room": "workshop",
+      "kind": "math",
+      "title": "Acorn star clue",
+      "prompt": "Robo built 23 shelves. Each shelf holds 14 acorns. How many acorns are there?",
+      "hint": "Split it up: 23 times 10, then 23 times 4. Add them together.",
+      "goal": "Find Robo's hidden acorn star.",
+      "icon": "⭐",
+      "answer": "322",
+      "options": [
+        "322",
+        "312",
+        "332"
+      ],
+      "requires": [],
+      "rewards": [
+        "star"
+      ],
+      "math": {
+        "type": "multiply",
+        "a": 23,
+        "b": 14
+      },
+      "optional": true,
+      "equation": "23 × 14 = ?"
+    },
+    {
+      "id": "place",
+      "room": "workshop",
+      "kind": "math",
+      "title": "Find the digit value",
+      "prompt": "Robo's gear number is 5274. What is the value of the 7?",
+      "hint": "Say the places: thousands, hundreds, tens, ones. The 7 is in the tens place.",
+      "goal": "Find Robo's hidden acorn shell.",
+      "icon": "⭐",
+      "answer": "70",
+      "options": [
+        "70",
+        "7",
+        "700"
+      ],
+      "requires": [],
+      "rewards": [
+        "shell"
+      ],
+      "math": {
+        "type": "place",
+        "number": 5274,
+        "digitIndex": 2
+      },
+      "optional": true,
+      "equation": "5274",
+      "number": 5274,
+      "digitIndex": 2
+    }
+  ],
+  "locks": [
+    {
+      "id": "path-lock",
+      "room": "grove",
+      "item": "rope",
+      "requires": [
+        "clue"
+      ],
+      "label": "Tie the vine rope",
+      "hint": "Win the vine rope at the lantern gate, then read the clue card on the moss path.",
+      "goal": "Tie your vine rope across the gap",
+      "icon": "rope"
+    }
+  ],
+  "sideQuests": [
+    {
+      "id": "bonus-quest",
+      "title": "Acorn star clue",
+      "puzzle": "bonus"
+    },
+    {
+      "id": "place-quest",
+      "title": "Find the digit value",
+      "puzzle": "place"
+    }
+  ],
+  "learning": {
+    "level": "reader",
+    "taughtLetters": [
+      "M",
+      "O"
+    ],
+    "focus": []
+  },
+  "revealVisual": "crown"
+}

@@ -25,34 +25,34 @@ export const READING_SENTENCES=SENTENCES;
 // One look-alike extra tile from level 2, so the last tiles cannot be guessed by position.
 export const READING_STORIES=[
  [
-  ['Sam has a red cap. The cap is in a bag.','Where is the cap?','bag',['bed','box']],
+  ['Alex has a red cap. The cap is in a bag.','Where is the cap?','bag',['bed','box']],
   ['A cat sat on a mat. A dog ran past.','Who sat on the mat?','cat',['dog','pig']],
-  ['The sun is hot. Ben gets a cup.','What does Ben get?','cup',['hat','pen']],
+  ['The sun is hot. Bo gets a cup.','What does Bo get?','cup',['hat','pen']],
   ['The pig can dig. The hen can peck.','Who can dig?','pig',['hen','dog']],
   ['A bug is on a log. A fox is in a den.','Where is the bug?','log',['den','bed']],
-  ['Dad has a pen. Mom has a map.','Who has the map?','Mom',['Dad','Sam']],
+  ['Dad has a pen. Mom has a map.','Who has the map?','Mom',['Dad','Alex']],
   ['The dog is wet. The cat is dry.','Who is wet?','dog',['cat','hen']],
   ['A red hat is on the bed. A cup is on the mat.','What is on the bed?','hat',['cup','map']]
  ],
  [
   ['The frog jumps in the pond. A duck swims past the frog.','Who jumps?','frog',['duck','fish']],
-  ['Sam packs a snack. He puts it in his bag.','What is in the bag?','snack',['sock','flag']],
+  ['Alex packs a snack. He puts it in his bag.','What is in the bag?','snack',['sock','flag']],
   ['The king has a ring. He puts it in a box.','Where is the ring now?','box',['shop','pond']],
   ['A crab hides under a rock. A fish swims above it.','Where is the crab?','under the rock',['above the rock','in the shop']],
-  ['The red sock is wet. The blue sock is dry.','Which sock can Ben put on to stay dry?','blue sock',['red sock','both socks']],
+  ['The red sock is wet. The blue sock is dry.','Which sock can Bo put on to stay dry?','blue sock',['red sock','both socks']],
   ['A ship has a flag. The wind makes the flag flap.','What makes the flag flap?','wind',['fish','ship']],
-  ['The shop has a drum. Dad gets the drum for Sam.','Who will get the drum?','Sam',['Mom','the king']],
+  ['The shop has a drum. Dad gets the drum for Alex.','Who will get the drum?','Alex',['Mom','the king']],
   ['The duck drops a snack. The frog finds it by the pond.','Who finds the snack?','frog',['duck','crab']]
  ],
  [
-  ['The train stops. Sam gets off with his bag. He walks to the beach.','Where does Sam go after the train ride?','beach',['train','shop']],
+  ['The train stops. Alex gets off with his bag. He walks to the beach.','Where does Alex go after the train ride?','beach',['train','shop']],
   ['A sheep is cold. It goes into the barn. The barn keeps out the wind.','Why does the sheep go inside?','to get warm',['to swim','to find a train']],
   ['The sky gets dark. Rain starts to fall. Mom brings the game inside.','Why does Mom bring the game inside?','it is raining',['it is too hot','the game is over']],
-  ['Ben puts a snack in his bag. At the park, he feels hungry. He opens the bag.','What will Ben probably do next?','eat his snack',['go to sleep','brush his hair']],
+  ['Bo puts a snack in his bag. At the park, he feels hungry. He opens the bag.','What will Bo probably do next?','eat his snack',['go to sleep','brush his hair']],
   ['A snail moves slowly. A rabbit runs fast. The rabbit reaches the tree first.','Who reaches the tree last?','snail',['rabbit','both together']],
-  ['The brush was beside the cup. Sam moves it into a box. Then he shuts the box.','Where is the brush now?','in the box',['beside the cup','under the chair']],
+  ['The brush was beside the cup. Alex moves it into a box. Then he shuts the box.','Where is the brush now?','in the box',['beside the cup','under the chair']],
   ['The shark swims past a ship. A small fish hides behind a rock until the shark is gone.','Why does the fish hide?','to stay safe',['to catch the shark','to sail the ship']],
-  ['Helper gives Admin a map. Admin follows the map to the park. Explorer meets him there.','Where does Explorer meet Admin?','park',['shop','beach']]
+  ['Ada gives Alex a map. Alex follows the map to the park. Explorer meets him there.','Where does Explorer meet Alex?','park',['shop','beach']]
  ]
 ];
 export const READING_LINES={intro:'New mission! Words do things. Let us find out what they can do.',correct:'You solved it! That word just opened a new door.',wrong:'Let us look again. You can hear a clue or try another answer.',hint:'Here is some help. Learning together counts, too.',saved:'Your writing is saved. Show it to a grown-up. I do not grade your handwriting here.',done:'Mission complete! My mustache would like to borrow your brain.',skip:'A different challenge is a good idea. On we go.'};

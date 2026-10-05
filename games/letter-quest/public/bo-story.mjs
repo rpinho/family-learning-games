@@ -1,23 +1,24 @@
-// Bo's adventure: a running story that stars the child (a small
 // first step toward the Primer in The Diamond Age, whose story starred its
 // reader and bent to what she did). Every finished lesson adds one short beat:
 // the next stop of the walk, and the letter he actually practised. It only
 // ever grows and never gates anything. Finite lines, so voice clips exist.
 import {lessonRecap} from './recap.mjs';
 export const tellsBoStory=id=>id==='beginner'||id==='admin';
-const team=()=>'Bo';
+const team=id=>id==='beginner'?'Beginner and Loona':'Loona';
 export const BO_PLACES=[
- {icon:'🏡',walk:'set off from the cozy cave'},
+ {icon:'🏡',walk:'set off from the cozy doghouse'},
  {icon:'🌳',walk:'walked into the berry forest'},
  {icon:'🪨',walk:'crossed the river on stepping stones'},
- {icon:'🍯',walk:'climbed the tall honey tree'},
+ {icon:'🦴',walk:'dug up a buried treasure'},
  {icon:'🦉',walk:'met a friendly owl'},
  {icon:'🦋',walk:'followed butterflies to the meadow'},
  {icon:'🌷',walk:'found a secret garden'},
  {icon:'⭐',walk:'watched the stars from the hill'}
 ];
 export const placeLine=(id,place)=>`${team(id)} ${BO_PLACES[place].walk}.`;
-export const letterLine=(id,letter)=>`Bo found the letter ${letter}.`;
+export const letterLine=(id,letter)=>`${id==='beginner'?'They':'Loona'} found the letter ${letter}.`;
+// A beat told with today's names (older saves stored lines that said Bo).
+export const beatLines=(id,b)=>[placeLine(id,b.place),...(b.letter?[letterLine(id,b.letter)]:[])];
 // Called when a lesson completes (after its last attempt is in history).
 export function addBoBeat(p,now=new Date()){
  const story=p.boStory??={count:0,beats:[]};
@@ -27,7 +28,7 @@ export function addBoBeat(p,now=new Date()){
  story.count++;
  return story.beats.at(-1);
 }
-export const beatIcon=b=>BO_PLACES[b.place]?.icon||'🐻';
+export const beatIcon=b=>BO_PLACES[b.place]?.icon||'🐶';
 export function boStoryVoiceLines(){
  const lines=[];
  for(const id of ['beginner','admin']){

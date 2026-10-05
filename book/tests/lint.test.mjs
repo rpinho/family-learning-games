@@ -8,7 +8,7 @@ import {plans,saves,NOW} from './fixtures.mjs';
 import {buildLearner} from '../learner.mjs';
 
 test('Safety lint flags every forbidden category',()=>{
- const cases={'violence':'The knight had a sword.','scary':'A scary ghost appeared.','death or loss':'The fish died.','abuse or danger':'A stranger gave him candy.','illness or medical':'She went to the hospital.','grandparents':'Grandma baked bread.','brand':'They built a Lego castle.','personal data':'Call 555-123-4567 today.'};
+ const cases={'violence':'The knight had a sword.','scary':'A scary ghost appeared.','death or loss':'The fish died.','abuse or danger':'A stranger gave him candy.','illness or medical':'She went to the hospital.','grandparents':'Grandma baked bread.','brand':'They built a Lego castle.','personal data':'Call 202-555-0107 today.'};
  for(const [label,text] of Object.entries(cases))assert.ok(safetyIssues(text).some(i=>i.startsWith(label)),`${label}: ${text}`);
  assert.ok(safetyIssues('Her hand felt numb.').length,'no medical symptoms');
  assert.ok(safetyIssues('Hi Smithers',{extra:['Smithers']}).some(i=>i.startsWith('private word')));
@@ -30,7 +30,7 @@ test('No clinical, therapy or school-report language, and no staff names (privat
   assert.ok(safetyIssues(t).some(i=>i.startsWith('clinical or school-report language')),t);
  assert.deepEqual(safetyIssues('He got the ball, sat in the boat and ate a big hot pizza with Dad.'),[]);
  assert.ok(safetyIssues('Miss Honeybun waved.',{extra:['Honeybun']}).some(i=>i.startsWith('private word')));
- assert.deepEqual(safetyIssues('A brown bear in the wood.',{extra:['Ann Brown','Ella Wood']}),[],'colour and common words stay usable');
+ assert.deepEqual(safetyIssues('A brown bear in the wood.',{extra:['Ada Brown','River Wood']}),[],'colour and common words stay usable');
 });
 test('Template chapters pass the lint for both reading levels on many days',()=>{
  for(const p of plans())assert.deepEqual(lintChapter(templateChapter(p,library),p,opts(p)),[],`${p.player} ${p.date}`);
@@ -43,16 +43,16 @@ test('Plans are deterministic, learning is in beats, and the NO! beat is a real,
    const sp=p.beats.find(b=>b.kind==='spell');assert.notDeepEqual(sp.tiles.slice(0,sp.answer.length),sp.answer,'never in order');
    const sg=p.beats.find(b=>b.kind==='signs');assert.ok(sg.options.includes(sg.target));assert.equal(new Set(sg.options).size,sg.options.length);}
   else{const [teach,stones,count]=p.beats;assert.equal(stones.letter,teach.letter);assert.equal(stones.stones.filter(l=>l===teach.letter).length,stones.need);
-   assert.ok(count.options.includes(count.answer));assert.ok(p.quest.includes(teach.letter));}
+   assert.ok(count.options.includes(count.answer));assert.ok(p.quest.text.includes(teach.letter));assert.ok(p.quest.hints.length>=3);}
  }
 });
-test('A young reader collects each friend’s letter key once, then reviews earlier keys in the NO! beat',()=>{
+test('A young reader collects each friend’s letter key once, and the NO! beat is about today’s letter',()=>{
  const young=buildLearner({player:'young',name:'Ada',profile:{age:5,mathTrack:'early'},now:NOW,saves:saves('young')});
  const cast={cast:[{id:'snake',name:'Sparkle',letter:'S',word:'snake',shape:'curl into an S'},{id:'robo',name:'Robo',letter:'R',word:'robot',shape:'draw an R'},{id:'pup',name:'Loop',letter:'L',word:'loop',shape:'make an L'}],children:{young:{fixed:['pup'],rotate:['snake','robo'],perChapter:1}}};
  const a=planChapter(young,{date:'2026-03-10',cast,collection:{keys:[]}});
  const b=planChapter(young,{date:'2026-03-10',cast,collection:{keys:[a.beats[0].letter]}});
  assert.notEqual(b.beats[0].letter,a.beats[0].letter,'a new key next time');
- assert.equal(b.beats.find(x=>x.kind==='no').right,a.beats[0].letter,'the NO! beat reviews the earlier key');
+ assert.equal(b.beats.find(x=>x.kind==='no').right,b.beats[0].letter,'the NO! beat is about today’s letter (2026-10-01)');
  assert.ok(b.cast.some(c=>c.id===b.beats[0].owner),'the owner of today’s letter is in today’s chapter');
  assert.match(a.beats[0].lines[0][1],/Look, I /);
 });
@@ -67,7 +67,7 @@ test('Chapter lint catches beats, magic words, speakers, give-aways, Dad and lev
  c=clone();const n=p.beats.find(b=>['share','score'].includes(b.kind));c.pages.find(x=>x.beat===n.id).say.push(['narrator',`It is ${n.answer}.`]);assert.ok(lintChapter(c,p,o).some(i=>i.includes('gives away')));
  c=clone();for(const pg of c.pages){pg.actors=(pg.actors||[]).filter(a=>!a.startsWith(o.dadId));pg.say=pg.say.filter(l=>l[0]!=='dad');}assert.ok(lintChapter(c,p,o).some(i=>i.startsWith('Dad must')));
  c=clone();c.pages[0].say.push(['narrator','And 2 + 2 = 5, said the cat.']);assert.ok(lintChapter(c,p,o).some(i=>i.startsWith('arithmetic mistakes')));
- c=clone();c.pages[0].say.unshift(['narrator','Leo Parker went out.']);assert.ok(lintChapter(c,p,o).some(i=>i.startsWith('looks like a full name')));
+ c=clone();c.pages[0].say.unshift(['narrator','Robin Exampleperson went out.']);assert.ok(lintChapter(c,p,o).some(i=>i.startsWith('looks like a full name')));
  c=clone();c.pages[0].caption='a very long caption with far too many words';assert.ok(lintChapter(c,p,o).some(i=>i.includes('caption')));
  c=clone();c.pages[1].actors=['robot-unicorn'];assert.ok(lintChapter(c,p,o).some(i=>i.includes('unknown actor')));
  const y=plans(['2026-03-10'])[0],yo=opts(y),yc=templateChapter(y,library);yc.pages[0].caption='Hello there';assert.ok(lintChapter(yc,y,yo).some(i=>i.includes('caption must be at most 1 word')));
@@ -129,4 +129,79 @@ test('He plays: action pages are required, need a reaction after he acts, and a 
  const k=planChapter(young,{date:'2026-03-10',profile:{interests:['soccer']}});const b2=k.beats[1];
  assert.equal(b2.kind,'kick-letter');assert.equal(b2.balls.filter(x=>x===b2.letter).length,1);assert.equal(b2.balls.length,3);
  assert.deepEqual(lintChapter(templateChapter(k,library),k,opts(k)),[],'the template handles the kick-letter beat');
+});
+
+test('Quest-style chapters: game beats in order, template passes the lint, puzzles are right', async()=>{
+ const {older,young}=await import('./fixtures.mjs');const {assemble}=await import('../assemble.mjs');
+ const details=[{id:'pull-ups',seed:'pull-ups on a bar'},{id:'american football',seed:'a football huddle'},{id:'mcdonalds',seed:'nuggets'}];
+ for(const d of ['2026-03-10','2026-03-11','2026-03-12','2026-03-13','2026-03-14','2026-09-29']){
+  const p=planChapter(older,{date:d,profile:{bookStyle:'quest',bookTheme:'spellbook',details}});
+  assert.equal(p.style,'quest');assert.deepEqual(p.beats.map(b=>b.id),['b1','b2','b3','b4','b5','b6']);
+  assert.deepEqual(p.beats.map(b=>b.kind==='share'?'puzzle':b.kind),['signs','puzzle','spell','fork','puzzle','no']);
+  assert.ok(!p.beats.some(b=>b.kind==='remainder'),'never a remainder (equal sharing only, 2026-09-26 parent decision)');
+  assert.ok(p.details.length>=1&&p.details.length<=2);
+  for(const b of p.beats){
+   if(b.kind==='puzzle'){assert.ok(b.options.includes(b.answer),`${d} ${b.variant}`);assert.equal(new Set(b.options).size,b.options.length);
+    if(b.variant==='nines'){const n=Number(b.display.split('×')[1]);assert.equal(Number(b.answer),9*n);}
+    if(b.variant==='skip'){const seq=b.display.split(', ');const i=seq.indexOf('?');const step=Number(seq[1]==='?'?seq[2]-seq[0]:seq[1]-seq[0])/(seq[1]==='?'?2:1);assert.equal(Number(b.answer),Number(seq[0])+i*step);}}
+   if(b.kind==='share'){assert.equal(b.total%b.groups,0);assert.equal(Number(b.answer),b.total/b.groups);assert.ok(b.prop&&b.basket,'a drawn fair share from the basket');}
+   if(b.kind==='fork'){assert.equal(b.options.length,2);assert.ok(b.options.every(o=>o.item?.id&&o.item.name));}}
+  assert.deepEqual(lintChapter(templateChapter(p,library),p,opts(p)),[],`quest template ${d}`);
+  const ch=assemble(templateChapter(p,library),p,{library,actors:p.actorIds.all});assert.equal(ch.theme,'spellbook');assert.equal(ch.style,'quest');
+  const fork=ch.pages.find(x=>x.beat?.kind==='fork').beat;assert.ok(fork.options.every(o=>o.reply?.text&&o.got?.text));}
+ // The younger child's book keeps its own shape: golden keys and a counting detail only.
+ const y=planChapter(young,{date:'2026-09-28',profile:{keyStyle:'golden',details:[{id:'michaelmas',window:['09-26','10-02'],seed:'Michaelmas dragon'},{id:'pancakes',count:['pancake','pancakes','🥞'],seed:'pancakes'}]}});
+ assert.notEqual(y.style,'quest');assert.equal(y.details[0].id,'michaelmas');assert.ok(y.beats[0].what.includes('golden'));
+});
+
+test('A household cast without a grown-ups list still has Mom and Dad, and a chapter without Mom fails the lint', async()=>{
+ const {older}=await import('./fixtures.mjs');
+ const cast={cast:[{id:'gizmo',name:'Gizmo',kind:'a robot pup',emoji:'🤖'}],children:{older:{fixed:['gizmo'],rotate:[],perChapter:0}}};
+ const p=planChapter(older,{date:'2026-03-10',profile:{},cast});assert.deepEqual(p.grownups.map(g=>g.id),['dad','mom']);
+ const lib={...library,actors:{...library.actors,mom:{name:'Mom',h:.6,poses:{idle:{file:'actors/mom.webp',ar:.4}}}}};
+ const ids=actorIdsFor(p,lib);p.actorIds=ids;const o={actors:ids.all,dadId:ids.dad};
+ const ch=templateChapter(p,lib);const noMom={...ch,pages:ch.pages.map(x=>({...x,actors:(x.actors||[]).filter(a=>!String(a).startsWith('mom'))}))};
+ assert.ok(lintChapter(noMom,p,o).some(i=>i.includes('Mom must be in the picture')));
+ const once={...ch,pages:ch.pages.map((x,i)=>({...x,actors:(x.actors||[]).filter(a=>!String(a).startsWith('mom')||i===0)}))};once.pages[0].actors=[...(once.pages[0].actors||[]).filter(a=>!String(a).startsWith('mom')),'mom'];assert.ok(lintChapter(once,p,o).some(i=>i.includes('at least two pages')),'one page is not enough');
+});
+
+test('Fallback chapters put Mom in the picture for every book style', async()=>{
+ const {older,young}=await import('./fixtures.mjs');
+ const lib={...library,actors:{...library.actors,mom:{name:'Mom',h:.6,poses:{idle:{file:'actors/mom.webp',ar:.4}}}}};
+ const mk=(model,profile)=>{const cast={cast:[{id:'gizmo',name:'Gizmo',kind:'a robot pup',emoji:'🤖',letter:'G'}],children:{[model.player]:{fixed:['gizmo'],rotate:[],perChapter:0}}};return planChapter(model,{date:'2026-03-10',profile,cast});};
+ for(const p of [mk(young,{}),mk(older,{}),mk(older,{bookStyle:'quest'})]){const ids=actorIdsFor(p,lib);p.actorIds=ids;
+  const issues=lintChapter(templateChapter(p,lib),p,{actors:ids.all,dadId:ids.dad});assert.ok(!issues.some(i=>i.includes('Mom')),`${p.player} ${p.style}: ${issues.join(' | ')}`);}
+});
+
+test('The key arc: keys keep growing past the friends\' own letters, each opens a hiding place, the last is the finale', async()=>{
+ const {young}=await import('./fixtures.mjs');const {assemble}=await import('../assemble.mjs');const {buildPrompt}=await import('../prompt.mjs').catch(()=>({}));
+ const cast={cast:[{id:'birdie',name:'Birdie',kind:'a parrot',emoji:'🦜'},{id:'bo',name:'Bo',kind:'a monkey',emoji:'🐒'}],children:{young:{fixed:['birdie','bo'],rotate:[],perChapter:0}}};
+ const profile={keyGoal:7,hidingPlaces:['the closet','under the bed'],keyStyle:'golden'};
+ let p=planChapter(young,{date:'2026-03-10',profile,cast,collection:{keys:['B']}});
+ assert.equal(p.keyArc.goal,7);assert.equal(p.keyArc.number,2);assert.equal(p.keyArc.place,'under the bed');assert.equal(p.keyArc.finale,false);
+ p=planChapter(young,{date:'2026-03-10',profile,cast,collection:{keys:['B','G']}});
+ assert.ok(!['B','G'].includes(p.keyArc.letter),'a friend brings a new letter once the friends\' own keys are his');assert.equal(p.keyArc.number,3);
+ p=planChapter(young,{date:'2026-03-10',profile,cast,collection:{keys:['B','G','M','S','A','T']}});assert.equal(p.keyArc.finale,true);assert.equal(p.keyArc.number,7);
+ const ids=actorIdsFor(p,library);p.actorIds=ids;const ch=assemble(templateChapter(p,library),p,{library,actors:ids.all});
+ assert.equal(ch.keyring.goal,7);assert.match(ch.keysLine.text,/last key/);
+ const p2=planChapter(young,{date:'2026-03-10',profile,cast,collection:{keys:['B']}});p2.actorIds=actorIdsFor(p2,library);
+ const ch2=assemble(templateChapter(p2,library),p2,{library,actors:p2.actorIds.all});assert.match(ch2.keysLine.text,/You have one of seven keys/);
+});
+
+test('A quest fork offers treasures he does not have yet',async()=>{
+ const {forkBeat}=await import('../quest-beats.mjs');
+ // (Sep 30 sample: a glowing crystal again, already in his spellbook)
+ const have=['snow-star','key-of-rooms','crystal'];
+ for(const date of ['2026-09-30','2026-10-01','2026-10-02','2026-10-03','2026-10-04'])assert.ok(forkBeat('q3',()=>0.5,{date,have}).options.every(o=>!have.includes(o.item.id)),date);
+ const {readCollection}=await import('../generate.mjs');const {mkdtemp,mkdir,writeFile}=await import('node:fs/promises');const {tmpdir}=await import('node:os');const {join}=await import('node:path');
+ const root=await mkdtemp(join(tmpdir(),'coll-'));await mkdir(join(root,'book-progress'),{recursive:true});
+ await writeFile(join(root,'book-progress','kid.json'),JSON.stringify({days:{},collection:{keys:['B'],words:['bed'],items:[{id:'crystal'}]}}));
+ assert.deepEqual((await readCollection({data:{hub:root}},'kid')).items,[{id:'crystal'}]);
+});
+
+test('A quest book plans its fork from the treasures saved in his spellbook',async()=>{
+ const {older}=await import('./fixtures.mjs');const {planChapter}=await import('../plan.mjs');
+ const items=[{id:'snow-star',name:'a snow star',emoji:'❄️'},{id:'key-of-rooms',name:'a castle key',emoji:'🗝️'},{id:'crystal',name:'a glowing crystal',emoji:'💎'}];
+ for(const date of ['2026-09-30','2026-10-01','2026-10-02']){const p=planChapter(older,{date,profile:{bookStyle:'quest'},collection:{keys:[],words:[],items}});
+  const fork=p.beats.find(b=>b.kind==='fork');assert.ok(fork.options.every(o=>!items.some(i=>i.id===o.item.id)),date);}
 });

@@ -1,0 +1,42 @@
+/* Apply the current shell before asynchronous profile/menu loading. */
+:root{background:#eee5d2;color:#304637}
+/* Every adventure stays visible in a wrapped grid, in the child's own order. */
+body{background:radial-gradient(ellipse at 30% 0,#fcf9ed,#e9dfc8);color:#304637}
+body .top{background:#f9f3e5;color:#304637;border-bottom:1px solid #b6a57b}
+body .top button{color:#304637;border-color:#c4b68f;background:transparent}
+body .identity small{color:#6a725b}
+.catalog.calm-home{max-width:1600px;padding:18px 26px;font-family:"Avenir Next",system-ui,sans-serif}
+.calm-home h1{font:500 clamp(1.6rem,3vw,2.3rem)/1.2 Georgia,serif;letter-spacing:-.02em;text-align:center;color:#344b3b}
+.calm-home>p{text-align:center;color:#6c735e;margin:8px 0 18px;font-weight:400}
+.catalog.calm-home .cards{grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;align-items:stretch}
+.catalog.calm-home .card{min-height:0;background:#faf6e9;border:1px solid #b9ab82;border-radius:65px 65px 12px 12px;padding:12px 8px;box-shadow:0 8px 20px #57411d0a;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;transition:background .3s}
+.catalog.calm-home .card:hover{transform:none;background:#eef0dd}.catalog.calm-home .card:active{transform:none}
+.catalog.calm-home .card .game-logo{width:min(100%,96px);height:auto;aspect-ratio:1;object-fit:contain;border-radius:50%;background:#eee6ce;border:1px solid #c7b98e;padding:8px;box-shadow:inset 0 0 0 4px #f9f4e6;margin:0 0 8px}
+.catalog.calm-home .card h2{font:500 1.05rem/1.2 Georgia,serif;letter-spacing:0;margin:0;min-height:0;color:#304637;overflow-wrap:anywhere}
+.catalog.calm-home .card p{display:none}
+.calm-home button{background:#faf5e7;border:1px solid #b9ab82;color:#3c5340;box-shadow:none;border-radius:10px;min-height:44px}
+.calm-home footer{border-top:1px solid #c7b98e;margin-top:16px;padding-top:10px;color:#67715d;font-size:.8rem;font-weight:400}
+.calm-home .book-watch-home{margin:10px 0 20px}.calm-home .book-watch-home h2{font-family:Georgia,serif}
+@media(max-width:1000px){.catalog.calm-home .cards{grid-template-columns:repeat(4,minmax(0,1fr))}.catalog.calm-home{padding:24px}.catalog.calm-home .card{padding:18px 8px}.catalog.calm-home .card .game-logo{width:112px}.catalog.calm-home .card h2{font-size:1.15rem}}
+@media(max-width:500px){.catalog.calm-home{padding:14px 12px}.catalog.calm-home .cards{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.catalog.calm-home .card{padding:6px 4px;height:104px;border-radius:45px 45px 9px 9px}.catalog.calm-home .card .game-logo{width:52px;padding:4px;margin-bottom:4px}.catalog.calm-home .card h2{font-size:.85rem;line-height:1.15}.calm-home h1{font-size:1.55rem}.calm-home>p{font-size:.85rem;margin:6px 0 12px}.calm-home footer{margin-top:12px;gap:8px}}
+@media(orientation:landscape) and (max-height:600px){.catalog.calm-home{padding:12px 20px}.catalog.calm-home .cards{grid-template-columns:repeat(6,minmax(0,1fr))}.catalog.calm-home .card .game-logo{width:58px}.catalog.calm-home .card{padding:8px 5px}.calm-home>p{margin:6px 0 10px}}
+@media(prefers-reduced-motion:reduce){.calm-home *{transition:none!important}}
+html,body{min-height:100%;background-color:#eee5d2}.calm-home .book-watch-btn{background:#ece8d2;color:#40563f;border:1px solid #c3b58e;font-weight:500;font-size:.85rem}.calm-home .card:focus-visible{outline:3px solid #91691f;outline-offset:3px}
+/* Two pages of one ordered list (about nine cards each): the same cards, a calmer count, centred rows. */
+.catalog.calm-home{max-width:1200px}
+.catalog.calm-home .cards{display:flex;flex-wrap:wrap;justify-content:center;--cols:5;--gap:16px;gap:var(--gap)}
+.catalog.calm-home .cards>.card{flex:0 0 calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));box-sizing:border-box;padding:18px 8px 16px}
+.catalog.calm-home .card .game-logo{width:min(100%,116px)}
+.catalog.calm-home .card h2{font-size:1.15rem}
+.calm-home .home-pager{display:flex;justify-content:center;margin:20px 0 4px}
+.calm-home .pager-btn{display:inline-flex;align-items:center;justify-content:center;min-height:56px;min-width:220px;padding:10px 28px;box-sizing:border-box;border-radius:28px;border:1px solid #9f8f60;background:#f1e9d2;color:#304637;font:500 1.25rem/1.2 Georgia,serif;text-decoration:none;box-shadow:0 4px 12px #57411d12}
+.calm-home .pager-btn:hover{background:#e8e6cf}.calm-home .pager-btn:focus-visible{outline:3px solid #91691f;outline-offset:3px}
+@media(max-width:1000px){.catalog.calm-home .cards{--cols:3;--gap:18px}.catalog.calm-home .cards>.card{padding:22px 8px 20px}.catalog.calm-home .card .game-logo{width:min(100%,136px)}.catalog.calm-home .card h2{font-size:1.3rem}}
+@media(max-width:500px){.catalog.calm-home .cards{--cols:3;--gap:10px}.catalog.calm-home .cards>.card{height:auto;padding:12px 4px 10px;border-radius:52px 52px 10px 10px}.catalog.calm-home .card .game-logo{width:76px;padding:5px;margin-bottom:6px}.catalog.calm-home .card h2{font-size:.95rem}.calm-home .home-pager{margin:14px 0 2px}.calm-home .pager-btn{min-height:50px;min-width:200px;font-size:1.1rem}}
+@media(orientation:landscape) and (max-height:600px){.catalog.calm-home .cards{--cols:5;--gap:12px}.catalog.calm-home .card .game-logo{width:72px}.catalog.calm-home .cards>.card{padding:10px 6px}.calm-home .home-pager{margin:10px 0 0}.calm-home .pager-btn{min-height:46px}}
+
+.calm-home .new-game{margin-top:5px;padding:2px 9px;border-radius:12px;background:#e6ebd3;color:#40563f;font:600 .75rem/1.2 system-ui,sans-serif}
+.calm-home{touch-action:pan-y}
+
+/* Existing World paintings sit in the same quiet circular frame as the game logos. */
+.catalog.calm-home .card .game-logo.world-painting{object-fit:cover;object-position:center top;aspect-ratio:1;height:auto}

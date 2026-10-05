@@ -1,6 +1,6 @@
 // Sling Shot: shared deterministic aiming and content for server scoring and the client.
 // Canvas is 800x600 logical pixels. The child drags anywhere and lets go; only the DIRECTION matters.
-// Modelled on a commercial tablet slingshot game: targets stacked in one column at the same distance, fixed power,
+// Modelled on guided practice slingshot: targets stacked in one column at the same distance, fixed power,
 // so the only choice is up/down. The stone flies where the pull points (straight away from the finger),
 // a full dotted arc shows the path and the target it will hit glows before letting go.
 export const SLING_VERSION='sling-2026-09-26-2';
@@ -8,8 +8,6 @@ export const ANCHOR={x:150,y:420};
 export const COLUMN_X=540,MAX_PULL=150,MIN_PULL=14,GROUND=560,STONES=5,ARC=70,FLIGHT_MS=900;
 export const SLING_TRACK={beginner:'letters',explorer:'words',admin:'mixed'};
 export const MODES={letters:['letters','numbers','pattern'],words:['math','spelling'],mixed:['letters','math','numbers','spelling','pattern']};
-// Beginner (letters): 3 big targets and a magnet: any aim at the column hits the nearest target.
-// Explorer (words): 4 targets, hits only within a small margin of a target.
 export function slingFeel(track){return track==='letters'?{count:3,radius:64,magnet:true,margin:70}:{count:4,radius:50,magnet:false,margin:9};}
 export function seeded(seed){let a=seed|0;return()=>{a+=0x6D2B79F5;let t=Math.imul(a^a>>>15,1|a);t^=t+Math.imul(t^t>>>7,61|t);return ((t^t>>>14)>>>0)/4294967296;};}
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
