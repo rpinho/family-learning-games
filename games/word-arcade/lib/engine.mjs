@@ -4,6 +4,7 @@ import {FOUNDATION_WORDS,foundationQuestion,foundationAttempt} from './foundatio
 import {lowerQuestion,lowerAttempt,lowerState} from './lowercase.mjs';
 import {BUILDER_STARTERS,builderState,builderQuestion,builderAttempt} from './builder.mjs';
 import {arcadeQuestion,arcadeAttempt} from './arcade-curriculum.mjs';
+import {flashcardCorrection} from './flashcard-correction.mjs';
 import {chooseWord,rememberWord} from './variety.mjs';
 import {SENTENCES as TRAIN_SENTENCES,SENTENCE_DISTRACT as TRAIN_DISTRACT,scramble,tilesOf,wordBreakLines,literacyFrom,DEFAULT_TRACK} from './word-break.mjs';
 import {slalomRun,slalomLines,afterGate,slalomChoice,easyNext,pickFamily,familyTargets} from './slalom.mjs';
@@ -140,7 +141,10 @@ export function act(p,input,ctx={}){
    if(s.game==='blaster'&&s.focus==='lowercase')lowerAttempt(p,q,{ok,helped:s.help||s.misses>0});
    if(s.game==='builder')builderAttempt(p,q,{ok,helped:s.help||s.misses>0});
    if(q.foundation)foundationAttempt(p,q,{ok,helped:s.help||s.misses>0});
-   if(!ok){s.misses++;s.level=Math.max(1,s.level-1);s.streak=0;if(s.misses>=2)s.help=true;result={kind:'wrong',line:LINES[5],ok:false,answer};}
+   if(!ok){s.misses++;s.level=Math.max(1,s.level-1);s.streak=0;if(s.misses>=2)s.help=true;result={kind:'wrong',line:LINES[5],ok:false,answer};
+    const correction=s.misses>=2?flashcardCorrection(q):null;
+    if(correction){s.phase='result';s.results.push({q,answer,ok:false,taught:true,independent:false,points:0,misses:s.misses,help:true,durationMs:input.durationMs});result={kind:'taught',ok:false,answer,correctAnswer:q.answer,line:correction};}
+   }
    else{const independent=!s.help&&!s.misses,points=independent?100:40;s.score+=points;s.correct++;s.assisted+=Number(!independent);s.streak=independent?(s.streak||0)+1:0;if(s.streak>=2){s.level=Math.min(3,s.level+1);s.streak=0;}const literacy=!['wordoku','cipher'].includes(s.game);p.xp+=literacy?(independent?12:6):0;s.phase='result';s.results.push({q,answer,independent,points,misses:s.misses,help:s.help,durationMs:input.durationMs});result={kind:'correct',ok:true,independent,points,line:LINES[1+(s.round%3)]};}
    if(s.game==='builder')s.level=p.builder.stage;
    if(['orbit','flashcards'].includes(s.game))s.level=arcadeAttempt(p,q,{ok,helped:s.help||s.misses>0});
