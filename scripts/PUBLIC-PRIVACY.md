@@ -15,6 +15,7 @@ checks require an external virtual environment (never committed):
 ```sh
 python3 -m venv "$HOME/.local/share/family-public-sync/venv"
 "$HOME/.local/share/family-public-sync/venv/bin/pip" install 'Pillow==11.3.0' 'numpy==2.0.2' 'opencv-python-headless==4.11.0.86'
+"$HOME/.local/share/family-public-sync/venv/bin/pip" install 'resvg-py==0.3.2'
 ```
 
 `PUBLIC_SYNC_PYTHON` overrides that interpreter. Missing tools/reference roots or
@@ -59,13 +60,14 @@ until represented as separately scanned assets. Video with an audio stream canno
 use silent-video approval. The gate also refuses symlinks and a candidate that
 changes during a scan.
 
-All raster images/animation frames are compared with every decodable private
+All raster images/animation frames and locally rasterized SVGs are compared with every decodable private
 reference below the five configured reference roots. A near-duplicate requires
 **64-bit dHash distance <= 6 AND 63-bit pHash distance <= 8** (pHash omits the DC
 coefficient). Low-information swatches (greyscale standard deviation < 8) are
 excluded from approximate matching. These thresholds catch resizes and light
 recompression; substantial crops, new paintings inspired by a photograph, and
-changed poses may evade perceptual hashes. Haar face candidates block until a
+changed poses may evade perceptual hashes. SVG rendering refuses embedded/external content, scripts and entity declarations.
+Haar face candidates block until a
 human reviews them; it can flag illustrations or miss small/profile faces.
 Neither detector proves that a drawing lacks a real person's likeness.
 

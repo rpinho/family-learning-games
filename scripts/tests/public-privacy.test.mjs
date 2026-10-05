@@ -50,13 +50,20 @@ im=Image.new('RGB',(160,120),'white');d=ImageDraw.Draw(im)
 for i in range(12):d.rectangle((i*13, i*7, i*13+10, i*7+24), fill=(i*20,30,200-i*10))
 im.save(${JSON.stringify(join(refs,'fake.png'))})
 exif=Image.Exif();exif[271]='Synthetic Camera';exif[306]='2000:01:01 00:00:00'
-im.resize((320,240)).save(${JSON.stringify(join(root,'derivative.jpg'))},exif=exif)`]);
+im.resize((320,240)).save(${JSON.stringify(join(root,'derivative.jpg'))},exif=exif)
+import resvg_py
+svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120">'+''.join('<rect x="%d" y="%d" width="10" height="24" fill="rgb(%d,30,%d)"/>'%(i*13,i*7,i*20,200-i*10) for i in range(12))+'</svg>'
+Path(${JSON.stringify(join(root,'vector.svg'))}).write_text(svg)
+Path(${JSON.stringify(join(refs,'composed.svg'))}).write_text('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120"><image href="fake.png" width="160" height="120"/></svg>')
+Path(${JSON.stringify(join(refs,'vector-reference.png'))}).write_bytes(resvg_py.svg_to_bytes(svg_string=svg,width=512,height=512))`]);
  const result=await runGate({root,base,policyPath:policy,reviewDir:review,referenceRoots:[refs],scanSecrets:()=>[]});
  assert.ok(result.issues.some(s=>s.includes('untracked.txt:1:')));
  assert.ok(result.issues.some(s=>s.includes('old.txt@')));
  assert.ok(result.issues.some(s=>s.includes('/message:1:')));
  assert.ok(result.issues.some(s=>s.includes('identifying media metadata')));
  assert.ok(result.issues.some(s=>s.includes('near-duplicate')));
+ assert.ok(result.issues.some(s=>s.startsWith('vector.svg:1: near-duplicate')));
+ assert.ok(!result.issues.some(s=>s.includes('unreadable private image')));
  assert.ok(result.issues.some(s=>s.includes('voice.wav:1: possible speech')));
  assert.ok(result.issues.every(s=>!s.includes(fakeName)));
  assert.ok(readFileSync(result.review,'utf8').includes('derivative.jpg'));

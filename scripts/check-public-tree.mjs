@@ -14,7 +14,7 @@ export async function main(args=process.argv.slice(2)){
  if(options.root)options.root=resolve(options.root);
  const result=await runGate(options);
  for(const issue of result.issues)console.error(issue);
- console.log(`${result.issues.length?'FAIL':'PASS'}: ${result.files} files; ${result.commits} PR commits; ${result.issues.length} findings; ${result.images} raster images; ${result.references} private references.`);
+ console.log(`${result.issues.length?'FAIL':'PASS'}: ${result.files} files; ${result.commits} PR commits; ${result.issues.length} findings; ${result.images} images (raster + SVG); ${result.references} private references.`);
  if(result.review)console.log(`Contact sheet: ${result.review}`);
  if(result.issues.length)process.exitCode=1;
  return result;

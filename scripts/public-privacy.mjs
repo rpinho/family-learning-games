@@ -1,6 +1,6 @@
 import {execFileSync,spawnSync} from 'node:child_process';
 import {readFileSync,existsSync,mkdirSync,writeFileSync,copyFileSync,lstatSync,mkdtempSync,rmSync} from 'node:fs';
-import {join,dirname,extname,resolve} from 'node:path';
+import {join,dirname,resolve} from 'node:path';
 import {homedir,tmpdir} from 'node:os';
 import {isIP} from 'node:net';
 import {createHash} from 'node:crypto';
@@ -153,7 +153,7 @@ export async function runGate({root=resolve('.'),base=process.env.PUBLIC_SYNC_BA
    const records=new Map(mediaResult.records.map(r=>[r.path,r]));
    const cards=assets.filter(f=>!audio.test(f)&&!video.test(f)).map(file=>{
     const r=records.get(file)||{path:file,issues:[],faces:0};
-    if(extname(file).toLowerCase()==='.svg'){const target=createHash('sha256').update(file).digest('hex')+'.svg';copyFileSync(join(root,file),join(review,target));r.thumbnail=target;}
+
     const hits=issues.filter(s=>s.startsWith(file+':')).map(s=>s.slice(s.indexOf(':1:')+4));
     return `<figure>${r.thumbnail?`<img loading="lazy" src="${r.thumbnail}">`:''}<figcaption>${escape(safe(file))}<br>${escape(hits.join('; ')|| (r.faces?'Reviewed illustration face candidate':'No automated findings; visual review pending'))}</figcaption></figure>`;
    });

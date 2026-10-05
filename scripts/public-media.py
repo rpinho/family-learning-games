@@ -1,12 +1,29 @@
 """Local media checks. JSON input/output only; private paths never enter reports."""
-import sys, json, os, hashlib
+import sys, json, os, hashlib, io, re
 from pathlib import Path
 from PIL import Image, ImageOps
 import numpy as np
 import cv2
+import resvg_py
+from urllib.parse import urlparse
 cv2.setNumThreads(1)
 
-IMAGE_EXT = {'.png','.jpg','.jpeg','.webp','.gif','.bmp','.tif','.tiff','.avif','.heic','.ico'}
+IMAGE_EXT = {'.png','.jpg','.jpeg','.webp','.gif','.bmp','.tif','.tiff','.avif','.heic','.ico','.svg'}
+
+def open_image(path, private=False):
+    if Path(path).suffix.lower() != '.svg': return Image.open(path)
+    text=Path(path).read_text()
+    # Refuse references before rendering, so no private files or network resources
+    # can be loaded from a public vector. Definitions within the SVG stay usable.
+    if re.search(r'<foreignObject\b|<script\b|<!DOCTYPE|<!ENTITY|@import',text,re.I): raise ValueError('External SVG content')
+    links=[m.group(2).strip() for m in re.finditer(r'\b(?:href|xlink:href)\s*=\s*(["\'])(.*?)\1',text,re.I)]
+    links += [m.group(2).strip() for m in re.finditer(r'url\(\s*(["\']?)(.*?)\1\s*\)',text,re.I)]
+    for link in links:
+        if link.startswith('#'): continue
+        if not private or link.startswith('//') or urlparse(link).scheme not in ('','file','data'): raise ValueError('External SVG content')
+    if not private and re.search(r'<image\b',text,re.I): raise ValueError('External SVG content')
+    png=resvg_py.svg_to_bytes(svg_string=text,width=512,height=512,log_information=False,resources_dir=str(Path(path).parent) if private else None)
+    return Image.open(io.BytesIO(png))
 
 def hashes(image):
     image = ImageOps.exif_transpose(image).convert('RGB')
@@ -40,14 +57,14 @@ def main():
             if not f.is_file() or f.suffix.lower() not in IMAGE_EXT: continue
             count+=1
             try:
-                with Image.open(f) as im: refs.append(hashes(im))
+                with open_image(f, private=True) as im: refs.append(hashes(im))
             except Exception: errors.append(f'private-reference-root-{index+1}:1: unreadable private image (path withheld)')
     records=[]
     for file in options['files']:
         if Path(file).suffix.lower() not in IMAGE_EXT: continue
         record={'path':file,'issues':[],'faces':0,'referenceMatches':0}
         try:
-            with Image.open(root/file) as im:
+            with open_image(root/file) as im:
                 # Every frame is checked, including animation frames.
                 for frame in range(getattr(im,'n_frames',1)):
                     im.seek(frame); current=im.copy(); dh,ph,spread=hashes(current)
