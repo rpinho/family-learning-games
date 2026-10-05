@@ -78,3 +78,23 @@ test('real custom gitleaks rules catch removed private terms in earlier PR commi
  assert.equal(issues.filter(x=>x.includes('old.txt')).length,3);assert.ok(issues.every(x=>x.includes('commit ')&&!terms.some(term=>x.includes(term))));
  assert.equal(privateTermScan({root,snapshot,base:'HEAD',terms}).length,0,'range excludes prior commits');
 });
+
+test('CI feature range survives force pushes and retains removed leaks on subsequent pushes',t=>{
+ const root=mkdtempSync(join(tmpdir(),'family-ci-range-'));t.after(()=>rmSync(root,{recursive:true,force:true}));
+ const git=a=>execFileSync('git',a,{cwd:root});git(['init','-q']);git(['config','user.name','Test']);git(['config','user.email','test@example.invalid']);
+ writeFileSync(join(root,'safe.txt'),'safe');git(['add','.']);git(['commit','-qm','Synthetic base']);const base=git(['rev-parse','HEAD']).toString().trim();
+ git(['update-ref','refs/remotes/origin/main',base]);
+ writeFileSync(join(root,'old.md'),unknown);git(['add','.']);git(['commit','-qm','Synthetic intermediate']);const prior=git(['rev-parse','HEAD']).toString().trim();
+ rmSync(join(root,'old.md'));git(['add','.']);git(['commit','-qm','Synthetic cleanup']);
+ const workflow=readFileSync(new URL('../../.github/workflows/privacy.yml',import.meta.url),'utf8');
+ const start=workflow.indexOf('base="${PR_BASE:-$PUSH_BASE}"'),end=workflow.indexOf('if [ -z "$base" ] ||',start);
+ assert.ok(start>=0&&end>start);
+ const script=workflow.slice(start,end)+'\nprintf "%s" "$base"';
+ const select=(before,extra={})=>execFileSync('bash',['-e','-c',script],{cwd:root,env:{...process.env,PR_BASE:'',PUSH_BASE:before,DEFAULT_BRANCH:'main',GITHUB_REF:'refs/heads/public/synthetic',...extra}}).toString();
+ for(const before of ['0'.repeat(40),'1'.repeat(40),prior]){
+  const selected=select(before);assert.equal(selected,base);
+  assert.ok(git(['rev-list',selected+'..HEAD']).toString().includes(prior),'a deleted leak remains in the scanned PR history');
+ }
+ assert.equal(select(prior,{PR_BASE:base,GITHUB_REF:'refs/pull/3/merge'}),base);
+ assert.equal(select(prior,{GITHUB_REF:'refs/heads/main'}),prior);
+});

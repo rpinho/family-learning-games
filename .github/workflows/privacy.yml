@@ -26,8 +26,14 @@ jobs:
         env:
           PR_BASE: ${{ github.event.pull_request.base.sha }}
           PUSH_BASE: ${{ github.event.before }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           base="${PR_BASE:-$PUSH_BASE}"
+          # Feature pushes scan complete PR ancestry, including removed leaks.
+          # A force push needs no pre-push object to select that range.
+          if [ -z "$PR_BASE" ] && [ "$GITHUB_REF" != "refs/heads/$DEFAULT_BRANCH" ]; then
+            base="$(git merge-base "origin/$DEFAULT_BRANCH" HEAD)"
+          fi
           if [ -z "$base" ] || [ "$base" = 0000000000000000000000000000000000000000 ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
             node scripts/check-public-tree.mjs --public-text-only --all-history
             node scripts/check-public-tree.mjs --secrets-only --all-history

@@ -69,7 +69,9 @@ geometry attributes are blanked before prose checks; visible text still scans.
 These reviews never suppress private terms or default secret scanners.
 
 CI also runs `--public-text-only` over the same history and filesystem range,
-using only committed public lookup/allowlist/reviews. It intentionally omits
+using only committed public lookup/allowlist/reviews. Feature pushes use the
+common ancestor with the public default branch, keeping every PR commit in scope
+after force pushes and incremental updates. It intentionally omits
 private rules and media references. `--secrets-only` runs the credential layer.
 
 Gitleaks runs on the filesystem snapshot and git range with full redaction and
