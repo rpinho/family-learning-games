@@ -4,6 +4,7 @@ import {mkdirSync,writeFileSync,readFileSync,copyFileSync,existsSync,readdirSync
 import {resolve,join,dirname} from 'node:path';
 import {homedir,tmpdir} from 'node:os';
 import {fileURLToPath} from 'node:url';
+import {loadPolicy} from './public-privacy.mjs';
 import {exportLive} from './public-export.mjs';
 import {checkTree,privacyIssues,denied,policyFile} from './public-policy.mjs';
 
@@ -20,7 +21,7 @@ export function publishPrepared({cwd,base,branch,title,gh,run=(exe,args,options=
  if(checked.issues.length)throw Error('Public sync refused:\n'+checked.issues.join('\n'));
  run('npm',['run','setup']);run('npm',['test']);
 
- run(process.execPath,['scripts/check-public-tree.mjs']);
+ run(process.execPath,['scripts/check-public-tree.mjs','--base',base]);
  const changes=execFileSync('git',['diff','--cached','--name-only'],{cwd}).toString().trim();
  if(!changes)throw Error('No public changes to publish.');
  const message='Sync public game engines and fictional demos';
@@ -31,6 +32,7 @@ export function publishPrepared({cwd,base,branch,title,gh,run=(exe,args,options=
  // Inspect every newly introduced committed tree as well as the working tree.
  const commits=execFileSync('git',['rev-list',base+'..HEAD'],{cwd}).toString().trim().split('\n').filter(Boolean);
  for(const commit of commits){const files=execFileSync('git',['ls-tree','-r','--name-only',commit],{cwd}).toString().trim().split('\n');for(const file of files){const bytes=execFileSync('git',['show',commit+':'+file],{cwd,maxBuffer:128*1024*1024});const hits=privacyIssues(file,bytes);if(hits.length)throw Error('Public sync refused:\n'+hits.join('\n'));}}
+ run(process.execPath,['scripts/check-public-tree.mjs','--base',base]);
  console.log(`PASS: ${checked.files} tracked files; 0 privacy hits; 0 new commit-message hits; builds and tests passed.`);
  // Use the already authenticated CLI without changing repository/global credentials.
  const helper="!'"+gh.replaceAll("'","'\\''")+"' auth git-credential";
@@ -67,4 +69,12 @@ export function main(args=process.argv.slice(2)){
  if(options['prepare-only']==='true'){execFileSync('git',['add','--all'],{cwd:out});const gate=checkTree(out);if(gate.issues.length)throw Error('Public sync refused:\n'+gate.issues.join('\n'));console.log('Prepared for local review; no push or PR.');return out;}
  publishPrepared({cwd:out,base:baseSha,branch,title:'Sync public repo with live ('+date+')',gh});
 }
-if(process.argv[1]===fileURLToPath(import.meta.url)){try{main();}catch(e){console.error(e.message);process.exitCode=1;}}
+if(process.argv[1]===fileURLToPath(import.meta.url)){try{main();}catch(e){
+ if(/^Public (?:sync|export|recipe) refused:\n/.test(e.message)){
+  try{const terms=loadPolicy().terms;for(let issue of e.message.split('\n').slice(1)){
+   for(const term of terms)issue=issue.replace(new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'),'[withheld]');
+   issue=issue.replace(/^([^:]+): (.*)$/,'$1:1: $2').replace(/[\x00-\x1f\x7f]/g,'?');console.error(issue);
+  }}catch{console.error('public-sync:1: privacy refusal (private policy unavailable)');}
+ }else console.error('public-sync:1: publication refused (run npm run check:privacy for safe findings; command failures appear above)');
+ process.exitCode=1;
+}}

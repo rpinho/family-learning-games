@@ -1,12 +1,18 @@
-import test from 'node:test';
+import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,writeFileSync,mkdirSync,readFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {execFileSync} from 'node:child_process';
-import {publishPrepared,main} from '../public-sync.mjs';
-import {privacyIssues,checkTree,denied,sanitize,replacements} from '../public-policy.mjs';
-import {exportLive} from '../public-export.mjs';
+// Never materialize household denylist values in even temporary test fixtures.
+const policyDir=mkdtempSync(join(tmpdir(),'synthetic-public-policy-'));
+const priorPolicy=process.env.PUBLIC_SYNC_POLICY;
+process.env.PUBLIC_SYNC_POLICY=join(policyDir,'privacy.json');
+writeFileSync(process.env.PUBLIC_SYNC_POLICY,JSON.stringify({replacements:[['Fictional Private Name','explorer']]}));
+after(()=>{rmSync(policyDir,{recursive:true,force:true});if(priorPolicy===undefined)delete process.env.PUBLIC_SYNC_POLICY;else process.env.PUBLIC_SYNC_POLICY=priorPolicy;});
+const {publishPrepared,main}=await import('../public-sync.mjs');
+const {privacyIssues,checkTree,denied,sanitize,replacements}=await import('../public-policy.mjs');
+const {exportLive}=await import('../public-export.mjs');
 function fixture(t){const dir=mkdtempSync(join(tmpdir(),'public-sync-test-'));t.after(()=>rmSync(dir,{recursive:true,force:true}));execFileSync('git',['init','-q',dir]);execFileSync('git',['-C',dir,'config','user.name','Test']);execFileSync('git',['-C',dir,'config','user.email','test@example.invalid']);return dir;}
 test('identities, forbidden characters and binary metadata are refused with the file listed',()=>{for(const term of denied){assert.deepEqual(privacyIssues('image.png',Buffer.from('metadata: '+term.toUpperCase())),['image.png: forbidden identity or character term']);}});
 test('runtime data, credentials and household hosts are refused',()=>{assert.ok(privacyIssues('.data/save.json',Buffer.from('{}')).length);assert.ok(privacyIssues('fixture.mjs',Buffer.from(['host','tail123','ts','net'].join('.'))).length);assert.ok(privacyIssues('fixture.mjs',Buffer.from('github_pat_'+'x'.repeat(40))).length);assert.deepEqual(privacyIssues('demo.mjs',Buffer.from("player='beginner'; name='Pip';")),[]);});
