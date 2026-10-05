@@ -1,5 +1,5 @@
 // Block builder (Tens & ones): read a number, then build it from base-ten
-// blocks. Pattern borrowed from Sage Teacher's place-value builder: coloured
+// blocks. Pattern borrowed from guided practice place-value builder: coloured
 // hundreds/tens/ones blocks and a check that is itemised per column
 // ("hundreds are right, too few tens"), not a bare right/wrong.
 import {numberNameLine,numberNameVoiceLines} from './number-names.mjs';

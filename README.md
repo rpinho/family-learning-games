@@ -2,17 +2,17 @@
 
 ![Family Learning Games — gameplay previews from the collection](docs/media/social-preview.png)
 
-**One app. Ten games, The Book, and a Castle Kingdom preview.** A single home screen brings together reading, numbers, free drawing, mazes, chess, strategy, soccer, and an illustrated story with little games inside it. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, not a public online classroom or hosted play service.
+**One app. Ten games, The Book and fictional demo worlds.** A single home screen brings together reading, numbers, free drawing, mazes, chess, strategy, soccer, and an illustrated story with little games inside it. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, not a public online classroom or hosted play service.
 
 After setup, open **http://localhost:4810/**. Choose a player once; their name stays large at the top and their progress stays separate. Use **Games** to return home, **Refresh** to reload, and **Grown-ups** to change the device's player or switch the main menu between gameplay screenshots and illustrated logos. The artwork choice is saved for that player on that device; activity-variant menus retain their gameplay previews. Main-menu order adapts per player from recent local play sessions, including older activities that now belong to Maze Garden or Soccer Club. The menu opens immediately using its last known order (or the default), updates preferences in the background for the next visit, and stays still while choosing.
 
-[Install in one command](#one-command-first-run) · [Let an agent install it](#let-a-coding-agent-install-it) · [Explore the games and Book](#ten-games-and-the-book) · [Privacy](PRIVACY.md)
+[Quick start](#quick-start) · [Let an agent install it](#let-a-coding-agent-install-it) · [Explore the games and Book](#ten-games-and-the-book) · [Privacy](PRIVACY.md)
 
 [![Watch the games and The Book in action — silent animated highlights](docs/media/highlights.gif)](docs/media/highlights.mp4)
 
 [Watch the 34-second highlight video](docs/media/highlights.mp4) · Silent · Fictional cast and empty preview saves
 
-**Gallery build note:** these captures show the current live calm editions. The public Letter Quest, Word Arcade, Number Park, Maze Garden, Three in a Row, Target Trail/Sling, and hub/chess/soccer interfaces still lack some of those newer visual layers. This PR adds the fictional Book cast and Castle Kingdom demo; it does not synchronize the other applications. [Exact edition differences](docs/showcase/README.md#edition-differences).
+**Edition note:** this edition includes the live calm theme, home pages and current game engines. The Book keeps the original fictional painted cast; the World and quest engines use geometric demo scenes. The showcase’s Castle Kingdom preview is a separate fictional presentation.
 
 ## Ten games and The Book
 
@@ -23,14 +23,14 @@ Drag, trace, steer, aim, and think ahead. Pick an activity and a manageable chal
 <table>
 <tr>
 <td colspan="2" valign="top">
-<img src="docs/media/world-talk.png" alt="Castle Kingdom: a fictional explorer walks to a painted guide; a goal ribbon and conversation explain the next quest" width="65%"> <img src="docs/media/world-map.png" alt="Castle Kingdom: a partially restored map shows visited places and unexplored rooms behind fog" width="33%"><br>
+<img src="docs/media/world-talk.png" alt="Castle Kingdom: an original painted fox walks to a mapmaker in a lush castle garden; a goal ribbon and conversation explain the next quest" width="65%"> <img src="docs/media/world-map.png" alt="Castle Kingdom: a partially restored map shows visited places and unexplored rooms behind fog" width="33%"><br>
 <strong>The Castle Kingdom — a world to explore together.</strong><br>
 Walk through painted places, talk to friends, collect tools, and solve little challenges. The map reveals places as you visit; restoring its three pieces opens the castle treasure. A public-safe, memory-only preview is included: run <code>node docs/showcase/demo-server.mjs</code>, then open <code>http://localhost:5710/world?player=hero</code>. This preview is separate from the standard hub installation.
 </td>
 </tr>
 <tr>
 <td colspan="2" valign="top">
-<a href="book/SCHEMA.md"><img src="docs/media/book-story.png" alt="The Book: painted castle doors open onto a treasure chest with an original fictional cast" width="100%"><br> <img src="docs/media/book-count.png" alt="The Book: tap twelve painted stepping stones inside a volcanic crater" width="49%"> <img src="docs/media/book-choice.png" alt="The Book: help an original plush fox correct a sum in a painted treehouse town" width="49%"></a><br>
+<a href="book/SCHEMA.md"><img src="docs/media/book-story.png" alt="The Book: a large original mapmaker, castle garden, opening treasure doors and a visible reading puzzle" width="100%"><br> <img src="docs/media/book-count.png" alt="The Book: tap twelve painted stepping stones inside a volcanic crater" width="49%"> <img src="docs/media/book-choice.png" alt="The Book: a painted treehouse town with a large sum board and visible number choices" width="49%"></a><br>
 <strong>The Book — play inside the story.</strong><br>
 The optional nightly writing pipeline creates an illustrated chapter. Explore painted worlds with the fictional cast. Tap the volcano’s stones, watch keys open the castle doors, and help a friend put the story right. Letter kicks and magic words are also supported. Grown-ups can preview a chapter without changing progress.
 </td>
@@ -98,9 +98,11 @@ Aim for the spoken letter, number, pattern, times-table answer or next spelling 
 
 </table>
 
-The Book uses original painted scenes and a fictional boy, older sister, guide and plush fox in this edition. Its nightly generation and optional local narration need separate setup; <code>npm run play</code> starts the games and chapter player, without automatically writing chapters. See the <a href="book/SCHEMA.md">chapter and picture-library guide</a>. The public player supports tapping painted objects and keys flying into opening castle doors, with a treasure chest reveal. Branching-ending helpers remain separate from public playback. These captures show this public build; <a href="docs/showcase/README.md#edition-differences--october-3-2026">edition differences</a> are documented.
+The showcase uses original fantasy paintings, an independently invented mapmaker and a plush fox; no child stand-ins appear in these captures. Its nightly generation and optional local narration need separate setup; <code>npm run play</code> starts the games and chapter player, without automatically writing chapters. See the <a href="book/SCHEMA.md">chapter and picture-library guide</a>. The public player supports tapping painted objects and keys flying into opening castle doors, with a treasure chest reveal. Branching-ending helpers remain separate from public playback. These captures use the current public player and an authored fictional chapter; <a href="docs/showcase/README.md#edition-differences">edition differences</a> are documented.
 
 *Actual gameplay from an isolated, generic Admin demo. Click a card for its game guide. No children's profiles or drawings are shown; the house doodle is newly scripted; screenshots are not evidence of learning outcomes.*
+
+The current edition also includes the calm theme, two home pages, balance challenges, expanded patterns, and a World with inventories, room paths and revision-checked quests. The [fictional demo worlds](hub/WORLD.md) use the original public cast and placeholder scenes. Private daily content, artwork and recordings are supplied separately by each installation.
 
 ### Made for playing together
 
@@ -128,15 +130,19 @@ The Book uses original painted scenes and a fictional boy, older sister, guide a
 
 ## Run on your computer
 
-### One-command first run
+### Quick start
 
-With **Node.js 22.13 or newer**, npm, and Git installed, paste this one command into Terminal (macOS/Linux) or PowerShell 7:
+With **Node.js 22.13 or newer**, npm, and Git installed, copy the clone URL from this page’s GitHub **Code** menu, replace `REPOSITORY_URL` below, and paste this command into Terminal (macOS/Linux) or PowerShell 7:
 
 ```sh
-git clone https://github.com/rpinho/family-learning-games.git && cd family-learning-games && npm run play
+git clone REPOSITORY_URL && cd family-learning-games && npm run play
 ```
 
-This downloads the collection, installs locked dependencies, builds the two React interfaces, and starts the hub plus the game servers. The hub and other games need only Node. Open **http://localhost:4810/** in Chrome, Edge, or another modern browser. Keep the terminal running; Ctrl+C stops the servers. Later, run `npm start` in the same folder; no reinstall is necessary. An existing `family-learning-games` folder is not overwritten.
+This downloads the collection, installs locked dependencies, builds the two React interfaces, and starts the hub plus the game servers. The hub and other games need only Node. Open **http://localhost:4810/** in Chrome, Edge, or another modern browser. On the first visit, a **grown-up** completes Family setup: add each child, choose a starting point, and optionally add interests and photos. You can save a child with **zero photos**. Add another child before opening Games. Later, use **Grown-ups → Family setup** to edit a child or add one.
+
+Tablet previews with fictional children: [child details](docs/media/onboarding-child-tablet.png), [starting skills](docs/media/onboarding-skills-tablet.png), [optional photos](docs/media/onboarding-photos-tablet.png).
+
+Keep the terminal running; Ctrl+C stops the servers. Later, run `npm start` in the same folder; no reinstall is necessary. An existing `family-learning-games` folder is not overwritten.
 
 If you download the repository ZIP instead, unzip it, open a terminal in its folder, and run **`npm run play`**. Prerequisites are not silently installed and no administrator access is required by the game installer.
 
@@ -144,11 +150,11 @@ If you download the repository ZIP instead, unzip it, open a terminal in its fol
 
 Give your agent this request:
 
-> Install and run https://github.com/rpinho/family-learning-games locally. Read its AGENTS.md and README first. Check Node/npm, use a new folder, run npm run play, verify all ten games through the hub and the optional Book preview, and give me the single home-screen link. Keep it private and preserve any existing saves.
+> Install and run this repository locally (use its clone URL from the Code menu). Read its AGENTS.md and README first. Check Node/npm, use a new folder, run npm run play, verify all ten games through the hub and the optional Book preview, and give me the single home-screen link. Keep it private and preserve any existing saves.
 
 [AGENTS.md](AGENTS.md) contains the installation, verification, data-preservation and privacy instructions. No API key or paid AI service is needed to run the games.
 
-Choose **Beginner**, **Explorer**, or **Admin**. Add `/?player=beginner` or `/?player=explorer` to a link to open that preset. Beginner and Explorer have different starting challenges and separate saves; Admin is for testing. These are three shared presets per installation, not authenticated personal accounts. Spelling names in exercises are fictional examples.
+After onboarding, choose a child by name; each has separate saves. Before setup, the public demo presets are **Beginner**, **Explorer**, and **Admin**. Add `/?player=beginner` or `/?player=explorer` to a link to open that preset. Beginner and Explorer have different starting challenges and separate saves; Admin is for testing. Child profiles and demo presets are shared within your installation, not authenticated personal accounts. Spelling names in exercises are fictional examples.
 
 To run just one game, run `npm start` inside its directory (for the React games, first run `npm ci` and `npm run build`). Individual servers use their original default ports, listed in their READMEs. Run `npm test` from the collection root after setup to check all game and hub suites.
 
@@ -160,15 +166,28 @@ By default the servers accept connections only from the computer running them. F
 HOST=0.0.0.0 npm start
 ```
 
-Then open `http://YOUR-COMPUTER-LAN-ADDRESS:4810/` on the child's device. On PowerShell, set `$env:HOST="0.0.0.0"` before `npm start`. Only the hub listens on the LAN; the game backends remain loopback-only. Allow the hub connection in your local firewall if necessary. Use your browser's Install/Create app action on **this home screen**, not on individual games. Parental approval may be needed once for this new address/port. Do **not** port-forward or expose these servers to the public internet. They do not have user authentication or internet-facing security hardening. A parent gate prevents accidental taps, not unauthorized access.
+Keep the host computer awake and on the same private Wi-Fi as the tablet or Chromebook. Find its Wi-Fi/LAN address in the computer’s network settings, then open `http://YOUR-COMPUTER-LAN-ADDRESS:4810/` in the device’s browser. Complete Family setup as a grown-up there, or choose a child already added on the host. The Chromebook needs only a browser when another computer runs the server. On PowerShell, set `$env:HOST="0.0.0.0"` before `npm start`. Only the hub listens on the LAN; the game backends remain loopback-only. Allow the hub connection in your local firewall if necessary. Use your browser's Install/Create app action on **this home screen**, not on individual games. Parental approval may be needed once for this new address/port. Do **not** port-forward or expose these servers to the public internet. They do not have user authentication or internet-facing security hardening. A parent gate prevents accidental taps, not unauthorized access.
 
 The apps include launcher icons and manifests. Installation/fullscreen behavior varies by browser; plain HTTP LAN addresses are not secure origins, so a seamless installable/offline experience is not guaranteed. GitHub Pages alone cannot run the Node save APIs.
+
+## What onboarding asks and why
+
+- **First name or nickname, age or grade:** address the child and give the Book age context; no surname or birthday.
+- **Letters, counting, reading and maths facts:** a grown-up’s starting estimate, kept separately from observed gameplay. The optional four-prompt check records “independent”, “with help”, “another day” or “skip”; it does not certify mastery.
+- **Interests and favourite things:** themes for the Book and quests. Both are optional.
+- **Photos:** entirely optional likeness references. The browser strips image metadata and reduces image size, then saves them on your family’s server. Onboarding never sends them to a model provider. They are accessible to a separately configured **local-only** art worker only when you enable the photo permission; games and text generation work without them.
+
+The grown-up gate prevents accidental taps; it is not authentication. On a shared LAN, only use this with people you trust. Data stays until you remove it; use **Remove saved photos** in an edit to delete those images. Private backups may retain copies. See [PRIVACY.md](PRIVACY.md).
+
+## Optional nightly quests and chapters
+
+Games need no AI account. For fresh chapters, a grown-up can separately enable the writer using the family’s own model subscription. [Install for your family](AGENTS.md#enable-the-nightly-quest-writer-optional) gives the login, manual verification and scheduler commands. The text writer sends selected names, interests, learning context and day notes to the selected provider; **it never sends photo bytes**. Voice generation and a custom local art worker are separate optional setups.
 
 ## Privacy and saves
 
 This release starts from fresh public history. It includes no real children's names, household logs, saved profiles, drawings, reports, contact details, credentials, or private deployment settings.
 
-The launcher saves new local progress and diagnostics in **`.data/<game>/`**, which is ignored by Git. A game started individually uses its own directory under `~/.local/share/family-learning-games/`, unless its data environment variable is supplied. Never upload these data directories or attach raw logs/drawings to public issues. Save a backup before changing or removing local data.
+The launcher saves new local progress and diagnostics in **`.data/<game>/`**, which is ignored by Git. Family setup writes **`.data/book/profiles.json`**, **`.data/book/cast.json`**, **`.data/learner/<child>.json`**, and optional **`.data/book/photos/<child>/`**. To keep all of this in a different private folder, set `FAMILY_DEPLOY_ROOT` to that folder every time you run the hub or nightly writer. Existing `FAMILY_BOOK`/`FAMILY_LEARNER` overrides are honoured; onboarding writes only when both stay inside that private root. A game started individually uses its own directory under `~/.local/share/family-learning-games/`, unless its data environment variable is supplied. Never upload these data directories or attach raw logs/drawings to public issues. Save a backup before changing or removing local data.
 
 Gameplay and drawing recognition run on your own server. There is no embedded API key, account requirement, advertising, chat, or third-party analytics. Browser narration may use a browser/vendor speech service; local voices are preferred when available, but offline speech is **not guaranteed**. See [PRIVACY.md](PRIVACY.md) and [SECURITY.md](SECURITY.md).
 

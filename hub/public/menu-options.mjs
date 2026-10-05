@@ -11,11 +11,8 @@ export function parentChallenge(random = Math.random) {
 export function parentAnswerMatches(challenge, answer) {
   return !!challenge && String(answer).replace(/\s/g,'').toUpperCase() === challenge.answer;
 }
-export function menuStyle(player, configured, storage) {
-  let saved;
-  try { saved = storage?.getItem('family-games-menu-style:' + player); } catch {}
-  return (saved || configured) === 'logos' ? 'logos' : 'screenshots';
-}
+// The main menu always shows the illustrated logos; any saved per-device preference is ignored (retired).
+export function menuStyle() { return 'logos'; }
 export function gameArtwork(item, style) {
   return style === 'logos'
     ? {className:'game-logo',src:item.icon || '/game-icons/' + item.id + '.png'}

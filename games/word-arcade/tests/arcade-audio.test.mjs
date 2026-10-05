@@ -6,10 +6,12 @@ import {AUDIO_FILES,PRIVATE_AUDIO_FILES,audioRange} from '../lib/audio-files.mjs
 import {homedir} from 'node:os';
 import {join} from 'node:path';
 const tick=()=>new Promise(r=>setImmediate(r));
-test('Correct answers get a distinct three-note chime, independent of music; effects mute is respected',async t=>{
- const h=harness(t);await h.audio.unlock();h.audio.feedback(true);
- assert.equal(h.oscillators.length,3);assert.ok(h.events.some(e=>e.name==='answer_chime'&&e.ok));
- h.audio.configure({...h.audio.prefs,effects:false});h.audio.feedback(true);assert.equal(h.oscillators.length,3);
+test('Calm: a right answer is one harp pluck, a miss one soft tone (a quiet sine until loaded); effects mute is respected',async t=>{
+ const h=harness(t);await h.audio.unlock();for(let i=0;i<4;i++)await tick();const before=h.samples.length;
+ h.audio.feedback(true);assert.equal(h.samples.length,before+1);assert.ok(h.events.some(e=>e.name==='feedback'&&e.ok&&e.calm));
+ h.audio.feedback(false);assert.equal(h.samples.length,before+2);
+ assert.ok(h.fetches.includes('/audio/calm-harp-c4.m4a')&&h.fetches.includes('/audio/calm-soft.m4a'));
+ h.audio.configure({...h.audio.prefs,effects:false});h.audio.feedback(true);assert.equal(h.samples.length,before+2);
 });
 function harness(t,{state='running',resumeError=false,fetchError=false}={}){
   const events=[],params=[],samples=[],oscillators=[],fetches=[];
@@ -25,23 +27,23 @@ function harness(t,{state='running',resumeError=false,fetchError=false}={}){
   let created=0;const audio=new ArcadeAudio({createContext:()=>{created++;return ctx;},createPlayer:()=>player,fetchAudio:async file=>{fetches.push(file);return {ok:!fetchError,arrayBuffer:async()=>new ArrayBuffer(8)};},record:(name,detail)=>events.push({name,...detail})});
   t.after(()=>audio.dispose());return {audio,ctx,player,events,params,samples,oscillators,fetches,created:()=>created};
 }
-test('Defaults are louder, music remains opt-in, legacy selections/explicit zero volumes survive',async t=>{
-  const h=harness(t);assert.equal(h.created(),0);assert.deepEqual(audioPreferences(),{track:'off',effects:true,volume:0.65,effectsVolume:0.6,laser:'pulse'});
+test('Background defaults off; harp and explicit music selections remain; legacy selections/explicit zero volumes survive',async t=>{
+  const h=harness(t);assert.equal(h.created(),0);assert.deepEqual(audioPreferences(),{track:'off',effects:true,volume:0.5,effectsVolume:0.6,laser:'harp'});
   assert.equal(audioPreferences({volume:7}).volume,1);assert.equal(audioPreferences({volume:0,effectsVolume:0}).effectsVolume,0);
   assert.equal(audioPreferences({track:'stardrift',volume:0.35}).volume,0.35);
-  assert.equal(audioPreferences({track:'bogus',laser:'unknown'}).laser,'pulse');
-  await h.audio.unlock();await h.audio.unlock();assert.equal(h.created(),1);assert.equal(h.player.played.length,0);
+  assert.equal(audioPreferences({track:'bogus',laser:'unknown'}).laser,'harp');assert.equal(audioPreferences({track:'off'}).track,'off');
+  await h.audio.unlock();await h.audio.unlock();assert.equal(h.created(),1);assert.deepEqual(h.player.played,[]);
 });
 test('Recorded laser fires once, caches downloads and remains independent of music/voice',async t=>{
-  const h=harness(t);await h.audio.unlock();await h.audio.preloadLaser();assert.equal(h.audio.laser(),true);
+  const h=harness(t);h.audio.configure({...h.audio.prefs,track:'off'});await h.audio.unlock();await h.audio.preloadLaser();assert.equal(h.audio.laser(),true);
   assert.equal(h.samples.length,1);assert.equal(h.events.filter(e=>e.name==='laser')[0].recorded,true);assert.equal(h.player.played.length,0);
-  h.audio.laser();assert.equal(h.samples.length,2);assert.equal(h.samples[0].stopped,true);assert.equal(h.fetches.length,1);
+  h.audio.laser();assert.equal(h.samples.length,2);assert.equal(h.samples[0].stopped,true);assert.equal(h.fetches.filter(f=>LASERS.some(l=>l.file===f)).length,1);
   h.audio.configure({...h.audio.prefs,effects:false});h.audio.laser();assert.equal(h.samples.length,2);
 });
 test('All samples preload independently; pause suppresses and clears shots',async t=>{
   const h=harness(t);await h.audio.unlock();
   for(const laser of LASERS){h.audio.configure({...h.audio.prefs,laser:laser.id});await h.audio.preloadLaser();h.audio.laser();}
-  assert.equal(h.samples.length,LASERS.length);assert.equal(new Set(h.fetches).size,LASERS.length);
+  assert.equal(h.samples.length,LASERS.length);assert.equal(new Set(h.fetches.filter(f=>LASERS.some(l=>l.file===f))).size,LASERS.length);
   h.audio.setPaused(true);assert.equal(h.audio.nodes.size,0);assert.equal(h.audio.laser(),false);
   h.audio.setPaused(false);h.audio.laser();assert.equal(h.samples.length,LASERS.length+1);
 });
@@ -68,7 +70,7 @@ test('Muted effects and volume zero do not pause music; late play errors cannot 
 test('Failed decode uses short rounded fallback, not previous sawtooth; recovery stays possible',async t=>{
   const h=harness(t,{fetchError:true});await h.audio.unlock();await h.audio.preloadLaser();h.audio.laser();
   assert.equal(h.oscillators.length,1);assert.equal(h.oscillators[0].type,'sine');assert.equal(h.samples.length,0);
-  assert.ok(h.events.some(e=>e.name==='audio_error'&&e.reason==='laser_file'));
+  assert.ok(h.events.some(e=>e.name==='audio_error'&&['laser_file','calm_file'].includes(e.reason)));
 });
 test('Suspended-context first input resumes; disposal cancels pending playback',async t=>{
   const h=harness(t,{state:'suspended'});h.audio.laser();await tick();assert.equal(h.events.filter(e=>e.name==='laser').length,1);
@@ -79,8 +81,8 @@ test('Resume failures are logged without throwing into gameplay',async t=>{
   const h=harness(t,{state:'suspended',resumeError:true});assert.equal(await h.audio.unlock(),false);assert.equal(h.events.at(-1).name,'audio_error');
 });
 test('Recordings exist locally, private assets stay outside public bundle, and byte ranges are bounded',async()=>{
-  for(const f of AUDIO_FILES){const path=PRIVATE_AUDIO_FILES.has(f)?join(process.env.WORD_ARCADE_AUDIO||join(homedir(),'.local/share/family-learning-games/word-arcade/audio'),f):new URL('../public/audio/'+f,import.meta.url);const bytes=await readFile(path);assert.ok(bytes.length>100);if(PRIVATE_AUDIO_FILES.has(f))await assert.rejects(readFile(new URL('../public/audio/'+f,import.meta.url)),{code:'ENOENT'});}
-  const credits=await readFile(new URL('../public/audio/CREDITS.md',import.meta.url),'utf8');assert.match(credits,/original/i);assert.match(credits,/CC0/);assert.match(credits,/Kenney/);
+  for(const f of AUDIO_FILES){const path=PRIVATE_AUDIO_FILES.has(f)?join(process.env.WORD_ARCADE_AUDIO||join(homedir(),'.local/share/word-arcade/audio'),f):new URL('../public/audio/'+f,import.meta.url);const bytes=await readFile(path);assert.ok(bytes.length>100);if(PRIVATE_AUDIO_FILES.has(f))await assert.rejects(readFile(new URL('../public/audio/'+f,import.meta.url)),{code:'ENOENT'});}
+  const credits=await readFile(new URL('../public/audio/CREDITS.md',import.meta.url),'utf8');assert.match(credits,/synthesized/);assert.match(credits,/No sampled songs/);assert.match(credits,/Kenney/);
   assert.deepEqual(audioRange('bytes=0-99',1000),{start:0,end:99,partial:true});
   assert.deepEqual(audioRange('bytes=-100',1000),{start:900,end:999,partial:true});
   assert.deepEqual(audioRange('bytes=900-',1000),{start:900,end:999,partial:true});

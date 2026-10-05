@@ -4,8 +4,8 @@ import {readFileSync} from 'node:fs';
 import ts from 'typescript';
 
 test('a fresh install speaks every math goal without a recorded cache, waits for completion and settles when stopped',async()=>{
- const source=readFileSync(new URL('../lib/audio.ts',import.meta.url),'utf8').replace(/^import .*;\n/,"const takeAwayPrompt=()=>'';\n");
- const js=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
+ const source=readFileSync(new URL('../lib/audio.ts',import.meta.url),'utf8').replace(/^import .*;\n/gm," ")+"\n";
+ const js=ts.transpileModule("const takeAwayPrompt=()=>'',calmAudio=()=>({duck:()=>()=>{}});\n"+source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
  const old={fetch:globalThis.fetch,speechSynthesis:globalThis.speechSynthesis,SpeechSynthesisUtterance:globalThis.SpeechSynthesisUtterance};
  let cancelled=0;const spoken=[];
  try{

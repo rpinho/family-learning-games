@@ -19,7 +19,7 @@ const play = (b, u) => b.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotio
 export function matchSettings(s = {}) {
   const name = typeof s.opponent === "string" && /^[\p{L}][\p{L} '-]{0,19}$/u.test(s.opponent) ? s.opponent : "Rook";
   const start = Number.isFinite(s.matchRating) ? clamp(Math.round(s.matchRating), RATING_MIN, RATING_MAX) : DEFAULT_RATING;
-  return { opponent: name, startRating: start, bigHints: s.bigHints === true };
+  return { opponent: name, startRating: start, bigHints: s.bigHints === true, coachChatter: s.coachChatter === 'lively' ? 'lively' : 'quiet' };
 }
 export function freshMatch(settings = {}) {
   const { startRating } = matchSettings(settings);
@@ -47,7 +47,8 @@ export function coachStyle(rating) {
     random: curve([[50, 0.3], [300, 0.12], [500, 0.03], [700, 0]], r),
     takeMate: curve([[50, 0.45], [600, 0.8], [1200, 0.97], [1800, 1]], r),
     // Chance of not noticing a mate-in-one threat (the Scholar's Mate and other rookie traps).
-    trapFall: curve([[50, 0.9], [300, 0.8], [600, 0.5], [900, 0.25], [1200, 0.08], [1500, 0]], r),
+    // (the gentlest levels only: from about 800 the coach no longer falls for the Scholar's Mate)
+    trapFall: curve([[50, 0.9], [300, 0.7], [600, 0.3], [800, 0]], r),
     multipv: r < 1000 ? 20 : 10,
     ms: r < 600 ? 200 : r < 1200 ? 280 : 350,
   };
@@ -94,11 +95,14 @@ export function chooseCoachMove(pvs, rating, legal, rng = Math.random) {
 }
 // Up after a win, down faster after a loss (faster still at first and on streaks), so the child
 // wins a little more than half: 60% while calibrating, about 58% after.
-export function nextRating(rating, outcome, previous = [], games = 0) {
+// Wins climb faster than losses fall back (2026-09-28: six wins in a row felt "too easy, lemon squeezy"):
+// +60 a win (+40 after six games), x1.5 after two wins in a row, x2 after three or more, x1.25 for a quick mate.
+export function nextRating(rating, outcome, previous = [], games = 0, plies = null) {
   if (outcome === 0.5) return rating;
-  let delta = outcome === 1 ? (games < 6 ? 40 : 25) : -(games < 6 ? 60 : 35);
-  const last = previous.slice(-2);
-  if (last.length === 2 && last.every((x) => x === outcome)) delta *= 1.5;
+  let delta = outcome === 1 ? (games < 6 ? 60 : 40) : -(games < 6 ? 60 : 35);
+  let run = 0; for (let i = previous.length - 1; i >= 0 && previous[i] === outcome; i--) run++;
+  if (run >= 3 && outcome === 1) delta *= 2; else if (run >= 2) delta *= 1.5;
+  if (outcome === 1 && plies != null && plies <= 30) delta *= 1.25;
   return clamp(Math.round(rating + delta), RATING_MIN, RATING_MAX);
 }
 export function matchBoard(g) {
@@ -142,28 +146,41 @@ export function hintIdea(board, move) {
 function line(g, kind) {
   const list = Array.isArray(V[kind]) ? V[kind] : [V[kind]];
   g.voiceTurn ??= {};
-  const i = g.voiceTurn[kind] ?? 0;
+  const seed = [...(g.id || '')].reduce((sum, c) => sum + c.charCodeAt(0), 0);
+  const i = g.voiceTurn[kind] ?? seed % list.length;
   g.voiceTurn[kind] = (i + 1) % list.length;
   return list[i % list.length];
 }
-// At most one short reaction, at key moments only.
-export function reactionFor(g, rec, reply, result) {
+// Lively installs react to more board events. The client supplies breathing room
+// in seconds as well, so quick consecutive moves never become a speech backlog.
+export function reactionFor(g, rec, reply, result, settings = {}) {
   const n = g.records.length, since = n - (g.spokeAt ?? -10);
+  const lively = settings.coachChatter === 'lively';
   let kind = null;
   const scholar = result?.kind === "win" && result.reason === "checkmate" && rec.piece === "q" && rec.captured === "p" &&
     rec.uci.slice(2, 4) === (g.side === "w" ? "f7" : "f2") && g.moves.length <= 24;
   if (scholar) kind = "scholar";
   else if (result) kind = result.kind === "win" ? "youWin" : result.kind === "loss" ? "meWin" : result.reason === "stalemate" ? "stalemate" : "draw";
+  else if (rec.captured === 'q') kind = 'youQueen';
+  else if (lively && reply?.captured === 'q') kind = 'meQueen';
   else if (reply?.captured && VALUE[reply.captured] >= 3 && rec.loss >= 250) kind = "pounce";
   else if (rec.promotion) kind = "youPromote";
   else if (reply?.promotion) kind = "mePromote";
-  else if (since >= 3) {
-    if (rec.captured && VALUE[rec.captured] >= 3 && rec.loss < 150) kind = "youCapture";
-    else if (rec.uci === rec.expect && rec.loss < 40 && (rec.fork || rec.check)) kind = "good";
-    else if (rec.check && since >= 4) kind = "youCheck";
-    else if (reply?.check && since >= 4) kind = "meCheck";
+  else if (since >= (lively ? 1 : 2)) {
+    if (rec.captured && reply?.captured) kind = 'trade';
+    else if (reply?.captured && (lively || VALUE[reply.captured] >= 3 || since >= 4)) kind = 'meCapture';
+    else if (rec.captured && (lively || VALUE[rec.captured] >= 3 || since >= 4)) kind = 'youCapture';
+    else if (rec.uci === rec.expect && rec.loss < 40 && rec.fork) kind = "good";
+    else if (rec.check && (lively || since >= 4)) kind = "youCheck";
+    else if (reply?.check && (lively || since >= 4)) kind = "meCheck";
+    else if (lively && rec.castle) kind = 'castle';
+    else if (lively && since >= 4) kind = 'thinking';
   }
-  if (!kind) return null;
+  if (!kind) {
+    // A capture still gets a visible reaction when the speech cooldown is on.
+    const motion = reply?.captured ? 'meCapture' : rec.captured ? 'youCapture' : null;
+    return motion ? {kind:motion,line:null,ply:g.moves.length} : null;
+  }
   g.spokeAt = n;
   return { kind, line: line(g, kind), ply: g.moves.length };
 }
@@ -226,7 +243,7 @@ function finish(m, g, result, now) {
   const outcome = result.kind === "win" ? 1 : result.kind === "loss" ? 0 : 0.5;
   const before = m.rating;
   const previous = m.history.map((h) => (h.kind === "win" ? 1 : h.kind === "loss" ? 0 : 0.5));
-  m.rating = nextRating(before, outcome, previous, m.games);
+  m.rating = nextRating(before, outcome, previous, m.games, (g.moves || []).length);
   m.games++;
   m.record[result.kind]++;
   g.result = { ...result, ratingBefore: before, ratingAfter: m.rating };
@@ -249,7 +266,15 @@ export function recordAbandoned(p, settings = {}, { id, side, plies }, now = Dat
   m.history.push({ id, at: now, side, kind: "loss", reason: "abandoned", plies, ratingBefore: before, ratingAfter: m.rating });
   m.history = m.history.slice(-60);
 }
-export const coachRating = (p, settings = {}) => p.match?.rating ?? matchSettings(settings).startRating;
+// The coach's strength: the child's rating, plus a step for a current winning streak (+100 per win beyond two in a
+// row), so a run of easy wins is answered at once without rewriting the child's saved rating.
+export function coachRating(p, settings = {}) {
+  const r = p.match?.rating ?? matchSettings(settings).startRating, h = p.match?.history || [];
+  let run = 0; for (let i = h.length - 1; i >= 0 && h[i].kind === "win"; i--) run++;
+  return clamp(r + Math.max(0, run - 2) * 100, RATING_MIN, RATING_MAX);
+}
+// Friendly practice plays a step above the full-game coach (practice is where he stretches).
+export const practiceRating = (p, settings = {}) => clamp(coachRating(p, settings) + 150, RATING_MIN, RATING_MAX);
 const publicHint = (h) => h && { stage: h.stage, idea: h.idea, text: h.voice, voice: h.voice, from: h.from, to: h.to };
 export function publicMatch(p, settings = {}) {
   const s = matchSettings(settings), m = p.match || freshMatch(settings), g = m.game;
@@ -278,7 +303,7 @@ export async function actMatch(p, input, { engine, settings = {}, now = Date.now
       hintedTurns: 0, slips: 0, startedAt: now, result: null, react: null, lastMoves: [] };
     const b = new Chess(START);
     if (side === "b") {
-      const r = await coachMove(g, b, m.rating, engine, rng);
+      const r = await coachMove(g, b, coachRating({ match: m }), engine, rng);
       g.lastMoves = [uciOf(r.move)];
     }
     g.fen = b.fen();
@@ -303,7 +328,7 @@ export async function actMatch(p, input, { engine, settings = {}, now = Date.now
     try { mv = b.move({ from: input.from, to: input.to, promotion: input.promotion || "q" }); }
     catch { fail("That move is not legal."); }
     const rec = { ply: g.moves.length, fen: fenBefore, uci: uciOf(mv), san: mv.san, piece: mv.piece, captured: mv.captured || null,
-      promotion: mv.promotion || null, check: b.isCheck(), mate: b.isCheckmate(), fork: targets(b, mv.to).length >= 2 && !attacked(b, mv.to, b.turn()),
+      promotion: mv.promotion || null, castle: mv.flags.includes('k') || mv.flags.includes('q'), check: b.isCheck(), mate: b.isCheckmate(), fork: targets(b, mv.to).length >= 2 && !attacked(b, mv.to, b.turn()),
       expect: g.expect, before: g.evalLearner, after: null, loss: 0, hinted: !!g.hint };
     g.moves.push(rec.uci);
     g.records.push(rec);
@@ -311,7 +336,7 @@ export async function actMatch(p, input, { engine, settings = {}, now = Date.now
     g.coach = null;
     let reply = null, result = resultOf(b, g.side, g.moves.length);
     if (!result) {
-      const r = await coachMove(g, b, m.rating, engine, rng);
+      const r = await coachMove(g, b, coachRating({ match: m }), engine, rng);
       reply = r.move;
       if (r.bestScore != null) rec.after = -r.bestScore;
       result = resultOf(b, g.side, g.moves.length);
@@ -331,7 +356,7 @@ export async function actMatch(p, input, { engine, settings = {}, now = Date.now
       }
       if (mo?.better) mo.betterSan = sanOf(mo.fen, mo.better);
     }
-    g.react = reactionFor(g, rec, reply && { captured: reply.captured, promotion: reply.promotion, check: b.isCheck() && !b.isCheckmate() }, g.result);
+    g.react = reactionFor(g, rec, reply && { captured: reply.captured, promotion: reply.promotion, check: b.isCheck() && !b.isCheckmate() }, g.result, s);
     return { moves: g.lastMoves, react: g.react?.kind || null, result: g.result?.kind || null };
   }
   if (input.type === "match-undo") {

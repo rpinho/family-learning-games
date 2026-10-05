@@ -1,4 +1,236 @@
 {
+  "meadow": {
+    "file": "bg/demo-meadow.svg",
+    "about": "a sunny meadow with hills and flowers",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-meadow-portrait.svg",
+        "about": "a sunny meadow with hills and flowers",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "forest": {
+    "file": "bg/demo-forest.svg",
+    "about": "a friendly forest with a path",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-forest-portrait.svg",
+        "about": "a friendly forest with a path",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "pitch": {
+    "file": "bg/demo-pitch.svg",
+    "about": "a soccer pitch with a goal",
+    "goal": [
+      0.35,
+      0.43,
+      0.3,
+      0.13
+    ],
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-pitch-portrait.svg",
+        "about": "a soccer pitch with a goal",
+        "goal": [
+          0.35,
+          0.43,
+          0.3,
+          0.13
+        ],
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "castle": {
+    "file": "bg/demo-castle.svg",
+    "about": "a friendly castle on a hill",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-castle-portrait.svg",
+        "about": "a friendly castle on a hill",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "night": {
+    "file": "bg/demo-night.svg",
+    "about": "a starry night over a cosy house (good for endings)",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-night-portrait.svg",
+        "about": "a starry night over a cosy house (good for endings)",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
   "castle-gate": {
     "file": "bg/real-foreground/castle-gateLandscape.webp",
     "about": "a big castle gate with three round shields",
@@ -94,84 +326,6 @@
       0.437
     ]
   },
-  "castle-forest": {
-    "file": "bg/real-foreground/castleLandscape.webp",
-    "url": "/book-art/bg/real-foreground/castleLandscape.webp",
-    "size": [
-      1774,
-      887
-    ],
-    "fit": "cover",
-    "focal": [
-      0.5,
-      0
-    ],
-    "realForeground": true,
-    "groundStart": 0.56,
-    "foreground": 0.56,
-    "ground": 0.97,
-    "standBand": [
-      0,
-      1
-    ],
-    "oneRow": false,
-    "portraitHeight": null,
-    "portraitGround": null,
-    "floorColor": null,
-    "keepOut": [
-      {
-        "name": "castle and river",
-        "r": [
-          0.09,
-          0.01,
-          0.84,
-          0.48
-        ]
-      }
-    ],
-    "goal": null,
-    "targets": null,
-    "variants": {
-      "portrait": {
-        "file": "bg/real-foreground/castlePortrait.webp",
-        "url": "/book-art/bg/real-foreground/castlePortrait.webp",
-        "size": [
-          836,
-          1881
-        ],
-        "fit": "cover",
-        "focal": [
-          0.5,
-          0
-        ],
-        "realForeground": true,
-        "groundStart": 0.25,
-        "foreground": 0.25,
-        "ground": 0.97,
-        "standBand": [
-          0,
-          1
-        ],
-        "oneRow": false,
-        "portraitHeight": null,
-        "portraitGround": null,
-        "floorColor": null,
-        "keepOut": [
-          {
-            "name": "castle and river",
-            "r": [
-              0.12,
-              0.01,
-              0.8,
-              0.22
-            ]
-          }
-        ],
-        "goal": null,
-        "targets": null
-      }
-    }
-  },
   "chess-courtyard": {
     "file": "bg/real-foreground/chess-courtyardLandscape.webp",
     "about": "a sunny castle courtyard with a giant chessboard on the stone floor; three giant dark wooden pieces on one side (king, knight, bishop) and three giant cream pieces on the other (king, knight, rook)",
@@ -254,6 +408,734 @@
     "floorColor": null,
     "targets": null,
     "goal": null
+  },
+  "soccer-pitch": {
+    "file": "bg/real-foreground/soccerLandscape.webp",
+    "url": "/book-art/bg/real-foreground/soccerLandscape.webp",
+    "size": [
+      1774,
+      887
+    ],
+    "fit": "cover",
+    "focal": [
+      0.5,
+      0
+    ],
+    "realForeground": true,
+    "groundStart": 0.49,
+    "foreground": 0.49,
+    "ground": 0.97,
+    "standBand": [
+      0,
+      1
+    ],
+    "oneRow": false,
+    "portraitHeight": null,
+    "portraitGround": null,
+    "floorColor": null,
+    "keepOut": [
+      {
+        "name": "complete soccer goal",
+        "r": [
+          0.382,
+          0.319,
+          0.197,
+          0.131
+        ]
+      }
+    ],
+    "goal": [
+      0.382,
+      0.319,
+      0.197,
+      0.131
+    ],
+    "targets": null,
+    "variants": {
+      "portrait": {
+        "file": "bg/real-foreground/soccerPortrait.webp",
+        "url": "/book-art/bg/real-foreground/soccerPortrait.webp",
+        "size": [
+          836,
+          1881
+        ],
+        "fit": "cover",
+        "focal": [
+          0.5,
+          0
+        ],
+        "realForeground": true,
+        "groundStart": 0.28,
+        "foreground": 0.28,
+        "ground": 0.97,
+        "standBand": [
+          0,
+          1
+        ],
+        "oneRow": false,
+        "portraitHeight": null,
+        "portraitGround": null,
+        "floorColor": null,
+        "keepOut": [
+          {
+            "name": "complete soccer goal",
+            "r": [
+              0.35,
+              0.202,
+              0.3,
+              0.058
+            ]
+          }
+        ],
+        "goal": [
+          0.35,
+          0.202,
+          0.3,
+          0.058
+        ],
+        "targets": null
+      }
+    }
+  },
+  "treehouse-town": {
+    "file": "bg/real-foreground/treehouse-townLandscape.webp",
+    "about": "a lush treehouse town with rope bridges",
+    "bed": "forest",
+    "keepOut": [
+      {
+        "name": "painted scene objects",
+        "r": [
+          0,
+          0,
+          1,
+          0.49
+        ]
+      }
+    ],
+    "size": [
+      1774,
+      887
+    ],
+    "focal": [
+      0.5,
+      0
+    ],
+    "groundStart": 0.53,
+    "ground": 0.97,
+    "url": "/book-art/bg/real-foreground/treehouse-townLandscape.webp",
+    "fit": "cover",
+    "realForeground": true,
+    "foreground": 0.53,
+    "standBand": [
+      0,
+      1
+    ],
+    "oneRow": false,
+    "portraitHeight": null,
+    "portraitGround": null,
+    "floorColor": null,
+    "variants": {
+      "portrait": {
+        "file": "bg/real-foreground/treehouse-townPortrait.webp",
+        "about": "a lush treehouse town with rope bridges",
+        "bed": "forest",
+        "keepOut": [
+          {
+            "name": "painted scene objects",
+            "r": [
+              0,
+              0,
+              1,
+              0.235
+            ]
+          }
+        ],
+        "size": [
+          836,
+          1881
+        ],
+        "focal": [
+          0.5,
+          0
+        ],
+        "groundStart": 0.25,
+        "ground": 0.97,
+        "url": "/book-art/bg/real-foreground/treehouse-townPortrait.webp",
+        "fit": "cover",
+        "realForeground": true,
+        "foreground": 0.25,
+        "standBand": [
+          0,
+          1
+        ],
+        "oneRow": false,
+        "portraitHeight": null,
+        "portraitGround": null,
+        "floorColor": null,
+        "variants": null,
+        "targets": null,
+        "goal": null
+      }
+    },
+    "targets": null,
+    "goal": null
+  },
+  "bakery": {
+    "file": "bg/demo-bakery.svg",
+    "about": "A fictional demo place: Treehouse bakery",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-bakery-portrait.svg",
+        "about": "A fictional demo place: Treehouse bakery",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "castle-forest": {
+    "file": "bg/real-foreground/castleLandscape.webp",
+    "url": "/book-art/bg/real-foreground/castleLandscape.webp",
+    "size": [
+      1774,
+      887
+    ],
+    "fit": "cover",
+    "focal": [
+      0.5,
+      0
+    ],
+    "realForeground": true,
+    "groundStart": 0.56,
+    "foreground": 0.56,
+    "ground": 0.97,
+    "standBand": [
+      0,
+      1
+    ],
+    "oneRow": false,
+    "portraitHeight": null,
+    "portraitGround": null,
+    "floorColor": null,
+    "keepOut": [
+      {
+        "name": "castle and river",
+        "r": [
+          0.09,
+          0.01,
+          0.84,
+          0.48
+        ]
+      }
+    ],
+    "goal": null,
+    "targets": null,
+    "variants": {
+      "portrait": {
+        "file": "bg/real-foreground/castlePortrait.webp",
+        "url": "/book-art/bg/real-foreground/castlePortrait.webp",
+        "size": [
+          836,
+          1881
+        ],
+        "fit": "cover",
+        "focal": [
+          0.5,
+          0
+        ],
+        "realForeground": true,
+        "groundStart": 0.25,
+        "foreground": 0.25,
+        "ground": 0.97,
+        "standBand": [
+          0,
+          1
+        ],
+        "oneRow": false,
+        "portraitHeight": null,
+        "portraitGround": null,
+        "floorColor": null,
+        "keepOut": [
+          {
+            "name": "castle and river",
+            "r": [
+              0.12,
+              0.01,
+              0.8,
+              0.22
+            ]
+          }
+        ],
+        "goal": null,
+        "targets": null
+      }
+    }
+  },
+  "workshop": {
+    "file": "bg/demo-workshop.svg",
+    "about": "A fictional demo place: Castle workshop",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-workshop-portrait.svg",
+        "about": "A fictional demo place: Castle workshop",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "river-bridge": {
+    "file": "bg/demo-river-bridge.svg",
+    "about": "A fictional demo place: River bridge",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-river-bridge-portrait.svg",
+        "about": "A fictional demo place: River bridge",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "pirate-ship": {
+    "file": "bg/real-foreground/pirate-shipLandscape.webp",
+    "about": "a friendly pirate ship at a river dock",
+    "bed": "meadow",
+    "keepOut": [
+      {
+        "name": "pirate ship and dock",
+        "r": [
+          0.335,
+          0,
+          0.505,
+          0.43
+        ]
+      }
+    ],
+    "size": [
+      1774,
+      887
+    ],
+    "focal": [
+      0.5,
+      0
+    ],
+    "groundStart": 0.465,
+    "ground": 0.97,
+    "url": "/book-art/bg/real-foreground/pirate-shipLandscape.webp",
+    "fit": "cover",
+    "realForeground": true,
+    "foreground": 0.465,
+    "standBand": [
+      0,
+      1
+    ],
+    "oneRow": false,
+    "portraitHeight": null,
+    "portraitGround": null,
+    "floorColor": null,
+    "variants": {
+      "portrait": {
+        "file": "bg/real-foreground/pirate-shipPortrait.webp",
+        "about": "a friendly pirate ship at a river dock",
+        "bed": "meadow",
+        "keepOut": [
+          {
+            "name": "pirate ship and dock",
+            "r": [
+              0.22,
+              0.13,
+              0.71,
+              0.16
+            ]
+          }
+        ],
+        "size": [
+          836,
+          1881
+        ],
+        "focal": [
+          0.5,
+          0
+        ],
+        "groundStart": 0.34,
+        "ground": 0.97,
+        "url": "/book-art/bg/real-foreground/pirate-shipPortrait.webp",
+        "fit": "cover",
+        "realForeground": true,
+        "foreground": 0.34,
+        "standBand": [
+          0,
+          1
+        ],
+        "oneRow": false,
+        "portraitHeight": null,
+        "portraitGround": null,
+        "floorColor": null,
+        "variants": null,
+        "targets": null,
+        "goal": null
+      }
+    },
+    "targets": null,
+    "goal": null
+  },
+  "castle-moon-hill": {
+    "file": "bg/demo-castle-moon-hill.svg",
+    "about": "A fictional demo place: Moon hill",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-castle-moon-hill-portrait.svg",
+        "about": "A fictional demo place: Moon hill",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "castle-night": {
+    "file": "bg/demo-castle-night.svg",
+    "about": "A fictional demo place: Secret night garden",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-castle-night-portrait.svg",
+        "about": "A fictional demo place: Secret night garden",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "library-tower": {
+    "file": "bg/demo-library-tower.svg",
+    "about": "A fictional demo place: Library tower",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-library-tower-portrait.svg",
+        "about": "A fictional demo place: Library tower",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "captain-cabin": {
+    "file": "bg/demo-captain-cabin.svg",
+    "about": "A fictional demo place: Captain’s cabin",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-captain-cabin-portrait.svg",
+        "about": "A fictional demo place: Captain’s cabin",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "lighthouse": {
+    "file": "bg/demo-lighthouse.svg",
+    "about": "A fictional demo place: Lighthouse",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-lighthouse-portrait.svg",
+        "about": "A fictional demo place: Lighthouse",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "forest-meadow": {
+    "file": "bg/demo-forest-meadow.svg",
+    "about": "A fictional demo place: Waterfall hideaway",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-forest-meadow-portrait.svg",
+        "about": "A fictional demo place: Waterfall hideaway",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
   },
   "volcano": {
     "file": "bg/real-foreground/volcanoLandscape.webp",
@@ -664,257 +1546,2289 @@
     },
     "goal": null
   },
-  "pirate-ship": {
-    "file": "bg/real-foreground/pirate-shipLandscape.webp",
-    "about": "a friendly pirate ship at a river dock",
-    "bed": "meadow",
-    "keepOut": [
-      {
-        "name": "pirate ship and dock",
-        "r": [
-          0.335,
-          0,
-          0.505,
-          0.43
-        ]
-      }
-    ],
+  "flower-meadow": {
+    "file": "bg/demo-flower-meadow.svg",
+    "about": "A fictional demo place: Flower meadow",
     "size": [
-      1774,
-      887
+      1536,
+      1024
     ],
     "focal": [
       0.5,
-      0
+      0.25
     ],
-    "groundStart": 0.465,
-    "ground": 0.97,
-    "url": "/book-art/bg/real-foreground/pirate-shipLandscape.webp",
-    "fit": "cover",
-    "realForeground": true,
-    "foreground": 0.465,
+    "groundStart": 0.7,
     "standBand": [
-      0,
-      1
+      0.78,
+      0.98
     ],
-    "oneRow": false,
-    "portraitHeight": null,
-    "portraitGround": null,
-    "floorColor": null,
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {
+      "yellow-flowers": [
+        {
+          "id": "1",
+          "label": "Demo token 1",
+          "r": [
+            0.18,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "2",
+          "label": "Demo token 2",
+          "r": [
+            0.33999999999999997,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "3",
+          "label": "Demo token 3",
+          "r": [
+            0.5,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "4",
+          "label": "Demo token 4",
+          "r": [
+            0.6599999999999999,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "5",
+          "label": "Demo token 5",
+          "r": [
+            0.18,
+            0.36,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "6",
+          "label": "Demo token 6",
+          "r": [
+            0.33999999999999997,
+            0.36,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "7",
+          "label": "Demo token 7",
+          "r": [
+            0.5,
+            0.36,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "8",
+          "label": "Demo token 8",
+          "r": [
+            0.6599999999999999,
+            0.36,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "9",
+          "label": "Demo token 9",
+          "r": [
+            0.18,
+            0.5,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "10",
+          "label": "Demo token 10",
+          "r": [
+            0.33999999999999997,
+            0.5,
+            0.085,
+            0.07
+          ]
+        }
+      ]
+    },
     "variants": {
       "portrait": {
-        "file": "bg/real-foreground/pirate-shipPortrait.webp",
-        "about": "a friendly pirate ship at a river dock",
-        "bed": "meadow",
-        "keepOut": [
-          {
-            "name": "pirate ship and dock",
-            "r": [
-              0.22,
-              0.13,
-              0.71,
-              0.16
-            ]
-          }
-        ],
+        "file": "bg/demo-flower-meadow-portrait.svg",
+        "about": "A fictional demo place: Flower meadow",
         "size": [
-          836,
-          1881
+          768,
+          1366
         ],
         "focal": [
           0.5,
-          0
+          0.25
         ],
-        "groundStart": 0.34,
-        "ground": 0.97,
-        "url": "/book-art/bg/real-foreground/pirate-shipPortrait.webp",
-        "fit": "cover",
-        "realForeground": true,
-        "foreground": 0.34,
+        "groundStart": 0.7,
         "standBand": [
-          0,
-          1
+          0.78,
+          0.98
         ],
-        "oneRow": false,
-        "portraitHeight": null,
-        "portraitGround": null,
-        "floorColor": null,
-        "variants": null,
-        "targets": null,
-        "goal": null
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {
+          "yellow-flowers": [
+            {
+              "id": "1",
+              "label": "Demo token 1",
+              "r": [
+                0.18,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "2",
+              "label": "Demo token 2",
+              "r": [
+                0.33999999999999997,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "3",
+              "label": "Demo token 3",
+              "r": [
+                0.5,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "4",
+              "label": "Demo token 4",
+              "r": [
+                0.6599999999999999,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "5",
+              "label": "Demo token 5",
+              "r": [
+                0.18,
+                0.36,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "6",
+              "label": "Demo token 6",
+              "r": [
+                0.33999999999999997,
+                0.36,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "7",
+              "label": "Demo token 7",
+              "r": [
+                0.5,
+                0.36,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "8",
+              "label": "Demo token 8",
+              "r": [
+                0.6599999999999999,
+                0.36,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "9",
+              "label": "Demo token 9",
+              "r": [
+                0.18,
+                0.5,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "10",
+              "label": "Demo token 10",
+              "r": [
+                0.33999999999999997,
+                0.5,
+                0.085,
+                0.07
+              ]
+            }
+          ]
+        }
       }
-    },
-    "targets": null,
-    "goal": null
+    }
   },
-  "treehouse-town": {
-    "file": "bg/real-foreground/treehouse-townLandscape.webp",
-    "about": "a lush treehouse town with rope bridges",
-    "bed": "forest",
-    "keepOut": [
-      {
-        "name": "painted scene objects",
-        "r": [
-          0,
-          0,
-          1,
-          0.49
-        ]
-      }
-    ],
+  "brain-world": {
+    "file": "bg/demo-brain-world.svg",
+    "about": "A fictional demo place: Brain room",
     "size": [
-      1774,
-      887
+      1536,
+      1024
     ],
     "focal": [
       0.5,
-      0
+      0.25
     ],
-    "groundStart": 0.53,
-    "ground": 0.97,
-    "url": "/book-art/bg/real-foreground/treehouse-townLandscape.webp",
-    "fit": "cover",
-    "realForeground": true,
-    "foreground": 0.53,
+    "groundStart": 0.7,
     "standBand": [
-      0,
-      1
+      0.78,
+      0.98
     ],
-    "oneRow": false,
-    "portraitHeight": null,
-    "portraitGround": null,
-    "floorColor": null,
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
     "variants": {
       "portrait": {
-        "file": "bg/real-foreground/treehouse-townPortrait.webp",
-        "about": "a lush treehouse town with rope bridges",
-        "bed": "forest",
-        "keepOut": [
-          {
-            "name": "painted scene objects",
-            "r": [
-              0,
-              0,
-              1,
-              0.235
-            ]
-          }
-        ],
+        "file": "bg/demo-brain-world-portrait.svg",
+        "about": "A fictional demo place: Brain room",
         "size": [
-          836,
-          1881
+          768,
+          1366
         ],
         "focal": [
           0.5,
-          0
+          0.25
         ],
-        "groundStart": 0.25,
-        "ground": 0.97,
-        "url": "/book-art/bg/real-foreground/treehouse-townPortrait.webp",
-        "fit": "cover",
-        "realForeground": true,
-        "foreground": 0.25,
+        "groundStart": 0.7,
         "standBand": [
-          0,
-          1
+          0.78,
+          0.98
         ],
-        "oneRow": false,
-        "portraitHeight": null,
-        "portraitGround": null,
-        "floorColor": null,
-        "variants": null,
-        "targets": null,
-        "goal": null
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
       }
-    },
-    "targets": null,
-    "goal": null
+    }
   },
-  "soccer-pitch": {
-    "file": "bg/real-foreground/soccerLandscape.webp",
-    "url": "/book-art/bg/real-foreground/soccerLandscape.webp",
+  "pizza-party": {
+    "file": "bg/demo-pizza-party.svg",
+    "about": "A fictional demo place: Pizza kitchen",
     "size": [
-      1774,
-      887
+      1536,
+      1024
     ],
-    "fit": "cover",
     "focal": [
       0.5,
-      0
+      0.25
     ],
-    "realForeground": true,
-    "groundStart": 0.49,
-    "foreground": 0.49,
-    "ground": 0.97,
+    "groundStart": 0.7,
     "standBand": [
-      0,
-      1
+      0.78,
+      0.98
     ],
-    "oneRow": false,
-    "portraitHeight": null,
-    "portraitGround": null,
-    "floorColor": null,
-    "keepOut": [
-      {
-        "name": "complete soccer goal",
-        "r": [
-          0.382,
-          0.319,
-          0.197,
-          0.131
-        ]
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {
+      "plates": [
+        {
+          "id": "1",
+          "label": "Demo token 1",
+          "r": [
+            0.18,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "2",
+          "label": "Demo token 2",
+          "r": [
+            0.33999999999999997,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "3",
+          "label": "Demo token 3",
+          "r": [
+            0.5,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "4",
+          "label": "Demo token 4",
+          "r": [
+            0.6599999999999999,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "5",
+          "label": "Demo token 5",
+          "r": [
+            0.18,
+            0.36,
+            0.085,
+            0.07
+          ]
+        }
+      ]
+    },
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-pizza-party-portrait.svg",
+        "about": "A fictional demo place: Pizza kitchen",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {
+          "plates": [
+            {
+              "id": "1",
+              "label": "Demo token 1",
+              "r": [
+                0.18,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "2",
+              "label": "Demo token 2",
+              "r": [
+                0.33999999999999997,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "3",
+              "label": "Demo token 3",
+              "r": [
+                0.5,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "4",
+              "label": "Demo token 4",
+              "r": [
+                0.6599999999999999,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "5",
+              "label": "Demo token 5",
+              "r": [
+                0.18,
+                0.36,
+                0.085,
+                0.07
+              ]
+            }
+          ]
+        }
       }
+    }
+  },
+  "lava-playroom": {
+    "file": "bg/demo-lava-playroom.svg",
+    "about": "A fictional demo place: Lava playroom",
+    "size": [
+      1536,
+      1024
     ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {
+      "mats": [
+        {
+          "id": "1",
+          "label": "Demo token 1",
+          "r": [
+            0.18,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "2",
+          "label": "Demo token 2",
+          "r": [
+            0.33999999999999997,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "3",
+          "label": "Demo token 3",
+          "r": [
+            0.5,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "4",
+          "label": "Demo token 4",
+          "r": [
+            0.6599999999999999,
+            0.22,
+            0.085,
+            0.07
+          ]
+        }
+      ]
+    },
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-lava-playroom-portrait.svg",
+        "about": "A fictional demo place: Lava playroom",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {
+          "mats": [
+            {
+              "id": "1",
+              "label": "Demo token 1",
+              "r": [
+                0.18,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "2",
+              "label": "Demo token 2",
+              "r": [
+                0.33999999999999997,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "3",
+              "label": "Demo token 3",
+              "r": [
+                0.5,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "4",
+              "label": "Demo token 4",
+              "r": [
+                0.6599999999999999,
+                0.22,
+                0.085,
+                0.07
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "forest-school": {
+    "file": "bg/demo-forest-school.svg",
+    "about": "A fictional demo place: Pattern studio",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-forest-school-portrait.svg",
+        "about": "A fictional demo place: Pattern studio",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "home-room": {
+    "file": "bg/demo-home-room.svg",
+    "about": "A fictional demo place: Grown-up’s room",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-home-room-portrait.svg",
+        "about": "A fictional demo place: Grown-up’s room",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "demo-castle-gate": {
+    "file": "bg/demo-castle-gate.svg",
+    "about": "A fictional demo place: Castle gate",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-castle-gate-portrait.svg",
+        "about": "A fictional demo place: Castle gate",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "demo-chess-courtyard": {
+    "file": "bg/demo-chess-courtyard.svg",
+    "about": "A fictional demo place: Chess courtyard",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-chess-courtyard-portrait.svg",
+        "about": "A fictional demo place: Chess courtyard",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "demo-soccer-pitch": {
+    "file": "bg/demo-soccer-pitch.svg",
+    "about": "A fictional demo place: Soccer pitch",
     "goal": [
-      0.382,
-      0.319,
-      0.197,
-      0.131
+      0.35,
+      0.43,
+      0.3,
+      0.13
     ],
-    "targets": null,
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
     "variants": {
       "portrait": {
-        "file": "bg/real-foreground/soccerPortrait.webp",
-        "url": "/book-art/bg/real-foreground/soccerPortrait.webp",
-        "size": [
-          836,
-          1881
-        ],
-        "fit": "cover",
-        "focal": [
-          0.5,
-          0
-        ],
-        "realForeground": true,
-        "groundStart": 0.28,
-        "foreground": 0.28,
-        "ground": 0.97,
-        "standBand": [
-          0,
-          1
-        ],
-        "oneRow": false,
-        "portraitHeight": null,
-        "portraitGround": null,
-        "floorColor": null,
-        "keepOut": [
-          {
-            "name": "complete soccer goal",
-            "r": [
-              0.35,
-              0.202,
-              0.3,
-              0.058
-            ]
-          }
-        ],
+        "file": "bg/demo-soccer-pitch-portrait.svg",
+        "about": "A fictional demo place: Soccer pitch",
         "goal": [
           0.35,
-          0.202,
+          0.43,
           0.3,
-          0.058
+          0.13
         ],
-        "targets": null
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "demo-treehouse-town": {
+    "file": "bg/demo-treehouse-town.svg",
+    "about": "A fictional demo place: Treehouse town",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-treehouse-town-portrait.svg",
+        "about": "A fictional demo place: Treehouse town",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "demo-bakery": {
+    "file": "bg/demo-bakery.svg",
+    "about": "A fictional demo place: Treehouse bakery",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-bakery-portrait.svg",
+        "about": "A fictional demo place: Treehouse bakery",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "demo-castle-forest": {
+    "file": "bg/demo-castle-forest.svg",
+    "about": "A fictional demo place: Castle forest",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-castle-forest-portrait.svg",
+        "about": "A fictional demo place: Castle forest",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "demo-workshop": {
+    "file": "bg/demo-workshop.svg",
+    "about": "A fictional demo place: Castle workshop",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-workshop-portrait.svg",
+        "about": "A fictional demo place: Castle workshop",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "demo-river-bridge": {
+    "file": "bg/demo-river-bridge.svg",
+    "about": "A fictional demo place: River bridge",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-river-bridge-portrait.svg",
+        "about": "A fictional demo place: River bridge",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "demo-pirate-ship": {
+    "file": "bg/demo-pirate-ship.svg",
+    "about": "A fictional demo place: Pirate shore",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-pirate-ship-portrait.svg",
+        "about": "A fictional demo place: Pirate shore",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "demo-castle-moon-hill": {
+    "file": "bg/demo-castle-moon-hill.svg",
+    "about": "A fictional demo place: Moon hill",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-castle-moon-hill-portrait.svg",
+        "about": "A fictional demo place: Moon hill",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "demo-castle-night": {
+    "file": "bg/demo-castle-night.svg",
+    "about": "A fictional demo place: Secret night garden",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-castle-night-portrait.svg",
+        "about": "A fictional demo place: Secret night garden",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "demo-library-tower": {
+    "file": "bg/demo-library-tower.svg",
+    "about": "A fictional demo place: Library tower",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-library-tower-portrait.svg",
+        "about": "A fictional demo place: Library tower",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "demo-captain-cabin": {
+    "file": "bg/demo-captain-cabin.svg",
+    "about": "A fictional demo place: Captain’s cabin",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-captain-cabin-portrait.svg",
+        "about": "A fictional demo place: Captain’s cabin",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "demo-lighthouse": {
+    "file": "bg/demo-lighthouse.svg",
+    "about": "A fictional demo place: Lighthouse",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-lighthouse-portrait.svg",
+        "about": "A fictional demo place: Lighthouse",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "demo-forest-meadow": {
+    "file": "bg/demo-forest-meadow.svg",
+    "about": "A fictional demo place: Waterfall hideaway",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-forest-meadow-portrait.svg",
+        "about": "A fictional demo place: Waterfall hideaway",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "demo-volcano": {
+    "file": "bg/demo-volcano.svg",
+    "about": "A fictional demo place: Volcano island",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {
+      "stones": [
+        {
+          "id": "1",
+          "label": "Demo token 1",
+          "r": [
+            0.18,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "2",
+          "label": "Demo token 2",
+          "r": [
+            0.33999999999999997,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "3",
+          "label": "Demo token 3",
+          "r": [
+            0.5,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "4",
+          "label": "Demo token 4",
+          "r": [
+            0.6599999999999999,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "5",
+          "label": "Demo token 5",
+          "r": [
+            0.18,
+            0.36,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "6",
+          "label": "Demo token 6",
+          "r": [
+            0.33999999999999997,
+            0.36,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "7",
+          "label": "Demo token 7",
+          "r": [
+            0.5,
+            0.36,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "8",
+          "label": "Demo token 8",
+          "r": [
+            0.6599999999999999,
+            0.36,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "9",
+          "label": "Demo token 9",
+          "r": [
+            0.18,
+            0.5,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "10",
+          "label": "Demo token 10",
+          "r": [
+            0.33999999999999997,
+            0.5,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "11",
+          "label": "Demo token 11",
+          "r": [
+            0.5,
+            0.5,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "12",
+          "label": "Demo token 12",
+          "r": [
+            0.6599999999999999,
+            0.5,
+            0.085,
+            0.07
+          ]
+        }
+      ]
+    },
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-volcano-portrait.svg",
+        "about": "A fictional demo place: Volcano island",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {
+          "stones": [
+            {
+              "id": "1",
+              "label": "Demo token 1",
+              "r": [
+                0.18,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "2",
+              "label": "Demo token 2",
+              "r": [
+                0.33999999999999997,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "3",
+              "label": "Demo token 3",
+              "r": [
+                0.5,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "4",
+              "label": "Demo token 4",
+              "r": [
+                0.6599999999999999,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "5",
+              "label": "Demo token 5",
+              "r": [
+                0.18,
+                0.36,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "6",
+              "label": "Demo token 6",
+              "r": [
+                0.33999999999999997,
+                0.36,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "7",
+              "label": "Demo token 7",
+              "r": [
+                0.5,
+                0.36,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "8",
+              "label": "Demo token 8",
+              "r": [
+                0.6599999999999999,
+                0.36,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "9",
+              "label": "Demo token 9",
+              "r": [
+                0.18,
+                0.5,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "10",
+              "label": "Demo token 10",
+              "r": [
+                0.33999999999999997,
+                0.5,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "11",
+              "label": "Demo token 11",
+              "r": [
+                0.5,
+                0.5,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "12",
+              "label": "Demo token 12",
+              "r": [
+                0.6599999999999999,
+                0.5,
+                0.085,
+                0.07
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "demo-flower-meadow": {
+    "file": "bg/demo-flower-meadow.svg",
+    "about": "A fictional demo place: Flower meadow",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {
+      "yellow-flowers": [
+        {
+          "id": "1",
+          "label": "Demo token 1",
+          "r": [
+            0.18,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "2",
+          "label": "Demo token 2",
+          "r": [
+            0.33999999999999997,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "3",
+          "label": "Demo token 3",
+          "r": [
+            0.5,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "4",
+          "label": "Demo token 4",
+          "r": [
+            0.6599999999999999,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "5",
+          "label": "Demo token 5",
+          "r": [
+            0.18,
+            0.36,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "6",
+          "label": "Demo token 6",
+          "r": [
+            0.33999999999999997,
+            0.36,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "7",
+          "label": "Demo token 7",
+          "r": [
+            0.5,
+            0.36,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "8",
+          "label": "Demo token 8",
+          "r": [
+            0.6599999999999999,
+            0.36,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "9",
+          "label": "Demo token 9",
+          "r": [
+            0.18,
+            0.5,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "10",
+          "label": "Demo token 10",
+          "r": [
+            0.33999999999999997,
+            0.5,
+            0.085,
+            0.07
+          ]
+        }
+      ]
+    },
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-flower-meadow-portrait.svg",
+        "about": "A fictional demo place: Flower meadow",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {
+          "yellow-flowers": [
+            {
+              "id": "1",
+              "label": "Demo token 1",
+              "r": [
+                0.18,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "2",
+              "label": "Demo token 2",
+              "r": [
+                0.33999999999999997,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "3",
+              "label": "Demo token 3",
+              "r": [
+                0.5,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "4",
+              "label": "Demo token 4",
+              "r": [
+                0.6599999999999999,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "5",
+              "label": "Demo token 5",
+              "r": [
+                0.18,
+                0.36,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "6",
+              "label": "Demo token 6",
+              "r": [
+                0.33999999999999997,
+                0.36,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "7",
+              "label": "Demo token 7",
+              "r": [
+                0.5,
+                0.36,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "8",
+              "label": "Demo token 8",
+              "r": [
+                0.6599999999999999,
+                0.36,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "9",
+              "label": "Demo token 9",
+              "r": [
+                0.18,
+                0.5,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "10",
+              "label": "Demo token 10",
+              "r": [
+                0.33999999999999997,
+                0.5,
+                0.085,
+                0.07
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "demo-brain-world": {
+    "file": "bg/demo-brain-world.svg",
+    "about": "A fictional demo place: Brain room",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-brain-world-portrait.svg",
+        "about": "A fictional demo place: Brain room",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "demo-pizza-party": {
+    "file": "bg/demo-pizza-party.svg",
+    "about": "A fictional demo place: Pizza kitchen",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {
+      "plates": [
+        {
+          "id": "1",
+          "label": "Demo token 1",
+          "r": [
+            0.18,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "2",
+          "label": "Demo token 2",
+          "r": [
+            0.33999999999999997,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "3",
+          "label": "Demo token 3",
+          "r": [
+            0.5,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "4",
+          "label": "Demo token 4",
+          "r": [
+            0.6599999999999999,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "5",
+          "label": "Demo token 5",
+          "r": [
+            0.18,
+            0.36,
+            0.085,
+            0.07
+          ]
+        }
+      ]
+    },
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-pizza-party-portrait.svg",
+        "about": "A fictional demo place: Pizza kitchen",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {
+          "plates": [
+            {
+              "id": "1",
+              "label": "Demo token 1",
+              "r": [
+                0.18,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "2",
+              "label": "Demo token 2",
+              "r": [
+                0.33999999999999997,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "3",
+              "label": "Demo token 3",
+              "r": [
+                0.5,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "4",
+              "label": "Demo token 4",
+              "r": [
+                0.6599999999999999,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "5",
+              "label": "Demo token 5",
+              "r": [
+                0.18,
+                0.36,
+                0.085,
+                0.07
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "demo-lava-playroom": {
+    "file": "bg/demo-lava-playroom.svg",
+    "about": "A fictional demo place: Lava playroom",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {
+      "mats": [
+        {
+          "id": "1",
+          "label": "Demo token 1",
+          "r": [
+            0.18,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "2",
+          "label": "Demo token 2",
+          "r": [
+            0.33999999999999997,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "3",
+          "label": "Demo token 3",
+          "r": [
+            0.5,
+            0.22,
+            0.085,
+            0.07
+          ]
+        },
+        {
+          "id": "4",
+          "label": "Demo token 4",
+          "r": [
+            0.6599999999999999,
+            0.22,
+            0.085,
+            0.07
+          ]
+        }
+      ]
+    },
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-lava-playroom-portrait.svg",
+        "about": "A fictional demo place: Lava playroom",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {
+          "mats": [
+            {
+              "id": "1",
+              "label": "Demo token 1",
+              "r": [
+                0.18,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "2",
+              "label": "Demo token 2",
+              "r": [
+                0.33999999999999997,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "3",
+              "label": "Demo token 3",
+              "r": [
+                0.5,
+                0.22,
+                0.085,
+                0.07
+              ]
+            },
+            {
+              "id": "4",
+              "label": "Demo token 4",
+              "r": [
+                0.6599999999999999,
+                0.22,
+                0.085,
+                0.07
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "demo-forest-school": {
+    "file": "bg/demo-forest-school.svg",
+    "about": "A fictional demo place: Pattern studio",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-forest-school-portrait.svg",
+        "about": "A fictional demo place: Pattern studio",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
+      }
+    }
+  },
+  "demo-home-room": {
+    "file": "bg/demo-home-room.svg",
+    "about": "A fictional demo place: Grown-up’s room",
+    "size": [
+      1536,
+      1024
+    ],
+    "focal": [
+      0.5,
+      0.25
+    ],
+    "groundStart": 0.7,
+    "standBand": [
+      0.78,
+      0.98
+    ],
+    "standW": 0.8,
+    "standX": 0.5,
+    "keepOut": [],
+    "targets": {},
+    "variants": {
+      "portrait": {
+        "file": "bg/demo-home-room-portrait.svg",
+        "about": "A fictional demo place: Grown-up’s room",
+        "size": [
+          768,
+          1366
+        ],
+        "focal": [
+          0.5,
+          0.25
+        ],
+        "groundStart": 0.7,
+        "standBand": [
+          0.78,
+          0.98
+        ],
+        "standW": 0.8,
+        "standX": 0.5,
+        "keepOut": [],
+        "targets": {}
       }
     }
   }

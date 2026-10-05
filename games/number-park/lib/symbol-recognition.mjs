@@ -3,7 +3,7 @@ import {sunFeatures,flowerFeatures,bareTreeFeatures,peopleGroupFeatures} from '.
 export const GUESS_MODES=['auto','letters','words','numbers','pictures'];
 export const UPPER=[...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'],LOWER=UPPER.map(x=>x.toLowerCase()),DIGITS=[...'0123456789'];
 export const MAX_GUESS_NUMBER=999999;
-export const KNOWN_WORDS=['ROOK','CASTLE'];
+export const KNOWN_WORDS=['BEGINNER','EXPLORER'];
 const numberLabel=x=>/^\d{1,6}$/.test(x)&&Number(x)<=MAX_GUESS_NUMBER&&String(Number(x))===x;
 // Picture labels are lowercase; recognized printed words are uppercase.
 // A shape name must not turn a picture guess into a spelling exercise.
@@ -14,8 +14,8 @@ export const validArtLabel=x=>typeof x==='string'&&(PICTURE_LABELS.includes(x)||
 export const labelName=x=>/^[A-Z]$/.test(x)?'Uppercase '+x:/^[a-z]$/.test(x)?'Lowercase '+x:numberLabel(x)?'Number '+prettyNumber(x):wordLabel(x)?'Word '+prettyWord(x):x;
 export const guessLine=x=>/^[A-Za-z]$/.test(x)?'Is it the letter '+x.toUpperCase()+'?':numberLabel(x)?'Is it '+prettyNumber(x)+'?':wordLabel(x)?'Does it say '+prettyWord(x)+'?':x==='two people'?'Are they two people?':'Is it a '+x+'?';
 export const labelLine=x=>/^[A-Za-z]$/.test(x)?'The letter '+x.toUpperCase()+'.':numberLabel(x)?prettyNumber(x)+'.':wordLabel(x)?'You wrote '+prettyWord(x)+'.':'Thanks for telling me!';
-export const guessVoiceLines=x=>wordLabel(x)&&!KNOWN_WORDS.includes(x.toUpperCase())?['I see the word.',...[...x.toUpperCase()].map(c=>'Letter '+c+'.')]:numberLabel(x)&&Number(x)>100?['I see the number.',...[...x].map(c=>c)]:[guessLine(x)];
-export const labelVoiceLines=x=>wordLabel(x)&&!KNOWN_WORDS.includes(x.toUpperCase())?['You wrote a word.',...[...x.toUpperCase()].map(c=>'Letter '+c+'.')]:numberLabel(x)&&Number(x)>100?['You wrote a big number.',...[...x].map(c=>c)]:[labelLine(x)];
+export const guessVoiceLines=x=>wordLabel(x)&&!KNOWN_WORDS.includes(x.toUpperCase())?['I see the word.',...[...x.toUpperCase()].map(c=>'Letter '+c+'.')]:numberLabel(x)&&Number(x)>100?Number(x)<=1000?[x]:['I see the number.',...[...x].map(c=>c)]:[guessLine(x)];
+export const labelVoiceLines=x=>wordLabel(x)&&!KNOWN_WORDS.includes(x.toUpperCase())?['You wrote a word.',...[...x.toUpperCase()].map(c=>'Letter '+c+'.')]:numberLabel(x)&&Number(x)>100?Number(x)<=1000?[x]:['You wrote a big number.',...[...x].map(c=>c)]:[labelLine(x)];
 export const symbolVoiceLines=()=>[...UPPER.flatMap(x=>[guessLine(x),labelLine(x),'Letter '+x+'.']),...Array.from({length:101},(_,n)=>guessLine(String(n))),...DIGITS,...KNOWN_WORDS.flatMap(x=>[guessLine(x),labelLine(x)]),'Could it be one of these?','Try drawing the digits with a little space between them.','I see the word.','You wrote a word.','I see the number.','You wrote a big number.'];
 export function symbolScores(ink,model,mode='auto'){
  const v=drawingVector(ink);if(!v)return [];

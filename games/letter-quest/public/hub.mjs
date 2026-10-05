@@ -7,12 +7,12 @@ export const NAV_ITEMS=[['practice','⌂','Learn'],['matches','🔤','Word games
 export function routeTab(hash){const raw=hash.replace(/^#/,'');const key=raw==='leaderboard'?'league':raw;return [...NAV_ITEMS.map(n=>n[0]),'treasure','parents','reading','rescue'].includes(key)?key:'practice';}
 export function navItems(tab,p,{grouped=false}={}){
  const ready=questBoard(p).quests.filter(q=>q.progress>=q.target&&!q.claimed).length;
- const items=NAV_ITEMS.filter(item=>!grouped||!['soccer','maze'].includes(item[0])).map(item=>item[0]==='maze'?(p.id==='beginner'?['rescue','🧩','Rescues']:['maze','⬡','Letter maze']):item);
+ const items=NAV_ITEMS.filter(item=>!grouped||!['soccer','maze'].includes(item[0])).map(item=>item[0]==='maze'?(String(p.id).split('_')[0]==='beginner'?['rescue','🧩','Rescues']:['maze','⬡','Letter maze']):item);
  return items.map(([key,icon,label])=>button(`<span class="nav-icon" aria-hidden="true">${icon}</span><span class="nav-label">${label}</span>${key==='quests'&&ready?`<b class="nav-count" aria-label="${ready} rewards ready">${ready}</b>`:''}`,`tab:${key}`,`nav-item ${tab===key||key==='quests'&&tab==='treasure'?'selected':''}`,`aria-label="${label}" ${tab===key?'aria-current="page"':''}`)).join('');
 }
 export function mazeHome(p){
- if(!['explorer','beginner'].includes(p.id))return '';
- const letters=p.id==='explorer',hasProgress=letters?!!p.maze:!!p.rescue;
+ if(!/^(?:beginner|explorer)(?:_[1-9]\d{0,3})?$/.test(p.id))return '';
+ const letters=String(p.id).split('_')[0]==='explorer',hasProgress=letters?!!p.maze:!!p.rescue;
  const level=letters?p.maze?.level:p.rescue?.mission;
  return `<section class="panel maze-home" aria-label="${esc(p.name)}’s maze games"><div class="eyebrow">${esc(p.name)}’S MAZE${level?` · ${letters?'LEVEL':'RESCUE'} ${esc(level)}`:''}</div><h2>${letters?'Letters unlock the labyrinth':'Rescue friends with Rook'}</h2><p>${letters?'Find letters, build words and open the next door.':'Move blocks, open bridges and plan a way to your friends.'}</p><div class="maze-home-actions">${button(`${hasProgress?'Continue':'Play'} ${letters?'letter labyrinth':'obstacle rescues'} →`,`tab:${letters?'maze':'rescue'}`)}${button(letters?'🧩 Obstacle rescues':'ABC · Letter labyrinth',`tab:${letters?'rescue':'maze'}`,'button secondary')}</div></section>`;
 }

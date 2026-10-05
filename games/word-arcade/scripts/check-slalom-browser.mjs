@@ -5,7 +5,6 @@
 // before the skier reaches it, that a missed gate names the answer, that the recap and the word break follow,
 // and that the finish screen appears. Records the frame times the game measured and saves screenshots and a
 // short recording (needs ffmpeg).
-// Usage: node scripts/check-slalom-browser.mjs --base http://127.0.0.1:5319 --player beginner [--size 1280x800]
 //        [--mobile] [--miss 2] [--shots <dir>] [--label tablet] [--record] [--cpu 4] [--quality medium]
 //        [--ride ski|board] [--track letters|words (tap the start screen's choice)] [--card (open from a Word Arcade card; default: the hub's ?play=slalom deep link)] [--boost 1,4 (hold Up after those rows' questions)]
 import {spawn,spawnSync} from 'node:child_process';
@@ -16,7 +15,7 @@ import {afterGate,familyWords} from '../lib/slalom.mjs';
 const args=process.argv.slice(2),arg=(k,d=null)=>{const i=args.indexOf(k);return i>=0?args[i+1]:d;},flag=k=>args.includes(k);
 const base=arg('--base','http://127.0.0.1:5319'),player=arg('--player','admin'),[W,H]=arg('--size','1280x800').split('x').map(Number),mobile=flag('--mobile');
 const shots=arg('--shots'),label=arg('--label',`${W}x${H}`),miss=new Set((arg('--miss','')||'').split(',').filter(Boolean).map(Number)),record=flag('--record'),cpu=Number(arg('--cpu','1')),quality=arg('--quality'),ride=arg('--ride','ski'),track=arg('--track'),deep=!flag('--card'),boostRows=new Set((arg('--boost','')||'').split(',').filter(Boolean).map(Number));
-const chrome=arg('--chrome',process.env.CHROME||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');
+const chrome=arg('--chrome',process.env.CHROME||(process.env.HOME+'/.local/share/family-games/bin/test-chrome'));
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const profile=await mkdtemp(join(tmpdir(),'slalom-check-chrome-'));
 const proc=spawn(chrome,['--headless=new','--remote-debugging-port=0',`--user-data-dir=${profile}`,'--no-first-run','--no-default-browser-check','--autoplay-policy=document-user-activation-required','--mute-audio',`--window-size=${W},${H}`,'about:blank'],{stdio:'ignore'});

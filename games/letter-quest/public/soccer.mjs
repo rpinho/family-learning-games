@@ -10,12 +10,12 @@ export const SOCCER_LINES={
  saves:['Saved! Good hands, goalkeeper. Learn the answer, then take your next shot.','The keeper got that one. Even champions have another go.','Saved! That goalkeeper has very grabby gloves. Next shot, new chance.']
 };
 export function soccerVoiceLines(){return [...Object.values(SOCCER_LINES).flat(),...WORDS.filter(w=>w.tier<=2).map(w=>`Choose the word ${w.word}.`)];}
-export function soccerState(p){return p.soccer||{number:0,phase:'lobby',level:p.id==='beginner'?1:2,streak:0,shots:[],aim:'left',question:null,helped:false,history:[],stats:{played:0,goals:0,independent:0}};}
+export function soccerState(p){return p.soccer||{number:0,phase:'lobby',level:String(p.id).split('_')[0]==='beginner'?1:2,streak:0,shots:[],aim:'left',question:null,helped:false,history:[],stats:{played:0,goals:0,independent:0}};}
 function rng(seed){return ()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};}
 function mix(items,r){const a=[...items];for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 export function soccerQuestion(p){
  const s=soccerState(p);if(s.question)return s.question;
- const round=s.shots.length,r=rng(s.number*7919+round*3571+(p.id==='beginner'?91:37)),level=s.level,count=level===1?2:4;
+ const round=s.shots.length,r=rng(s.number*7919+round*3571+(String(p.id).split('_')[0]==='beginner'?91:37)),level=s.level,count=level===1?2:4;
  const type=['find','gap','sequence','word'][(round+s.number-1)%4],alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZ',id=`soccer1:${s.number}:${round}`,base={id,type,level};
  if(type==='gap'||type==='word'){
   const pool=WORDS.filter(w=>w.tier===(level===3?2:1)),w=pool[Math.floor(r()*pool.length)],blank=Math.floor(r()*w.word.length),answer=type==='word'?w.word:w.word[blank];

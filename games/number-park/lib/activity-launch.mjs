@@ -1,6 +1,5 @@
 // A shortcut uses the selected profile's existing permissions and save client.
 // Any game listed for that profile can be opened directly (home shortcuts:
-// Cookie Monster, Pattern Parade, Take Away); another profile's game cannot.
 import {gamesFor} from './math.mjs';
 export function launchActivity(search, profile) {
  const q=new URLSearchParams(search);

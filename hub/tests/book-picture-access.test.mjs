@@ -14,7 +14,7 @@ test('small painted targets retain generous on-screen touch boxes at every devic
   const r=paintedTapRect({x,y,w:4,h:4},{width,height});assert.ok(r.w>=MIN_PAINTED_TAP&&r.h>=MIN_PAINTED_TAP);assert.ok(r.x>=0&&r.y>=0&&r.x+r.w<=width&&r.y+r.h<=height);
  }
 });
-test('a wide scene keeps both edge objects inside the portrait frame',()=>{
- const bg={size:[1536,1024],groundStart:.65,keepOut:[{r:[.02,.25,.21,.32]},{r:[.78,.24,.2,.33]}]};
- for(const [width,height] of sizes.filter(([w,h])=>w<h))for(const z of bg.keepOut){const r=foregroundRect(bg,z.r,{width,height});assert.ok(r.x>=0&&r.x+r.w<=width&&r.y>=0&&r.y+r.h<=height*.265+1e-9);}
+test('aspect variants preserve important objects with a uniform crop',()=>{
+ const bg={size:[1774,887],focal:[.5,0],keepOut:[{r:[.35,.2,.3,.2]}],variants:{portrait:{size:[836,1881],keepOut:[{r:[.35,.16,.3,.1]}]}}};
+ for(const [width,height] of sizes){const b=selectBackground(bg,{width,height});for(const z of b.keepOut){const r=foregroundRect(b,z.r,{width,height});assert.ok(r.x>=0&&r.x+r.w<=width&&r.y>=0&&r.y+r.h<=height);}}
 });

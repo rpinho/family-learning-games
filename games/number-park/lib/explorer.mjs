@@ -3,6 +3,7 @@ import {buildQuestion} from './place-build.mjs';
 import {worthQuestion} from './place-worth.mjs';
 import {numberNameReview} from './number-names.mjs';
 import {balanceQuestion} from './balance.mjs';
+import {weightPuzzle,WEIGHT_PROMPT,FREE_PROMPT} from './balance-weights.mjs';
 export const EXPLORER_TRACK='explorer-math-1';
 export const EXPLORER_GAMES=[
  {id:'mix',icon:'🚀',title:'Math mission',description:'Multiplication, sums and number puzzles.'},
@@ -14,7 +15,7 @@ export const EXPLORER_GAMES=[
  COOKIE_GAME,
  {id:'balance',icon:'⚖️',title:'Balance scale',description:'Compare animals and make the numbers balance.'}
 ];
-export const advanced=p=>p.id==='explorer';
+export const advanced=p=>String(p.id).split('_')[0]==='explorer';
 // Only this track's attempts inform its difficulty, independently per skill.
 // Neither old preschool play nor guided tracing can establish mastery here.
 const cookieRow=h=>h.question?.track===EXPLORER_TRACK&&h.question.skill==='cookies';
@@ -25,7 +26,6 @@ const cookieRow=h=>h.question?.track===EXPLORER_TRACK&&h.question.skill==='cooki
 // clean rounds in a row on his own) moves him up a level.
 // A round won with only a Help tap (no uneven check, no wrong answer) is not a
 // struggle: it earns no progress but never eases him. Two such taps had dropped
-// Explorer from level 4 to 2, the level he had just called too easy.
 const helpOnly=h=>h.helped&&h.cookieChecks===0;
 export function cookieProgress(p){
  const history=p.history||[];
@@ -52,10 +52,11 @@ export function cookieProgress(p){
  }
  return {level,stage,fade:FADE[stage],clean,mastered,toMastery:stage===2?MASTERY_RUN-clean:null};
 }
-// Challenge skills support levels 1–5 and explicit Easier/Harder choices.
-// Rushed taps reset a streak without treating them as a difficulty mismatch.
+// and the other challenge skills at 3. A quick miss (under RUSH_MS) on a choice question is a rushed
+// tap, not a struggle: on 2026-09-08 he lost factor levels to 1-second taps (2 × ? = 4 answered "4"
+// in 0.76 s) and the easier questions bored him more. It resets the streak but never eases him.
 export const CHALLENGE_MAX=5,CHALLENGE_SKILLS=['multiply','factor','sums','skip','balance'];
-export const CHALLENGE_START={multiply:2,factor:2,sums:2,skip:2,balance:2};
+export const CHALLENGE_START={multiply:4,factor:3,sums:3,skip:3,balance:3};
 export const RUSH_MS=2500;
 const rushed=h=>!h.ok&&!h.helped&&Number.isFinite(h.durationMs)&&h.durationMs<RUSH_MS;
 export const clampChallenge=n=>Math.max(1,Math.min(CHALLENGE_MAX,Math.round(Number(n))||1));
@@ -67,7 +68,10 @@ export function challengeLevel(p,skill){
  // An Easier/Harder choice (his or a grown-up's) applies at once; only later rounds adapt from it.
  const manual=p.challengeManual?.[skill];
  if(manual&&Number.isInteger(manual.level)){level=Math.min(max,clampChallenge(manual.level));start=Math.max(0,Math.min(rows.length,manual.after|0));}
-
+ else if(CHALLENGE_START[skill]){
+  // Rounds played before the 2026-10-01 restart were capped at 3 and pulled down by rushed taps.
+  start=rows.filter(h=>h.at&&Date.parse(h.at)<Date.parse('2026-10-01T23:00:00Z')).length;
+ }
  for(const h of rows.slice(start)){
   if(h.ok&&!h.helped){streak++;struggles=0;if(streak===6){level=Math.min(max,level+1);streak=0;}}
   else if(rushed(h))streak=0;
@@ -89,6 +93,12 @@ export function challengeQuestion(p,game,round,r){
  if(skill==='balance'){
   for(let trial=0;trial<120;trial++){
    q={track:EXPLORER_TRACK,...balanceQuestion(level,round,r)};
+   // Keep the legacy question fields for already-open v1 clients; v2 places physical weights.
+   if(q.mode!=='animals'){
+    q.weights=weightPuzzle(level,round,r,p.mathFloor);
+    q.prompt=q.weights.mode==='fixed'?WEIGHT_PROMPT:FREE_PROMPT;
+    q.fingerprint=JSON.stringify(['balance-weights',level,q.weights]);
+   }
    if(!(p.recent||[]).includes(q.fingerprint))break;
   }
   q.id=`${p.revision}:${p.history.length}:${round}:f1`;return q;

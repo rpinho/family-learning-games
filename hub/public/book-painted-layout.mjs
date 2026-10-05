@@ -1,7 +1,7 @@
-// Projection of a still painted panorama and an optional extension of its empty foreground.
+// Uniform projection of an entire painting. Ground belongs to the master image.
 // Variants carry their own painted coordinates; ids and written chapters stay stable.
-export function selectBackground(entry,{width,height}={}){
- const v=width<height?entry?.variants?.portrait:null;
+export function selectBackground(entry,{width,height,painted=false}={}){
+ const v=width<height?(painted?entry?.variants?.portraitBeat||entry?.variants?.portrait:entry?.variants?.portrait):null;
  return v?{...entry,...v,variants:entry.variants}:entry;
 }
 export const MIN_PAINTED_TAP=64;
@@ -11,18 +11,12 @@ export function paintedTapRect(r,{width,height,min=MIN_PAINTED_TAP}={}){
 }
 export function backgroundRect(entry,{width,height,nw=1536,nh=1024,top=false}={}){
  if(entry?.size?.every(n=>Number.isFinite(n)&&n>0)){[nw,nh]=entry.size;}
- const portrait=width<height&&entry?.portraitHeight>0&&entry.portraitHeight<=1,frameH=portrait?height*entry.portraitHeight:height;
- const contain=entry?.fit==='contain'&&!portrait,k=(contain?Math.min:Math.max)(width/nw,frameH/nh),w=nw*k,h=nh*k;
+ const k=Math.max(width/nw,height/nh),w=nw*k,h=nh*k;
  const [fx,fy]=entry?.focal||[.5,.5];
- return {x:(width-w)*fx,y:portrait||entry?.fit==='contain'||top?0:(height-h)*fy,w,h};
+ return {x:(width-w)*fx,y:top?0:(height-h)*fy,w,h};
 }
-// Extend only the empty painted terrace, keeping the panorama and its hit areas at their original scale.
-// Landscape has no extension. The extra image is clipped below foreground; its lava can never show.
-export function portraitTerrace(entry,{width,height}={}){
- if(!(width<height&&entry?.portraitGround>0&&entry.portraitGround<1&&entry.foreground>0&&entry.foreground<1&&entry.portraitHeight))return null;
- const r=backgroundRect(entry,{width,height}),top=r.y+entry.foreground*r.h,h=height-top;
- return {top,height:h,left:r.x,width:r.w,imageHeight:h/(1-entry.foreground),ground:entry.portraitGround};
-}
+// Compatibility for older callers: synthetic terrace extensions are retired.
+export function portraitTerrace(){return null;}
 // A standing plane belongs to the image, so its screen height changes with the crop.
 // Leave space for a second row rather than putting its feet above the painted ground.
 export function standingGround(entry,{width,height,ground=.93,backLift=.05}={}){
@@ -54,5 +48,10 @@ export function standingWithUI(entry,{width,height,ground,maxHeight,avoid=null,u
 }
 // Optional release metadata corrects existing art without changing a library or a written chapter.
 export function applyBackgroundLayouts(library,layouts={}){
- return {...library,backgrounds:Object.fromEntries(Object.entries(library.backgrounds||{}).map(([id,b])=>[id,layouts[id]?{...b,...layouts[id]}:b]))};
+ return {...library,backgrounds:Object.fromEntries(Object.entries(library.backgrounds||{}).map(([id,b])=>{
+  const layout=layouts[id],file=b.file||b.url?.replace(/^\/book-art\//,'');
+  // Coordinates of a replacement painting must not overwrite an unrelated custom image.
+  if(!layout||layout.sourceFiles&&!layout.sourceFiles.includes(file)&&file!==layout.file)return [id,b];
+  return [id,{...b,...layout}];
+ }))};
 }

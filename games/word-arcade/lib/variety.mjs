@@ -6,7 +6,7 @@ export function chooseWord(p,pool,{recent=[],skills={},serial=0}={}){
  const candidates=eligible.length?eligible:local.length?local:pool;
  const cost=w=>(skills[w]?.seen||0)*4+(p.variety?.seen?.[w]||0);
  const least=Math.min(...candidates.map(cost)),choices=candidates.filter(w=>cost(w)===least);
- return choices[(serial*7+(p.variety?.serial||0)*11+(p.id==='beginner'?5:2))%choices.length];
+ return choices[(serial*7+(p.variety?.serial||0)*11+(String(p.id).split('_')[0]==='beginner'?5:2))%choices.length];
 }
 export function rememberWord(p,word){
  if(!/^[a-z]{2,12}$/.test(word||''))return;

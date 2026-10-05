@@ -1,0 +1,96 @@
+{
+  "people": [
+    {
+      "names": [
+        "River",
+        "Robin",
+        "Alex",
+        "Ada",
+        "Explorer",
+        "Beginner",
+        "Rook",
+        "Bo",
+        "Pip",
+        "Dot",
+        "Scout",
+        "Moss",
+        "Professor"
+      ],
+      "reason": "Fictional public game cast and generic demo roles."
+    },
+    {
+      "names": [
+        "Dominic",
+        "Gary"
+      ],
+      "reason": "Public upstream dataset authors; required provenance and license attribution."
+    },
+    {
+      "names": [
+        "Mom",
+        "Dad",
+        "Admin",
+        "Scholar",
+        "Robo",
+        "Captain",
+        "Nova",
+        "Loona",
+        "Birdie",
+        "Lulu",
+        "Lula",
+        "Fern",
+        "Luna",
+        "Bram",
+        "Chip",
+        "Buddy",
+        "Honey",
+        "Mario",
+        "Wizard"
+      ],
+      "reason": "Existing fictional game characters, generic parent roles, and public Nintendo character used in a brand-filter regression."
+    },
+    {
+      "names": [
+        "Jeff",
+        "Ken",
+        "Kirk",
+        "David",
+        "Eberly",
+        "Simon",
+        "Tatham",
+        "Brent",
+        "Eric",
+        "Van",
+        "Reinhard"
+      ],
+      "reason": "Public authors credited by the unmodified chess.js and Three.js sources; surnames also occur in algorithm attributions."
+    },
+    {
+      "names": [
+        "Kenney"
+      ],
+      "reason": "Public asset creator credited by the required CC0 asset provenance."
+    },
+    {
+      "names": [
+        "Smithers"
+      ],
+      "reason": "Entirely invented regression-test character for unknown-name and private-note refusal cases."
+    },
+    {
+      "names": [
+        "Wald"
+      ],
+      "reason": "Public algorithm author credited in the unmodified Three.js source."
+    },
+    {
+      "names": [
+        "Sam",
+        "Ben",
+        "Pat"
+      ],
+      "reason": "Existing fictional characters in the public CVC reading examples; keeping these spellings preserves early phonics practice."
+    }
+  ],
+  "handles": []
+}

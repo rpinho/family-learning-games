@@ -38,7 +38,7 @@ for(const field of ['guided','done'])BOOLEANS.add(field);
 function text(value,max=300){return String(value).replace(/https?:\/\/[^\s)]+/g,url=>url.split(/[?#]/)[0]).replace(/[\u0000-\u001f]/g,' ').slice(0,max);}
 export const identifier=value=>typeof value==='string'&&/^[a-zA-Z0-9:_-]{1,100}$/.test(value)?value:undefined;
 export function cleanEvent(input){
- if(!input||typeof input!=='object'||Array.isArray(input)||!EVENTS.has(input.kind)||!identifier(input.eventId)||!identifier(input.session)||!['explorer','beginner','demo','admin'].includes(input.player))throw Error('Invalid diagnostic event');
+ if(!input||typeof input!=='object'||Array.isArray(input)||!EVENTS.has(input.kind)||!identifier(input.eventId)||!identifier(input.session)||!(/^(?:(?:beginner|explorer)(?:_[1-9]\d{0,3})?|admin)$/.test(input.player)||input.player==='demo'))throw Error('Invalid diagnostic event');
  if(JSON.stringify(input).length>24000)throw Error('Diagnostic event too large');
  const out={};
  for(const [key,value] of Object.entries(input)){

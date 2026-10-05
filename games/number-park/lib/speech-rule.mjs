@@ -1,16 +1,18 @@
-// Keep challenge control independent from rushed taps.
 // CONTENT: the question itself, or the specific number/letter/word/shape to find. Always plays, even with the
 // sound button off, and repeats once if the child is idle.
 // INSTRUCTIONS: how to play ("Tap and count.", "Drag a picture into the gap."). Once per session per line, and
 // only with sound on. Repeated instructions are what made the kids turn sound off.
 // Narration and praise (recap, story, chimes) obey the sound button.
+import {kinderBalanceVoiceLines} from './balance-kinder.mjs';
 import {balanceVoiceLines} from './balance.mjs';
 const balanceContent=new Set(balanceVoiceLines());
+// Pre-readers need the animal names and the manipulation prompt even with effects off.
+const kinderContent=new Set(kinderBalanceVoiceLines());
 export const sentences=t=>String(t).match(/[^.?!]+[.?!]+|[^.?!]+$/g)?.map(x=>x.trim()).filter(Boolean)||[];
 export const isContent=s=>balanceContent.has(s)||/\?$/.test(s)||/\d/.test(s)||/^(Count only the |Trace a |Reading (sound|word) |Find the (letter|little letter|word) |Which letter )/.test(s);
 export function splitSpeech(lines){
  const content=[],instructions=[];
- for(const line of lines){const parts=sentences(line);
+ for(const line of lines){if(kinderContent.has(line)||balanceContent.has(line)){content.push(line);continue;}const parts=sentences(line);
   if(!parts.length||parts.every(isContent))content.push(line);
   else if(!parts.some(isContent))instructions.push(line);
   else for(const part of parts)(isContent(part)?content:instructions).push(part);}

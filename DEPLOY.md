@@ -78,3 +78,34 @@ installed app opens that child's profile.
     node scripts/deploy/cli.mjs rollback <game> [--now]   # --now only for a broken live game
 
 After changing the tooling itself, run `node scripts/deploy/cli.mjs install` so the promoter uses the new copy.
+
+## Sync the public repository after a promote
+
+After the queued promote has actually gone live, read `node scripts/deploy/cli.mjs status` and use the live commit IDs, not staging or the development branch tip. From a clean public checkout run:
+
+```sh
+node scripts/public-sync.mjs \
+  --source-root "$HOME/dev" \
+  --hub LIVE_HUB_SHA \
+  --number-park LIVE_NUMBER_SHA \
+  --word-arcade LIVE_WORD_SHA \
+  --letter-quest LIVE_LETTER_SHA \
+  --maze-garden LIVE_MAZE_SHA \
+  --three-in-a-row LIVE_STRATEGY_SHA \
+  --target-trail LIVE_TARGET_SHA \
+  --out "$HOME/.worktrees/family-public-next" \
+  --branch public/next-live-sync \
+  --gh "$HOME/dev/.bin/gh"
+```
+
+The source root contains `family-learning-games` for the hub and one repository per game. Hub, Number Park and Word Arcade SHAs are required; omit an unchanged optional game to keep its public version. Choose a new output directory and unused branch each time. `--date YYYY-MM-DD` controls the PR title; `--base origin/main` is the default. This is an explicit post-promote publishing command, not a service restart or a background task touching live saves.
+
+The command seeds a new branch from public main with the audited public recipe, exports code from each exact live commit, applies the public adaptations, and retains fictional demos and approved public assets. It never imports private commit ancestry. Household catalogs/configuration and runtime data are omitted; new binary artwork or recordings are never imported. New vector assets require an approved public counterpart. The original public cast, synthetic episode fixtures, geometric counting scenes and stock synthesized sounds replace household content.
+
+Before any commit or network publication, it stages the complete candidate, checks privacy, builds both React apps and runs every game, hub, Book and sync test. It then scans new commit messages and every newly introduced committed tree before pushing that one branch and opening a PR with `gh pr create`. It never merges. Privacy failures exit non-zero with offending files listed; build/test failures also prevent a push. The failed worktree remains for inspection. Update and review the fictional fixtures or public adaptations when live changes require them; rerun in a fresh directory. Assets still require human review; the denylist is a guardrail.
+
+For local export inspection without publishing, add `--prepare-only true`. This stages and scans the export, without committing, building, pushing or opening a PR. The normal command always performs the complete build/test gate.
+
+Household-specific label mappings live only in a private local policy: `$PUBLIC_SYNC_POLICY`, default `~/.config/family-public-sync/privacy.json`. The sync command requires this file. It has the shape `{"replacements":[["private source label","public preset or fictional label"]]}`; fill it privately for the source installation and never commit it. Common character vocabulary is encoded in `scripts/public-policy.mjs` to avoid self-matches. The public recipe contains no household vocabulary, even in encoded form. `PUBLIC_SYNC_BASE=origin/main node scripts/check-public-tree.mjs` also scans new commit messages. Historical messages already on public main are inherited unchanged by ordinary PRs; cleaning those requires a separate coordinated history rewrite.
+
+The complete local gate (secret scanners, generic PII, EXIF, private-reference perceptual hashes, face/audio provenance checks and contact sheet) is documented in [scripts/PUBLIC-PRIVACY.md](scripts/PUBLIC-PRIVACY.md). Run `npm run check:privacy -- --base origin/main`; use `--strip` only to remove media metadata. Missing tools or private policy block publication.

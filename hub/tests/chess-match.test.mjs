@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { Chess } from "../public/chess/rules.mjs";
 import { freshChess, actChess, publicChess } from "../chess-state.mjs";
-import { chooseCoachMove, nextRating, coachStyle, resultOf, hintIdea, matchBoard, pickMoment, coachChoice, mateInOne, RATING_MIN, RATING_MAX } from "../chess-match.mjs";
+import { chooseCoachMove, nextRating, coachStyle, resultOf, hintIdea, matchBoard, pickMoment, coachChoice, mateInOne, reactionFor, RATING_MIN, RATING_MAX } from "../chess-match.mjs";
 import { MATCH_VOICE, matchVoiceLines } from "../public/chess/match-voice.mjs";
 import { wordBreakLines } from "../public/word-break.mjs";
 import { LocalEngine } from "../stockfish.mjs";
@@ -38,6 +38,35 @@ test("Every new spoken line has a clip in the coach voice set, including the wor
   assert.ok(!matchVoiceLines().some((l) => /\bRook\b/.test(l)), "lines never say the coach's name");
 });
 
+test("Captures drive dramatic, sparse speech and still move the coach when silent", () => {
+  const game = {side:'w',records:[{}, {}, {}],spokeAt:0,moves:['e2e4'],voiceTurn:{}};
+  const child = {uci:'c4d5',piece:'b',captured:'n',loss:20};
+  const reply = {captured:'b'};
+  assert.equal(reactionFor(game, child, reply, null).kind, 'trade');
+  assert.ok(game.spokeAt === 3);
+  assert.equal(reactionFor(game, {...child,captured:'q'}, null, null).kind, 'youQueen');
+  game.spokeAt = 3;
+  const silent = reactionFor(game, child, null, null);
+  assert.deepEqual([silent.kind,silent.line], ['youCapture',null]);
+  assert.equal(game.spokeAt,3,'a silent expression does not reset the speech timer');
+  assert.equal(reactionFor(game, {...child,captured:null}, null, null),null);
+  game.spokeAt = 0;
+  assert.equal(reactionFor(game, {...child,captured:null,loss:400}, {captured:'r'}, null).kind,'pounce');
+});
+
+test('Lively coaching reacts to consecutive captures and checks, rotates jokes and spaces quiet-turn remarks',()=>{
+ const game={id:'varied',side:'w',records:[{},{}],moves:['e2e4'],spokeAt:1};
+ const child={uci:'e4d5',piece:'p',captured:'p',loss:0};
+ const lively={coachChatter:'lively'};
+ assert.equal(reactionFor(game,child,null,null).line,null,'quiet is still the public default');
+ const first=reactionFor(game,child,null,null,lively);assert.equal(first.kind,'youCapture');assert.ok(first.line);
+ game.records.push({});const second=reactionFor(game,child,null,null,lively);assert.notEqual(second.line,first.line);
+ game.records.push({});assert.equal(reactionFor(game,{...child,captured:null},{captured:'q'},null,lively).kind,'meQueen');
+ game.records.push({});assert.equal(reactionFor(game,{...child,captured:null,check:true},null,null,lively).kind,'youCheck');
+ game.records.push({});assert.equal(reactionFor(game,{...child,captured:null},null,null,lively),null);
+ game.records.push({},{},{});assert.equal(reactionFor(game,{...child,captured:null},null,null,lively).kind,'thinking');
+});
+
 test("Legal moves only: an illegal move is refused and changes nothing", async () => {
   const p = freshChess();
   await act(p, "match-start", {}, { engine: fakeEngine(), settings: strong });
@@ -58,7 +87,7 @@ test("Checkmate wins and losses finish the game, move the rating and alternate c
   const r = await move(p, "d1h5", { engine: fakeEngine(), settings: strong });
   assert.equal(r.result, "win");
   const g = p.match.game;
-  assert.deepEqual([g.result.kind, g.result.reason, g.result.ratingBefore, g.result.ratingAfter], ["win", "checkmate", 700, 740]);
+  assert.deepEqual([g.result.kind, g.result.reason, g.result.ratingBefore, g.result.ratingAfter], ["win", "checkmate", 700, 775], "a quick checkmate climbs faster");
   assert.equal(g.react.kind, "youWin");
   assert.ok(g.recap?.moment, "a moment to replay");
   await assert.rejects(move(p, "a2a3", { engine: fakeEngine(), settings: strong }), /Start a game/);
@@ -72,7 +101,7 @@ test("Checkmate wins and losses finish the game, move the rating and alternate c
   const lost = await move(p, "g7g5", { engine: fakeEngine(["d1h5"]), settings: strong });
   assert.equal(lost.result, "loss");
   assert.equal(p.match.game.react.kind, "meWin");
-  assert.equal(p.match.rating, 680, "a loss drops faster than a win climbs");
+  assert.equal(p.match.rating, 715, "a loss after a win: 775 - 60");
   await act(p, "match-ack");
   await act(p, "match-start", {}, { engine: fakeEngine(), settings: strong });
   assert.equal(p.match.game.side, "w", "colours alternate every game");
@@ -172,9 +201,11 @@ test("Reactions stay rare and every spoken reaction is a real clip", async () =>
     await move(p, uci(m), { engine: fakeEngine(), settings: { matchRating: 300 }, rng: random });
     learnerMoves++;
     const r = p.match.game.react;
-    if (r && !p.match.game.result) {
+    if (r?.line && !p.match.game.result) {
       reactions++;
       assert.ok(spoken.has(r.line), r.line);
+    } else if (r && !p.match.game.result) {
+      assert.ok(['meCapture', 'youCapture'].includes(r.kind), 'a silent reaction must be a capture');
     }
   }
   assert.ok(reactions <= Math.ceil(learnerMoves / 2), `${reactions} reactions in ${learnerMoves} moves`);
@@ -207,11 +238,13 @@ test("The coach's move choice: gentle ratings slip more, strong ratings play the
 });
 
 test("Rating goes up after a win and down after a loss, so wins settle near half", () => {
-  assert.equal(nextRating(600, 1, [], 0), 640);
+  assert.equal(nextRating(600, 1, [], 0), 660);
   assert.equal(nextRating(600, 0, [], 0), 540);
   assert.equal(nextRating(600, 0, [], 9), 565);
   assert.equal(nextRating(600, 0.5, [], 9), 600);
-  assert.equal(nextRating(600, 1, [1, 1], 9), 638, "streaks move faster");
+  assert.equal(nextRating(600, 1, [1, 1], 9), 660, "streaks move faster");
+  assert.equal(nextRating(600, 1, [1, 1, 1], 9), 680, "three wins in a row: twice as fast");
+  assert.equal(nextRating(600, 1, [], 9, 20), 650, "a quick mate");
   assert.equal(nextRating(RATING_MIN, 0, [], 9), RATING_MIN);
   assert.equal(nextRating(RATING_MAX, 1, [], 9), RATING_MAX);
   // A child of fixed strength against the staircase: the rating finds him and he wins about half.
@@ -225,7 +258,8 @@ test("Rating goes up after a win and down after a loss, so wins settle near half
       rating = nextRating(rating, win, history, gno);
       history.push(win);
     }
-    assert.ok(wins / 300 > 0.5 && wins / 300 < 0.7, `skill ${skill}: won ${wins}/300`);
+    // Wins climb faster than losses fall (2026-09-28), so a steady child now wins a little under half to a little over.
+    assert.ok(wins / 300 > 0.4 && wins / 300 < 0.65, `skill ${skill}: won ${wins}/300`);
   }
 });
 
@@ -299,4 +333,13 @@ test("Friendly practice plays like the adaptive coach, and a Friendly full game 
   await act(p, "game-start", { side: "w" }, { engine: fakeEngine(), settings });
   assert.equal(p.match.rating, 240);
   assert.equal(p.match.history.at(-1).reason, "abandoned");
+});
+
+test("Too easy is answered at once: a winning streak steps the coach up, practice plays a step above, no rookie trap from 800", async () => {
+  const { coachRating, practiceRating } = await import("../chess-match.mjs");
+  const h = (k, n) => Array.from({ length: n }, () => ({ kind: k }));
+  assert.equal(coachRating({ match: { rating: 620, history: h("win", 6) } }), 1020, "six wins in a row: +400");
+  assert.equal(coachRating({ match: { rating: 620, history: [...h("win", 5), { kind: "loss" }] } }), 620, "a loss ends the streak");
+  assert.equal(practiceRating({ match: { rating: 620, history: [] } }), 770);
+  assert.equal(coachStyle(800).trapFall, 0);assert.ok(coachStyle(300).trapFall > 0.5);
 });

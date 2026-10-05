@@ -82,7 +82,7 @@ for (const [i, label] of [
 body +=
   '<rect x="44" y="492" width="235" height="54" rx="12" fill="#d4f59d"/>' +
   text(66, 526, 23, "npm run play", 700) +
-  text(44, 583, 15, "github.com/rpinho/family-learning-games", 400, "#bed1d3");
+  text(44, 583, 15, "Self-hosted source · npm run play", 400, "#bed1d3");
 games.forEach(([id, name], i) => {
   const x = 552 + (i % 3) * 232,
     y = 44 + Math.floor(i / 3) * 139,

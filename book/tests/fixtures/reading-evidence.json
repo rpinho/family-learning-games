@@ -1,0 +1,442 @@
+{
+  "description": "Wholly synthetic evidence from fixed toy word cases. No household play data.",
+  "now": 1717675200000,
+  "evidence": [
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717588800000,
+      "item": "demo-cat-0",
+      "tags": [
+        "word:cat",
+        "pattern:cvc",
+        "vowel:a",
+        "family:at"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": true,
+      "help": false
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717502399000,
+      "item": "demo-cat-1",
+      "tags": [
+        "word:cat",
+        "pattern:cvc",
+        "vowel:a",
+        "family:at"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": true,
+      "help": false
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717588798000,
+      "item": "demo-cat-2",
+      "tags": [
+        "word:cat",
+        "pattern:cvc",
+        "vowel:a",
+        "family:at"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": true,
+      "help": false
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717502397000,
+      "item": "demo-cat-3",
+      "tags": [
+        "word:cat",
+        "pattern:cvc",
+        "vowel:a",
+        "family:at"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": true,
+      "help": false
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717588796000,
+      "item": "demo-cat-4",
+      "tags": [
+        "word:cat",
+        "pattern:cvc",
+        "vowel:a",
+        "family:at"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": true,
+      "help": false
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717502395000,
+      "item": "demo-cat-5",
+      "tags": [
+        "word:cat",
+        "pattern:cvc",
+        "vowel:a",
+        "family:at"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": true,
+      "help": false
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717588800000,
+      "item": "demo-pin-0",
+      "tags": [
+        "word:pin",
+        "pattern:cvc",
+        "vowel:i",
+        "family:in"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": false,
+      "help": false,
+      "gapPosition": "final-consonant"
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717502399000,
+      "item": "demo-pin-1",
+      "tags": [
+        "word:pin",
+        "pattern:cvc",
+        "vowel:i",
+        "family:in"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": false,
+      "help": false,
+      "gapPosition": "final-consonant"
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717588798000,
+      "item": "demo-pin-2",
+      "tags": [
+        "word:pin",
+        "pattern:cvc",
+        "vowel:i",
+        "family:in"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": false,
+      "help": false,
+      "gapPosition": "final-consonant"
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717502397000,
+      "item": "demo-pin-3",
+      "tags": [
+        "word:pin",
+        "pattern:cvc",
+        "vowel:i",
+        "family:in"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": false,
+      "help": false,
+      "gapPosition": "final-consonant"
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717588796000,
+      "item": "demo-pin-4",
+      "tags": [
+        "word:pin",
+        "pattern:cvc",
+        "vowel:i",
+        "family:in"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": false,
+      "help": false,
+      "gapPosition": "final-consonant"
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717502395000,
+      "item": "demo-pin-5",
+      "tags": [
+        "word:pin",
+        "pattern:cvc",
+        "vowel:i",
+        "family:in"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": false,
+      "help": false,
+      "gapPosition": "final-consonant"
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717588800000,
+      "item": "demo-map-0",
+      "tags": [
+        "word:map",
+        "pattern:cvc",
+        "vowel:a",
+        "family:ap"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": true,
+      "help": false
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717502399000,
+      "item": "demo-map-1",
+      "tags": [
+        "word:map",
+        "pattern:cvc",
+        "vowel:a",
+        "family:ap"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": false,
+      "help": false
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717588798000,
+      "item": "demo-map-2",
+      "tags": [
+        "word:map",
+        "pattern:cvc",
+        "vowel:a",
+        "family:ap"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": true,
+      "help": false
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717502397000,
+      "item": "demo-map-3",
+      "tags": [
+        "word:map",
+        "pattern:cvc",
+        "vowel:a",
+        "family:ap"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": false,
+      "help": false
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717588796000,
+      "item": "demo-map-4",
+      "tags": [
+        "word:map",
+        "pattern:cvc",
+        "vowel:a",
+        "family:ap"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": true,
+      "help": false
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717502395000,
+      "item": "demo-map-5",
+      "tags": [
+        "word:map",
+        "pattern:cvc",
+        "vowel:a",
+        "family:ap"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": false,
+      "help": false
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717588800000,
+      "item": "demo-duck-0",
+      "tags": [
+        "word:duck",
+        "pattern:digraph"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": false,
+      "help": false
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717502399000,
+      "item": "demo-duck-1",
+      "tags": [
+        "word:duck",
+        "pattern:digraph"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": false,
+      "help": false
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717588798000,
+      "item": "demo-duck-2",
+      "tags": [
+        "word:duck",
+        "pattern:digraph"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": false,
+      "help": false
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717502397000,
+      "item": "demo-duck-3",
+      "tags": [
+        "word:duck",
+        "pattern:digraph"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": false,
+      "help": false
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717588800000,
+      "item": "demo-milk-0",
+      "tags": [
+        "word:milk",
+        "pattern:blend",
+        "vowel:i"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": false,
+      "help": false
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717502399000,
+      "item": "demo-milk-1",
+      "tags": [
+        "word:milk",
+        "pattern:blend",
+        "vowel:i"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": false,
+      "help": false
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717588798000,
+      "item": "demo-milk-2",
+      "tags": [
+        "word:milk",
+        "pattern:blend",
+        "vowel:i"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": false,
+      "help": false
+    },
+    {
+      "player": "reader",
+      "source": "synthetic",
+      "at": 1717502397000,
+      "item": "demo-milk-3",
+      "tags": [
+        "word:milk",
+        "pattern:blend",
+        "vowel:i"
+      ],
+      "readTask": true,
+      "choices": 3,
+      "ms": 3000,
+      "ok": false,
+      "help": false
+    }
+  ]
+}

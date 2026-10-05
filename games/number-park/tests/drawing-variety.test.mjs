@@ -24,7 +24,7 @@ test('ten shapes cycle and resume; copied work is distinct from guided work and 
 });
 test('patterns sometimes place the missing picture at the start without changing level',()=>{
  const p=freshProfile('beginner');let found=0;
- for(let i=0;i<120;i++){p.revision=i;const q=makeQuestion(p,'pattern',3);assert.equal(q.level,2);if(q.position==='start'){found++;assert.equal(q.blank,0);assert.equal(q.sequence[0],null);assert.equal(q.answer,q.unit[q.phase]);assert.equal(q.prompt,'Which picture starts the pattern?');}}
+ for(let i=0;i<120;i++){p.revision=i;const q=makeQuestion(p,'pattern',3);assert.equal(q.level,4);if(q.position==='start'){found++;assert.equal(q.blank,0);assert.equal(q.sequence[0],null);assert.equal(q.answer,q.unit[q.phase]);assert.equal(q.prompt,'Which picture starts the pattern?');}}
  assert.equal(found,120);
 });
 test('pointer coordinates are read synchronously, never in deferred React state updaters',()=>{

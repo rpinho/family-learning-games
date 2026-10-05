@@ -18,9 +18,8 @@ import {backupProfile} from './profile-backup.mjs';
 import {trackPlay,windDownDue,startRest,clearRest} from './public/rest.mjs';
 import {daySummary,localDate} from './day-summary.mjs';
 const timeZone=process.env.FAMILY_TZ||Intl.DateTimeFormat().resolvedOptions().timeZone;
-
 const root=path.dirname(fileURLToPath(import.meta.url));
-const data=process.env.LETTER_QUEST_DATA||path.join(os.homedir(),'.local/share/family-learning-games/letter-quest');
+const data=process.env.LETTER_QUEST_DATA||path.join(os.homedir(),'.local/share/letter-quest');
 await mkdir(data,{recursive:true,mode:0o700});
 const diagnostics=createDiagnostics(data);
 await diagnostics.record('server_start');
@@ -33,7 +32,7 @@ function allowedHosts(){if(hostCache&&Date.now()-hostCacheAt<5000)return hostCac
 let queue=Promise.resolve();
 async function load(id){try{return JSON.parse(await readFile(path.join(data,id+'.json'),'utf8'));}catch(e){if(e.code==='ENOENT')return freshProfile(id);throw e;}}
 async function save(p){const file=path.join(data,p.id+'.json');await writeFile(file+'.tmp',JSON.stringify(p,null,2),{mode:0o600});await rename(file+'.tmp',file);}
-const files={'/timing.mjs':'timing.mjs','/hints.mjs':'hints.mjs','/':'index.html','/app.mjs':'app.mjs','/engine.mjs':'engine.mjs','/dialogue.mjs':'dialogue.mjs','/voice.mjs':'voice.mjs','/telemetry.mjs':'telemetry.mjs','/version.mjs':'version.mjs','/style.css':'style.css','/rook.svg':'rook.svg','/favicon.ico':'rook.svg'};
+const files={'/calm.css':'calm.css','/calm-view.mjs':'calm-view.mjs','/calm-sound.mjs':'calm-sound.mjs','/calm-water.m4a':'calm-water.m4a','/calm-letters.svg':'calm-letters.svg','/calm-words.svg':'calm-words.svg','/calm-reading.svg':'calm-reading.svg','/calm-story.svg':'calm-story.svg','/calm-numbers.svg':'calm-numbers.svg','/timing.mjs':'timing.mjs','/hints.mjs':'hints.mjs','/':'index.html','/app.mjs':'app.mjs','/engine.mjs':'engine.mjs','/dialogue.mjs':'dialogue.mjs','/voice.mjs':'voice.mjs','/telemetry.mjs':'telemetry.mjs','/version.mjs':'version.mjs','/style.css':'style.css','/rook.svg':'rook.svg','/favicon.ico':'rook.svg'};
 Object.assign(files,{'/hub.mjs':'hub.mjs','/hub.css':'hub.css'});
 for(const file of ['rescue.mjs','rescue-puzzles.mjs','rescue-view.mjs','rescue.css','player-banner.css'])files['/'+file]=file;
 for(const file of ['story.mjs','story-ui.mjs','rook.mjs','story.css'])files['/'+file]=file;
@@ -42,7 +41,7 @@ for(const file of ['soccer.mjs','soccer-view.mjs','soccer-audio.mjs','soccer.css
 for(const file of ['reading-client.mjs','reading.mjs','reading-view.mjs','reading.css','foundation.mjs','guided-trace.mjs','recap.mjs','bo-story.mjs','rest.mjs','word-break.mjs'])files['/'+file]=file;
 for(const version of [1,2])for(const size of [16,32,48,180,192,512])files[`/icons/app-${size}-v${version}.png`]=`icons/app-${size}-v${version}.png`;
 files['/icons/favicon-v1.ico']='icons/favicon-v1.ico';files['/icons/favicon-v2.ico']='icons/favicon-v2.ico';files['/favicon.ico']='icons/favicon-v2.ico';files['/manifest.webmanifest']='manifest.webmanifest';
-const mime={html:'text/html; charset=utf-8',mjs:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',svg:'image/svg+xml',png:'image/png',ico:'image/x-icon',webmanifest:'application/manifest+json'};
+const mime={m4a:'audio/mp4',html:'text/html; charset=utf-8',mjs:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',svg:'image/svg+xml',png:'image/png',ico:'image/x-icon',webmanifest:'application/manifest+json'};
 function reply(res,status,body){if(status>=400)res.diagnosticReason=body.error;res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(body.profile?{...body,serverNow:Date.now()}:body));}
 async function body(req){let data='';for await(const chunk of req){data+=chunk;if(data.length>200000)throw Object.assign(Error('Request too large'),{status:413});}try{return JSON.parse(data);}catch{throw Object.assign(Error('Invalid JSON'),{status:400});}}
 function validStrokes(strokes){return Array.isArray(strokes)&&strokes.length<=8&&strokes.every(s=>Array.isArray(s)&&s.length>=2&&s.length<=1000&&s.every(p=>Array.isArray(p)&&p.length===2&&p.every(v=>Number.isFinite(v)&&v>=-10&&v<=110)));}
@@ -81,7 +80,7 @@ const server=http.createServer(async(req,res)=>{
    if(url.pathname.endsWith('.wav'))res.setHeader('Cache-Control','public, max-age=31536000, immutable');
    res.setHeader('Content-Length',bytes.length);res.end(req.method==='HEAD'?undefined:bytes);return;
   }
-  const match=url.pathname.match(/^\/api\/(explorer|beginner|admin)\/(state|attempt|settings|chest|promote|advance|reset|skip|duel|adventure|quest|hint|story|maze|soccer|reading|rescue|rest|summary)$/);
+  const match=url.pathname.match(/^\/api\/((?:explorer|beginner)(?:_[1-9]\d{0,3})?|admin)\/(state|attempt|settings|chest|promote|advance|reset|skip|duel|adventure|quest|hint|story|maze|soccer|reading|rescue|rest|summary)$/);
   if(match){
    const [,id,action]=match;
    if(action==='summary'){

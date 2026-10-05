@@ -48,7 +48,7 @@ test('ordinary wrong builds keep column guidance; older saves and early-number g
  assert.deepEqual(buildFeedback(q.target,[0,2,2],0,q).lines,['Too many tens.','Too few ones.']);
  for(const player of ['beginner','admin'])for(let round=0;round<6;round++){
   const p=freshProfile(player);const next=makeQuestion(p,'count',round);
-  assert.notEqual(next.skill,'number-name');assert.equal(next.max,13);
+  assert.notEqual(next.skill,'number-name');assert.equal(next.max,next.kind==='count'&&next.count>13?16:13);
  }
  const p=freshProfile('explorer');act(p,{kind:'start',game:'place'});
  const prior=JSON.stringify(p);prepareProfile(p);assert.equal(JSON.stringify(p),prior);

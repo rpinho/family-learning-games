@@ -4,7 +4,7 @@ import {nearPatternGap,patternLevel} from '../lib/play-practice.mjs';
 test('Repair changes manipulation, not difficulty bounds; every slot is solvable across tiers',()=>{
  for(const level of [1,2,3])for(let n=0;n<150;n++){
   const p=freshProfile('beginner');p.revision=n;
-  p.history=Array.from({length:level===1?2:level===3?5:0},()=>({ok:level===3,helped:false,question:{patternVersion:2}}));
+  p.patternManual={level,after:0};
   const q=makeQuestion(p,'pattern',2);assert.equal(q.mode,'repair');assert.equal(q.level,level);assert.equal(patternLevel(p),level);
   assert.equal(q.sequence.filter(x=>x===null).length,1);assert.equal(q.answer,q.unit[(q.blank+q.phase)%q.unit.length]);assert.equal(q.options.length,4);assert.equal(p.ceiling,13);
  }
