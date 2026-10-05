@@ -58,7 +58,7 @@ test('quest carries reading assessment and uses confidence words and parent-appr
  const learning=episodeLearning(plan,model,{bookPlan:{confidenceWords:['cat','pin'],soundFocus:['final-consonant'],hearAndBuildWords:['thin']}});
  const e=fallbackEpisode(plan,{actors:{'grown-up':{}},backgrounds:{garden:{}}},learning);
  assert.equal(e.puzzles.find(g=>g.id==='clue').answer,'pin');
- const names=e.puzzles.find(g=>g.practice==='name-spelling');assert.deepEqual(names.words,['anna','eric']);assert.equal(names.answer,'anna eric');assert.equal(names.soundSupport,true);
+ const names=e.puzzles.find(g=>g.practice==='name-spelling');assert.deepEqual(names.words,['robin','ada']);assert.equal(names.answer,'robin ada');assert.equal(names.soundSupport,true);
  assert.equal(e.puzzles.find(g=>g.practice==='hear-and-build').answer,'thin');
  assert.equal(learning.masteryRule.minMasteryReads,4);assert.deepEqual(learning.soundFocus,['final-consonant']);assert.deepEqual(checkEpisode(e,{...learning}).issues,[]);
  const changed=structuredClone(e);changed.puzzles.find(g=>g.practice==='name-spelling').words=['mom'];assert.ok(checkEpisode(changed,{...learning}).issues.length);
@@ -67,6 +67,6 @@ test('quest carries reading assessment and uses confidence words and parent-appr
 test('an explicit private name-spelling goal overrides only its exact legacy denylist entry',async()=>{
  const plan={level:'reader',player:'explorer',date:'2026-03-10',nameSpelling:['ROBIN','ADA']},library={actors:{'grown-up':{}},backgrounds:{garden:{}}};
  const raw=fallbackEpisode(plan,library),r=await writeEpisode(plan,{library,extra:['Robin','Schooltown'],allow:['ROBIN','ADA'],ask:async()=>({source:'writer',text:JSON.stringify(raw)})});
- assert.equal(r.source,'writer');assert.deepEqual(r.checks.issues,[]);assert.deepEqual(r.episode.puzzles.find(g=>g.practice==='name-spelling').words,['anna','eric']);
+ assert.equal(r.source,'writer');assert.deepEqual(r.checks.issues,[]);assert.deepEqual(r.episode.puzzles.find(g=>g.practice==='name-spelling').words,['robin','ada']);
  raw.intro='Visit Schooltown.';const unsafe=await writeEpisode(plan,{library,extra:['Robin','Schooltown'],allow:['ROBIN','ADA'],ask:async()=>({source:'writer',text:JSON.stringify(raw)})});assert.equal(unsafe.source,'deterministic quest fallback');assert.ok(unsafe.lint.some(x=>x.includes('Schooltown')));
 });

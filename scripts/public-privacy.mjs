@@ -7,6 +7,8 @@ import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {secretScan} from './public-secrets.mjs';
 import {privacyIssues,denied} from './public-policy.mjs';
+import {familyTextIssues} from './public-family-text.mjs';
+import {privateTermScan} from './public-private-terms.mjs';
 
 const media=/\.(png|jpe?g|webp|gif|svg|bmp|tiff?|avif|heic|ico|mp4|mov|m4v|webm|avi|mkv|mp3|wav|ogg|m4a|flac|aac|aiff|opus)$/i;
 const audio=/\.(mp3|wav|ogg|m4a|flac|aac|aiff|opus)$/i;
@@ -19,7 +21,7 @@ export function loadPolicy(path=process.env.PUBLIC_SYNC_POLICY||join(homedir(),'
  const local=JSON.parse(readFileSync(path,'utf8'));
  const terms=[...(local.replacements||[]).map(x=>x[0]),...(local.denied||[]),...Object.values(local.denylist||{}).flat()];
  if(!terms.length||terms.some(x=>typeof x!=='string'||!x.trim()))throw Error('privacy-policy:1: empty or invalid private denylist');
- return {...local,terms:[...new Set([...terms,...denied])]};
+ return {...local,privateTerms:[...new Set(terms)],terms:[...new Set([...terms,...denied])]};
 }
 const patterns=[
  [/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi,'email'],
@@ -41,16 +43,18 @@ function synthetic(value,label){
  if(label==='IPv6 address')return !isIP(value)||value==='::1'||value.toLowerCase().startsWith('2001:db8:');
  return false;
 }
-export function textIssues(file,bytes,terms=[],{scanMediaText=false}={}){
+export function textIssues(file,bytes,terms=[],{scanMediaText=false,familyOnly=false}={}){
  const issues=[],texts=[[file,1],[bytes.toString('utf8'),null]];
  for(const [text,fixed] of texts){
   const lineAt=i=>fixed||text.slice(0,i).split('\n').length;
   const scanText=!fixed&&/\.svg$/i.test(originalPath(file))?text.replace(/\b(?:d|points|viewBox|x[12]?|y[12]?|cx|cy|r|rx|ry|width|height|transform)\s*=\s*(["'])([\s\S]*?)\1/g,attribute=>attribute.replace(/[^\n]/g,' ')):text;
   const excepted=(hit,label)=>exceptions.some(e=>e.file===originalPath(file)&&e.rule===label&&e.sha256===createHash('sha256').update(text.split('\n')[lineAt(hit.index)-1]).digest('hex'));
+  if(fixed||scanMediaText||!bytes.includes(0)&&(/\.svg$/i.test(originalPath(file))||!media.test(originalPath(file))))issues.push(...familyTextIssues(file,fixed?originalPath(file):scanText,{filename:!!fixed}));
+  if(familyOnly)continue;
   for(const term of terms){const re=new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');for(const hit of text.matchAll(re))issues.push(`${file}:${lineAt(hit.index)}: private denylist match (value withheld)`);}
   for(const [pattern,label]of patterns)for(const hit of scanText.matchAll(pattern))if((fixed||scanMediaText||/\.svg$/i.test(originalPath(file))||!media.test(originalPath(file)))&&!synthetic(hit[0],label)&&!excepted(hit,label)&&!(label==='private hostname'&&!fixed&&/\.(?:m?js|[jt]sx?|py)$/.test(originalPath(file))&&(text.slice(Math.max(0,hit.index-2),hit.index)==='${'||/^this\./.test(hit[0])&&/^\s*\+?=/.test(text.slice(hit.index+hit[0].length))))&&!(label==='email'&&/\.(?:png|jpg|webp|svg)\b/.test(hit[0])))issues.push(`${file}:${lineAt(hit.index)}: ${label} (value withheld)`);
  }
- for(const old of privacyIssues(originalPath(file),bytes))if(old.includes('forbidden runtime/private')||old.includes('projected household'))issues.push(`${file}:1: ${old.slice(file.length+2)}`);
+ if(!familyOnly)for(const old of privacyIssues(originalPath(file),bytes))if(old.includes('forbidden runtime/private')||old.includes('projected household'))issues.push(`${file}:1: ${old.slice(file.length+2)}`);
  return [...new Set(issues)];
 }
 export function metadataFindings(tags){
@@ -61,18 +65,19 @@ const privateRoots=()=>[
  ...['refs','src','lib'].map(s=>join(homedir(),'.local/share/family-games/book/art',s)),
  join(homedir(),'.local/share/family-games/book/cast')
 ];
-export async function runGate({root=resolve('.'),base=process.env.PUBLIC_SYNC_BASE||'origin/main',head='HEAD',strip=false,secretsOnly=false,allHistory=false,policyPath,reviewDir,referenceRoots,scanSecrets=secretScan}={}){
+export async function runGate({root=resolve('.'),base=process.env.PUBLIC_SYNC_BASE||'origin/main',head='HEAD',strip=false,secretsOnly=false,publicTextOnly=false,allHistory=false,policyPath,reviewDir,referenceRoots,scanSecrets=secretScan,scanPrivateTerms=privateTermScan}={}){
  const git=args=>execFileSync('git',args,{cwd:root,maxBuffer:256*1024*1024});
  base=allHistory?null:git(['merge-base',base,head]).toString().trim(); // Bound both scanners to the actual PR ancestry.
  const files=[...new Set(git(['ls-files','--cached','--others','--exclude-standard','-z']).toString().split('\0').filter(Boolean))];
  const issues=[];
- const policy=secretsOnly?{terms:[]}:loadPolicy(policyPath);
+ const policy=secretsOnly||publicTextOnly?{terms:[]}:loadPolicy(policyPath);
+ const textOptions={familyOnly:publicTextOnly};
  const snapshot=mkdtempSync(join(tmpdir(),'public-tree-snapshot-'));
  const safe=s=>{for(const term of policy.terms)s=s.replace(new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'),'[withheld]');return s.replace(/[\x00-\x1f\x7f]/g,'?');};
  const startHead=git(['rev-parse',head]).toString().trim();
  const commits=git(['rev-list','--reverse',base?`${base}..${head}`:head]).toString().trim().split('\n').filter(Boolean);
  try {
-  if(strip&&!secretsOnly){
+  if(strip&&!secretsOnly&&!publicTextOnly){
    const assets=files.filter(f=>media.test(f)&&existsSync(join(root,f))&&lstatSync(join(root,f)).isFile());
    const exif=existsSync('/opt/homebrew/bin/exiftool')?'/opt/homebrew/bin/exiftool':'exiftool';
    if(assets.length){
@@ -89,7 +94,7 @@ export async function runGate({root=resolve('.'),base=process.env.PUBLIC_SYNC_BA
    if(linked||!stat.isFile()){issues.push(`${file}:1: symlink or non-regular public file refused`);continue;}
    const bytes=readFileSync(path);
    if(!secretsOnly&&!media.test(file)&&(/^(?:\x89PNG|GIF8|\xff\xd8\xff|ID3|fLaC|OggS)/.test(bytes.subarray(0,16).toString('latin1'))||bytes.toString('ascii',0,4)==='RIFF'&&['WEBP','WAVE'].includes(bytes.toString('ascii',8,12))||bytes.toString('ascii',4,8)==='ftyp'))issues.push(`${file}:1: media bytes with unrecognized extension; rename for complete media review`);
-   if(!secretsOnly){issues.push(...textIssues(file,bytes,policy.terms));
+   if(!secretsOnly){issues.push(...textIssues(file,bytes,policy.terms,textOptions));
     if(/\.svg$/i.test(file)&&/<image\b|<foreignObject\b|\b(?:href|xlink:href)\s*=\s*["'](?!#)/i.test(bytes.toString('utf8')))issues.push(`${file}:1: embedded or external SVG content requires separate raster/media review`);
    }
    mkdirSync(dirname(join(snapshot,file)),{recursive:true});copyFileSync(path,join(snapshot,file));
@@ -97,7 +102,7 @@ export async function runGate({root=resolve('.'),base=process.env.PUBLIC_SYNC_BA
   if(!secretsOnly){
    const trees=new Map(),blobIds=new Set();
    for(const commit of commits){
-    issues.push(...textIssues(`commit/${commit}/message`,git(['show','-s','--format=%B',commit]),policy.terms));
+    issues.push(...textIssues(`commit/${commit}/message`,git(['show','-s','--format=%B',commit]),policy.terms,textOptions));
     const entries=git(['ls-tree','-r','-z',commit]).toString().split('\0').filter(Boolean).map(row=>{
      const split=row.indexOf('\t'),[mode,type,oid]=row.slice(0,split).split(' ');return {mode,type,oid,file:row.slice(split+1)};
     });trees.set(commit,entries);for(const e of entries)if(e.type==='blob')blobIds.add(e.oid);
@@ -112,13 +117,14 @@ export async function runGate({root=resolve('.'),base=process.env.PUBLIC_SYNC_BA
    for(const [commit,entries]of trees)for(const e of entries){
     const file=`${e.file}@${commit.slice(0,12)}`;
     if(e.type!=='blob'||e.mode!=='100644'&&e.mode!=='100755'){issues.push(`${file}:1: symlink/submodule or non-regular historical file refused`);continue;}
-    issues.push(...textIssues(file,objects.get(e.oid),policy.terms));
+    issues.push(...textIssues(file,objects.get(e.oid),policy.terms,textOptions));
    }
   }
   for(const commit of commits){const message=join(snapshot,'_privacy_scan_commit_messages',commit+'.txt');mkdirSync(dirname(message),{recursive:true});writeFileSync(message,git(['show','-s','--format=%B',commit]));}
-  issues.push(...scanSecrets({root,snapshot,base,head}));
+  if(!publicTextOnly)issues.push(...scanSecrets({root,snapshot,base,head}));
+  if(!secretsOnly&&!publicTextOnly)issues.push(...scanPrivateTerms({root,snapshot,base,head,terms:policy.privateTerms}));
   let mediaResult={records:[],references:0},review;
-  if(!secretsOnly){
+  if(!secretsOnly&&!publicTextOnly){
    review=reviewDir||join(homedir(),'.local/share/family-public-sync/review',new Date().toLocaleDateString('en-CA'));mkdirSync(review,{recursive:true,mode:0o700});
    const assets=files.filter(f=>media.test(f)&&existsSync(join(root,f))&&lstatSync(join(root,f)).isFile()),metadata=new Map();
    const exif=existsSync('/opt/homebrew/bin/exiftool')?'/opt/homebrew/bin/exiftool':'exiftool';

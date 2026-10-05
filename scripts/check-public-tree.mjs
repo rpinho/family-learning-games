@@ -8,9 +8,11 @@ export async function main(args=process.argv.slice(2)){
   if(args[i]==='--strip')options.strip=true;
   else if(args[i]==='--all-history')options.allHistory=true;
   else if(args[i]==='--secrets-only')options.secretsOnly=true;
+  else if(args[i]==='--public-text-only')options.publicTextOnly=true;
   else if(['--base','--head','--root'].includes(args[i])&&args[i+1])options[args[i].slice(2)]=args[++i];
-  else throw Error('privacy-gate:1: use [--base REF] [--head REF] [--root DIR] [--strip] [--secrets-only]');
+  else throw Error('privacy-gate:1: use [--base REF] [--head REF] [--root DIR] [--strip] [--secrets-only | --public-text-only] [--all-history]');
  }
+ if(options.secretsOnly&&options.publicTextOnly||options.strip&&(options.secretsOnly||options.publicTextOnly))throw Error('privacy-gate:1: incompatible modes');
  if(options.root)options.root=resolve(options.root);
  const result=await runGate(options);
  for(const issue of result.issues)console.error(issue);

@@ -56,7 +56,7 @@ svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120">'+''.join('<r
 Path(${JSON.stringify(join(root,'vector.svg'))}).write_text(svg)
 Path(${JSON.stringify(join(refs,'composed.svg'))}).write_text('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120"><image href="fake.png" width="160" height="120"/></svg>')
 Path(${JSON.stringify(join(refs,'vector-reference.png'))}).write_bytes(resvg_py.svg_to_bytes(svg_string=svg,width=512,height=512))`]);
- const result=await runGate({root,base,policyPath:policy,reviewDir:review,referenceRoots:[refs],scanSecrets:()=>[]});
+ const result=await runGate({root,base,policyPath:policy,reviewDir:review,referenceRoots:[refs],scanSecrets:()=>[],scanPrivateTerms:()=>[]});
  assert.ok(result.issues.some(s=>s.includes('untracked.txt:1:')));
  assert.ok(result.issues.some(s=>s.includes('old.txt@')));
  assert.ok(result.issues.some(s=>s.includes('/message:1:')));
@@ -68,10 +68,10 @@ Path(${JSON.stringify(join(refs,'vector-reference.png'))}).write_bytes(resvg_py.
  assert.ok(result.issues.every(s=>!s.includes(fakeName)));
  assert.ok(readFileSync(result.review,'utf8').includes('derivative.jpg'));
  writeFileSync(policy,JSON.stringify({denied:[fakeName],mediaReviews:{[createHash('sha256').update(readFileSync(recording)).digest('hex')]:{kind:'synthetic-audio',reason:'Synthetic fixture',reviewer:'Test'}}}));
- const stripped=await runGate({root,base,strip:true,policyPath:policy,reviewDir:review,referenceRoots:[refs],scanSecrets:()=>[]});
+ const stripped=await runGate({root,base,strip:true,policyPath:policy,reviewDir:review,referenceRoots:[refs],scanSecrets:()=>[],scanPrivateTerms:()=>[]});
  assert.ok(!stripped.issues.some(s=>s.includes('identifying media metadata')));
  assert.ok(!stripped.issues.some(s=>s.includes('possible speech')));
  writeFileSync(recording,Buffer.alloc(101));
- const changed=await runGate({root,base,policyPath:policy,reviewDir:review,referenceRoots:[refs],scanSecrets:()=>[]});
+ const changed=await runGate({root,base,policyPath:policy,reviewDir:review,referenceRoots:[refs],scanSecrets:()=>[],scanPrivateTerms:()=>[]});
  assert.ok(changed.issues.some(s=>s.includes('voice.wav:1: possible speech')));
 });

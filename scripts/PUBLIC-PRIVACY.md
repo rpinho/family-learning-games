@@ -4,7 +4,9 @@ Run `npm run check:privacy -- --base origin/main` before a public commit or push
 `public-sync.mjs` invokes the same gate before committing and again before pushing.
 Any finding or unavailable scanner exits non-zero. Reports contain `file:line` and
 rule names, never matched identities, reference paths, credentials or scanner raw
-output. Git scanners and PII checks cover the PR merge-base through HEAD; PII also
+output. Family text, private-term history rules, and image checks are the primary
+privacy layers; default secret scanners are a separate credential side-check.
+Git scanners and PII checks cover the PR merge-base through HEAD; PII also
 checks every intermediate tree and commit message. Filesystem scanners include
 tracked files and non-ignored untracked files, including staged/unstaged edits.
 Ignored household data and installed dependencies are outside the public tree.
@@ -26,6 +28,13 @@ repository (default `~/.config/family-public-sync/privacy.json`). Existing
 schools, town/street and private devices; a denylist cannot discover unknown names.
 Never copy this policy or its values into logs, tests, PRs or public history.
 
+The gate generates a private temporary Gitleaks TOML ruleset from every private
+term (including existing replacement keys), escapes literal terms for RE2/TOML,
+and scans both the candidate snapshot and the complete PR git range. Rule IDs
+are numeric and reports contain locations only. The temporary directory is
+private, config permissions are 0600, scanner output is withheld, and all
+rules/reports are removed in a `finally` block. No private policy enters CI.
+
 Generic checks flag email, phone, street addresses, ZIP/city, IP addresses,
 private hostnames, absolute home paths and labelled birthdays. The only intrinsic
 network exceptions are loopback, wildcard bind addresses and RFC documentation
@@ -38,12 +47,37 @@ Required upstream copyright contacts have line-hash exceptions in
 `public-pii-exceptions.json`, with a reason for each; edited lines lose approval.
 No whole-file, secret-detector or private-name exemptions are permitted.
 
+Capitalized given names use a vendored lookup of 8,429 public names/components.
+Possessives, social handles and speech attributions also flag names absent from
+the corpus. Unknown people fail until a human removes them or approves a public
+fictional character or public figure in `public-name-allowlist.json`, with a
+reason. Private terms override that allowlist. Case variants are checked too.
+Package scopes, CSS at-rules and documented code annotations are distinguished
+from social handles. Names in filenames, comments, strings, SVG text and media
+metadata are included; compressed binary bytes are not treated as prose.
+
+Nameless family relationships, diagnosis/treatment terms, education context,
+home features, care/financial details and child age/grade combinations also fail.
+Age/grade detection is deliberately broad, avoiding public household ages.
+Exact non-person homonyms, generic product prose, fictional settings and invented
+regression cases have line-bound reviews in `public-text-reviews.json`. Entries
+store the path, SHA-256 of the exact scanned line (or all lines of a multiline match),
+rule and optional word hashes,
+and a review reason. A new person cannot be approved with a homonym review.
+Changing a reviewed line or adding a new token invalidates its approval. SVG
+geometry attributes are blanked before prose checks; visible text still scans.
+These reviews never suppress private terms or default secret scanners.
+
+CI also runs `--public-text-only` over the same history and filesystem range,
+using only committed public lookup/allowlist/reviews. It intentionally omits
+private rules and media references. `--secrets-only` runs the credential layer.
+
 Gitleaks runs on the filesystem snapshot and git range with full redaction and
 ignores inline allow comments. TruffleHog runs both sources with all result
 classes, including unverified/unknown/filtered unverified. This is the modern
 CLI equivalent of `--only-verified=false`. Verification is disabled to keep
 candidate credentials local; any detected result fails. Inline ignore tags are
-disabled. GitHub runs these secret-only checks for every PR/push with pinned
+disabled. GitHub runs these text and secret checks for every PR/push with pinned
 scanner versions and no credential verification. Private policy and likeness
 sources are never uploaded. No `.gitleaks.toml` exceptions are currently needed.
 
