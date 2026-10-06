@@ -96,3 +96,33 @@ export const weightVoiceLines = () => [
   WEIGHT_HELP,
   'Target.',
 ];
+
+// Reveal a worked arrangement only after submitted misses or an explicit Help.
+// Keep piece identities: two equal labels can require two different weights.
+export function weightTeaching(w, session = {}) {
+  if (session.result || (!session.helped && !(session.balanceChecks >= 2))) return null;
+  if (!Number.isFinite(w.target) || !Array.isArray(w.tray) || w.tray.length > 8) return null;
+  const base = [sum(w.fixed || []), sum(w.baseRight || [])];
+  const sides = w.mode === 'free' ? [-1, 0, 1] : [-1, 1];
+  let best = null, cost = Infinity;
+  const search = (i, draft, totals) => {
+    if (totals.some(n => n > w.target)) return;
+    if (i === w.tray.length) {
+      if (totals[0] !== w.target || totals[1] !== w.target || (w.selection === 'one' && draft.filter(s => s === 1).length !== 1)) return;
+      const nextCost = draft.filter(s => s !== -1).length;
+      if (nextCost < cost) { best = [...draft]; cost = nextCost; }
+      return;
+    }
+    for (const side of sides) {
+      const next = [...totals];
+      if (side !== -1) next[side] += w.tray[i];
+      search(i + 1, [...draft, side], next);
+    }
+  };
+  search(0, [], base);
+  if (!best) return null;
+  return { draft: best, equations: [0, 1].map(side => {
+    const values = [...(side === 0 ? w.fixed || [] : w.baseRight || []), ...w.tray.filter((_, i) => best[i] === side)];
+    return values.map(v => v.toLocaleString('en-US')).join(' + ') + ' = ' + w.target.toLocaleString('en-US');
+  }) };
+}
