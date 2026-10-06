@@ -93,6 +93,6 @@ export function ClassicBalanceScale({q,result,disabled,answer,answerDisabled=fal
  </section>;
 }
 
-export function BalanceScale(props:ComponentProps<typeof ClassicBalanceScale>&{draft?:number[],place:(draft:number[])=>void}){
+export function BalanceScale(props:ComponentProps<typeof ClassicBalanceScale>&{session?:any,draft?:number[],place:(draft:number[])=>void}){
  return props.q.weights?<NumberBalance {...props}/>:<ClassicBalanceScale {...props}/>;
 }

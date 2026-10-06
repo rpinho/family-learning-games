@@ -7,6 +7,7 @@ import {
   weightTotals,
   weightAngle,
   WEIGHT_HELP,
+  weightTeaching,
 } from '@/lib/balance-weights.mjs';
 
 type WeightPuzzle = {
@@ -22,14 +23,17 @@ export function NumberBalance({
   draft,
   disabled,
   place,
+  session = {},
 }: {
   q: { weights: WeightPuzzle };
+  session?: any;
   result: { draft?: number[] } | null;
   draft?: number[];
   disabled: boolean;
   place: (draft: number[]) => void;
 }) {
   const w = q.weights;
+  const teaching = weightTeaching(w, {...session, result});
   const [layout, setLayout] = useState<number[]>(
     draft || result?.draft || emptyWeightDraft(w),
   );
@@ -98,12 +102,14 @@ export function NumberBalance({
       className={
         'number-weight' +
         (selected === index ? ' selected' : '') +
-        (drag?.index === index ? ' lifted' : '')
+        (drag?.index === index ? ' lifted' : '') +
+        (teaching?.draft[index] !== undefined && teaching.draft[index] !== -1 ? ' teaching-weight' : '')
       }
       disabled={locked}
+      data-teaching-side={teaching?.draft[index] ?? -1}
       data-weight={index}
       data-side={layout[index]}
-      aria-label={`${value} weight${layout[index] === -1 ? ' in tray' : ` on ${layout[index] === 0 ? 'left' : 'right'} pan`}`}
+      aria-label={`${value} weight${layout[index] === -1 ? ' in tray' : ` on ${layout[index] === 0 ? 'left' : 'right'} pan`}${teaching && teaching.draft[index] !== -1 ? `; use on ${teaching.draft[index] === 0 ? 'left' : 'right'} pan` : ''}`}
       aria-pressed={selected === index}
       onPointerDown={(e) => down(e, index)}
       onPointerMove={move}
@@ -356,6 +362,10 @@ export function NumberBalance({
             ? `Place the ${w.tray[selected]} weight on a pan.`
             : WEIGHT_HELP}
       </output>
+      {teaching && <div className="weight-teaching" role="status">
+        <p>Try the outlined weights. Return the others to the tray.</p>
+        {teaching.equations.map((line: string, side: number) => (side === 0 && w.mode === 'fixed') ? null : <p key={side}><span>{side === 0 ? 'Left' : 'Right'}:</span> <strong>{line}</strong></p>)}
+      </div>}
       {drag && (
         <div
           className="number-drag-ghost"
