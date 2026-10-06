@@ -247,3 +247,26 @@ void test('all new prompt and completion speech comes from the finite voice inve
         assert.ok(clips.has(line), line);
     }
 });
+
+void test('personalized table lists keep every weight prompt in the finite speech inventory', () => {
+  const clips = new Set(balanceVoiceLines());
+  const floors = [
+    {},
+    { tables: [] },
+    { tables: [2, 3, 4, 5, 6, 7, 8, 9] },
+    ...Array.from({ length: 12 }, (_, i) => ({ tables: [i + 1] })),
+  ];
+  for (const floor of floors)
+    for (let level = 1; level <= 5; level++)
+      for (const round of [1, 2, 4, 5])
+        for (const sample of [0, 0.25, 0.5, 0.75, 0.999999]) {
+          const weights = weightPuzzle(level, round, () => sample, floor);
+          const lines = balancePrompt({ weights });
+          for (const line of lines) assert.ok(clips.has(line), line);
+          assert.deepEqual(
+            planSpeech(lines, { sound: false, firstTime: () => false }).say,
+            lines,
+            'essential content remains complete with optional sound off',
+          );
+        }
+});
