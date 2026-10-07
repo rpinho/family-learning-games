@@ -7,7 +7,7 @@ import './audio-scope.mjs';
 import {createWorldModel,walkPath,bodyAt,worldSpot,worldGroupSpots} from './world-model.mjs';
 let model;
 let ROOMS,GATES,mapPieces,ITEMS,LOCKS,friendDone,nextHint,nextGoal,goalTarget,MAP_GATES,definition,targetStatus,availableExits;
-import {selectBackground,backgroundRect} from './book-painted-layout.mjs';
+import {selectBackground,backgroundRect,paintedTapRect} from './book-painted-layout.mjs';
 import {relHeight,zonesOnScreen} from './book-scene.mjs';
 import {createCoachAudio} from './chess/audio.mjs';
 const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -182,8 +182,8 @@ function drawDoor(){const layer=$('#door-layer');layer.replaceChildren();drawOpe
 }
 function drawOpening(layer){const door=ROOMS[state.room].door;if(!door)return;
  const b=document.createElement('button');b.className=door.return?'opening return-opening':'opening painted-opening';b.dataset.to=door.to;b.setAttribute('aria-label','Enter '+ROOMS[door.to].name);
- if(door.return){b.textContent='↩ '+door.label;Object.assign(b.style,{left:'8px',top:Math.max(.11*geometry.H,geometry.floor*geometry.H-64-10)+'px',translate:'0 0'});}else{const [x,y,w,h]=geometry.W>=geometry.H?door.wide:door.tall,R=geometry.rect;Object.assign(b.style,{left:(R.x+x*R.w)+'px',top:(R.y+y*R.h)+'px',width:Math.max(64,w*R.w)+'px',height:Math.max(64,h*R.h)+'px'});b.innerHTML=`<span>${ROOMS[door.to].icon}</span>`;}
- layer.append(b);const rect=b.getBoundingClientRect();let top=rect.y;for(const ui of document.querySelectorAll('.hud,#goal,#quest-button,#tutorial'))if(!ui.hidden){const r=ui.getBoundingClientRect();if(rect.x<r.right&&rect.right>r.x&&top<r.bottom)top=Math.max(top,r.bottom+12);}b.style.top=top+'px';
+ if(door.return){b.textContent='↩ '+door.label;Object.assign(b.style,{left:'8px',top:Math.max(.11*geometry.H,geometry.floor*geometry.H-64-10)+'px',translate:'0 0'});}else{const [x,y,w,h]=geometry.W>=geometry.H?door.wide:door.tall,R=geometry.rect,tap=paintedTapRect({x:R.x+x*R.w,y:R.y+y*R.h,w:Math.max(64,w*R.w),h:Math.max(64,h*R.h)},{width:geometry.W,height:geometry.H});Object.assign(b.style,{left:tap.x+'px',top:tap.y+'px',width:tap.w+'px',height:tap.h+'px'});b.innerHTML=`<span>${ROOMS[door.to].icon}</span>`;}
+ layer.append(b);const rect=b.getBoundingClientRect();let top=rect.y;for(const ui of document.querySelectorAll('.hud,#goal,#quest-button,#tutorial'))if(!ui.hidden){const r=ui.getBoundingClientRect();if(rect.x<r.right&&rect.right>r.x&&top<r.bottom)top=Math.max(top,r.bottom+12);}b.style.top=(door.return?top:Math.min(top,geometry.H-rect.height))+'px';
  if(door.return){
   const signs=[...document.querySelectorAll('.signpost')].map(e=>e.getBoundingClientRect()),box=b.getBoundingClientRect(),overlaps=r=>box.x<r.right&&box.right>r.x&&box.y<r.bottom&&box.bottom>r.y;
   if(signs.some(overlaps)){
