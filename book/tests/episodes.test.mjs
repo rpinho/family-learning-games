@@ -24,6 +24,20 @@ test('repair loop passes nightly context and rejections; four failures become a 
  const f=await writeEpisode(plan,{library,ask:async()=>({source:'bad',text:'broken JSON'})});assert.equal(f.source,'deterministic quest fallback');assert.deepEqual(f.checks.issues,[]);
 });
 test('learner sound inventory and focus come from learner data',()=>{const l=episodeLearning({level:'early',letter:'M',learnerFocus:[{kind:'count',value:12}]},{literacy:{letters:['O'],learning:['F']}});assert.deepEqual(l.taughtLetters,['O','F','M']);assert.equal(l.focus[0].value,12);});
+test('four unsafe writer repairs use a validated deterministic quest',async()=>{
+ const plan={player:'explorer',level:'reader',date:'2026-03-10'},library={actors:{'grown-up':{}},backgrounds:{garden:{}}};
+ const raw=fallbackEpisode(plan,library);raw.intro='An evil monster attacks.';let calls=0;const validated=[];
+ const result=await writeEpisode(plan,{library,ask:async()=>{calls++;return {source:'synthetic writer',text:JSON.stringify(raw)};},
+  validate:async e=>{validated.push(e.fallback===true);return checkEpisode(e,{library,...e.learning});}});
+ assert.equal(calls,4);assert.equal(result.source,'deterministic quest fallback');assert.equal(result.episode.fallback,true);
+ assert.deepEqual(result.checks.issues,[]);assert.equal(validated.at(-1),true);assert.doesNotMatch(JSON.stringify(result.episode),/evil monster attacks/);
+});
+test('a fallback with failed certification cannot become a replacement quest',async()=>{
+ const plan={player:'explorer',level:'reader',date:'2026-03-10'},library={actors:{'grown-up':{}},backgrounds:{garden:{}}};
+ const raw=fallbackEpisode(plan,library);raw.intro='An evil monster attacks.';
+ await assert.rejects(writeEpisode(plan,{library,ask:async()=>({source:'synthetic writer',text:JSON.stringify(raw)}),
+  validate:async e=>e.fallback?{issues:['Missing recorded voice']}:checkEpisode(e,{library,...e.learning})}),/Deterministic quest failed: Missing recorded voice/);
+});
 test('world upgrades retain inventory, prior rooms and progress; review preview never edits the child save',async()=>{
  const bookDir=await mkdtemp(join(tmpdir(),'episode-persist-')),e=samples.reader,definitions={explorer:episodeDefinition(e,CASTLE)},store=worldStore({bookDir,players:['explorer'],definitions});await mkdir(join(bookDir,'world'));const original={schema:2,room:'castle-gate',items:['castle-key','spyglass'],solved:['chess'],flags:[],collected:[],visited:['castle-gate'],tutorial:{walk:true,talk:true},revision:7};const f=join(bookDir,'world','explorer.json');await writeFile(f,JSON.stringify(original));const bytes=await readFile(f);let s=await store.read('explorer',false);assert.deepEqual(s.items,original.items);assert.deepEqual(await readFile(f),bytes);
  let p=await store.read('explorer',e.id);await store.act('explorer',e.id,{action:'quest',revision:p.revision});assert.deepEqual(await readFile(f),bytes);
