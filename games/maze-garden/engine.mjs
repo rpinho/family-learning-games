@@ -151,7 +151,7 @@ export function action(p,input){const a=p.active;switch(input.type){case 'recali
  case 'hint':if(a&&!a.finished){requestHint(a);}break;
  case 'mode':if(!['pure','puzzles'].includes(input.mode))throw Error('Invalid mode');p.mode=input.mode;break;
  case 'level':if(![-1,1].includes(input.delta))throw Error('Invalid level');p.level=Math.max(1,Math.min(MAX_LEVEL,p.level+input.delta));p.streak=0;p.struggles=0;break;
- case 'challenge':{if(![-2,-1,1,2].includes(input.delta))throw Error('Invalid challenge');p.level=Math.max(1,Math.min(MAX_LEVEL,p.level+Math.sign(input.delta)));p.streak=0;p.struggles=0;p.active=startMaze(p,input.seed);noteRequest(p,input.delta>0?'requested-harder':'requested-easier',a);break;}
+ case 'challenge':{if(![-2,-1,1,2].includes(input.delta))throw Error('Invalid challenge');const level=Math.max(1,Math.min(MAX_LEVEL,p.level+Math.sign(input.delta)));if(level===p.level)break;p.level=level;p.streak=0;p.struggles=0;p.active=startMaze(p,input.seed);noteRequest(p,input.delta>0?'requested-harder':'requested-easier',a);break;}
  case 'new':p.history.push({id:a?.id,type:'skipped',level:a?.level,at:new Date().toISOString()});p.history=trimHistory(p.history);p.active=startMaze(p,input.seed);break;
  default:throw Error('Unknown action');}p.revision++;return p;}
 // Sample a finger segment in grid coordinates. Stop at the first wall; never wrap or teleport.
