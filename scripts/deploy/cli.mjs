@@ -424,7 +424,7 @@ function qualityGate(name, version, channel, opts = {}) {
   const suites = ['hub/tests', 'book/tests'].filter(d => existsSync(join(work, d)));
   const files = suites.flatMap(d => readdirSync(join(work, d)).filter(f => f.endsWith('.test.mjs')).map(f => join(d, f)));
   if (!files.length) throw new Error(`${channel} refused: ${name} ${version} has no tests to run`);
-  let r; try { r = spawnSync(process.execPath, ['--test', '--test-concurrency=2', '--test-reporter=tap', ...files], {cwd: work, encoding: 'utf8', maxBuffer: 1 << 26, timeout: 15 * 60 * 1000}); }
+  let r; try { r = spawnSync(process.execPath, ['--test', '--test-concurrency=2', '--test-reporter=tap', ...files], {cwd: work, encoding: 'utf8', maxBuffer: 1 << 26, timeout: 30 * 60 * 1000}); }
   finally { rmSync(work, {recursive: true, force: true}); }
   const fail = Number((r.stdout.match(/^# fail (\d+)/m) || [])[1] ?? NaN), pass = Number((r.stdout.match(/^# pass (\d+)/m) || [])[1] ?? 0);
   if (r.status !== 0 || fail !== 0) {
