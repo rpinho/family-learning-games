@@ -189,7 +189,7 @@ export function nearLimit(issue){const t=String(issue);let m;
 export async function narrate(lines,{paths,env=process.env}){
  const req=join(tmpdir(),`book-voice-${process.pid}-${Date.now()}.json`);
  await writeFile(req,JSON.stringify({lines,out:paths.voice,models:paths.voiceModels,...soundSource(paths)}));
- try{const r=await run(paths.python,[join(here,'narrate.py'),req],{env:{...env,BOOK_VOICE_THREADS:env.BOOK_VOICE_THREADS||'2'},timeoutMs:15*60000});
+ try{let r;for(let attempt=0;attempt<3;attempt++){r=await run(paths.python,[join(here,'narrate.py'),req],{env:{...env,BOOK_VOICE_THREADS:attempt?'1':env.BOOK_VOICE_THREADS||'2'},timeoutMs:15*60000});if(r.code===0||r.timedOut||!(r.signal==='SIGABRT'||r.code===134))break;}
   if(r.code!==0)throw Error(r.err.slice(-600)||'narration failed');
   const j=JSON.parse(r.out.trim().split('\n').at(-1));return {made:j.made,clips:j.clips};}
  finally{await rm(req,{force:true});}
