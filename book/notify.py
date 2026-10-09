@@ -3,7 +3,8 @@
 import json, os, smtplib, sys
 from pathlib import Path
 from email.message import EmailMessage
-payload = json.load(sys.stdin)
+from notice_payload import read_payload
+payload = read_payload(sys.argv[1:], sys.stdin)
 address = os.environ.get('BOOK_NOTICE_ADDRESS')
 if not address:
     # Read the channel's configured address rather than publishing a household address in source.
