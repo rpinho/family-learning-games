@@ -14,12 +14,16 @@ function midMazeBreak(){const a=profile?.active;if(!a||a.finished||a.checkpoints
 const missionLines=['Help the rabbit find the carrot.','Help the turtle find the island.','Help the bee find the flower.','Help the rocket reach the planet.','Help the penguin find the fish.','Help the monkey find the banana.','Help the fox find its home.','Help the dragon find the gem.'];
 function message(text,error=false){$('#status').textContent=text;$('#status').classList.toggle('error',error);}
 function event(type,detail=''){if(player)fetch(`/api/event?player=${player}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,detail})}).catch(()=>{});}
-function stopSpeech(){globalThis.calmBed?.stopSpeech();audio.pause();audio.currentTime=0;window.speechSynthesis?.cancel();}
+let hintSpeech=null;
+function stopSpeech(){hintSpeech=null;globalThis.calmBed?.stopSpeech();audio.pause();audio.currentTime=0;window.speechSynthesis?.cancel();}
 // Speech has three kinds. CONTENT (the question the child answers): say(line,true) always plays, even with sound off,
 // and ask() repeats it gently when idle. INSTRUCTIONS (how to play): once per session via sayOnce(). Praise: say(line).
 // say() returns a promise that settles when this line is over (the word-break audio-finished contract).
 function say(text,essential=false){if(muted&&!essential)return;stopSpeech();if(clips[text]){globalThis.calmBed?.watch(audio);audio.src=clips[text];const el=audio;return audio.play().then(()=>mediaSettled(el),e=>{if(e?.name==='NotAllowedError')return essential?retryOnTouch(text):'blocked';return fallback(text,essential);});}return fallback(text,essential);}
 function sayOnce(key,text){if(!muted&&onceThisSession('maze-garden:'+key))say(text);}
+// Show again refreshes the arrow without restarting a hint that is still speaking.
+// Once it ends (or another action stops it), the next tap can replay it normally.
+function sayHint(text){if(hintSpeech?.text===text)return hintSpeech.done;const current={text,done:say(text,true)};hintSpeech=current;const clear=()=>{if(hintSpeech===current)hintSpeech=null;};Promise.resolve(current.done).then(clear,clear);return current.done;}
 // Autoplay blocked before the first touch: say the pending question on the next touch.
 // The returned promise settles when the retried line is over, so a word break's reply waits for it too.
 let pendingLine=null,pendingDone=null;const touchEvents=['pointerup','touchend','click'];
@@ -74,7 +78,7 @@ board.addEventListener('pointermove',e=>{if(e.pointerId!==drag)return;e.preventD
 function endDrag(e){if(drag===null||e.pointerId!==drag)return;const id=drag;drag=null;if(board.hasPointerCapture(id))board.releasePointerCapture(id);void flush();}
 for(const name of ['pointerup','pointercancel','lostpointercapture'])board.addEventListener(name,endDrag);
 board.addEventListener('keydown',async e=>{const d={ArrowUp:-profile?.active?.n,ArrowDown:profile?.active?.n,ArrowLeft:-1,ArrowRight:1}[e.key];if(d===undefined)return;e.preventDefault();if(busy||dirty.length||drag!==null)return;const a=profile.active,to=a.trail.at(-1)+d;if(move(a,to)){dirty.push(to);draw();await flush();}});
-$('#hint').onclick=async()=>{if(busy||!profile.active||profile.active.finished||!await flush())return;if(await transact({type:'hint'})){const cue=profile.active.hintCue;hintCells=cue.cells;const view=hintView(profile.active,cue,board.getBoundingClientRect().width/(profile.active.n+1.3));message(view.spoken);if(view.zoom)setZoom(true);if(board.classList.contains('big'))requestAnimationFrame(()=>focusCell(view.focus));say(view.spoken,true);draw();clearTimeout(hintTimer);hintTimer=setTimeout(()=>{hintCells=[];draw();},10000);updateHintButton();}};
+$('#hint').onclick=async()=>{if(busy||!profile.active||profile.active.finished||!await flush())return;if(await transact({type:'hint'})){const cue=profile.active.hintCue;hintCells=cue.cells;const view=hintView(profile.active,cue,board.getBoundingClientRect().width/(profile.active.n+1.3));message(view.spoken);if(view.zoom)setZoom(true);if(board.classList.contains('big'))requestAnimationFrame(()=>focusCell(view.focus));sayHint(view.spoken);draw();clearTimeout(hintTimer);hintTimer=setTimeout(()=>{hintCells=[];draw();},10000);updateHintButton();}};
 function updateHintButton(){const a=profile?.active;if(!a)return;const cue=a.hintDecisions?.[String(decisionHint(a).junction)],left=Math.max(0,(cue?.readyAt||0)-((profile.serverNow||Date.now())+Date.now()-receivedAt));const b=$('#hint');b.disabled=busy||a.finished||!!(cue?.stage===1&&left>0);b.textContent=cue?.stage===1&&left>0?'💡 '+Math.ceil(left/1000)+'s':cue?.stage===1?'💡 More help':cue?.stage===2?'💡 Show again':'💡 Hint';}
 setInterval(updateHintButton,250);
 $('#hear').onclick=()=>say(missionLines[profile.active.theme],true);$('#puzzle-hear').onclick=()=>{const c=pendingPuzzle(profile.active);if(c)say(c.puzzle.spoken,true);};$('#puzzle').addEventListener('cancel',e=>e.preventDefault());
