@@ -4,6 +4,7 @@
 //   $FAMILY_DEPLOY_ROOT/deploy.json   (default ~/.local/share/family-games/deploy.json)
 // Nothing here writes into a game's source tree. See DEPLOY.md.
 import {spawnSync, spawn} from 'node:child_process';
+import {runQualityChecks} from './quality-checks.mjs';
 import {existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, readdirSync, statSync, lstatSync, readlinkSync,
   symlinkSync, copyFileSync, rmSync, appendFileSync, realpathSync, constants as fsc} from 'node:fs';
 import {join, dirname, resolve, basename, isAbsolute, sep} from 'node:path';
@@ -424,13 +425,16 @@ function qualityGate(name, version, channel, opts = {}) {
   const suites = ['hub/tests', 'book/tests'].filter(d => existsSync(join(work, d)));
   const files = suites.flatMap(d => readdirSync(join(work, d)).filter(f => f.endsWith('.test.mjs')).map(f => join(d, f)));
   if (!files.length) throw new Error(`${channel} refused: ${name} ${version} has no tests to run`);
-  let r; try { r = spawnSync(process.execPath, ['--test', '--test-concurrency=2', '--test-reporter=tap', ...files], {cwd: work, encoding: 'utf8', maxBuffer: 1 << 26, timeout: 30 * 60 * 1000}); }
+  let r; try { r = runQualityChecks(files, {cwd: work}); }
   finally { rmSync(work, {recursive: true, force: true}); }
-  const fail = Number((r.stdout.match(/^# fail (\d+)/m) || [])[1] ?? NaN), pass = Number((r.stdout.match(/^# pass (\d+)/m) || [])[1] ?? 0);
-  if (r.status !== 0 || fail !== 0) {
+  const transcript = join(ROOT, 'logs', `qa-${name}-${version}-${channel}-${Date.now()}.tap`);
+  mkdirSync(dirname(transcript), {recursive: true, mode: 0o700});
+  writeFileSync(transcript, r.stdout + '\n' + r.stderr, {mode: 0o600});
+  const {fail, pass} = r;
+  if (!r.ok) {
     const failed = (r.stdout.match(/^not ok \d+ - .*$/gm) || []).slice(0, 10).join('; ');
     log(`REFUSED ${name} ${version} for ${channel}: tests failed (${Number.isNaN(fail) ? 'no result' : fail}): ${failed}`);
-    throw new Error(`${channel} refused: ${name} ${version} tests failed: ${failed || (r.stderr || '').slice(-400)}`);
+    throw new Error(`${channel} refused: ${name} ${version} tests failed: ${failed || (r.stderr || '').slice(-400)}; full report ${transcript}`);
   }
   log(`QA-PASSED ${name} ${version} for ${channel}: ${pass} tests`);
 }
@@ -778,7 +782,7 @@ async function uncutover(backupDir) {
 // ---------- misc ----------
 function install() {
   mkdirSync(join(ROOT, 'bin'), {recursive: true});
-  for (const f of ['cli.mjs', 'word-arcade-serve.mjs']) copyFileSync(join(here, f), join(ROOT, 'bin', f));
+  for (const f of ['cli.mjs', 'word-arcade-serve.mjs', 'quality-checks.mjs']) copyFileSync(join(here, f), join(ROOT, 'bin', f));
   const label = cfg.promoterLabel || 'local.family-games-promoter', file = plistPath(label);
   writePlist(file, {Label: label, ProgramArguments: [NODE, join(ROOT, 'bin', 'cli.mjs'), 'tick'], StartInterval: 60, RunAtLoad: true,
     ProcessType: 'Background', LowPriorityIO: true, EnvironmentVariables: {PATH: PATH_ENV, HOME},
