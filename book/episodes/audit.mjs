@@ -1,3 +1,4 @@
+import {waitForPageTarget} from '../../hub/scripts/chrome-target.mjs';
 // Real renderer and service, pointer input and recorded playback. All progress lives in a disposable Book root.
 import {createServer} from 'node:http';
 import {spawn} from 'node:child_process';
@@ -25,7 +26,7 @@ export async function auditEpisode(ch,{paths,library,viewports=[[1366,768],[390,
   await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port,query=new URLSearchParams({player,preview:'1',review:'1',date:ch.date});
   chrome=guardChrome(spawn(process.env.CHROME||join(homedir(),'.local/share/family-games/bin/test-chrome'),['--headless=new','--remote-debugging-port=0','--user-data-dir='+join(root,'chrome'),'--mute-audio','--autoplay-policy=no-user-gesture-required','--no-first-run'],{stdio:'ignore'}));
   let port;for(let i=0;i<100;i++){try{port=(await readFile(join(root,'chrome','DevToolsActivePort'),'utf8')).split('\n')[0];break;}catch{await pause(100);}}if(!port)throw Error('Test Chrome did not start');
-  const target=(await fetch('http://127.0.0.1:'+port+'/json').then(r=>r.json())).find(t=>t.type==='page');ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((ok,no)=>{ws.onopen=ok;ws.onerror=no;});let seq=0;const pending=new Map(),errors=[];
+  const target=await waitForPageTarget(()=>fetch('http://127.0.0.1:'+port+'/json').then(r=>r.json()));ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((ok,no)=>{ws.onopen=ok;ws.onerror=no;});let seq=0;const pending=new Map(),errors=[];
   ws.onmessage=e=>{const v=JSON.parse(e.data);if(v.id){pending.get(v.id)?.(v);pending.delete(v.id);}if(v.method==='Runtime.exceptionThrown')errors.push(v.params.exceptionDetails.exception?.description||'Browser error');};
   const send=(method,params={})=>new Promise((ok,no)=>{const id=++seq,t=setTimeout(()=>no(Error('CDP timeout '+method)),20000);pending.set(id,v=>{clearTimeout(t);v.error?no(Error(JSON.stringify(v.error))):ok(v.result);});ws.send(JSON.stringify({id,method,params}));});
   const js=async expression=>{const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.exception?.description||'JS error');return r.result.value;};

@@ -16,6 +16,7 @@ test('Hub persists only the chosen profile, rejects replay/foreign origins, and 
   const request=(a)=>fetch(base+'/api/dribble?player=admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rulesVersion:RULES,...a})});
   assert.equal((await fetch(base+'/health',{headers:{Origin:'https://untrusted.example'}})).status,403);
   assert.equal((await fetch(base+'/config.json')).status,404);
+  const approach=await fetch(base+'/world-approach.mjs');assert.equal(approach.status,200);assert.match(approach.headers.get('content-type'),/javascript/);assert.equal(await approach.text(),await readFile(new URL('../public/world-approach.mjs',import.meta.url),'utf8'));
   const page=await(await fetch(base+'/')).text();
   assert.match(page,/<meta name="family-release" content="development">/);
   const diagnostic=await fetch(base+'/api/events?player=admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'error',detail:'A synthetic late callback',clientRelease:'release-old<script>',stack:'TypeError: synthetic\n    at callback (http://localhost/book.mjs:12:3)\n'+'x'.repeat(2000),secret:'discard me'})});

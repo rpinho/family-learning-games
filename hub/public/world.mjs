@@ -1,3 +1,4 @@
+import {approachDestination} from './world-approach.mjs';
 import {questGoals,goalsByRoom,worldToys,factSupport} from './world-progress.mjs';
 import {mountScenePuzzle} from './world-scene-puzzles.mjs';
 import {readingAudio,addReadingSupport} from './reading-support.mjs';
@@ -137,7 +138,7 @@ async function talkFriend(){const room=ROOMS[state.room];
 async function approach(target,fn){const turn=++interactionTurn;if(!$('#map').hidden)return;
  if(challengeGate&&!GATES[challengeGate]?.instruction)closeChallenge();
  const beside=target.w?target.x-target.w/2-heroSize().w/2-.022:target.x;
- trace({approach:target,owner:turn,challengeGate});const destination=clearHeroSpot({x:Math.max(heroSize().w/2+.01,Math.min(1-heroSize().w/2-.01,beside)),y:.98});const moved=await walk(destination);
+ trace({approach:target,owner:turn,challengeGate});const destination=approachDestination(()=>clearHeroSpot({x:Math.max(heroSize().w/2+.01,Math.min(1-heroSize().w/2-.01,beside)),y:.98}),{episode:!!definition.episode});if(!destination){trace({approachWithoutWalk:true,owner:turn});if(turn===interactionTurn&&!disposed&&!document.hidden)await fn();return;}const moved=await walk(destination);
  trace({arrived:moved,owner:turn,destination});if(moved&&turn===interactionTurn&&!disposed&&!document.hidden)await fn();
 }
 async function walkToEdge(side){globalThis.familyAudio?.stop();interactionTurn++;if(!$('#map').hidden)return;if(challengeGate)closeChallenge();

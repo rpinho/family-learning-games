@@ -25,9 +25,9 @@ test('Shortcut logos, favicon and manifest icon sizes are served and decode as t
 });
 
 // A layout helper must load through the production allowlist, not just a test file server.
-test('Book picture module dependencies are served by the hub',async()=>{
+test('Book and World module dependencies are served by the hub',async()=>{
  const server=await readFile(new URL('../server.mjs',import.meta.url),'utf8'),list=server.match(/const files=\[([^\]]*)\]/)[1];
- for(const entry of ['book.mjs','book-scene.mjs']){
+ for(const entry of ['book.mjs','book-scene.mjs','world.mjs']){
   const source=await readFile(new URL('../public/'+entry,import.meta.url),'utf8');
   for(const [,file] of source.matchAll(/from ['"]\.\/([^'"]+\.mjs)['"]/g))assert.ok(list.includes(`'${file}'`),`${entry} imports ${file}, which must be served`);
  }

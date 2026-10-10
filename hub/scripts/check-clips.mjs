@@ -42,5 +42,6 @@ if(import.meta.url===`file://${process.argv[1]}`){
  if(args.includes('--json'))console.log(JSON.stringify({ok:!m.length,missing:m}));
  else if(m.length)console.error(`${m.length} line(s) without a voice clip:\n`+m.slice(0,40).map(x=>`  ${x.where} ${x.key}: "${x.text.slice(0,70)}"${x.file?` (file ${x.file} missing)`:''}`).join('\n'));
  else console.log('every line has its clip');
- process.exit(m.length?1:0);
+ // Let piped JSON finish writing before returning the failure status.
+ process.exitCode=m.length?1:0;
 }
