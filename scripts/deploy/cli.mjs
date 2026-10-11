@@ -451,7 +451,18 @@ function narrationGate(name, version, channel) {
     throw new Error(`${channel} refused: lines without a voice clip (${out?.missing?.length ?? 'unknown'}): ${list || r.stderr}`);
   }
 }
+// Two pipelines (for example a scheduled audit and a feature branch) can stage over each other and drop the other's
+// unreleased fixes. Staging may only be replaced by a commit that already contains what is staged (or by live).
+function guardStaging(name, sha, opts) {
+  const st = currentVersion('staging', name), lv = currentVersion('live', name);
+  if (!st || st === lv || opts.replaceStaging) return;
+  const staged = st.split('-').pop();
+  if (sha.startsWith(staged)) return;
+  const ok = spawnSync('git', ['-C', game(name).repo, 'merge-base', '--is-ancestor', staged, sha]).status === 0;
+  if (!ok) die(`${name}: staging holds ${st} (not live yet) and ${sha.slice(0, 7)} does not contain ${staged}. Merge ${staged} into your branch first, or pass --replace-staging if dropping it is intended.`);
+}
 async function stage(name, ref, opts) {
+  guardStaging(name, resolveRef(name, ref).sha, opts);
   const version = await build(name, ref, opts);
   qualityGate(name, version, 'staging', opts);
   narrationGate(name, version, 'staging');
@@ -460,6 +471,7 @@ async function stage(name, ref, opts) {
     if (!existsSync(dataDir(name, 'staging'))) refreshStagingData(name);
     if (name === 'hub') stagingHubConfig();
     applyVoice(name, version, dataDir(name, 'staging'));
+    guardStaging(name, version.split('-').pop(), opts);  // re-check under the lock (another stage may have landed while we built)
     const previous = currentVersion('staging', name);
     atomicSymlink(releaseDir(name, version), channelLink('staging', name));
     const {label, obj} = plistFor(name, 'staging'), file = plistPath(label);
@@ -803,7 +815,7 @@ function status() {
 
 const [cmd, ...args] = process.argv.slice(2);
 const flags = new Set(args.filter(a => a.startsWith('--'))), pos = args.filter(a => !a.startsWith('--'));
-const opts = {voice: !flags.has('--no-voice'), allowRollback: flags.has('--allow-rollback'), skipQa: flags.has('--skip-qa')};
+const opts = {voice: !flags.has('--no-voice'), allowRollback: flags.has('--allow-rollback'), skipQa: flags.has('--skip-qa'), replaceStaging: flags.has('--replace-staging')};
 const usage = `usage: cli.mjs <command>
   build <game> [ref]            build an immutable release (no deploy)
   stage <game|all> [ref]        build + deploy to STAGING (safe any time)
