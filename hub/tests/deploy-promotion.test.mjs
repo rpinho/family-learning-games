@@ -54,10 +54,21 @@ for(const failure of ['start','health','port'])test(`A ${failure} failure restor
   assert.ok(f.calls.includes('voice-old'));assert.ok(f.calls.includes('verify:old'));
 });
 
+test('stage refuses to replace an unreleased staged build its commit does not contain',()=>{
+  const versions={staging:'20261010-1-abc1234',live:'20261010-0-live000'},ancestors=new Set(['abc1234>def5678aaaa']);let died=null;
+  const context={currentVersion:c=>versions[c],game:()=>({repo:'/fixture/repo'}),die:m=>{died=m;throw Error(m);},
+    spawnSync:(_git,args)=>({status:ancestors.has(args.at(-2)+'>'+args.at(-1))?0:1})};
+  vm.createContext(context);vm.runInContext(cli.slice(cli.indexOf('function guardStaging('),cli.indexOf('async function stage('))+'\nthis.guard=guardStaging;',context);
+  context.guard('hub','def5678aaaa',{});assert.equal(died,null,'a commit containing the staged build may replace it');
+  context.guard('hub','abc1234ffff',{});assert.equal(died,null,'the staged commit itself may be re-staged');
+  context.guard('hub','9990000',{replaceStaging:true});assert.equal(died,null,'--replace-staging is explicit');
+  assert.throws(()=>context.guard('hub','9990000',{}),/does not contain abc1234/);
+  versions.staging=versions.live;died=null;context.guard('hub','9990000',{});assert.equal(died,null,'staging equal to live holds nothing unreleased');
+});
 test('Staging also reloads the loaded configuration, so API checks exercise the intended environment',async()=>{
   const calls=[],desired={EnvironmentVariables:{COACH:'lively'}};let fileConfiguration,loadedConfiguration={EnvironmentVariables:{COACH:'quiet'}};
   const context={
-    build:async()=> 'new',narrationGate:()=>{},qualityGate:()=>{},lock:()=>()=>{},existsSync:()=>true,
+    build:async()=> 'new',narrationGate:()=>{},qualityGate:()=>{},lock:()=>()=>{},existsSync:()=>true,guardStaging:()=>{},resolveRef:()=>({sha:'new'}),
     dataDir:()=>'/fixture/data',refreshStagingData:()=>{},stagingHubConfig:()=>{},applyVoice:()=>{},
     currentVersion:()=> 'old',atomicSymlink:()=>{},releaseDir:()=>'/fixture/new',channelLink:()=>'/fixture/staging',
     plistFor:()=>({label:'fixture.staging',obj:desired}),plistPath:()=>'/fixture/service.plist',

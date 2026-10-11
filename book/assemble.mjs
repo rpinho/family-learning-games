@@ -3,6 +3,7 @@
 import {sayOf} from './lint.mjs';
 import {normalizeScene,artFor,MAX_ACTORS} from '../hub/public/book-scene.mjs';
 import {phonemize} from '../hub/public/pronounce.mjs';
+import {spokenForm} from '../hub/public/spoken-form.mjs';
 import {resolveVoice} from './paths.mjs';
 export const CHAPTER_SCHEMA='family-book-chapter-2';
 // Fixed lines the player speaks (content prompts always speak).
@@ -40,7 +41,7 @@ export function namedOnScreen(pages,library){const props=Object.keys(library?.pr
 export function assemble(story,plan,{number=1,source='template',lint=[],generatedAt=new Date().toISOString(),dadLines=[],library,actors,voices,pronounce={}}){
  // Every spoken line goes to the voice through the one pronunciation map (names as phonemes, never guessed).
  const recorded=new Map((plan.cast||[]).filter(c=>c.recordedLines?.length).map(c=>[c.id,new Set(c.recordedLines.map(clean))]));
- const V=voices||voicesFor(plan),line=(who,text)=>{const t=clean(text),w=V[who]&&(!recorded.has(who)||recorded.get(who).has(t))?who:'narrator',s=phonemize(t,pronounce);return {who:w,text:s,...(s!==t?{shown:t}:{}),...V[w]};};
+ const V=voices||voicesFor(plan),line=(who,text)=>{const t=clean(text),w=V[who]&&(!recorded.has(who)||recorded.get(who).has(t))?who:'narrator',s=phonemize(spokenForm(t),pronounce);return {who:w,text:s,...(s!==t?{shown:t}:{}),...V[w]};};
  const forms=nameForms(plan),inPicture=id=>library.actors?.[id]&&(!actors||actors.includes(id));
  const N=t=>line('narrator',t);
  const beats=Object.fromEntries(plan.beats.map(b=>[b.id,b]));
