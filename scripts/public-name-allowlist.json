@@ -90,6 +90,12 @@
         "Pat"
       ],
       "reason": "Existing fictional characters in the public CVC reading examples; keeping these spellings preserves early phonics practice."
+    },
+    {
+      "names": [
+        "Claude"
+      ],
+      "reason": "AI coding assistant named in Co-Authored-By commit trailers; not a person."
     }
   ],
   "handles": []
