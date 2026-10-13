@@ -32,3 +32,20 @@ test('An unwarmed server does not replace favorites already saved on the device'
  const c=createMenuCache({storage:{getItem:()=>JSON.stringify(reverse)},request:async()=>({order:ids,ready:false})});
  assert.deepEqual(c.current('a'),reverse);await c.refresh('a');assert.deepEqual(c.current('a'),reverse);
 });
+
+test('A new worker gets the longer cold-scan allowance; a warm one keeps the short stall limit',async()=>{
+ let now=0;const workers=[],errors=[];const wait=ms=>new Promise(r=>setTimeout(r,ms));
+ const service=cachedMenuOrderService({sources:{},players:['a'],clock:()=>now,timeoutMs:20,coldTimeoutMs:120,onError:e=>errors.push(e),makeWorker:()=>{const w=new FakeWorker();workers.push(w);return w;}});
+ try{
+  service.ranking('a');await wait(60);
+  // Past the warm limit: the first full parse is still running, so it is not killed and its work is not thrown away.
+  assert.equal(workers[0].stopped,undefined);assert.equal(errors.length,0);
+  workers[0].emit('message',{rankings:{a:{order:reverse}}});assert.deepEqual(service.ranking('a').order,reverse);
+  now=60001;service.ranking('a');await wait(60);
+  assert.equal(workers[0].stopped,true);assert.deepEqual(errors,['Menu scan timed out']);
+  // A replacement worker is cold again: it may not finish in the warm limit, but it does not hang forever.
+  now+=60001;service.ranking('a');assert.equal(workers.length,2);await wait(60);assert.equal(workers[1].stopped,undefined);
+  await wait(100);assert.equal(workers[1].stopped,true);assert.equal(errors.length,2);
+  assert.deepEqual(service.ranking('a').order,reverse);
+ }finally{service.close();}
+});
