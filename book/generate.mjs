@@ -39,34 +39,34 @@ const here=dirname(fileURLToPath(import.meta.url));
 
 function run(cmd,args,{input='',env=process.env,timeoutMs=240000,cwd=tmpdir()}={}){
  return new Promise(resolve=>{
-  let out='',err='',done=false,inputError=false;const child=spawn(cmd,args,{env,cwd,stdio:['pipe','pipe','pipe']});
-  const timer=setTimeout(()=>{if(!done){try{child.kill('SIGTERM');}catch{}setTimeout(()=>{try{child.kill('SIGKILL');}catch{}},3000);}},timeoutMs);
+  let out='',err='',done=false,inputError=false,timedOut=false;const child=spawn(cmd,args,{env,cwd,stdio:['pipe','pipe','pipe']});
+  const timer=setTimeout(()=>{if(!done){timedOut=true;try{child.kill('SIGTERM');}catch{}setTimeout(()=>{try{child.kill('SIGKILL');}catch{}},3000);}},timeoutMs);
   child.stdout.on('data',b=>out+=b);child.stderr.on('data',b=>err=(err+b).slice(-4000));
   child.on('error',e=>{done=true;clearTimeout(timer);resolve({code:-1,out,err:String(e.message)});});
   // A worker can refuse the job before reading its input. Report that failure through the
   // normal fallback/preservation path, rather than letting the pipe error crash generation.
   child.stdin.on('error',e=>{inputError=true;err=(err+'\n'+e.message).slice(-4000);});
-  child.on('close',code=>{done=true;clearTimeout(timer);resolve({code:code===0&&inputError?-1:code,out,err});});
+  child.on('close',code=>{done=true;clearTimeout(timer);resolve({code:code===0&&inputError?-1:code,timedOut,out,err});});
   child.stdin.end(input);
  });
 }
 // One model turn. Claude Opus 5.5 first; Codex (GPT-6 Sol) if Claude is unavailable.
 export const DEFAULT_MODELS={claude:'claude-opus-5-5',codex:'gpt-6-sol'};
-export async function askModel(prompt,{env=process.env,log=()=>{},system=SYSTEM}={}){
+export async function askModel(prompt,{env=process.env,log=()=>{},system=SYSTEM,timeoutMs=240000}={}){
  const claudeModel=env.BOOK_CLAUDE_MODEL||DEFAULT_MODELS.claude,codexModel=env.BOOK_CODEX_MODEL||DEFAULT_MODELS.codex;
  const order=(env.BOOK_BACKEND||'claude,codex').split(',').map(s=>s.trim()).filter(Boolean);
  for(const backend of order){
   if(backend==='claude'){
    const e={...env};delete e.CLAUDECODE;delete e.CLAUDE_CODE_ENTRYPOINT;
    if(env.BOOK_CLAUDE_TOKEN_FILE&&existsSync(env.BOOK_CLAUDE_TOKEN_FILE))e.CLAUDE_CODE_OAUTH_TOKEN=readFileSync(env.BOOK_CLAUDE_TOKEN_FILE,'utf8').trim();
-   const r=await run(env.BOOK_CLAUDE_BIN||'claude',['-p','--safe-mode','--model',claudeModel,'--tools','','--no-session-persistence','--system-prompt',system,'--output-format','json'],{input:prompt,env:e});
+   const r=await run(env.BOOK_CLAUDE_BIN||'claude',['-p','--safe-mode','--model',claudeModel,'--tools','','--no-session-persistence','--system-prompt',system,'--output-format','json'],{input:prompt,env:e,timeoutMs});
    let j=null;try{j=JSON.parse(r.out);}catch{}
    if(r.code===0&&j&&!j.is_error&&j.result)return {text:j.result,source:`claude:${claudeModel}`};
-   log(`claude unavailable (${r.code}): ${(j?.result||r.err||r.out).slice(0,200)}`);
+   log(`claude unavailable (${r.timedOut?`timed out after ${Math.round(timeoutMs/1000)} s`:r.code}): ${(j?.result||r.err||r.out).slice(0,200)}`);
   }else if(backend==='codex'){
    const e={...env};delete e.OPENAI_BASE_URL;delete e.OPENAI_API_KEY;
    const last=join(tmpdir(),`book-codex-${process.pid}-${Date.now()}.txt`);
-   const r=await run(env.BOOK_CODEX_BIN||'codex',['exec','--ignore-user-config','--skip-git-repo-check','-m',codexModel,'--sandbox','read-only','--color','never','-o',last,'-'],{input:system+'\n\n'+prompt,env:e});
+   const r=await run(env.BOOK_CODEX_BIN||'codex',['exec','--ignore-user-config','--skip-git-repo-check','-m',codexModel,'--sandbox','read-only','--color','never','-o',last,'-'],{input:system+'\n\n'+prompt,env:e,timeoutMs});
    let text='';try{text=await readFile(last,'utf8');}catch{}await rm(last,{force:true});
    if(r.code===0&&text.trim())return {text,source:`codex:${codexModel}`};
    log(`codex unavailable (${r.code}): ${r.err.slice(-200)}`);

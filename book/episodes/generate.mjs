@@ -66,7 +66,12 @@ export function normalizeEpisode(raw,plan,learning){const e=structuredClone(raw)
  addReadingGoals(e,learning);
  e.revealVisual=/crown/i.test(e.reveal)?'crown':/moon/i.test(e.reveal)?'moon':'garden';
  for(const g of e.puzzles||[]){delete g.clip;if(g.kind==='count')g.countVisual=/stone/i.test(g.prompt)?'stone':/flower/i.test(g.prompt)?'flower':/acorn/i.test(g.prompt)?'acorn':'light';if(g.kind==='sound'){g.prompt='Tap the letter that makes this sound: '+SOUNDS[g.letter]+'.';g.goal='Listen to the clue. Find the matching letter.';}if(g.kind==='math'){g.equation=mathDisplay(g.math||{});if(g.math?.type==='place'){g.number=g.math.number;g.digitIndex=g.math.digitIndex;}}}return e;}
-export async function writeEpisode(plan,{library,learning=episodeLearning(plan),ask=async()=>null,log=()=>{},validate=async e=>checkEpisode(e,{library,...learning}),extra=[],allow=[]}={}){
+// A whole quest is one long JSON reply that often needs more than the 240 s default model turn, and a timed-out
+// first turn used to drop straight to the deterministic quest. Each writer turn gets up to 8 min, and all turns
+// share 20 min so a scheduled draft keeps a bounded total time.
+export const WRITER_TURN_MS=8*60e3,WRITER_BUDGET_MS=20*60e3;
+export async function writeEpisode(plan,{library,learning=episodeLearning(plan),ask=async()=>null,log=()=>{},validate=async e=>checkEpisode(e,{library,...learning}),extra=[],allow=[],turnMs=WRITER_TURN_MS,budgetMs=WRITER_BUDGET_MS,clock=Date.now}={}){
+ const writerUntil=clock()+budgetMs;
  const fallback=fallbackEpisode(plan,library,learning),system='Write a playable role-playing quest as JSON only. Code owns the schema and learner constraints. Friends talk; tools open paths; a reveal rewards the main goal. No page book.';
  const {name,age,grade,startingSkills,placement,level,cast,grownups,lead,scenario,memory,learnerFocus,sibling,details,themes,dadLines,recent,collection}=plan;
  const context={learning,name,age,grade,startingSkills,placement,level,cast,grownups,lead,scenario,memory,learnerFocus,sibling,details,themes,dadLines,recent,collection,daynotes:plan.daynotes?{thread:plan.daynotes.thread,moment:plan.daynotes.moment}:null};
@@ -74,7 +79,8 @@ export async function writeEpisode(plan,{library,learning=episodeLearning(plan),
  const prompt='Use exactly this JSON shape (sample values may change; retain 3–6 rooms, an enterable interior with a return door, tools, locks, 1–3 optional side quests). Return the full JSON.\n'+JSON.stringify(fallback)+'\nNightly Book inputs (use day notes only as their approved allegory; honor cast rules, memory hook, scenario and learner focus):\n'+inputs+'\nGrown-up startingSkills and placement observations are estimates for choosing support; they never establish mastery. Math is tables 6–9+, two 2-digit factors, four-digit place value or exact division. Reading needs a CVC word chosen from learning.confidenceWords/wordsAlmost and readingFocus (use readingFeatures to prioritize weak vowels), with soundSupport:true. Use masteryRule for independent reading; assisted tile building is practice, never mastery. wordsAboveLevel/hearAndBuildWords may be heard and built with support, never assigned as unsupported reading. Honor readingSupport and soundFocus. Keep the optional name-spelling card exactly as supplied; use only learning.nameSpelling targets, never MOM or GROWN-UP as spelling targets. Early puzzles are spoken counts <=20 or sounds from taughtLetters only. Grown-up, never Mom, for the early child.';
  let errors=[],candidate=null,source='deterministic quest fallback';
  for(let attempt=0;attempt<4;attempt++){
-  try{const r=await ask(prompt+(attempt?'\nRepair this candidate. Keep working parts, fix every rejection.\n'+JSON.stringify(candidate)+'\nRejections: '+errors.join(' | '):''),{system,log});if(!r)break;source=r.source;const text=String(r.text).replace(/^```(?:json)?\s*|\s*```$/g,'');candidate=normalizeEpisode(JSON.parse(text),plan,learning);
+  const left=writerUntil-clock();if(attempt&&left<60e3){log('Writer time used; using the checked fallback quest');break;}
+  try{const r=await ask(prompt+(attempt?'\nRepair this candidate. Keep working parts, fix every rejection.\n'+JSON.stringify(candidate)+'\nRejections: '+errors.join(' | '):''),{system,log,timeoutMs:Math.max(60e3,Math.min(turnMs,left))});if(!r)break;source=r.source;const text=String(r.text).replace(/^```(?:json)?\s*|\s*```$/g,'');candidate=normalizeEpisode(JSON.parse(text),plan,learning);
    errors=episodeContentIssues(candidate,extra,allow,plan);const result=await validate(candidate);errors.push(...result.issues);if(!errors.length)return {episode:candidate,source,checks:result};
   }catch(e){errors=[e.message];}log('Episode repair '+attempt+': '+errors.join(' | '));
  }
