@@ -1,5 +1,5 @@
 import {waitForPageTarget} from '../../hub/scripts/chrome-target.mjs';
-import {waitFor,ROOM_LOAD_MS} from './audit-wait.mjs';
+import {waitFor,ROOM_LOAD_MS,CDP_COMMAND_MS} from './audit-wait.mjs';
 // Real renderer and service, pointer input and recorded playback. All progress lives in a disposable Book root.
 import {createServer} from 'node:http';
 import {spawn} from 'node:child_process';
@@ -29,7 +29,7 @@ export async function auditEpisode(ch,{paths,library,viewports=[[1366,768],[390,
   let port;for(let i=0;i<100;i++){try{port=(await readFile(join(root,'chrome','DevToolsActivePort'),'utf8')).split('\n')[0];break;}catch{await pause(100);}}if(!port)throw Error('Test Chrome did not start');
   const target=await waitForPageTarget(()=>fetch('http://127.0.0.1:'+port+'/json').then(r=>r.json()));ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((ok,no)=>{ws.onopen=ok;ws.onerror=no;});let seq=0;const pending=new Map(),errors=[];
   ws.onmessage=e=>{const v=JSON.parse(e.data);if(v.id){pending.get(v.id)?.(v);pending.delete(v.id);}if(v.method==='Runtime.exceptionThrown')errors.push(v.params.exceptionDetails.exception?.description||'Browser error');};
-  const send=(method,params={})=>new Promise((ok,no)=>{const id=++seq,t=setTimeout(()=>no(Error('CDP timeout '+method)),20000);pending.set(id,v=>{clearTimeout(t);v.error?no(Error(JSON.stringify(v.error))):ok(v.result);});ws.send(JSON.stringify({id,method,params}));});
+  const send=(method,params={})=>new Promise((ok,no)=>{const id=++seq,t=setTimeout(()=>no(Error('CDP timeout '+method)),CDP_COMMAND_MS);pending.set(id,v=>{clearTimeout(t);v.error?no(Error(JSON.stringify(v.error))):ok(v.result);});ws.send(JSON.stringify({id,method,params}));});
   const js=async expression=>{const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.exception?.description||'JS error');return r.result.value;};
   const until=async(expression,ms=null)=>{if(await waitFor(()=>js(expression),{ms,sleep:pause}))return;throw Error('Timed out '+expression+' [save-status: '+await js("document.querySelector('#save-status')?.textContent||''")+'] '+await js('document.body.innerText'));};
   const tap=async sel=>{const box=await js(`(()=>{const e=document.querySelector(${JSON.stringify(sel)});if(!e)throw Error('No target '+${JSON.stringify(sel)});const r=e.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()`);for(const type of ['mousePressed','mouseReleased'])await send('Input.dispatchMouseEvent',{type,...box,button:'left',clickCount:1});};
