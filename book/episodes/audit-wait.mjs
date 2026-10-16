@@ -1,5 +1,8 @@
-// How long the quest audit waits for a browser condition.
-// Most checks keep the original 180 polls. A room load is a full page navigation (world page, art, voice warm-up) and,
+// How long the quest audit waits for a browser condition. Every wait is by the clock: the draft runs as a background
+// process on the efficiency cores, and 180 polls (about 13.5 s) failed correct quests three times on 2026-10-16 (a room
+// load; the math card's Next after a deliberate wrong answer). A broken step still fails, about 30 s later.
+export const STEP_MS=45e3;
+// A room load is a full page navigation (world page, art, voice warm-up) and,
 // at background priority while a draft narrates, takes 5-7 s and sometimes 20+ s (2026-10-16: pirate shore 23 s).
 // A fixed 180-poll wait failed a correct quest on a slow room load, so room loads wait by the clock instead.
 export const ROOM_LOAD_MS=60e3;
