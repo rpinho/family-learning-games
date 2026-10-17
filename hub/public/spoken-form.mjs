@@ -43,3 +43,11 @@ function plain(t){
 }
 // A runtime line with a clean voice text; `shown` keeps the notation for the caption only when it differs.
 export function spokenLine(text,voice={}){const said=spokenForm(text);return said===String(text)?{text,...voice}:{text:said,shown:String(text),...voice};}
+// A spoken sentence ends in a full stop: a goal without one ran into "go to the …" as one breathless clause.
+export function sentence(text){const s=String(text??'').trim();return !s||/[.!?…]["'”’)]*$/.test(s)?s:s+'.';}
+// A room's name as a place to go: a free-text title loses its asides (parentheses, " / ", " + ", ": ") and a
+// leading article, so the line never says "the the".
+export function placeName(name){
+ return String(name??'').replace(/\s*\([^)]*\)/g,'').split(/\s+(?:\/|\+)\s+|:\s+/)[0].replace(/^the\s+/i,'').replace(/\s{2,}/g,' ').trim();
+}
+export function goTo(name){return 'Go to the '+placeName(name)+'.';}
