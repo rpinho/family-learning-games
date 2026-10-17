@@ -2,7 +2,7 @@ import {EPISODE_SCHEMA,checkEpisode,episodeDefinition,mathDisplay} from './forma
 import {SOUNDS} from '../plan.mjs';
 import {hasSound,isFamilyWord,canSoundOut} from '../../hub/public/word-families.mjs';
 import {phonemize} from '../../hub/public/pronounce.mjs';
-import {spokenForm} from '../../hub/public/spoken-form.mjs';
+import {spokenForm,sentence,goTo} from '../../hub/public/spoken-form.mjs';
 import {safetyIssues,comparisonIssues} from '../lint.mjs';
 import {dayNoteIssues} from '../daynotes.mjs';
 import {assemble,voicesFor} from '../assemble.mjs';
@@ -58,8 +58,8 @@ export function episodeLines(ep,{voices={},pronounce={}}={}){
  const line=(text,who='narrator')=>({text:phonemize(spokenForm(text),pronounce),shown:text,...(voices[who]||n),who});
  const out={start:line('Tap your guide to begin. '+ep.goal),'on-way':line('Here we go.'),path:line('Try the clear ground.'),found:line('You already helped here. Your reward stays in your backpack.'),piece:line('You did it! Your reward stays in your backpack.'),treasure:line(ep.reveal),'next-done':line(ep.recap),intro:line(ep.intro),recap:line(ep.recap)};
  for(const [id,r]of Object.entries(def.ROOMS))r.lines.forEach((text,i)=>out['friend-'+id+'-'+i]=line(text,r.friend));
- for(const [id,g]of Object.entries(def.GATES)){out[id]=line(g.prompt);out['hint-'+id]=line(g.hint);out['next-'+id]=line(g.goal+' Go to the '+def.ROOMS[g.room].name+'.');if(g.kind==='tiles'){for(const c of new Set(g.words.join('')))out['sound-'+id+'-'+c]=line(SOUNDS[c.toUpperCase()]);for(const w of g.words)out['word-'+id+'-'+w]=line(w[0].toUpperCase()+w.slice(1)+'.');}if(g.kind==='sound')for(const L of g.options)out['sound-'+id+'-'+L]=line(SOUNDS[L]);}
- for(const [id,l]of Object.entries(def.LOCKS)){out['lock-'+id]=line(l.hint);out['next-'+id]=line(l.goal+' Go to the '+def.ROOMS[l.room].name+'.');out['used-'+id]=line('The path is open. Your tool stays in your backpack.');}
+ for(const [id,g]of Object.entries(def.GATES)){out[id]=line(g.prompt);out['hint-'+id]=line(g.hint);out['next-'+id]=line(sentence(g.goal)+' '+goTo(def.ROOMS[g.room].name));if(g.kind==='tiles'){for(const c of new Set(g.words.join('')))out['sound-'+id+'-'+c]=line(SOUNDS[c.toUpperCase()]);for(const w of g.words)out['word-'+id+'-'+w]=line(w[0].toUpperCase()+w.slice(1)+'.');}if(g.kind==='sound')for(const L of g.options)out['sound-'+id+'-'+L]=line(SOUNDS[L]);}
+ for(const [id,l]of Object.entries(def.LOCKS)){out['lock-'+id]=line(l.hint);out['next-'+id]=line(sentence(l.goal)+' '+goTo(def.ROOMS[l.room].name));out['used-'+id]=line('The path is open. Your tool stays in your backpack.');}
  const counts=['One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen','Twenty'];counts.forEach((t,i)=>out['count-'+(i+1)]=line(t));return out;
 }
 export function normalizeEpisode(raw,plan,learning){const e=structuredClone(raw);e.schema=EPISODE_SCHEMA;e.id=plan.player+'-'+plan.date;e.player=plan.player;e.date=plan.date;e.level=plan.level;e.learning=learning;delete e.lines;delete e.checks;delete e.fallback;delete e.entry;
