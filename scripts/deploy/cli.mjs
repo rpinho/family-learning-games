@@ -436,7 +436,8 @@ function qualityGate(name, version, channel, opts = {}) {
     log(`REFUSED ${name} ${version} for ${channel}: tests failed (${Number.isNaN(fail) ? 'no result' : fail}): ${failed}`);
     throw new Error(`${channel} refused: ${name} ${version} tests failed: ${failed || (r.stderr || '').slice(-400)}; full report ${transcript}`);
   }
-  log(`QA-PASSED ${name} ${version} for ${channel}: ${pass} tests`);
+  const retried = (r.retried || []).map(x => `${x.file} (${x.tests.join('; ').slice(0, 120)})`).join(', ');
+  log(`QA-PASSED ${name} ${version} for ${channel}: ${pass} tests${retried ? `; failed under load, passed alone: ${retried}` : ''}`);
 }
 function narrationGate(name, version, channel) {
   if (name !== 'hub') return;

@@ -1,3 +1,5 @@
 #!/bin/sh
 # Queue a game release for the LIVE site. It goes live only when all games are idle (see DEPLOY.md).
-exec nice -n 19 taskpolicy -b node "$(dirname "$0")/deploy/cli.mjs" promote "$@"
+# Not clamped as a whole (10-16): the QA runner backgrounds the bulk suite itself and keeps the timing-sensitive
+# audio test at normal priority; a fully backgrounded promote starved it under load and refused good releases.
+exec node "$(dirname "$0")/deploy/cli.mjs" promote "$@"
