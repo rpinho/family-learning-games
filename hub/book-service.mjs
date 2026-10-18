@@ -72,9 +72,14 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
    return JSON.parse(String(out).trim().split('\n').at(-1));}finally{await rm(dir,{recursive:true,force:true}).catch(()=>{});}});
  async function renderLine(line){const file=clipName(line),at=join(bookDir,'voice',file);
   try{await access(at);return file;}catch{}
-  const run=voiceQueue.catch(()=>{}).then(()=>narrate([line]));voiceQueue=run;
-  const r=await run;const made=r?.clips?.[`${line.voice}|${line.speed}|${line.text}`];if(!made)throw Error('not rendered');
-  await log({type:'book_voice_rendered',file:made,chars:line.text.length});return made;}
+  // One render per clip: a tablet asking again while the first render runs joins it (ten requests for one
+  // line used to queue ten narrate runs).
+  if(rendering.has(file))return rendering.get(file);
+  const job=(async()=>{const run=voiceQueue.catch(()=>{}).then(()=>narrate([line]));voiceQueue=run;
+   const r=await run;const made=r?.clips?.[`${line.voice}|${line.speed}|${line.text}`];if(!made)throw Error('not rendered');
+   await log({type:'book_voice_rendered',file:made,chars:line.text.length});return made;})();
+  rendering.set(file,job);try{return await job;}finally{rendering.delete(file);}}
+ const rendering=new Map();
  const lineIn=(v,want)=>{let hit=false;const walk=x=>{if(hit||!x||typeof x!=='object')return;if(Array.isArray(x))return x.forEach(walk);if(x.text===want.text&&x.voice===want.voice&&Number(x.speed)===Number(want.speed))hit=true;else Object.values(x).forEach(walk);};walk(v);return hit;};
  const kids=config.players.filter(p=>p.id!=='admin');
  const progressDir=join(data,'book-progress'),notesFile=join(data,'book-notes.json');
