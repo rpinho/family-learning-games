@@ -1,3 +1,5 @@
 #!/bin/sh
 # Build a release and deploy it to the STAGING site only (safe while the children play).
-exec nice -n 19 taskpolicy -b node "$(dirname "$0")/deploy/cli.mjs" stage "$@"
+# Not clamped as a whole (10-18, as promote on 10-16): the CLI backgrounds its own builds, voice and bulk tests, and the
+# timing-sensitive audio test must run at normal priority; a niced parent is inherited and starved it (staging refusals).
+exec node "$(dirname "$0")/deploy/cli.mjs" stage "$@"
