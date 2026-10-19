@@ -166,8 +166,11 @@ export function buildLearner({player,name,profile={},now=Date.now(),saves={},wor
  const sentenceBreaks=wordBreaks.filter(b=>b.kind==='sentence');
  const week=activity(saves,now);
  const favourites=Object.entries(week).filter(([,n])=>n>=5).sort((a,b)=>b[1]-a[1]).map(([g])=>FAVOURITE_THEMES[g]).filter(Boolean);
+ // A letter is "stuck" only after a real miss (seen more often than found). Letters not met yet, or found every time but
+ // not often enough for mastery, stay in literacy.learning for practice but are not reported as stuck.
+ const missedLetter=c=>{const s=obj(skills['find:'+c]);return num(s.seen)>num(s.hits);};
  const stuck=[
-  ...lit.learning.slice(0,6).map(c=>({area:'letters',item:c,detail:`still learning ${/[a-z]/.test(c)?'little':'big'} ${c.toUpperCase()}`})),
+  ...lit.learning.filter(missedLetter).slice(0,6).map(c=>({area:'letters',item:c,detail:`still learning ${/[a-z]/.test(c)?'little':'big'} ${c.toUpperCase()}`})),
   ...words.stuck.slice(0,6).map(w=>({area:'words',item:w,detail:`${tallies[w].attempts} first answers, ${tallies[w].firstTry} clean reads`})),
   ...recapStuck.slice(0,6).map(line=>({area:'recap',item:null,detail:line})),
   ...list(sageSummary(sage)?.practising).slice(0,4).map(line=>({area:'sage',item:null,detail:`Sage: still practising ${line}`}))

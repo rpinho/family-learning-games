@@ -68,3 +68,11 @@ test('Outside tutor file (family-sage-1) is summarised read-only; absent or fore
  assert.equal(buildLearner({player:'x',name:'X',now:NOW,saves:{}}).sage,null);
  assert.equal(sageSummary({schema:'other',mastered:['x']}),null);
 });
+
+test('Letters are stuck only after a real miss: unseen or always-found letters stay practice, not stuck',()=>{
+ const lq={completed:40,skills:{'find:A':{level:3,seen:4,hits:4},'find:R':{level:2,seen:2,hits:2},'find:T':{level:2,seen:2,hits:1},'find:b':{level:0,seen:1,hits:1}}};
+ const m=buildLearner({player:'older',profile:{age:8},now:NOW,saves:{'letter-quest':lq},playDate:'2026-03-09',timeZone:'UTC'});
+ const stuck=m.stuck.filter(s=>s.area==='letters').map(s=>s.item);
+ assert.deepEqual(stuck,['T'],'only T was ever missed');
+ assert.ok(m.literacy.learning.includes('R'),'R is still practised');assert.ok(!m.literacy.learning.includes('A'));
+});
