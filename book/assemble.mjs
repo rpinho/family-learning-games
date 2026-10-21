@@ -3,7 +3,7 @@
 import {sayOf} from './lint.mjs';
 import {normalizeScene,artFor,MAX_ACTORS} from '../hub/public/book-scene.mjs';
 import {phonemize} from '../hub/public/pronounce.mjs';
-import {spokenForm} from '../hub/public/spoken-form.mjs';
+import {spokenForm,chapterTitle} from '../hub/public/spoken-form.mjs';
 import {resolveVoice} from './paths.mjs';
 export const CHAPTER_SCHEMA='family-book-chapter-2';
 // Fixed lines the player speaks (content prompts always speak).
@@ -70,7 +70,9 @@ export function assemble(story,plan,{number=1,source='template',lint=[],generate
  const art=artFor(pages,library);
  const first=pages[0];
  const bookWord=plan.theme==='spellbook'?'Spellbook':'Book';
- const cover={title:clean(story.title),line:N(`${plan.name}'s ${bookWord}. Chapter ${number}. ${clean(story.title).replace(/[.!?]*$/,'.')}`),scene:first.scene};
+ // A written title may carry asides; the cover shows and says it without them.
+ const title=chapterTitle(clean(story.title));
+ const cover={title,line:N(`${plan.name}'s ${bookWord}. Chapter ${number}. ${title.replace(/[.!?]*$/,'.')}`),scene:first.scene};
  const ui=Object.fromEntries(Object.entries(UI_LINES).map(([k,t])=>[k,N(t)]));
  ui.numbers=Object.fromEntries(Array.from({length:20},(_,i)=>[String(i+1),N(String(i+1))]));
  return {schema:CHAPTER_SCHEMA,player:plan.player,name:plan.name,date:plan.date,number,title:cover.title,level:plan.level,cover,

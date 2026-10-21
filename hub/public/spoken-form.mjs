@@ -51,3 +51,9 @@ export function placeName(name){
  return String(name??'').replace(/\s*\([^)]*\)/g,'').split(/\s+(?:\/|\+)\s+|:\s+/)[0].replace(/^the\s+/i,'').replace(/\s{2,}/g,' ').trim();
 }
 export function goTo(name){return 'Go to the '+placeName(name)+'.';}
+// A chapter title from free text: the same asides go, but a lead or subtitle after a colon stays (a cover read
+// "Chapter 25. Pool day with a slide ( plus poolside cake)." aloud).
+export function chapterTitle(name){
+ const s=String(name??'').replace(/\s*\([^)]*\)/g,'').split(/\s+(?:\/|\+)\s+/)[0].replace(/\s{2,}/g,' ').trim();
+ return s||String(name??'').trim();
+}
