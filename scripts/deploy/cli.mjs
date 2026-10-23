@@ -462,6 +462,20 @@ function guardStaging(name, sha, opts) {
   const ok = spawnSync('git', ['-C', game(name).repo, 'merge-base', '--is-ancestor', staged, sha]).status === 0;
   if (!ok) die(`${name}: staging holds ${st} (not live yet) and ${sha.slice(0, 7)} does not contain ${staged}. Merge ${staged} into your branch first, or pass --replace-staging if dropping it is intended.`);
 }
+// 10-23: a release moved away during its own QA left staging pointing at a missing directory: the
+// failed readiness check kept the broken release. Refuse a release that is gone; on a failed check, switch back.
+const releaseIntact = (name, version) => existsSync(join(releaseDir(name, version), '.release.json'));
+async function switchStaging(name, version) {
+  atomicSymlink(releaseDir(name, version), channelLink('staging', name));
+  const {label, obj} = plistFor(name, 'staging'), file = plistPath(label);
+  await bootout(label);
+  for (const port of [portFor(name, 'staging'), uiPortFor(name, 'staging')].filter(Boolean)) {
+    if (!await waitPortFree(port, 25)) throw new Error(`${name}: staging port ${port} did not stop`);
+  }
+  writePlist(file, obj);
+  await bootstrap(file, label);
+  return verifyServing(name, 'staging', version);
+}
 async function stage(name, ref, opts) {
   guardStaging(name, resolveRef(name, ref).sha, opts);
   const version = await build(name, ref, opts);
@@ -469,21 +483,21 @@ async function stage(name, ref, opts) {
   narrationGate(name, version, 'staging');
   const release = lock('staging'); if (!release) die('another staging deploy is running; retry in a minute');
   try {
+    const previous = currentVersion('staging', name);
+    if (!releaseIntact(name, version)) {log(`STAGING-REFUSED ${name} ${version} release directory is gone (moved after its build); staging stays on ${previous}`); throw new Error(`${name}: release ${version} is gone; staging unchanged`);}
     if (!existsSync(dataDir(name, 'staging'))) refreshStagingData(name);
     if (name === 'hub') stagingHubConfig();
     applyVoice(name, version, dataDir(name, 'staging'));
     guardStaging(name, version.split('-').pop(), opts);  // re-check under the lock (another stage may have landed while we built)
-    const previous = currentVersion('staging', name);
-    atomicSymlink(releaseDir(name, version), channelLink('staging', name));
-    const {label, obj} = plistFor(name, 'staging'), file = plistPath(label);
-    await bootout(label);
-    for (const port of [portFor(name, 'staging'), uiPortFor(name, 'staging')].filter(Boolean)) {
-      if (!await waitPortFree(port, 25)) throw new Error(`${name}: staging port ${port} did not stop`);
+    const v = await switchStaging(name, version);
+    if (!v.ok) {
+      log(`STAGING-FAILED ${name} ${version} ${v.why} (previous ${previous})`);
+      if (previous && previous !== version && releaseIntact(name, previous)) {
+        const back = await switchStaging(name, previous).catch(e => ({ok: false, why: e.message}));
+        log(back.ok ? `STAGING-RESTORED ${name} ${previous}` : `STAGING-RESTORE-FAILED ${name} ${previous} ${back.why}`);
+      }
+      throw new Error(`staging ${name} ${version} unhealthy: ${v.why}`);
     }
-    writePlist(file, obj);
-    await bootstrap(file, label);
-    const v = await verifyServing(name, 'staging', version);
-    if (!v.ok) {log(`STAGING-FAILED ${name} ${version} ${v.why} (previous ${previous})`); throw new Error(`staging ${name} ${version} unhealthy: ${v.why}`);}
     setCurrent('staging', name, version);
     log(`STAGED ${name} ${version}`);
     console.log(`\nStaging: http://${cfg.lanHost || 'localhost'}:${portFor('hub', 'staging')}  (${name} -> ${version})`);
