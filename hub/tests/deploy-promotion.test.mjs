@@ -68,7 +68,7 @@ test('stage refuses to replace an unreleased staged build its commit does not co
 test('Staging also reloads the loaded configuration, so API checks exercise the intended environment',async()=>{
   const calls=[],desired={EnvironmentVariables:{COACH:'lively'}};let fileConfiguration,loadedConfiguration={EnvironmentVariables:{COACH:'quiet'}};
   const context={
-    build:async()=> 'new',narrationGate:()=>{},qualityGate:()=>{},lock:()=>()=>{},existsSync:()=>true,guardStaging:()=>{},resolveRef:()=>({sha:'new'}),
+    build:async()=> 'new',narrationGate:()=>{},qualityGate:()=>{},lock:()=>()=>{},existsSync:()=>true,join:(...a)=>a.join('/'),guardStaging:()=>{},resolveRef:()=>({sha:'new'}),
     dataDir:()=>'/fixture/data',refreshStagingData:()=>{},stagingHubConfig:()=>{},applyVoice:()=>{},
     currentVersion:()=> 'old',atomicSymlink:()=>{},releaseDir:()=>'/fixture/new',channelLink:()=>'/fixture/staging',
     plistFor:()=>({label:'fixture.staging',obj:desired}),plistPath:()=>'/fixture/service.plist',
@@ -80,7 +80,7 @@ test('Staging also reloads the loaded configuration, so API checks exercise the 
     verifyServing:async()=>({ok:loadedConfiguration?.EnvironmentVariables.COACH==='lively'}),
     setCurrent:()=>{},log:()=>{},console:{log:()=>{}},cfg:{lanHost:'fixture.invalid'},
   };
-  vm.createContext(context);const stage=cli.slice(cli.indexOf('async function stage('),cli.indexOf('\n// ---------- promotion ----------'));
+  vm.createContext(context);const stage=cli.slice(cli.indexOf('const releaseIntact ='),cli.indexOf('\n// ---------- promotion ----------'));
   vm.runInContext(stage+'\nthis.deploy=stage;',context);await context.deploy('hub','new',{});
   assert.deepEqual(calls,['stop','configure','start']);assert.equal(loadedConfiguration.EnvironmentVariables.COACH,'lively');
 });
