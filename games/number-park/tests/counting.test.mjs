@@ -18,9 +18,10 @@ test('six correct harder counting rounds retain auto-next scoring and reward beh
 });
 
 test('only the counting track occasionally extends to 14–16, with close valid choices',()=>{
- const p=freshProfile('beginner'),counts=new Set();let stretched=0;
+ const p=freshProfile('beginner'),counts=new Set();let stretched=0,supported=0;
  for(let i=0;i<3000;i++){
   p.revision=i;const q=makeQuestion(p,'count',i%6);
+  if(!q.countWithoutNumbers)supported++;
   assert.ok(q.count>=6&&q.count<=16);assert.ok(q.items.length<=16);
   assert.equal(q.items.filter(x=>x.object===q.object).length,q.answer);
   assert.equal(new Set(q.options).size,4);assert.ok(q.options.includes(q.answer));
@@ -28,7 +29,7 @@ test('only the counting track occasionally extends to 14–16, with close valid 
   if(q.count>13){stretched++;counts.add(q.count);assert.equal(q.max,16);assert.notEqual(q.mode,'only');}
   else assert.equal(q.max,13);
  }
- assert.ok(stretched/3000>.30&&stretched/3000<.37,'about one in three, got '+stretched);
+ assert.ok(stretched/supported>.30&&stretched/supported<.37,'about one in three supported rounds, got '+stretched+'/'+supported);
  assert.deepEqual([...counts].sort(),[14,15,16]);assert.equal(p.ceiling,13);
 });
 test('counting extension never alters other tracks or an existing saved question',()=>{
