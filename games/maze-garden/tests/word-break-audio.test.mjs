@@ -83,7 +83,7 @@ test('wrong then right mid-question: one short reply after the question, the que
   assert.ok(w.doc.choice('B').classList.contains('glow'),'help glow still appears at once');
   w.doc.hear().onclick();await flush();
   assert.deepEqual(a.log,[['play','Find the letter B.']]);
-  w.doc.choice('B').onclick();await flush();assert.equal(w.results[0].misses,3);
+  w.doc.choice('B').onclick();await flush();assert.equal(w.results[0].misses,2);
   a.current().end();await flush();assert.deepEqual(a.log.at(-1),['play','Yes!'],'only the praise follows; the waiting repeat was dropped');
   a.current().end();await tick(1000);assert.ok(w.resolved());assert.equal(a.cuts().length,0);
  }finally{mock.timers.reset();}
@@ -113,5 +113,60 @@ test('autoplay blocked: the question settles as blocked and the speaker replays 
   const said=[];const blocked={speak:t=>{said.push(t);return Promise.resolve(said.length===1?'blocked':'ended');}};
   const w=open(blocked);await tick(400);w.doc.hear().onclick();await flush();
   assert.deepEqual(said,['Find the letter B.','Find the letter B.']);
+ }finally{mock.timers.reset();}
+});
+
+test('a tried wrong choice stays disabled without adding repeated misses',async()=>{
+ mock.timers.enable({apis:['setTimeout','Date']});
+ try{
+  const w=open({speak:()=>undefined});
+  const wrong=w.doc.choice('D'),right=w.doc.choice('B');
+  wrong.onclick();assert.equal(wrong.disabled,true);
+  wrong.onclick();wrong.onclick();
+  assert.equal(right.disabled,undefined);assert.equal(right.classList.contains('glow'),false);
+  assert.equal(w.results.length,0);
+  right.onclick();assert.equal(w.results[0].misses,1);
+ }finally{mock.timers.reset();}
+});
+test('four choices allow at most two distinct misses and still require the right tap',async()=>{
+ mock.timers.enable({apis:['setTimeout','Date']});
+ try{
+  const w=open({speak:()=>undefined},{...ITEM,options:['B','D','P','R']});
+  w.doc.choice('D').onclick();w.doc.choice('P').onclick();
+  for(const value of ['D','P','R']){
+   assert.equal(w.doc.choice(value).disabled,true);w.doc.choice(value).onclick();
+  }
+  const right=w.doc.choice('B');assert.ok(right.classList.contains('glow'));assert.ok(!right.disabled);
+  await tick(1000);assert.equal(w.results.length,0);assert.equal(w.resolved(),null);
+  right.onclick();assert.equal(w.results[0].misses,2);
+ }finally{mock.timers.reset();}
+});
+test('a clean first try logs no misses and leaves no retry glow',()=>{
+ mock.timers.enable({apis:['setTimeout','Date']});
+ try{
+  const w=open({speak:()=>undefined});w.doc.choice('B').onclick();
+  assert.equal(w.results.length,1);assert.equal(w.results[0].misses,0);
+  assert.ok(w.doc.choice('B').classList.contains('right'));
+  assert.ok(w.doc.buttons().every(b=>!b.classList.contains('glow')));
+ }finally{mock.timers.reset();}
+});
+test('sentence slots reset unused tiles, retain used duplicates, and log misses across slots',()=>{
+ mock.timers.enable({apis:['setTimeout','Date']});
+ try{
+  const w=open({speak:()=>undefined},{kind:'sentence',track:'sentences',spoken:'Go go home now.',sentence:'Go go home now.',answer:['go','go','home','now'],tiles:['go','home','go','now'],mark:'.'});
+  const [go,home,goAgain,now]=w.doc.buttons().filter(b=>b.dataset.value);
+  home.onclick();now.onclick();
+  assert.ok(go.classList.contains('glow'));assert.equal(home.disabled,true);assert.equal(now.disabled,true);
+  go.onclick();
+  assert.equal(go.disabled,true);assert.ok(go.classList.contains('used'));
+  for(const b of [home,goAgain,now]){assert.equal(b.disabled,false);assert.equal(b.classList.contains('glow'),false);}
+  go.onclick();assert.equal(w.results.length,0,'used duplicate cannot fill the next slot');
+  home.onclick();assert.equal(home.disabled,true);
+  goAgain.onclick();
+  assert.equal(goAgain.disabled,true);assert.equal(home.disabled,false,'a previously wrong tile becomes the next target');
+  assert.equal(now.disabled,false);
+  go.onclick();goAgain.onclick();assert.equal(w.results.length,0);
+  home.onclick();assert.equal(home.disabled,true);assert.equal(now.disabled,false);
+  now.onclick();assert.equal(w.results.length,1);assert.equal(w.results[0].misses,3);
  }finally{mock.timers.reset();}
 });

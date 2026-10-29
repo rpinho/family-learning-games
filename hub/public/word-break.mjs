@@ -205,6 +205,7 @@ dialog.wb::backdrop{background:#10284099;backdrop-filter:blur(3px)}
 .wb-choice{border:3px solid #cddbe6;background:#fff;color:#17324a;border-radius:20px;min-width:110px;min-height:110px;font-size:clamp(3rem,10vw,4.6rem);font-weight:850;cursor:pointer;padding:6px 18px;box-shadow:0 5px 0 #cddbe6;touch-action:manipulation;font-family:inherit}
 .wb-words .wb-choice{font-size:clamp(1.7rem,6vw,2.5rem);min-height:78px;min-width:96px}
 .wb-choice.right{background:#dff7e7;border-color:#2f9b64;box-shadow:0 5px 0 #2f9b64}
+.wb-choice:disabled{opacity:.45;cursor:default}
 .wb-choice.used{visibility:hidden}
 .wb-choice.wiggle{animation:wb-wiggle .45s}
 .wb-choice.glow{animation:wb-glow 1.2s ease-in-out infinite;border-color:#f0a020}
@@ -254,14 +255,14 @@ export function wordBreak({player='admin',level,speak=()=>{},log=()=>{},reason='
    const result={kind:q.kind,track:q.track,answer:q.sentence||q.answer,misses,ms:Date.now()-started,reason,...(q.starter?{starter:true}:{})};log(result);
    if(q.kind==='sentence')rememberSentence(player,{misses,tiles:q.answer.length,starter:!!q.starter});
    void praised.then(()=>setTimeout(()=>{try{d.close();}catch{}d.remove();resolve(result);},q.kind==='sentence'?1500:1000));};
-  const wrong=b=>{misses++;missesHere++;ding(false);b.classList.remove('wiggle');void b.offsetWidth;b.classList.add('wiggle');
-   if(missesHere>=2){const want=q.kind==='sentence'?q.answer[step]:q.answer;const right=[...choices.children].find(x=>x.dataset.value===want&&!x.classList.contains('used'));right?.classList.add('glow');void ask();}
+  const wrong=b=>{b.disabled=true;misses++;missesHere++;ding(false);b.classList.remove('wiggle');void b.offsetWidth;b.classList.add('wiggle');
+   if(missesHere>=2){const want=q.kind==='sentence'?q.answer[step]:q.answer;for(const x of choices.children)if(x.dataset.value!==want)x.disabled=true;const right=[...choices.children].find(x=>x.dataset.value===want&&!x.classList.contains('used'));right?.classList.add('glow');void ask();}
    else void voice.say('Try again.',false);};
   const list=q.kind==='sentence'?q.tiles:q.options;
   for(const value of list){const b=doc.createElement('button');b.type='button';b.className='wb-choice';b.textContent=value;b.dataset.value=value;b.setAttribute('aria-label',value);
-   b.onclick=()=>{if(finished||b.classList.contains('used'))return;
+   b.onclick=()=>{if(finished||b.disabled||b.classList.contains('used'))return;
     nudge();
-    if(q.kind==='sentence'){if(value!==q.answer[step])return wrong(b);b.classList.remove('glow');b.classList.add('used');slots[step].textContent=value;slots[step].classList.add('filled');step++;missesHere=0;[...choices.children].forEach(x=>x.classList.remove('glow'));if(step===q.answer.length)finish();return;}
+    if(q.kind==='sentence'){if(value!==q.answer[step])return wrong(b);b.classList.remove('glow');b.classList.add('used');b.disabled=true;slots[step].textContent=value;slots[step].classList.add('filled');step++;missesHere=0;[...choices.children].forEach(x=>{x.classList.remove('glow');x.disabled=x.classList.contains('used');});if(step===q.answer.length)finish();return;}
     if(value!==q.answer)return wrong(b);b.classList.remove('glow');b.classList.add('right');finish();};
    choices.append(b);}
   d.addEventListener('cancel',e=>e.preventDefault());
