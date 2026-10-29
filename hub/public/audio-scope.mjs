@@ -3,8 +3,10 @@
 (()=>{
  if(!globalThis.document||globalThis.familyAudio)return;
  const media=new Set(),sources=new Set(),contexts=new Set();let blocked=false,epoch=0;
- const stop=()=>{blocked=true;epoch++;for(const a of media){try{a.pause();a.removeAttribute('src');a.load();}catch{}}for(const s of sources){try{s.stop();s.disconnect();}catch{}}sources.clear();for(const c of contexts){if(c.state==='closed'){contexts.delete(c);continue;}try{Promise.resolve(c.suspend()).catch(()=>{if(c.state==='closed')contexts.delete(c);});}catch{if(c.state==='closed')contexts.delete(c);}}try{globalThis.speechSynthesis?.cancel();}catch{}globalThis.dispatchEvent(new Event('family-audio-stop'));};
- globalThis.familyAudio={stop,get epoch(){return epoch;},get blocked(){return blocked;}};
+ const interrupt=()=>{epoch++;for(const a of media){try{a.pause();a.removeAttribute('src');a.load();}catch{}}for(const s of sources){try{s.stop();s.disconnect();}catch{}}sources.clear();for(const c of contexts){if(c.state==='closed'){contexts.delete(c);continue;}try{Promise.resolve(c.suspend()).catch(()=>{if(c.state==='closed')contexts.delete(c);});}catch{if(c.state==='closed')contexts.delete(c);}}try{globalThis.speechSynthesis?.cancel();}catch{}globalThis.dispatchEvent(new Event('family-audio-stop'));};
+ // In-page interactions cancel old audio without clearing an existing navigation barrier.
+ const stop=()=>{blocked=true;interrupt();};
+ globalThis.familyAudio={stop,interrupt,get epoch(){return epoch;},get blocked(){return blocked;}};
  if(globalThis.speechSynthesis){const speak=speechSynthesis.speak.bind(speechSynthesis);speechSynthesis.speak=utterance=>{if(!blocked&&!document.hidden)return speak(utterance);};}
  if(globalThis.HTMLMediaElement){const play=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=function(){media.add(this);if(blocked||document.hidden)return Promise.resolve();return play.call(this);};}
  for(const name of ['AudioBufferSourceNode','OscillatorNode']){const P=globalThis[name]?.prototype;if(!P)continue;const start=P.start;P.start=function(...args){if(blocked||document.hidden)return;contexts.add(this.context);sources.add(this);this.addEventListener('ended',()=>sources.delete(this),{once:true});return start.apply(this,args);};}

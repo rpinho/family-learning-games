@@ -141,7 +141,7 @@ async function approach(target,fn){const turn=++interactionTurn;if(!$('#map').hi
  trace({approach:target,owner:turn,challengeGate});const destination=approachDestination(()=>clearHeroSpot({x:Math.max(heroSize().w/2+.01,Math.min(1-heroSize().w/2-.01,beside)),y:.98}),{episode:!!definition.episode});if(!destination){trace({approachWithoutWalk:true,owner:turn});if(turn===interactionTurn&&!disposed&&!document.hidden)await fn();return;}const moved=await walk(destination);
  trace({arrived:moved,owner:turn,destination});if(moved&&turn===interactionTurn&&!disposed&&!document.hidden)await fn();
 }
-async function walkToEdge(side){globalThis.familyAudio?.stop();interactionTurn++;if(!$('#map').hidden)return;if(challengeGate)closeChallenge();
+async function walkToEdge(side){globalThis.familyAudio?.interrupt();interactionTurn++;if(!$('#map').hidden)return;if(challengeGate)closeChallenge();
  const status=targetStatus(state,'exit',side);if(status.missing.length){refuse(status);return;}
  const x=side==='left'?heroSize().w/2+.004:side==='right'?1-heroSize().w/2-.004:.5;await walk({x,y:.993},side);
 }
