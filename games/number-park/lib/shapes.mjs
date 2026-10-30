@@ -18,7 +18,17 @@ export const SHAPES={
 };
 export const nextShape=shape=>{const ids=Object.keys(SHAPES);return ids[(Math.max(0,ids.indexOf(shape))+1)%ids.length];};
 export const startingShape=shape=>Object.hasOwn(SHAPES,shape)?shape:'rectangle';
-export function validGuidedShape(shape,strokes){return Object.hasOwn(SHAPES,shape)&&JSON.stringify(strokes)===JSON.stringify(SHAPES[shape].paths);}
+export function validGuidedShape(shape,strokes){
+ if(!Object.hasOwn(SHAPES,shape)||!Array.isArray(strokes))return false;
+ const paths=SHAPES[shape].paths;
+ // Browser and Node trig results can differ by a few floating-point bits.
+ return strokes.length===paths.length&&paths.every((path,i)=>
+  Array.isArray(strokes[i])&&strokes[i].length===path.length&&path.every((point,j)=>{
+   const actual=strokes[i][j];
+   return Array.isArray(actual)&&actual.length===2&&point.every((coordinate,k)=>
+    Number.isFinite(actual[k])&&Math.abs(actual[k]-coordinate)<=1e-9);
+  }));
+}
 
 // Global coverage can accept an obvious opening in an otherwise accurate loop.
 // Look for the longest missing section around the model (including its seam).
