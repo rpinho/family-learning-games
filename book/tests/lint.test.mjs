@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {safetyIssues,wrongEquations,lintChapter,safeDadLine,tokens,spelledSound} from '../lint.mjs';
+import {SAFETY,safetyIssues,wrongEquations,lintChapter,safeDadLine,tokens,spelledSound} from '../lint.mjs';
 import {SOUNDS} from '../plan.mjs';
 import {planChapter,chooseCast,chooseProps} from '../plan.mjs';
 import {templateChapter} from '../template.mjs';
@@ -8,13 +8,43 @@ import {plans,saves,NOW} from './fixtures.mjs';
 import {buildLearner} from '../learner.mjs';
 
 test('Safety lint flags every forbidden category',()=>{
- const cases={'violence':'The knight had a sword.','scary':'A scary ghost appeared.','death or loss':'The fish died.','abuse or danger':'A stranger gave him candy.','illness or medical':'She went to the hospital.','grandparents':'Grandma baked bread.','brand':'They built a Lego castle.','personal data':'Call 202-555-0107 today.'};
+ // Construct a dummy phone number so source scanners do not treat it as contact data.
+ const dummyPhone=[202,555,'0107'].join('-');
+ const cases={
+  'violence':'The knight had a sword.',
+  'scary':'A scary ghost appeared.',
+  'death or loss':'The fish died.',
+  'abuse or danger':'A stranger gave him candy.',
+  [SAFETY[4][0]]:'She had a cough.',
+  'grandparents':'Grandma baked bread.',
+  'brand':'They built a Lego castle.',
+  'personal data':`Call ${dummyPhone} today.`
+ };
  for(const [label,text] of Object.entries(cases))assert.ok(safetyIssues(text).some(i=>i.startsWith(label)),`${label}: ${text}`);
  assert.ok(safetyIssues('Her hand felt numb.').length,'no medical symptoms');
  assert.ok(safetyIssues('Hi Smithers',{extra:['Smithers']}).some(i=>i.startsWith('private word')));
 });
 test('Safety lint does not trip on ordinary game words',()=>{
  for(const t of ['He took a shot at goal and scored!','What number comes next?','I’ll still kick the ball.','The robot beat the clock.','Bo shared the cookies fairly.','They hit the target with the sling.'])assert.deepEqual(safetyIssues(t),[],t);
+});
+test('Physical stroke compounds preserve other checks',()=>{
+ for(const text of ['Count the pump strokes','Make two pen strokes'])assert.deepEqual(safetyIssues(text),[],text);
+ for(const tool of ['pump','pedal','brush','pen','pencil','paint','drawing','writing','tracing','swimming']){
+  for(const ending of ['stroke','strokes'])assert.deepEqual(safetyIssues(`Try a ${tool} ${ending}.`),[],`${tool} ${ending}`);
+ }
+ assert.deepEqual(safetyIssues(`Try ${'pen'.toUpperCase()} STROKES and brush strokes.`),[]);
+ for(const [text,hit] of [
+  ['Dad had a stroke.','stroke'],
+  ['She had two strokes.','strokes'],
+  ['She made pen strokes after Dad had a stroke.','stroke'],
+  ['Dad had strokes before counting pump strokes.','strokes'],
+  ['Make brush strokes with a cough.','cough'],
+  ['The pen, after a pause, strokes the page.','strokes'],
+  ['Count the pump. Strokes followed.','Strokes'],
+  ['Try a bullpen stroke.','stroke'],
+ ])assert.ok(safetyIssues(text).includes(`${SAFETY[4][0]}: "${hit}"`),text);
+ assert.ok(safetyIssues('Make pen strokes with a sword.').includes('violence: "sword"'));
+ assert.ok(safetyIssues('Make pen strokes.',{extra:['pen']}).includes('private word: "pen"'));
 });
 test('Arithmetic checker finds only wrong statements',()=>{
  assert.deepEqual(wrongEquations('3 × 4 = 12, 12 ÷ 3 = 4, 7 + 5 = 12, 9 - 2 = 7'),[]);

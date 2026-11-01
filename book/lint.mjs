@@ -33,7 +33,9 @@ export const tokens=s=>String(s).split(/\s+/).map(t=>t.replace(/^[^\p{L}\p{N}]+|
 export function safetyIssues(text,{extra=[],allow=[],travel=[]}={}){
  const out=[],ok=new Set(allow.map(a=>a.toLowerCase()));
  for(const [label,re] of SAFETY){
-  const checked=label==='personal data'?travel.reduce((t,line)=>t.split(line).join('mapped path'),String(text)):String(text);
+  let checked=label==='personal data'?travel.reduce((t,line)=>t.split(line).join('mapped path'),String(text)):String(text);
+  // Mask only adjacent physical compounds for this rule; other words still count.
+  if(label===SAFETY[4][0])checked=checked.replace(/\b(?:pump|pedal|brush|pen|pencil|paint|drawing|writing|tracing|swimming)[ \t]+strokes?\b/gi,' ');
   const all=[...checked.matchAll(new RegExp(re.source,re.flags.includes('g')?re.flags:re.flags+'g'))].map(m=>m[0]);
   const hit=label==='brand'?all.find(m=>!ok.has(m.toLowerCase())):all[0];
   if(hit)out.push(`${label}: "${hit}"`);
