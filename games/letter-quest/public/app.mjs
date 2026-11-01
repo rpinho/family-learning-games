@@ -337,7 +337,7 @@ async function readingAct(kind,value){
   if(['start','choose','next'].includes(kind)&&readingState(profile).phase==='question')readingPrompt(readingState(profile).question);
   else if(['read','show'].includes(kind)&&data.result.line)void coachVoice.speak(data.result.line);
   else if(kind==='tile'&&q?.tiles?.[Number(value)]&&['dictation','change'].includes(q.type)&&!mute)void coachVoice.letter(`Letter ${q.tiles[Number(value)].toUpperCase()}.`);
-  else if(data.result.line)praise(data.result.kind!=='wrong');
+  else if(data.result.line)praise(data.result.kind!=='incorrect');
   if(data.result.kind==='correct')chime();
  }catch(e){readingMessage=e.message;notice(e.message);}finally{busy=false;render();}
 }

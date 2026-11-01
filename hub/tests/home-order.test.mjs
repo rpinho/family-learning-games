@@ -17,6 +17,62 @@ const visit = (game, daysAgo, extra = {}) => ({player: 'a', game, sub: null, at:
 const sub = (game, activity, daysAgo) => ({player: 'a', game, sub: activity, at: at(daysAgo)});
 const home = (events, opts = {}) => smartHome({events, player: 'a', now: NOW, timeZone: TZ, ...opts});
 
+const transitions = [
+  {key: '2026-03-08', start: '2026-03-08T05:00:00Z', end: '2026-03-09T04:00:00Z', previous: ['2026-03-07', '2026-03-06'], previousStarts: ['2026-03-07T05:00:00Z', '2026-03-06T05:00:00Z']},
+  {key: '2026-11-01', start: '2026-11-01T04:00:00Z', end: '2026-11-02T05:00:00Z', previous: ['2026-10-31', '2026-10-30'], previousStarts: ['2026-10-31T04:00:00Z', '2026-10-30T04:00:00Z']},
+];
+for (const fixture of transitions) {
+  const start = Date.parse(fixture.start), end = Date.parse(fixture.end);
+  // Every half hour includes both 01:30 instances in the 25-hour fall day.
+  const instants = [start, ...Array.from({length: (end - start) / 1800000}, (_, i) => start + i * 1800000 + 123.75), end - 0.25];
+  test(`Local day ${fixture.key}: stable key/start/index throughout the DST date`, () => {
+    const expected = {key: fixture.key, start, index: Date.parse(fixture.key + 'T00:00:00Z') / DAY};
+    for (const now of instants) assert.deepEqual(localDay(now, TZ), expected, new Date(now).toISOString());
+    assert.equal(localDay(end, TZ).start, end);
+    assert.equal(localDay(end, TZ).index, expected.index + 1);
+  });
+  test(`Local day ${fixture.key}: previous-date traversal crosses DST exactly once`, () => {
+    // Start on the following date too, so traversal must cross the transition date.
+    let t = end;
+    for (const [key, midnight] of [[fixture.key, fixture.start], ...fixture.previous.map((key, i) => [key, fixture.previousStarts[i]])]) {
+      const previous = localDay(localDay(t, TZ).start - 1, TZ);
+      assert.equal(previous.key, key);
+      assert.equal(previous.start, Date.parse(midnight));
+      t = previous.start;
+    }
+  });
+  test(`smartHome ${fixture.key}: same-day menu_home feedback leaves the analytic output stable`, () => {
+    const options = {player: 'a', timeZone: TZ, profile: {age: 6}, events: [
+      {player: 'a', game: 'chess', at: start - 1800000},
+      {player: 'a', game: 'word-arcade', at: start + 1800000},
+    ]};
+    const shown = fixture.previous.map((day, i) => ({player: 'a', day, nudge: ['hunt', 'sling'][i], at: Date.parse(fixture.previousStarts[i])}));
+    const expected = smartHome({...options, now: start, shown});
+    assert.ok(expected.nudge);
+    assert.deepEqual(expected.analytics.previous, ['hunt', 'sling']);
+    // Also exercise recomputation when neither previous day was logged.
+    const unlogged = smartHome({...options, now: start});
+    const feedback = [];
+    for (const now of instants) {
+      const actual = smartHome({...options, now, shown});
+      assert.deepEqual(actual, expected, new Date(now).toISOString());
+      shown.push({type: 'menu_home', player: 'a', at: now, ...actual});
+      const recomputed = smartHome({...options, now, shown: feedback});
+      assert.deepEqual(recomputed, unlogged, `unlogged: ${new Date(now).toISOString()}`);
+      feedback.push({type: 'menu_home', player: 'a', at: now, ...recomputed});
+    }
+  });
+}
+
+test('Local day: UTC and invalid-zone fallback retain exact midnight with fractional milliseconds', () => {
+  for (const now of [Date.parse('2026-03-08T23:59:59Z') + 999.75, -0.25, -1234.75]) {
+    const expected = {key: new Date(now).toISOString().slice(0, 10), start: Math.floor(new Date(now).getTime() / DAY) * DAY};
+    expected.index = expected.start / DAY;
+    assert.deepEqual(localDay(now, 'UTC'), expected);
+    assert.deepEqual(localDay(now, 'Not/AZone'), expected);
+  }
+});
+
 test('Local day: key and midnight follow the household time zone', () => {
   const d = localDay(NOW, TZ);
   assert.equal(d.key, '2026-10-01'); assert.equal(d.start, MIDNIGHT);

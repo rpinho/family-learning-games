@@ -21,13 +21,22 @@ const USED_TO = 3;           // distinct visits before the last week that make a
 const FREQUENT_SHIELD = 4;   // already this high by frequency: no need to sprinkle it
 
 export function localDay(now, timeZone) {
-  let parts;
+  let formatter, parts;
   try {
-    parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' })
-      .formatToParts(new Date(now)).map(p => [p.type, p.value]));
+    formatter = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' });
+    parts = Object.fromEntries(formatter.formatToParts(new Date(now)).map(p => [p.type, p.value]));
   } catch { return localDay(now, 'UTC'); }
   const key = `${parts.year}-${parts.month}-${parts.day}`;
-  const start = now - (((+parts.hour * 60) + +parts.minute) * 60 + +parts.second) * 1000 - (((now % 1000) + 1000) % 1000);
+  // Search for the first instant of this calendar date, not elapsed wall-clock time:
+  // the offset at midnight can differ from now's. Two days bracket even a 25-hour day.
+  // Reuse the formatter for the bounded search (at most 28 steps, no per-ms scan).
+  let start = new Date(now).getTime(), before = start - 2 * DAY;
+  const date = formatter.format(new Date(start));
+  while (start - before > 1) {
+    const mid = Math.floor((before + start) / 2);
+    if (formatter.format(new Date(mid)) === date) start = mid;
+    else before = mid;
+  }
   return { key, start, index: Math.round(Date.parse(key + 'T00:00:00Z') / DAY) };
 }
 export function hash(text) {
