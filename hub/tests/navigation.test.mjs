@@ -40,5 +40,5 @@ test('Artwork preference stays per player and device, with all nine destinations
   const storage={getItem:()=>'screenshots'};
   assert.equal(menuStyle('beginner',null,storage),'logos');
   assert.equal(menuStyle('explorer','screenshots',storage),'logos');
-  for(const item of CATALOG){assert.match(gameArtwork(item,'logos').src,/\.(png|svg)$/);assert.equal(gameArtwork(item,'screenshots').src,`/previews/${item.preview||item.id}.jpg`);}
+  for(const item of CATALOG){assert.match(gameArtwork(item,'logos').src,/\.(png|svg)$/);assert.equal(gameArtwork(item,'screenshots').src,item.illustrationOnly?item.icon:`/previews/${item.preview||item.id}.jpg`);}
 });

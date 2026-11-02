@@ -1,6 +1,6 @@
 # One app: Family Learning Games
 
-Run `npm run play` at the repository root, then open **http://localhost:4810/**. This home screen contains ten destinations, including **Guess My Drawing**, **Rook Academy**, **Maze Garden** and **Soccer Club**. Install this home screen once, not each game. Browser installation behavior depends on platform and secure-origin support; plain HTTP on a LAN can retain browser security chrome.
+Run `npm run play` at the repository root, then open **http://localhost:4810/**. This home screen contains thirteen destinations, with reading, drawing, building, chess, mazes and soccer. Install this home screen once, not each game. Browser installation behavior depends on platform and secure-origin support; plain HTTP on a LAN can retain browser security chrome.
 
 Beginner and Explorer links: `/?player=beginner` and `/?player=explorer`. The hub remembers the selected preset on the device. The name remains large at the top. Use **Grown-ups** on the home screen to change it. The reading-and-code gate adds a deliberate step; it is not authentication.
 
@@ -11,6 +11,18 @@ Games stay inside the hub under `/g/<game>/<player>/`. A loopback-only reverse p
 **Guess My Drawing** opens Number Park’s free-drawing data directly on a wider canvas; Number Park keeps number/shape tracing. Existing pictures and guess history stay in the same backend, while menu activity is attributed to the drawing destination. **Maze Garden** offers four activities: tracing mazes, Make a Maze, the 3D letter labyrinth, and obstacle rescues. Make a Maze opens directly in its existing Maze Garden save; standalone links remain compatible. **Soccer Club** offers the three soccer variants below. Each keeps its previous save location; Letter Quest’s former activities still use its backend, with no profile migration. Standalone Letter Quest links remain compatible. Its hub navigation now focuses on literacy and stories, with a book icon. Reading exercises with distinct mechanics in Word Arcade, Number Park and Target Trail remain separate.
 
 **[Rook Academy](CHESS.md)** is the new chess destination: 12 units, 72 short lessons, two difficulty bands, an original speaking coach, spaced review and local practice games. Chess owns the rook icon.
+
+## free build, Word Search and Word Blocks
+
+All three open from the home screen, including its More games page, or from `#free-build`, `#word-search` and `#word-blocks`. Use `/?player=beginner` or `/?player=explorer` before Family setup for generic presets. The default home address still opens Family setup on a fresh installation. These games need no Book, cast, profiles, private packs, voice clips or model account. They use original SVG icons and drawings, plus code-drawn toys.
+
+**free build** is an open room with wooden blocks, bouncy blocks, two balls and pegged gears, up to forty toys. Drag from the tray, tap a gear or turn its crank, drag a toy to the bin, and confirm the broom to clear the room. Keyboard users can add a tray toy, then move the newest toy with arrow keys, spin its gear with Space or remove it with Delete. The room resumes after Refresh, including an intentionally cleared room.
+
+**Word Search** uses generic pictured words. Select the first and last letters by tapping, dragging, or using arrow keys and Enter. Words run across or down. Boards start at 6×6 with four words, grow to 7×7 after two finishes, then 8×8 after four. Your current board stays until you finish it and choose another; wrong selections have no penalty. Filler is checked in all eight directions for unwanted words and accidental target repeats.
+
+**Word Blocks** has three shelf activities: turn letter blocks to match a picture, turn word blocks to describe an animal scene, and pair numbers with number words from eleven through thirty. Six spelling/sentence pictures make a short visit. A first correct press after at least 2.5 server seconds counts as careful practice; other correct answers still move on, with the picture returning for review. This is practice history, not reading mastery. Shelf changes preserve each unfinished activity. These two reading games are silent and request no microphone.
+
+Saves live in the hub's private data directory as `free-build-<player>.json`, `word-search-<player>.json` and `word-blocks-<player>.json`. No data migration or private content export is needed. Each API (`/api/free-build`, `/api/word-search`, `/api/word-blocks`) requires `?player=<id>` and rejects stale writes. free build logs action counts without layouts or personal text. Do not publish saves or browser captures from real play.
 
 ## Personal menu order
 

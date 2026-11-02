@@ -17,6 +17,7 @@ export const HISTORY = 45 * DAY;
 export function activityFor(source, row) {
   if (source === 'hub') {
     if(row.type==='client'&&row.kind==='open_game'){const id=String(row.detail||'').split('/')[0];return IDS.includes(id)?id:null;}
+    if (row.type === 'free-build' && ['place','remove','spin','clear'].includes(row.action)) return 'free-build';
     if (row.type === 'chess' && ['move', 'game-move'].includes(row.action)) return 'chess';
     if (row.type === 'dribble' && ['move', 'feint', 'answer'].includes(row.input?.type)) return 'dribble-duel';
     if (row.type === 'dribble-live' && ['live-checkpoint', 'live-finish'].includes(row.input?.type)) return 'dribble-duel';

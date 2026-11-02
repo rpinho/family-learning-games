@@ -14,7 +14,7 @@ export function parentAnswerMatches(challenge, answer) {
 // The main menu always shows the illustrated logos; any saved per-device preference is ignored (retired).
 export function menuStyle() { return 'logos'; }
 export function gameArtwork(item, style) {
-  return style === 'logos'
+  return style === 'logos' || item.illustrationOnly
     ? {className:'game-logo',src:item.icon || '/game-icons/' + item.id + '.png'}
     : {className:'game-preview',src:'/previews/' + (item.preview || item.id) + '.jpg'};
 }

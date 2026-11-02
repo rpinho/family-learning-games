@@ -52,7 +52,7 @@ test("Chess API isolates players, serializes writes, recovers duplicate saves an
     ])
       assert.equal((await fetch(base + path)).status, 404);
     for (const name of new Set([
-      ...CATALOG.map((x) => x.preview || x.id),
+      ...CATALOG.filter(x=>!x.illustrationOnly).map((x) => x.preview || x.id),
       ...Object.values(FAMILIES)
         .flat()
         .map((x) => x.preview),
@@ -63,6 +63,10 @@ test("Chess API isolates players, serializes writes, recovers duplicate saves an
       const bytes = new Uint8Array(await image.arrayBuffer());
       assert.equal(bytes[0], 255);
       assert.equal(bytes[1], 216);
+    }
+    for(const item of CATALOG.filter(x=>x.illustrationOnly)){
+      const image=await fetch(base+item.icon);assert.equal(image.status,200);
+      assert.match(image.headers.get('content-type'),/image\/svg/);assert.match(await image.text(),/^<svg/);
     }
     const beginner = (await (await fetch(base + "/api/chess?player=beginner")).json()).profile;
     const explorer = (await (await fetch(base + "/api/chess?player=explorer")).json()).profile;

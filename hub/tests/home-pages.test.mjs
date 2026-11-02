@@ -14,12 +14,12 @@ const olderList = ['maze-garden', 'maze-maker', 'letter-quest', 'maze-trace', 'd
 
 test('One ordered list over two roughly equal pages: My Book + the first half, then the rest in the same order', () => {
   const young = smartHomeGames(CATALOG, youngPicks, youngList);
-  assert.equal(young.length + 1, 18);
+  assert.equal(young.length + 1, CATALOG.length + youngPicks.length + 1);
   const a = homePages(young, {lead: 1, nudge: 'number-park'});
-  assert.equal(a.first.length + 1, 9); assert.equal(a.second.length, 9);
+  assert.equal(a.first.length + 1, 11); assert.equal(a.second.length, 10);
   const older = smartHomeGames(CATALOG, olderPicks, olderList);
   const b = homePages(older, {lead: 1, nudge: 'letter-quest'});
-  assert.equal(b.first.length + 1, 9); assert.equal(b.second.length, 8);
+  assert.equal(b.first.length + 1, 10); assert.equal(b.second.length, 10);
   for (const [cards, p] of [[young, a], [older, b]]) {
     const all = [...ids(p.first), ...ids(p.second)];
     assert.deepEqual([...all].sort(), ids(cards).sort(), 'every card exactly once across the two pages');
@@ -27,9 +27,9 @@ test('One ordered list over two roughly equal pages: My Book + the first half, t
     // Page 2 continues the list's own order.
     assert.deepEqual(ids(p.second), ids(cards).filter(id => ids(p.second).includes(id)));
   }
-  // Admin has no My Book: an even split of the games.
+  // Admin has no pinned book: the first page keeps the larger half.
   const admin = homePages(CATALOG, {lead: 0});
-  assert.equal(admin.first.length, 6); assert.equal(admin.second.length, 6);
+  assert.equal(admin.first.length, 8); assert.equal(admin.second.length, 7);
   assert.deepEqual(homePages([], {lead: 1}), {first: [], second: []});
 });
 
@@ -41,7 +41,7 @@ test('Each family has one card on page 1; its most-played card wins, siblings st
   assert.ok(ids(p.second).includes('letter-labyrinth'));
   assert.ok(ids(p.second).includes('maze-garden'));
   assert.equal(new Set(p.first.map(c => familyOf(c.id))).size, p.first.length);
-  assert.equal(p.first.length, 8);
+  assert.equal(p.first.length, 9);
   assert.equal(parentOf('drawing-studio'), 'number-park');
   assert.equal(parentOf('letter-slalom'), 'word-arcade');
   assert.equal(parentOf('sling'), 'target-trail');
@@ -70,8 +70,8 @@ test('New games get seven calendar days on page 1, then compete normally; future
     assert.equal(p.first[2].id, 'letter-quest');
     assert.ok(!ids(p.first).includes('number-park'));
     assert.ok(!ids(p.first).includes('snack-friend'));
-    assert.equal(p.first.length + 1, 9);
-    assert.equal(p.second.length, 9);
+    assert.equal(p.first.length + 1, 11);
+    assert.equal(p.second.length, 10);
   }
   for (const day of ['2026-10-02', '2026-10-10', '2026-10-11']) {
     const p = homePages(cards, {lead: 1, newGames: discovery, day});
@@ -98,8 +98,8 @@ test('Recorded crowded order: favourite maze plus the nudge, Balance scale, Lett
   const cards = smartHomeGames(CATALOG, [...olderPicks, 'balance-scale'], recordedOrder);
   const p = homePages(cards, {lead:1, nudge:'letter-labyrinth', familyOrder:['maze-trace','maze-maker','chess','number-park','maze-garden','letter-labyrinth','letter-slalom','snack-friend','drawing-studio','letter-quest','word-arcade','sling','dribble-duel','three-in-a-row','target-trail','balance-scale','hunt'],newGames:discovery, day:'2026-10-03'});
   assert.equal(p.first.filter(c => familyOf(c.id) === 'maze-garden').length, 2);
-  assert.deepEqual(ids(p.first), ['maze-trace','dribble-duel','letter-labyrinth','letter-slalom','balance-scale','sling','letter-quest','chess']);
-  assert.equal(p.first.length + 1, 9);
+  assert.deepEqual(ids(p.first), ['maze-trace','dribble-duel','letter-labyrinth','letter-slalom','balance-scale','sling','letter-quest','chess','three-in-a-row','hunt']);
+  assert.equal(p.first.length + 1, 11);
   assert.equal(new Set([...ids(p.first), ...ids(p.second)]).size, cards.length);
 });
 

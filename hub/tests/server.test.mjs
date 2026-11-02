@@ -5,6 +5,7 @@ import {mkdtemp,readFile,readdir,mkdir,writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {once} from 'node:events';
+import {CATALOG} from '../public/catalog.mjs';
 import {RULES} from '../dribble.mjs';
 
 test('Hub persists only the chosen profile, rejects replay/foreign origins, and scopes runtime imports',async()=>{
@@ -41,7 +42,7 @@ test('Hub persists only the chosen profile, rejects replay/foreign origins, and 
   const conf=await(await fetch(base+'/api/config')).json();
   assert.equal(typeof conf.menuTimeZone, 'string');
   assert.doesNotThrow(()=>new Intl.DateTimeFormat('en-CA',{timeZone:conf.menuTimeZone}));
-  assert.equal(new Set(menu.order).size,12); // Background ranking may still be warming; never wait for it.
+  assert.equal(new Set(menu.order).size,CATALOG.length); // Background ranking may still be warming; never wait for it.
   // The learner model readout (grown-ups' diagnostics): 404 until the nightly writes one, then the private file as is.
   assert.equal((await fetch(base+'/api/learner?player=admin')).status,404);
   assert.equal((await fetch(base+'/api/learner?player=../admin')).status,400);

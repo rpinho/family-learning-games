@@ -85,6 +85,9 @@ export const CATALOG = [
     game: "target-trail",
     query: "mode=sling",
   },
+  {id:'free-build',name:'free build',description:'Stack blocks, bounce balls and turn wooden gears.',color:'#dce6c9',illustrationOnly:true,icon:'/free-build.svg'},
+  {id:'word-search',name:'Word Search',description:'Find picture words across and down a letter garden.',color:'#dce6c9',illustrationOnly:true,icon:'/word-search.svg'},
+  {id:'word-blocks',name:'Word Blocks',description:'Turn spelling blocks, match sentences and pair number coins.',color:'#ead9ba',illustrationOnly:true,icon:'/word-blocks.svg'},
   {
     id: "dribble-duel",
     name: "Soccer Club",
@@ -158,6 +161,7 @@ export function destination(hash) {
   const [family, activity] = String(hash).replace(/^#/, "").split("/");
   const item = [...CATALOG,...SHORTCUTS].find((g) => g.id === family);
   if (!item) return { type: "home" };
+  if (["free-build","word-search","word-blocks"].includes(family)) return {type:family,item};
   if (family === "chess") return { type: "chess", item };
   if (family === "hunt") return { type: "hunt", item };
   if (FAMILIES[family]) {

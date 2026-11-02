@@ -169,7 +169,23 @@ async function render() {
   const dest = destination(location.hash),
     game = dest.item?.id,
     item = dest.item;
-  if (["chess", "soccer", "frame"].includes(dest.type)) rememberPlace(player, location.hash);
+  if (["chess", "soccer", "frame", "free-build", "word-search", "word-blocks"].includes(dest.type)) rememberPlace(player, location.hash);
+  if (["free-build","word-search","word-blocks"].includes(dest.type)) {
+    if (dest.type === "free-build") {
+      await new Promise((resolve,reject)=>{
+        let link=document.querySelector('link[data-free-build]');
+        if(link?.sheet)return resolve();
+        if(link)link.remove();
+        link=document.createElement('link');link.rel='stylesheet';link.href='/free-build/style.css';link.dataset.freeBuild='';
+        link.onload=resolve;link.onerror=()=>{link.remove();reject(Error('Could not open the room.'));};document.head.append(link);
+      });
+    }
+    const app=await import(`./${dest.type}/app.mjs`);
+    if (seq !== renderSeq) return;
+    const mount={"free-build":app.mountFreeBuild,"word-search":app.mountWordSearch,"word-blocks":app.mountWordBlocks}[dest.type];
+    dispose=mount(main,{player,event});event('open_game',dest.type);
+    return;
+  }
   if (dest.type === "hunt") {
     // Letter Hunt: a real-world hunt at home, announced by a friend from the book.
     dispose = mountHunt(main, { player, event, onClose: () => { location.hash = ""; } });
@@ -357,8 +373,9 @@ window.addEventListener("unhandledrejection", (e) =>
 try {
   config = await fetchJSON('/api/config',{},8000);
   if(!Array.isArray(config.players)||!config.players.length)throw Error('Could not read your game settings.');
-  if(config.onboardingRequired){location.replace('/onboarding');throw Error('Opening family setup…');}
   const requested = new URL(location.href).searchParams.get("player");
+  const demo=['beginner','explorer','admin'].includes(requested)&&config.players.some(p=>p.id===requested);
+  if(config.onboardingRequired&&!demo){location.replace('/onboarding');throw Error('Opening family setup…');}
   let saved;try{saved=storage?.getItem("family-games-player");}catch{}
   player = config.players.some((p) => p.id === requested)
     ? requested

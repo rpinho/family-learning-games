@@ -2,11 +2,11 @@
 
 ![Family Learning Games — gameplay previews from the collection](docs/media/social-preview.png)
 
-**One app. Ten games, The Book and fictional demo worlds.** A single home screen brings together reading, numbers, free drawing, mazes, chess, strategy, soccer, and an illustrated story with little games inside it. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, not a public online classroom or hosted play service.
+**One app. Thirteen games, The Book and fictional demo worlds.** A single home screen brings together reading, numbers, free drawing, mazes, chess, strategy, soccer, and an illustrated story with little games inside it. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, intended to run on your own computer.
 
 After setup, open **http://localhost:4810/**. Choose a player once; their name stays large at the top and their progress stays separate. Use **Games** to return home, **Refresh** to reload, and **Grown-ups** to change the device's player or switch the main menu between gameplay screenshots and illustrated logos. The artwork choice is saved for that player on that device; activity-variant menus retain their gameplay previews. Main-menu order adapts per player from recent local play sessions, including older activities that now belong to Maze Garden or Soccer Club. The menu opens immediately using its last known order (or the default), updates preferences in the background for the next visit, and stays still while choosing.
 
-[Quick start](#quick-start) · [Let an agent install it](#let-a-coding-agent-install-it) · [Explore the games and Book](#ten-games-and-the-book) · [Privacy](PRIVACY.md)
+[Quick start](#quick-start) · [Let an agent install it](#let-a-coding-agent-install-it) · [Explore the games and Book](#thirteen-games-and-the-book) · [Privacy](PRIVACY.md)
 
 [![Watch the games and The Book in action — silent animated highlights](docs/media/highlights.gif)](docs/media/highlights.mp4)
 
@@ -14,7 +14,7 @@ After setup, open **http://localhost:4810/**. Choose a player once; their name s
 
 **Edition note:** this edition includes the live calm theme, home pages and current game engines. The Book keeps the original fictional painted cast; the World and quest engines use geometric demo scenes. The showcase’s Castle Kingdom preview is a separate fictional presentation.
 
-## Ten games and The Book
+## Thirteen games and The Book
 
 **[Rook Academy](hub/CHESS.md)** offers 36 First moves lessons, 189 Small steps lessons that grow from sparse boards into full positions, and a 72-lesson advanced continuation in two difficulty bands, with an original speaking coach, hints, review and local practice games. **Maze Garden** gathers four activities: tracing mazes, Make a Maze, letter labyrinths and obstacle rescues. **Soccer Club** gathers three soccer variants. Choose any version; existing progress is preserved.
 
@@ -109,7 +109,7 @@ The current edition also includes the calm theme, two home pages, balance challe
 - **Touch-friendly:** drag objects, trace paths, steer a spaceship, and aim with a finger.
 - **Choose the challenge:** separate Beginner and Explorer presets; adjustable or adaptive challenges vary by game.
 - **Keep progress local:** saved rounds and diagnostics live on your own server. No ads or game-owned analytics.
-- **One icon:** one installed home screen for all ten games and the Book; no separate installs needed.
+- **One icon:** one installed home screen for all thirteen games and the Book; no separate installs needed.
 - **Easy to start:** one setup command for the whole collection. No AI API key required.
 
 ## Pick a game
@@ -126,6 +126,9 @@ The current edition also includes the calm theme, two home pages, balance challe
 | [Sling Shot](games/target-trail) | Pull back and let go: hit the spoken letter, number, pattern, times-table answer or next spelling letter | http://localhost:4810/#sling |
 | [Rook Academy](hub/CHESS.md) | 270 lessons across beginner and advanced paths, review and local practice games | http://localhost:4810/#chess |
 | [Soccer Club](hub/README.md#dribble-duel) | Live dribbling, feint puzzles and word penalties | http://localhost:4810/#dribble-duel |
+| [free build](hub/README.md#free-build-word-search-and-word-blocks) | Stack blocks, bounce balls and spin connected wooden gears | http://localhost:4810/#free-build |
+| [Word Search](hub/README.md#free-build-word-search-and-word-blocks) | Find generic picture words across and down; boards grow as you finish | http://localhost:4810/#word-search |
+| [Word Blocks](hub/README.md#free-build-word-search-and-word-blocks) | Turn spelling blocks, match pictured sentences, and pair number coins | http://localhost:4810/#word-blocks |
 | [The Book](book/SCHEMA.md) | Illustrated chapters, counting, letter kicks and magic words; separate chapter setup | Grown-ups → Watch; Admin can preview chapters |
 
 ## Run on your computer
@@ -150,11 +153,11 @@ If you download the repository ZIP instead, unzip it, open a terminal in its fol
 
 Give your agent this request:
 
-> Install and run this repository locally (use its clone URL from the Code menu). Read its AGENTS.md and README first. Check Node/npm, use a new folder, run npm run play, verify all ten games through the hub and the optional Book preview, and give me the single home-screen link. Keep it private and preserve any existing saves.
+> Install and run this repository locally (use its clone URL from the Code menu). Consult its AGENTS.md and README first. Check Node/npm, use a new folder, run npm run play, verify all thirteen games through the hub and the optional Book preview, and give me the single home-screen link. Keep it private and preserve any existing saves.
 
 [AGENTS.md](AGENTS.md) contains the installation, verification, data-preservation and privacy instructions. No API key or paid AI service is needed to run the games.
 
-After onboarding, choose a child by name; each has separate saves. Before setup, the public demo presets are **Beginner**, **Explorer**, and **Admin**. Add `/?player=beginner` or `/?player=explorer` to a link to open that preset. Beginner and Explorer have different starting challenges and separate saves; Admin is for testing. Child profiles and demo presets are shared within your installation, not authenticated personal accounts. Spelling names in exercises are fictional examples.
+After onboarding, choose a child by name; each has separate saves. Before setup, the public demo presets are **Beginner**, **Explorer**, and **Admin**. Add `/?player=beginner` or `/?player=explorer` to a link to open that preset. Explicit preset links work before Family setup, using generic content. free build, Word Search and Word Blocks need no Book, cast, word pack, voice cache or model account. Beginner and Explorer have different starting challenges and separate saves; Admin is for testing. Child profiles and demo presets are shared within your installation, not authenticated personal accounts. Spelling names in exercises are fictional examples.
 
 To run just one game, run `npm start` inside its directory (for the React games, first run `npm ci` and `npm run build`). Individual servers use their original default ports, listed in their READMEs. Run `npm test` from the collection root after setup to check all game and hub suites.
 
