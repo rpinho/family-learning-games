@@ -55,6 +55,7 @@ function fitCaption(){
 }
 
 async function speak(key){if(disposed||document.hidden||globalThis.familyAudio?.blocked)return;const l=lines[key];if(!l)return;lastLine=key;const turn=++voiceTurn;audio.stop();if($('#map').hidden&&(!challengeGate||GATES[challengeGate]?.instruction))caption((challengeGate&&GATES[challengeGate]?.instruction?GATES[challengeGate].prompt:l.shown||l.text).replace(/\[\[ɑ\]\]/g,'/o/'));$('#world').dataset.line=key;$('#world').dataset.clip=l.clip||'';if(muted)return;
+ rewardAudio.stop();
  try{if(!l.clip)throw Error('Missing recorded line: '+key);if(turn!==voiceTurn||disposed||muted)return;const source='/book-voice/'+l.clip+'?r=L1';audio.play(source);}
  catch{if(turn===voiceTurn){$('#sound').title='Tap the speaker to replay the recorded voice.';}}
 }

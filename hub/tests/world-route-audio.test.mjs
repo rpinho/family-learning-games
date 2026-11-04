@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
+import {createCoachAudio} from '../public/chess/audio.mjs';
 
 const scope=await readFile(new URL('../public/audio-scope.mjs',import.meta.url),'utf8');
 const world=await readFile(new URL('../public/world.mjs',import.meta.url),'utf8');
@@ -34,6 +35,7 @@ function fixture(locked){
  });
  vm.runInContext(scope,env);
  const old=new Media();old.src='old.wav';old.play();
+ env.rewardAudio={stop:()=>{}};
  env.audio={stop:()=>old.pause(),play:src=>{const clip=new Media();clip.src=src;return clip.play();}};
  vm.runInContext(declaration('speak')+'\n'+declaration('walkToEdge'),env);
  return {env,old,heard,walks,captions,events,handlers};
@@ -65,4 +67,19 @@ for(const boundary of ['stop','pagehide','hidden'])test(`${boundary} retains the
  f.handlers.get('pointerdown')();
  await f.env.speak('puzzle');
  assert.equal(f.heard.length,count+1,'a fresh visible gesture releases the barrier');
+});
+
+test('new narration cancels a reaction primer even when its play promise completes later',async()=>{
+ const f=fixture(false);let finishPrimer;
+ const reaction={paused:true,play(){this.paused=false;return new Promise(r=>finishPrimer=r);},pause(){this.paused=true;}};
+ f.env.rewardAudio=createCoachAudio({createAudio:()=>reaction});
+ f.env.rewardAudio.unlock();
+ assert.equal(reaction.paused,false);
+ const play=f.env.audio.play;let pausedAtCue;
+ f.env.audio.play=source=>{pausedAtCue=reaction.paused;return play(source);};
+ await f.env.speak('puzzle');
+ finishPrimer();await Promise.resolve();
+ assert.equal(pausedAtCue,true,'reaction must stop before the cue starts');
+ assert.equal(reaction.paused,true,'late primer completion must stay silent');
+ assert.deepEqual(f.heard.filter(s=>s.includes('puzzle.wav')),['/book-voice/puzzle.wav?r=L1']);
 });
