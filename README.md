@@ -8,6 +8,8 @@ After setup, open **http://localhost:4810/**. Choose a player once; their name s
 
 [Quick start](#quick-start) · [Let an agent install it](#let-a-coding-agent-install-it) · [Explore the games and Book](#thirteen-games-and-the-book) · [Privacy](PRIVACY.md)
 
+What I learned building this: [RETRO.md](RETRO.md)
+
 [![Watch the games and The Book in action — silent animated highlights](docs/media/highlights.gif)](docs/media/highlights.mp4)
 
 [Watch the 35-second highlight video](docs/media/highlights.mp4) · Silent · Fictional cast and empty preview saves
