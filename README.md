@@ -224,6 +224,18 @@ Word Arcade includes original synthesized music loops and CC0 laser effects. Pri
 
 These are experimental practice games, not validated educational assessments or medical/occupational-therapy tools. Scores, tracing success and engagement do not establish mastery or transfer to paper. Drawing guesses can be wrong. Play together, let the child choose a manageable challenge, and check skills away from the screen.
 
+## References
+
+The games stand on other people's work. [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) carries the full provenance and licenses. The main sources:
+
+- [chess.js](https://github.com/jhlywa/chess.js): move generation and rules in Rook Academy.
+- [Stockfish](https://github.com/official-stockfish/Stockfish), through [stockfish.js](https://github.com/nmrugg/stockfish.js): the local engine that plays and scores positions.
+- [Lichess puzzle database](https://database.lichess.org/) (CC0): the tactics positions.
+- [RhosGFX](https://rhosgfx.itch.io/) chess pieces ([CC0](https://creativecommons.org/publicdomain/zero/1.0/)): the classic piece set.
+- [The Quick, Draw! Dataset](https://github.com/googlecreativelab/quickdraw-dataset), Google ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)): the feature vectors that let the games guess what a drawing shows.
+- [Kenney's Sci-fi Sounds](https://kenney.nl/assets/sci-fi-sounds) (CC0): the Word Arcade laser effects.
+- [shadcn/ui](https://ui.shadcn.com/): the vendored UI primitives.
+
 ## Contributing and reuse
 
 Bug reports should use an Admin preset with synthetic examples. Include the game, steps, browser and expected behavior; omit names and personal data. Run `npm run check:privacy` before publishing changes. The scanner is a guardrail, not proof that a change contains no private information.
