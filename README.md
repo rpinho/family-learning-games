@@ -49,12 +49,12 @@ Spaceship challenges, word building, rhyme hunts, sorting, and flashcards. Pract
 </tr>
 <tr>
 <td width="50%" valign="top">
-<a href="games/number-park"><img src="docs/media/number-park.png" alt="Number Park: a calm illustrated balance scale asks which animal is lighter" width="100%"></a>
+<a href="games/number-park"><img src="docs/media/number-park.png" alt="Combine two groups of stars to solve five plus four" width="100%"></a>
 <strong>Number Park — math you can move.</strong><br>
 Count objects, combine groups, take away, continue patterns, trace numbers and shapes, and explore reading or harder math.
 </td>
 <td width="50%" valign="top">
-<a href="games/maze-garden"><img src="docs/media/maze-garden.png" alt="Maze Garden: a 19-by-19 tracing maze with a rabbit, a carrot and adjustable difficulty" width="100%"></a>
+<a href="games/maze-garden"><img src="docs/media/maze-garden.png" alt="Maze Garden: a tracing maze with a rabbit, a carrot and adjustable difficulty" width="100%"></a>
 <strong>Maze Garden — find your own way.</strong><br>
 Choose tracing mazes, the 3D letter labyrinth, or obstacle rescues. Each keeps its own progress.
 </td>
@@ -110,7 +110,7 @@ Start with small gardens and grow to 12×12. Find pictured words across and down
 Rotate blocks to spell pictured words, put pictured sentences together, or pair number coins. Three activities on one shelf.
 </td>
 <td width="50%" valign="top">
-<a href="hub/README.md#free-build-word-search-and-word-blocks"><img src="docs/media/free-build.png" alt="free build: wooden blocks, two meshing gears and bouncy toys in a saved building room" width="100%"></a>
+<a href="hub/README.md#free-build-word-search-and-word-blocks"><img src="docs/media/free-build.png" alt="free build: wooden blocks, meshing gears and bouncy toys in a saved building room" width="100%"></a>
 <strong>free build — see what happens.</strong><br>
 Stack blocks, drop a ball, add a bounce and spin a gear train. Build freely and return to the room you left.
 </td>

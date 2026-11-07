@@ -138,7 +138,7 @@ async function render() {
       dispose = await mountBook(main, { player: watch[1], book, preview: true, startPage: watch[2] ? Number(watch[2]) - 1 : 0, onDone: () => { dispose = null; location.hash = ""; } });
       return;
     }
-    main.innerHTML = `<section class="error"><h1>No chapter yet.</h1><p>The next chapter is written overnight.</p><a class="back-link" href="#">← Back</a></section>`;
+    main.innerHTML = `<section class="error"><h1>No chapter yet.</h1><p>Games are ready to play. A grown-up can set up optional Book chapters.</p><a class="back-link" href="#">← Back to games</a></section>`;
     return;
   }
   // Returning from a World stays on home for this visit, including when turning to page two.
