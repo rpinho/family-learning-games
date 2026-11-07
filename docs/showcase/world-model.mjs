@@ -1,6 +1,8 @@
 import {CASTLE} from './world-definitions.mjs';
 export function createWorldModel(definition=CASTLE){
+ definition=structuredClone(definition);
  const {ROOMS,ITEMS,LOCKS,GATES,MAP_GATES,FRIENDS}=definition;
+ for(const room of Object.values(ROOMS))room.exitRequires=Object.fromEntries(Object.entries(room.exitRequires||{}).filter(([,id])=>Object.hasOwn(LOCKS,id)));
 const friendDone=(s,room)=>definition.early?s.solved.includes(ROOMS[room].gate):room==='castle-gate'?s.doorOpen:room==='castle-forest'?s.flags.includes('acorns-traded'):room==='soccer-pitch'?s.flags.includes('ball-returned'):room==='treehouse-town'?s.solved.includes('bakery'):room==='river-bridge'?s.solved.includes('bridge'):s.solved.includes(ROOMS[room].gate);
 const adjacent=(a,b)=>!!ROOMS[a]&&(Object.values(ROOMS[a].exits).includes(b)||ROOMS[a].door?.to===b);
 const freshWorld=()=>definition.early?({schema:2,world:definition.id,room:definition.startRoom,position:{x:.33,y:.97},items:[],solved:[],flags:[],collected:[],questStarted:false,doorOpen:false,treasureOpen:false,visited:[definition.startRoom],tutorial:{walk:false,talk:false},revision:0}):({schema:2,room:'castle-gate',position:{x:.33,y:.97},items:['castle-key','spyglass'],solved:[],flags:[],collected:[],questStarted:false,doorOpen:false,foxSpoken:false,treasureOpen:false,visited:['castle-gate'],tutorial:{walk:false,talk:false},revision:0});

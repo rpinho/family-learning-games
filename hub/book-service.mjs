@@ -1,3 +1,4 @@
+import {roomArtFallback} from './art-fallback.mjs';
 import {phonicsLine} from './phonics.mjs';
 import {bookArtMatch} from './book-art-path.mjs';
 // The Book in the hub: serves each child's chapter for today (and a read-only preview for grown-ups),
@@ -61,7 +62,8 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
  const fitHints=c=>{const L=String(c?.letter||'').toUpperCase(),q=c?.quest;if(!/^[A-Z]$/.test(L)||!Array.isArray(q?.hints))return c;
   q.hints=q.hints.filter(h=>{const t=String(h?.line?.text||h?.text||''),m=t.match(/^((?:the )?[A-Z][\w-]*(?: [A-Z][\w-]*)*) starts with /i);
    return !(m&&/^[A-Z]/.test(String(h?.word||''))&&String(h.word).replace(/^the\s+/i,'')[0].toUpperCase()!==L);});return c;};
- async function library(){const additions=await readJSON(join(here,'book-art-additions.json'),{});const base=await readJSON(join(bookDir,'art','lib','library.json'),null)||await readJSON(join(publicArt,'library.json'),{});return applyBackgroundLayouts(mergeArtLibrary(mergeArtLibrary(additions,base),(await localArt).library),await readJSON(join(here,'book-art-layouts.json'),{}));}
+ async function library(){const additions=await readJSON(join(here,'book-art-additions.json'),{});const stock=await readJSON(join(publicArt,'library.json'),{}),privateArt=await readJSON(join(bookDir,'art','lib','library.json'),{});const base=mergeArtLibrary(stock,privateArt);const merged=applyBackgroundLayouts(mergeArtLibrary(mergeArtLibrary(additions,base),(await localArt).library),await readJSON(join(here,'book-art-layouts.json'),{}));
+  return roomArtFallback(merged,stock,async file=>{if(!bookArtMatch('/book-art/'+file))return false;for(const dir of [(await localArt).directory,join(bookDir,'art','lib'),publicArt].filter(Boolean)){try{if((await stat(join(dir,file))).isFile())return true;}catch(e){if(e.code!=='ENOENT')throw e;}}return false;});}
  // ---- on-demand narration: a line with no clip is rendered by the same local voice engine (never the device's
  // voice), cached in the voice store, one at a time, at the lowest priority. Only lines that exist in a story or
  // a chapter can be rendered. narrate(lines) -> {clips} can be replaced in tests.

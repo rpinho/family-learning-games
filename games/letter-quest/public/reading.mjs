@@ -67,6 +67,17 @@ export function readingHintState(p,now=Date.now()){
  return {waitSeconds:Math.ceil(waitSeconds),label:shown?'Answer shown':!cued?'Help me':waitSeconds>0?`Show me · ${Math.ceil(waitSeconds)}s`:'Show me'};
 }
 export function readingState(p){return p.reading||{run:0,step:0,phase:'lobby',focus:'mix',skills:{},question:null,help:[],mistakes:0,results:[],history:[],draft:[],ink:[]};}
+// Once the model is shown, keep the unchanged letters and guide the one replacement.
+// This is a view of saved work: opening an older question never rewrites its save.
+export function readingChangeSupport(s){
+ const q=s.question;if(q?.type!=='change'||!s.help.includes('show'))return null;
+ const positions=[...q.from].flatMap((c,i)=>c!==q.answer[i]?[i]:[]);
+ if(positions.length!==1||q.from.length!==q.answer.length)return null;
+ const position=positions[0],target=q.tiles.indexOf(q.answer[position]);
+ if(target<0)return null;
+ const draft=[...q.from].map((c,i)=>i===position&&q.tiles[s.draft[i]]!==undefined?s.draft[i]:q.tiles.indexOf(c));
+ return {position,target,draft};
+}
 export function readingQuestion(p){
  const s=readingState(p);if(s.question)return s.question;
  const type=s.focus==='mix'?READING_TYPES[s.step%7][0]:s.focus,level=s.skills[type]?.level||1;
@@ -136,10 +147,13 @@ export function readingAction(p,input){
   if(q.type==='sentence'&&new Set(input.draft).size!==input.draft.length)throw Error('A word tile can only be used once');
   if(q.type==='sentence'&&input.draft.length>(q.slots||q.tiles.length))throw Error('The sentence is already full');
   if(!['dictation','change','sentence','act'].includes(q.type))throw Error('No tiles in this activity');
-  s.draft=input.draft;p.revision++;return {kind:'draft'};
+  const support=readingChangeSupport(s);
+  s.draft=support?readingChangeSupport({...s,draft:input.draft}).draft:input.draft;
+  if(support)s.cursor=support.position;
+  p.revision++;return {kind:'draft'};
  }
  if(input.kind==='position'){
-  if(q.type!=='change'||!Number.isInteger(input.position)||input.position<0||input.position>=q.from.length)throw Error('Choose a letter in the word');s.cursor=input.position;p.revision++;return {kind:'position'};
+  if(q.type!=='change'||!Number.isInteger(input.position)||input.position<0||input.position>=q.from.length)throw Error('Choose a letter in the word');s.cursor=readingChangeSupport(s)?.position??input.position;p.revision++;return {kind:'position'};
  }
  if(input.kind==='ink'){
   if(q.type!=='write'||!validReadingInk(input.ink))throw Error('Invalid writing sample');s.ink=input.ink;p.revision++;return {kind:'ink'};
@@ -151,6 +165,7 @@ export function readingAction(p,input){
   if(!s.ink.length)throw Error('Write something first, or choose a different activity');
   p.revision++;return finish(p,{kind:'writing',ok:false,independent:false,xp:0,ink:structuredClone(s.ink),durationMs:input.durationMs,line:READING_LINES.saved});
  }
+ const support=readingChangeSupport(s);if(support){s.draft=support.draft;s.cursor=support.position;}
  const built=['dictation','change'].includes(q.type)?s.draft.map(i=>q.tiles[i]).join(''):q.type==='sentence'?s.draft.map(i=>q.tiles[i]).join(' '):q.type==='act'?s.draft.map(i=>q.options[i].id).join('|'):input.answer;
  if(typeof built!=='string'||built.length>200)throw Error('Choose or build an answer');
  if(q.type==='decode'&&!q.options.some(o=>o.value===built)||q.type==='story'&&!q.options.includes(built))throw Error('Choose one of the answers');

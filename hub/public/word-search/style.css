@@ -31,3 +31,43 @@
 @media(min-width:740px){.ws-layout{grid-template-columns:auto minmax(250px,360px);justify-content:center;align-items:center;gap:32px}.ws-grid{width:min(49vw,calc(100dvh - 178px),540px)}.ws-words{grid-template-columns:1fr;gap:10px}.ws-words li{min-height:60px;padding:3px 14px}.ws-picture{width:56px;height:50px}.ws-word{font-size:25px}.ws-how{margin-bottom:14px}.ws{padding-bottom:12px}.ws .ws-cell{font-size:clamp(27px,3vw,36px)}}
 @media(max-width:430px){.ws{padding:8px 8px 16px}.ws-how{font-size:13px;margin:4px 0 12px}.ws-layout{gap:14px}.ws-heading img{width:36px;height:36px}.ws-words li{padding:3px 5px;gap:3px}.ws-picture{width:42px;height:46px}.ws-check{width:18px}.ws-check svg{width:18px}.ws-word{font-size:17px;letter-spacing:0}.ws-finish{margin-top:10px}.ws-finish h2{font-size:20px;margin-bottom:8px}}
 @media(min-width:740px) and (max-height:680px){.ws-layout{align-items:start}.ws-words{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.ws-words li{padding:4px 6px;min-height:64px;gap:3px}.ws-picture{width:38px;height:46px}.ws-word{font-size:18px;letter-spacing:0}.ws-check{width:18px}.ws-check svg{width:18px}.ws-finish{margin-top:18px}}
+
+/* The largest board keeps a 44px cell even when the viewport needs scrolling. */
+.ws-grid{min-width:calc(var(--size)*44px + 4px);flex:none}
+.ws .ws-color-6{--found:#e4cdbf}.ws .ws-color-7{--found:#d5d3eb}.ws .ws-color-8{--found:#bfe0ce}.ws .ws-color-9{--found:#e9d5a8}
+.ws .ws-hint{outline:3px dashed #63824d;outline-offset:-5px;background:#e5edc9}
+.ws button[data-hint]{min-height:44px;margin:12px auto 0;display:block;background:#e5eddb;color:#304d42;border:1px solid #91a587}
+.ws-daily{text-align:center;margin:4px auto 8px}
+.ws-daily-icons{display:flex;justify-content:center;gap:10px}
+.ws-day-icon{display:flex;align-items:center;justify-content:center;width:38px;height:36px;border-radius:50%;background:#e3e5d7;filter:grayscale(1);opacity:.4;font-size:28px}
+.ws-day-icon img{width:100%;height:100%;object-fit:contain}
+.ws-day-filled{background:#f3e6b9;filter:none;opacity:1}
+.ws-daily p{margin:3px 0 0;font-size:14px;font-weight:650}
+.ws-celebrate .ws-day-filled{animation:ws-bloom .7s ease-out}
+@keyframes ws-bloom{50%{transform:translateY(-4px) scale(1.08)}}
+@media(prefers-reduced-motion:reduce){.ws-celebrate .ws-day-filled{animation:none}}
+@media(min-width:1000px){.ws-grid{width:min(calc(100dvh - 220px),540px)}.ws-words{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.ws aside{width:100%}.ws-layout{grid-template-columns:auto minmax(350px,480px);gap:24px}.ws-words li{min-height:58px;padding:3px 7px}.ws-word{font-size:19px;letter-spacing:0}.ws-picture{width:36px;height:42px}}
+@media(min-width:740px) and (max-width:999px) and (min-height:900px){.ws-layout{grid-template-columns:1fr;gap:18px}.ws-grid{width:min(100%,540px)}.ws aside{width:min(100%,700px)}.ws-words{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.ws-words li{min-height:48px;padding:2px 10px}.ws-picture{width:42px;height:42px}.ws-word{font-size:22px}}
+@media(min-width:1000px){.ws{padding-top:8px}.ws-daily{display:flex;align-items:center;justify-content:center;gap:12px;margin:2px auto 6px}.ws-daily p{margin:0}.ws-how{margin-bottom:8px}}
+
+@media(min-width:1000px){.ws-word.ws-long{font-size:16px}}
+
+.ws-words li{padding:0;overflow:hidden}
+.ws-words .ws-word-control{display:flex;align-items:center;gap:5px;width:100%;min-height:inherit;margin:0;padding:4px 6px;border:0;border-radius:11px;background:transparent;color:inherit;box-shadow:none;text-align:left}
+.ws-words button[data-word]{cursor:pointer}
+.ws-words button[data-word]:focus-visible{outline:3px solid #647eb1;outline-offset:-3px}
+.ws-words button[data-word]:active{background:#dce8c9}
+
+@media(max-width:430px){.ws-words li{min-height:54px}}
+
+/* Small likenesses share the word's replay button and never add a tab stop. */
+.ws-face{position:relative;display:grid;place-items:center;width:34px;height:34px;flex:none;border-radius:50%;overflow:hidden;background:#e8dfcc;color:#574c39;font:800 21px/1 system-ui,sans-serif}
+.ws-face img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#e8dfcc}
+
+/* Expert-only additions keep the ordinary garden's rules unchanged. */
+.ws button[data-expert]{min-height:48px;margin:10px 0 0;background:#dce8c9;border:1px solid #90ab7f;color:#304d42;box-shadow:0 3px 0 #b6c7a3}
+.ws-expert .ws-picture{width:64px;height:52px}
+.ws-expert .ws-face{width:46px;height:46px}
+.ws-expert .ws-status{position:static;width:auto;height:auto;overflow:visible;clip-path:none;text-align:center;min-height:24px;margin:10px 0 0;font-weight:650}
+.ws-story{display:block;border:2px solid #658568;border-radius:16px;padding:14px 18px;margin-top:12px;min-height:48px;background:#e0eddb;color:#263e2c;font-size:1.1rem;font-weight:800;text-align:center;text-decoration:none}
+.ws-story:focus-visible{outline:3px solid #b67c24;outline-offset:3px}

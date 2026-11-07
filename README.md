@@ -10,9 +10,9 @@ After setup, open **http://localhost:4810/**. Choose a player once; their name s
 
 [![Watch the games and The Book in action — silent animated highlights](docs/media/highlights.gif)](docs/media/highlights.mp4)
 
-[Watch the 34-second highlight video](docs/media/highlights.mp4) · Silent · Fictional cast and empty preview saves
+[Watch the 35-second highlight video](docs/media/highlights.mp4) · Silent · Fictional cast and empty preview saves
 
-**Edition note:** this edition includes the live calm theme, home pages and current game engines. The Book keeps the original fictional painted cast; the World and quest engines use geometric demo scenes. The showcase’s Castle Kingdom preview is a separate fictional presentation.
+**Edition note:** this edition includes pictured Word Search gardens up to 12×12, Expert clues, guided word changes, open World paths and generic pastel scenes. The Book retains the original fictional cast. The showcase’s Castle Kingdom preview is a separate fictional presentation; household paintings and recordings are supplied privately.
 
 ## Thirteen games and The Book
 
@@ -23,23 +23,23 @@ Drag, trace, steer, aim, and think ahead. Pick an activity and a manageable chal
 <table>
 <tr>
 <td colspan="2" valign="top">
-<img src="docs/media/world-talk.png" alt="Castle Kingdom: an original painted fox walks to a mapmaker in a lush castle garden; a goal ribbon and conversation explain the next quest" width="65%"> <img src="docs/media/world-map.png" alt="Castle Kingdom: a partially restored map shows visited places and unexplored rooms behind fog" width="33%"><br>
+<img src="docs/media/world-talk.png" alt="Castle Kingdom: a fox and an invented mapmaker explore a pastel castle courtyard, with open paths, a backpack and a quest ribbon" width="65%"> <img src="docs/media/world-map.png" alt="Castle Kingdom: a partially restored map shows visited places and unexplored rooms behind fog" width="33%"><br>
 <strong>The Castle Kingdom — a world to explore together.</strong><br>
-Walk through painted places, talk to friends, collect tools, and solve little challenges. The map reveals places as you visit; restoring its three pieces opens the castle treasure. A public-safe, memory-only preview is included: run <code>node docs/showcase/demo-server.mjs</code>, then open <code>http://localhost:5710/world?player=hero</code>. This preview is separate from the standard hub installation.
+Explore pastel places, talk to friends, collect tools, and solve little challenges in your own order. Walking paths stay open; keys and tools still matter at real locks. The map reveals places as you visit; restoring its three pieces opens the castle treasure. A public-safe, memory-only preview is included: run <code>node docs/showcase/demo-server.mjs</code>, then open <code>http://localhost:5710/world?player=hero</code>. This preview is separate from the standard hub installation.
 </td>
 </tr>
 <tr>
 <td colspan="2" valign="top">
-<a href="book/SCHEMA.md"><img src="docs/media/book-story.png" alt="The Book: a large original mapmaker, castle garden, opening treasure doors and a visible reading puzzle" width="100%"><br> <img src="docs/media/book-count.png" alt="The Book: tap twelve painted stepping stones inside a volcanic crater" width="49%"> <img src="docs/media/book-choice.png" alt="The Book: a painted treehouse town with a large sum board and visible number choices" width="49%"></a><br>
+<a href="book/SCHEMA.md"><img src="docs/media/book-story.png" alt="The Book: an invented mapmaker beside pastel castle doors, an open treasure chest and the word open" width="100%"><br> <img src="docs/media/book-count.png" alt="The Book: twelve tappable stones in a pastel mountain scene, with eleven, twelve and thirteen as choices" width="49%"> <img src="docs/media/book-choice.png" alt="The Book: a pastel treehouse scene with the sum two plus one and visible number choices" width="49%"></a><br>
 <strong>The Book — play inside the story.</strong><br>
-The optional nightly writing pipeline creates an illustrated chapter. Explore painted worlds with the fictional cast. Tap the volcano’s stones, watch keys open the castle doors, and help a friend put the story right. Letter kicks and magic words are also supported. Grown-ups can preview a chapter without changing progress.
+The optional nightly writing pipeline creates an illustrated chapter. Explore pastel scenes with the fictional cast. Tap the counting stones, watch keys open the castle doors, and help a friend put the story right. Letter kicks and magic words are also supported. Grown-ups can preview a chapter without changing progress.
 </td>
 </tr>
 <tr>
 <td width="50%" valign="top">
-<a href="games/letter-quest"><img src="docs/media/letter-quest.png" alt="Letter Quest: a calm paper lesson with Rook asks the explorer to match letter A" width="100%"></a>
+<a href="games/letter-quest"><img src="docs/media/letter-quest.png" alt="Letter Quest: a shown word model highlights the one letter to replace in a calm reading mission" width="100%"></a>
 <strong>Letter Quest — words open worlds.</strong><br>
-Letter tracing, reading missions, word building and story adventures.
+Letter tracing, reading missions, word building and story adventures. After showing a word-change model, the game keeps the other letters and guides the replacement.
 </td>
 <td width="50%" valign="top">
 <a href="games/word-arcade"><img src="docs/media/word-arcade.png" alt="Word Arcade: the Word Reactor activity replaces letters in a word" width="100%"></a>
@@ -73,7 +73,7 @@ Spoken letter and word targets with adjustable motion and aiming difficulty. Set
 </tr>
 <tr>
 <td width="50%" valign="top">
-<a href="hub/CHESS.md"><img src="docs/media/chess.png" alt="Rook Academy: a tactical chess position with Rook and staged hints" width="100%"></a>
+<a href="hub/CHESS.md"><img src="docs/media/chess.png" alt="Rook Academy: a tactical chess position with the original public tower companion and staged hints" width="100%"></a>
 <strong>Rook Academy — your next good move.</strong><br>
 Short tactical positions, a winding lesson path, a graduated short-lesson course, two advanced bands, review and practice games.
 </td>
@@ -96,13 +96,33 @@ Aim for the spoken letter, number, pattern, times-table answer or next spelling 
 </td>
 </tr>
 
+<tr>
+<td colspan="2" valign="top">
+<a href="hub/README.md#free-build-word-search-and-word-blocks"><img src="docs/media/word-search.png" alt="Word Search: a 12 by 12 letter garden with original pictures for elephant, mountain, starlight and seven other long words" width="65%"> <img src="docs/media/word-search-finish.png" alt="Word Search: the same garden completed, with found words coloured and choices for another garden or Expert" width="33%"></a><br>
+<strong>Word Search — a picture for every word.</strong><br>
+Start with small gardens and grow to 12×12. Find pictured words across and down, then try backwards and diagonal paths as the gardens grow. Expert hides the written clues and adds two near misses. Tap a clue to hear device pronunciation; available voices vary by browser.
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<a href="hub/README.md#free-build-word-search-and-word-blocks"><img src="docs/media/word-blocks.png" alt="Word Blocks: turn three wooden letter blocks to spell the pictured word" width="100%"></a>
+<strong>Word Blocks — give the letters a turn.</strong><br>
+Rotate blocks to spell pictured words, put pictured sentences together, or pair number coins. Three activities on one shelf.
+</td>
+<td width="50%" valign="top">
+<a href="hub/README.md#free-build-word-search-and-word-blocks"><img src="docs/media/free-build.png" alt="free build: wooden blocks, two meshing gears and bouncy toys in a saved building room" width="100%"></a>
+<strong>free build — see what happens.</strong><br>
+Stack blocks, drop a ball, add a bounce and spin a gear train. Build freely and return to the room you left.
+</td>
+</tr>
+
 </table>
 
-The showcase uses original fantasy paintings, an independently invented mapmaker and a plush fox; no child stand-ins appear in these captures. Its nightly generation and optional local narration need separate setup; <code>npm run play</code> starts the games and chapter player, without automatically writing chapters. See the <a href="book/SCHEMA.md">chapter and picture-library guide</a>. The public player supports tapping painted objects and keys flying into opening castle doors, with a treasure chest reveal. Branching-ending helpers remain separate from public playback. These captures use the current public player and an authored fictional chapter; <a href="docs/showcase/README.md#edition-differences">edition differences</a> are documented.
+The showcase uses original generic pastel SVG scenes, an independently invented mapmaker and a plush fox; no child stand-ins appear in these captures. Its nightly generation and optional local narration need separate setup; <code>npm run play</code> starts the games and chapter player, without automatically writing chapters. The <a href="book/SCHEMA.md">chapter and picture-library guide</a> explains the setup. The public player supports tapping painted objects and keys flying into opening castle doors, with a treasure chest reveal. Branching-ending helpers remain separate from public playback. These captures use the current public player and an authored fictional chapter; <a href="docs/showcase/README.md#fictional-preview">edition differences</a> are documented.
 
 *Actual gameplay from an isolated, generic Admin demo. Click a card for its game guide. No children's profiles or drawings are shown; the house doodle is newly scripted; screenshots are not evidence of learning outcomes.*
 
-The current edition also includes the calm theme, two home pages, balance challenges, expanded patterns, and a World with inventories, room paths and revision-checked quests. The [fictional demo worlds](hub/WORLD.md) use the original public cast and placeholder scenes. Private daily content, artwork and recordings are supplied separately by each installation.
+The current edition also includes the calm theme, two home pages, balance challenges, expanded patterns, and a World with inventories, room paths and revision-checked quests. The [fictional demo worlds](hub/WORLD.md) use the original public cast and generic pastel scenes. Private daily content, artwork and recordings are supplied separately by each installation.
 
 ### Made for playing together
 
@@ -127,7 +147,7 @@ The current edition also includes the calm theme, two home pages, balance challe
 | [Rook Academy](hub/CHESS.md) | 270 lessons across beginner and advanced paths, review and local practice games | http://localhost:4810/#chess |
 | [Soccer Club](hub/README.md#dribble-duel) | Live dribbling, feint puzzles and word penalties | http://localhost:4810/#dribble-duel |
 | [free build](hub/README.md#free-build-word-search-and-word-blocks) | Stack blocks, bounce balls and spin connected wooden gears | http://localhost:4810/#free-build |
-| [Word Search](hub/README.md#free-build-word-search-and-word-blocks) | Find generic picture words across and down; boards grow as you finish | http://localhost:4810/#word-search |
+| [Word Search](hub/README.md#free-build-word-search-and-word-blocks) | Find pictured words in gardens up to 12×12; optional Expert picture clues | http://localhost:4810/#word-search |
 | [Word Blocks](hub/README.md#free-build-word-search-and-word-blocks) | Turn spelling blocks, match pictured sentences, and pair number coins | http://localhost:4810/#word-blocks |
 | [The Book](book/SCHEMA.md) | Illustrated chapters, counting, letter kicks and magic words; separate chapter setup | Grown-ups → Watch; Admin can preview chapters |
 

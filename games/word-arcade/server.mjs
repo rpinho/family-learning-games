@@ -2,12 +2,15 @@ import {answerQuestion} from './lib/answer-question.mjs';
 import http from 'node:http';
 import {readFile,writeFile,rename,mkdir,appendFile,stat} from 'node:fs/promises';
 import {createReadStream} from 'node:fs';
-import {join} from 'node:path';
+import {join,resolve,extname} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {homedir,hostname,networkInterfaces} from 'node:os';
 import {fresh,act,VERSION} from './lib/engine.mjs';
 import {literacyFrom,DEFAULT_TRACK} from './lib/word-break.mjs';
 import {AUDIO_FILES,PRIVATE_AUDIO_FILES,audioRange} from './lib/audio-files.mjs';
 const data=process.env.WORD_ARCADE_DATA||join(homedir(),'.local/share/word-arcade'),port=Number(process.env.PORT||4319),upstream=Number(process.env.ARCADE_UI_PORT||4320);
+// The legacy upstream setting is unused; the interface comes from this build.
+const staticRoot=fileURLToPath(new URL('./dist/client/',import.meta.url));
 const letterData=process.env.LETTER_QUEST_DATA||join(homedir(),'.local/share/letter-quest');
 // Read-only look at Letter Quest progress so word breaks match each child.
 async function literacy(id){let save=null;try{save=JSON.parse(await readFile(join(letterData,id+'.json'),'utf8'));}catch{}return literacyFrom(save,DEFAULT_TRACK[id]||'mixed');}
@@ -76,9 +79,15 @@ const server=http.createServer(async(req,res)=>{
   if(url.pathname.startsWith('/api/'))return send(res,404,{error:'Unknown route'});
   if(!['GET','HEAD'].includes(req.method))return send(res,405,{error:'Read only'});
   if(url.pathname!=='/'&&url.pathname!=='/slalom'&&url.pathname!=='/og.png'&&!/^\/assets\/[a-zA-Z0-9_./-]+$/.test(url.pathname))return send(res,404,{error:'Not found'});
-  // The hub's Letter Slalom card opens /?play=slalom: serve the slalom's own light page (/slalom), never the Arcade shell.
-  let upstreamPath=req.url;if(url.pathname==='/'&&url.searchParams.get('play')==='slalom')upstreamPath='/slalom'+url.search;
-  const proxy=http.request({hostname:'127.0.0.1',port:upstream,path:upstreamPath,method:req.method,headers:{...req.headers,host:`localhost:${upstream}`,'x-forwarded-host':req.headers.host}},r=>{res.writeHead(r.statusCode,{...r.headers,'X-Frame-Options':process.env.WORD_ARCADE_QA==='1'?'SAMEORIGIN':'DENY'});r.pipe(res);});proxy.on('error',()=>send(res,503,{error:'Arcade is starting. Refresh in a moment.'}));req.pipe(proxy);
+  const name=decodeURIComponent(url.pathname);
+  if(name.includes('..')||!/^\/[a-zA-Z0-9_./-]*$/.test(name))return send(res,404,{error:'Not found.'});
+  const entry=name==='/slalom'||name==='/'&&url.searchParams.get('play')==='slalom'?'/slalom.html':name==='/'?'/index.html':name;
+  const file=resolve(staticRoot,'.'+entry);if(!file.startsWith(staticRoot))return send(res,404,{error:'Not found.'});
+  const info=await stat(file);if(!info.isFile())return send(res,404,{error:'Not found.'});
+  const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp','.woff2':'font/woff2'};
+  res.writeHead(200,{'Content-Type':types[extname(file)]||'application/octet-stream','Content-Length':info.size,'Cache-Control':'no-cache','X-Frame-Options':'SAMEORIGIN'});
+  if(req.method==='HEAD')res.end();else{const stream=createReadStream(file);stream.on('error',()=>res.destroy());res.on('close',()=>stream.destroy());stream.pipe(res);}
+
  }catch(e){if(e.code==='ENOENT')return send(res,404,{error:'Not found'});await log({type:'error',error:e.message});send(res,500,{error:'Could not save or load. Please keep this page open and retry.'});}
 });
 server.on('clientError',(e,s)=>{void log({type:'protocol_error',error:e.code});s.end('HTTP/1.1 400 Bad Request\r\n\r\n');});

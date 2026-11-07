@@ -34,14 +34,15 @@ test('at least three goals can be chosen together; different independent orders 
  assert.ok(a.doorOpen&&b.doorOpen);assert.deepEqual([...a.items].sort(),[...b.items].sort());assert.deepEqual([...a.solved].sort(),[...b.solved].sort());assert.equal(started.solved.length,0);
 });
 
-test('earned shortcuts and the post-ending garden loops offer several routes; the ending remains binding',async()=>{
+test('walking paths stay open before the ending; inventory locks remain binding',async()=>{
  const original=await fixture(),s=model.upgradeWorld(original);
- assert.throws(()=>model.worldAction({...s,room:'treehouse-town',treasureOpen:false},{action:'walk',room:'garden-court',x:.4,y:.97}),/Find the island treasure/);
+ assert.equal(model.worldAction({...s,room:'treehouse-town',treasureOpen:false},{action:'walk',room:'garden-court',x:.4,y:.97}).state.room,'garden-court');
  let loop=move(s,'treehouse-town');for(const room of ['garden-court','lookout-ridge','lighthouse','castle-night','treehouse-town'])loop=move(loop,room);
  assert.equal(loop.room,'treehouse-town');assert.deepEqual(loop.items,original.items);
  for(const room of ['garden-court','waterfall','treehouse-town'])loop=move(loop,room);
  assert.equal(loop.room,'treehouse-town');
- for(const [room,side,req] of [['castle-gate','bottom','bridge'],['castle-forest','top','score']]){
+ assert.equal(model.availableExits({...model.freshWorld(),room:'castle-forest'}).top,'soccer-pitch');
+ for(const [room,side,req] of [['castle-gate','bottom','bridge']]){
   const unearned={...model.freshWorld(),room,questStarted:true};assert.ok(!model.availableExits(unearned)[side]);assert.equal(model.availableExits({...unearned,solved:[req]})[side],model.ROOMS[room].exits[side]);
  }
 });

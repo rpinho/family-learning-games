@@ -50,7 +50,7 @@ async function captureChess(){
  await load('hub','chess');const lesson=page.getByRole('button',{name:'Start Find the forcing move'});if(await lesson.isVisible())await lesson.click();await page.locator('#chess-board').waitFor();await wait(600);
  if(chessOnly){
   const rook=page.locator('.rook-replay .rook-puppet');
-  if(await rook.locator('circle[cx="87"][r="20"]').count()!==1||await rook.locator('.rook-arm').count()!==1||await rook.locator('.rook-clasp').count())throw Error('The chess preview must use Rook Classic (glasses and pencil).');
+  if(await rook.locator('.rook-arm').count()!==1||!await rook.evaluate(e=>e.classList.contains('public-rook')))throw Error('The chess preview must use the public tower companion.');
  }
  await shot('chess');
  // Preserve the unframed capture, then crop to the full board and companion.

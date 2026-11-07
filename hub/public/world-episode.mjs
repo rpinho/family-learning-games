@@ -1,10 +1,11 @@
+import {explorationEpisode} from './world-exploration.mjs';
 // Pure episode compiler/reducer. IDs are namespaced by child/date; inventory is additive.
 export const EPISODE_SCHEMA='family-world-episode-1';
 export function episodeDefinition(episode,base=null,history=[]){
  const prefix=episode.id+'--',id=x=>prefix+x;
  const ROOMS=Object.fromEntries(Object.entries(base?.ROOMS||{}).map(([k,r])=>[k,{...r,exits:{...r.exits},gate:undefined,gates:[],exitRequires:{},exitLock:{}}]));
  const ITEMS={...(base?.ITEMS||{})},GATES={},LOCKS={},FRIENDS={...(base?.FRIENDS||{})};
- for(const ep of [...history.filter(e=>e.id!==episode.id),episode]){
+ for(const ep of [...history.filter(e=>e.id!==episode.id),episode].map(explorationEpisode)){
   const p=ep.id+'--',ns=x=>p+x;
   for(const r of ep.rooms){ROOMS[ns(r.id)]={...r,bg:r.bg,exits:Object.fromEntries(Object.entries(r.exits||{}).map(([s,to])=>[s,ns(to)])),exitRequires:Object.fromEntries(Object.entries(r.exitRequires||{}).map(([s,k])=>[s,ns(k)])),door:r.door?{...r.door,to:ns(r.door.to)}:undefined,gates:ep.puzzles.filter(g=>g.room===r.id).map(g=>ns(g.id))};FRIENDS[ns(r.id)]=r.lines;}
   for(const [k,v]of Object.entries(ep.items))ITEMS[ns(k)]=v;

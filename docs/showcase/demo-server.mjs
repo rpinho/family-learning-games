@@ -12,7 +12,7 @@ const library=showcaseArt(JSON.parse(await readFile(resolve(publicDir,'book-art/
 const {definition,freshWorld,worldAction,ROOMS,FRIENDS,GATES,LOCKS}=createWorldModel();
 // Extra rooms use generic public paintings; no private artwork is loaded.
 const backgrounds={bakery:'treehouse-town',workshop:'castle-forest','river-bridge':'castle-forest','castle-moon-hill':'castle-forest','castle-night':'castle-forest'};
-for(const [id,r] of Object.entries(ROOMS))r.bg=backgrounds[id]||id;
+for(const [id,r] of Object.entries(ROOMS))r.bg=library.backgrounds[id]?id:backgrounds[id]||id;
 const art=artFor(Object.values(ROOMS).map(r=>({scene:{bg:r.bg,actors:['hero','bo','grown-up','pip'].map(id=>({id,pose:'idle'})),props:[{id:'treasure-chest',n:1}]}})),library);
 // Reuse the public chess set and its existing third-party notices for capture comparisons.
 for(const color of ['white','black'])for(const [piece,letter]of Object.entries({rook:'R',knight:'N',pawn:'P',bishop:'B'}))art.props[`chess-${color}-${piece}`]={url:`/chess/pieces/${color[0]}${letter}.svg`,h:.12,ar:1};
@@ -34,7 +34,7 @@ const bookJS=`import {mountBook} from '/book.mjs';const book=await(await fetch('
 const server=http.createServer(async(req,res)=>{try{
  const u=new URL(req.url,'http://localhost'),session=u.searchParams.get('session')||'review';
  if(u.pathname==='/'){res.writeHead(200,{'Content-Type':'text/html'});return res.end('<!doctype html><meta charset="utf-8"><title>A little adventure</title><style>body{background:#f5efdf;color:#234032;font:22px Georgia;max-width:760px;margin:12vh auto;padding:24px}h1{font-weight:400;font-size:48px}a{display:inline-block;background:#234032;color:#fff7df;border-radius:16px;padding:20px;margin:12px 16px 12px 0;text-decoration:none}</style><h1>A world worth exploring.</h1><p>Painted places. Friendly faces. Little discoveries.</p><a href="/world?player=hero">The Castle Kingdom →</a><a href="/book-demo?capture=1">The Three Golden Keys →</a>');}
- if(u.pathname==='/api/demo-book')return json(res,{chapter:demoChapter(library,{extras:u.searchParams.has('extras')}),date:'2026-10-03',collection:{keys:['A','B','C']},progress:{page:0},preview:true});
+ if(u.pathname==='/api/demo-book')return json(res,{chapter:demoChapter(library,{extras:u.searchParams.has('extras')}),date:'2026-11-07',collection:{keys:['A','B','C']},progress:{page:0},preview:true});
  if(u.pathname==='/api/world'){
   if(req.method==='POST'){let raw='';for await(const part of req){raw+=part;if(raw.length>4096)return json(res,{error:'Too much data'},413);}const b=JSON.parse(raw),state=getState(session);if(b.revision!==state.revision)return json(res,{error:'Refresh this demo'},409);const result=worldAction(state,b);states.set(session,result.state);return json(res,result);}
   // A separate fictional end-state demonstrates the working castle-door animation.

@@ -2,379 +2,512 @@
   "_comment": "Generic picture library for The Book (public build). A household can add its own private library next to its chapters (book/art/lib/library.json); see book/SCHEMA.md.",
   "backgrounds": {
     "meadow": {
-      "file": "bg/meadow.svg",
-      "about": "a sunny meadow with hills and flowers"
+      "file": "bg/demo-meadow.svg",
+      "about": "a sunny meadow with hills and flowers",
+      "size": [
+        1536,
+        1024
+      ],
+      "focal": [
+        0.5,
+        0
+      ],
+      "groundStart": 0.7,
+      "standBand": [
+        0.78,
+        0.98
+      ],
+      "standW": 0.8,
+      "standX": 0.5,
+      "keepOut": [],
+      "targets": {},
+      "variants": {
+        "portrait": {
+          "file": "bg/demo-meadow-portrait.svg",
+          "about": "a sunny meadow with hills and flowers",
+          "size": [
+            768,
+            1366
+          ],
+          "focal": [
+            0.5,
+            0
+          ],
+          "groundStart": 0.7,
+          "standBand": [
+            0.78,
+            0.98
+          ],
+          "standW": 0.8,
+          "standX": 0.5,
+          "keepOut": [],
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
+        }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "forest": {
-      "file": "bg/forest.svg",
-      "about": "a friendly forest with a path"
+      "file": "bg/demo-forest.svg",
+      "about": "a friendly forest with a path",
+      "size": [
+        1536,
+        1024
+      ],
+      "focal": [
+        0.5,
+        0
+      ],
+      "groundStart": 0.7,
+      "standBand": [
+        0.78,
+        0.98
+      ],
+      "standW": 0.8,
+      "standX": 0.5,
+      "keepOut": [],
+      "targets": {},
+      "variants": {
+        "portrait": {
+          "file": "bg/demo-forest-portrait.svg",
+          "about": "a friendly forest with a path",
+          "size": [
+            768,
+            1366
+          ],
+          "focal": [
+            0.5,
+            0
+          ],
+          "groundStart": 0.7,
+          "standBand": [
+            0.78,
+            0.98
+          ],
+          "standW": 0.8,
+          "standX": 0.5,
+          "keepOut": [],
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
+        }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "pitch": {
-      "file": "bg/pitch.svg",
+      "file": "bg/demo-pitch.svg",
       "about": "a soccer pitch with a goal",
       "goal": [
         0.35,
         0.43,
         0.3,
         0.13
-      ]
-    },
-    "castle": {
-      "file": "bg/castle.svg",
-      "about": "a friendly castle on a hill"
-    },
-    "night": {
-      "file": "bg/night.svg",
-      "about": "a starry night over a cosy house (good for endings)"
-    },
-    "castle-gate": {
-      "file": "bg/real-foreground/castle-gateLandscape.webp",
-      "about": "a big castle gate with three round shields",
-      "bed": "meadow",
-      "keepOut": [
-        {
-          "name": "painted scene objects",
-          "r": [
-            0,
-            0,
-            1,
-            0.475
-          ]
-        }
       ],
       "size": [
-        1774,
-        887
+        1536,
+        1024
       ],
       "focal": [
         0.5,
         0
       ],
-      "groundStart": 0.49,
-      "ground": 0.97,
-      "url": "/book-art/bg/real-foreground/castle-gateLandscape.webp",
-      "fit": "cover",
-      "realForeground": true,
-      "foreground": 0.49,
+      "groundStart": 0.7,
       "standBand": [
-        0,
-        1
+        0.78,
+        0.98
       ],
-      "oneRow": false,
-      "portraitHeight": null,
-      "portraitGround": null,
-      "floorColor": null,
+      "standW": 0.8,
+      "standX": 0.5,
+      "keepOut": [],
+      "targets": {},
       "variants": {
         "portrait": {
-          "file": "bg/real-foreground/castle-gatePortrait.webp",
-          "about": "a big castle gate with three round shields",
-          "bed": "meadow",
-          "keepOut": [
-            {
-              "name": "painted scene objects",
-              "r": [
-                0,
-                0,
-                1,
-                0.21500000000000002
-              ]
-            }
-          ],
-          "size": [
-            836,
-            1881
-          ],
-          "focal": [
-            0.5,
-            0
-          ],
-          "groundStart": 0.23,
-          "ground": 0.97,
-          "url": "/book-art/bg/real-foreground/castle-gatePortrait.webp",
-          "fit": "cover",
-          "realForeground": true,
-          "foreground": 0.23,
-          "standBand": [
-            0,
-            1
-          ],
-          "oneRow": false,
-          "portraitHeight": null,
-          "portraitGround": null,
-          "floorColor": null,
-          "variants": null,
-          "targets": null,
-          "goal": null,
-          "door": [
-            0.276,
-            0.006,
-            0.448,
-            0.204
-          ]
-        }
-      },
-      "targets": null,
-      "goal": null,
-      "door": [
-        0.366,
-        0.035,
-        0.268,
-        0.437
-      ]
-    },
-    "chess-courtyard": {
-      "file": "bg/real-foreground/chess-courtyardLandscape.webp",
-      "about": "a sunny castle courtyard with a giant chessboard on the stone floor; three giant dark wooden pieces on one side (king, knight, bishop) and three giant cream pieces on the other (king, knight, rook)",
-      "bed": "meadow",
-      "keepOut": [
-        {
-          "name": "all six chess pieces",
-          "r": [
-            0.28,
-            0.2,
-            0.45,
-            0.27
-          ]
-        }
-      ],
-      "size": [
-        1774,
-        887
-      ],
-      "focal": [
-        0.5,
-        0
-      ],
-      "groundStart": 0.55,
-      "ground": 0.97,
-      "foreground": 0.55,
-      "variants": {
-        "portrait": {
-          "file": "bg/real-foreground/chess-courtyardPortrait.webp",
-          "about": "a sunny castle courtyard with a giant chessboard on the stone floor; three giant dark wooden pieces on one side (king, knight, bishop) and three giant cream pieces on the other (king, knight, rook)",
-          "bed": "meadow",
-          "keepOut": [
-            {
-              "name": "all six chess pieces",
-              "r": [
-                0.025,
-                0.102,
-                0.95,
-                0.115
-              ]
-            }
-          ],
-          "size": [
-            836,
-            1881
-          ],
-          "focal": [
-            0.5,
-            0
-          ],
-          "groundStart": 0.28,
-          "ground": 0.97,
-          "foreground": 0.28,
-          "variants": null,
-          "url": "/book-art/bg/real-foreground/chess-courtyardPortrait.webp",
-          "fit": "cover",
-          "realForeground": true,
-          "standBand": [
-            0,
-            1
-          ],
-          "oneRow": false,
-          "portraitHeight": null,
-          "portraitGround": null,
-          "floorColor": null,
-          "targets": null,
-          "goal": null
-        }
-      },
-      "url": "/book-art/bg/real-foreground/chess-courtyardLandscape.webp",
-      "fit": "cover",
-      "realForeground": true,
-      "standBand": [
-        0,
-        1
-      ],
-      "oneRow": false,
-      "portraitHeight": null,
-      "portraitGround": null,
-      "floorColor": null,
-      "targets": null,
-      "goal": null
-    },
-    "soccer-pitch": {
-      "file": "bg/real-foreground/soccerLandscape.webp",
-      "url": "/book-art/bg/real-foreground/soccerLandscape.webp",
-      "size": [
-        1774,
-        887
-      ],
-      "fit": "cover",
-      "focal": [
-        0.5,
-        0
-      ],
-      "realForeground": true,
-      "groundStart": 0.49,
-      "foreground": 0.49,
-      "ground": 0.97,
-      "standBand": [
-        0,
-        1
-      ],
-      "oneRow": false,
-      "portraitHeight": null,
-      "portraitGround": null,
-      "floorColor": null,
-      "keepOut": [
-        {
-          "name": "complete soccer goal",
-          "r": [
-            0.382,
-            0.319,
-            0.197,
-            0.131
-          ]
-        }
-      ],
-      "goal": [
-        0.382,
-        0.319,
-        0.197,
-        0.131
-      ],
-      "targets": null,
-      "variants": {
-        "portrait": {
-          "file": "bg/real-foreground/soccerPortrait.webp",
-          "url": "/book-art/bg/real-foreground/soccerPortrait.webp",
-          "size": [
-            836,
-            1881
-          ],
-          "fit": "cover",
-          "focal": [
-            0.5,
-            0
-          ],
-          "realForeground": true,
-          "groundStart": 0.28,
-          "foreground": 0.28,
-          "ground": 0.97,
-          "standBand": [
-            0,
-            1
-          ],
-          "oneRow": false,
-          "portraitHeight": null,
-          "portraitGround": null,
-          "floorColor": null,
-          "keepOut": [
-            {
-              "name": "complete soccer goal",
-              "r": [
-                0.35,
-                0.202,
-                0.3,
-                0.058
-              ]
-            }
-          ],
+          "file": "bg/demo-pitch-portrait.svg",
+          "about": "a soccer pitch with a goal",
           "goal": [
             0.35,
-            0.202,
+            0.43,
             0.3,
-            0.058
-          ],
-          "targets": null
-        }
-      }
-    },
-    "treehouse-town": {
-      "file": "bg/real-foreground/treehouse-townLandscape.webp",
-      "about": "a lush treehouse town with rope bridges",
-      "bed": "forest",
-      "keepOut": [
-        {
-          "name": "painted scene objects",
-          "r": [
-            0,
-            0,
-            1,
-            0.49
-          ]
-        }
-      ],
-      "size": [
-        1774,
-        887
-      ],
-      "focal": [
-        0.5,
-        0
-      ],
-      "groundStart": 0.53,
-      "ground": 0.97,
-      "url": "/book-art/bg/real-foreground/treehouse-townLandscape.webp",
-      "fit": "cover",
-      "realForeground": true,
-      "foreground": 0.53,
-      "standBand": [
-        0,
-        1
-      ],
-      "oneRow": false,
-      "portraitHeight": null,
-      "portraitGround": null,
-      "floorColor": null,
-      "variants": {
-        "portrait": {
-          "file": "bg/real-foreground/treehouse-townPortrait.webp",
-          "about": "a lush treehouse town with rope bridges",
-          "bed": "forest",
-          "keepOut": [
-            {
-              "name": "painted scene objects",
-              "r": [
-                0,
-                0,
-                1,
-                0.235
-              ]
-            }
+            0.13
           ],
           "size": [
-            836,
-            1881
+            768,
+            1366
           ],
           "focal": [
             0.5,
             0
           ],
-          "groundStart": 0.25,
-          "ground": 0.97,
-          "url": "/book-art/bg/real-foreground/treehouse-townPortrait.webp",
-          "fit": "cover",
-          "realForeground": true,
-          "foreground": 0.25,
+          "groundStart": 0.7,
           "standBand": [
-            0,
-            1
+            0.78,
+            0.98
           ],
-          "oneRow": false,
-          "portraitHeight": null,
-          "portraitGround": null,
-          "floorColor": null,
-          "variants": null,
-          "targets": null,
-          "goal": null
+          "standW": 0.8,
+          "standX": 0.5,
+          "keepOut": [],
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
       },
-      "targets": null,
-      "goal": null
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
+    },
+    "castle": {
+      "file": "bg/demo-castle.svg",
+      "about": "a friendly castle on a hill",
+      "size": [
+        1536,
+        1024
+      ],
+      "focal": [
+        0.5,
+        0
+      ],
+      "groundStart": 0.7,
+      "standBand": [
+        0.78,
+        0.98
+      ],
+      "standW": 0.8,
+      "standX": 0.5,
+      "keepOut": [],
+      "targets": {},
+      "variants": {
+        "portrait": {
+          "file": "bg/demo-castle-portrait.svg",
+          "about": "a friendly castle on a hill",
+          "size": [
+            768,
+            1366
+          ],
+          "focal": [
+            0.5,
+            0
+          ],
+          "groundStart": 0.7,
+          "standBand": [
+            0.78,
+            0.98
+          ],
+          "standW": 0.8,
+          "standX": 0.5,
+          "keepOut": [],
+          "targets": {},
+          "door": null,
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
+        }
+      },
+      "door": null,
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
+    },
+    "night": {
+      "file": "bg/demo-night.svg",
+      "about": "a starry night over a cosy house (good for endings)",
+      "size": [
+        1536,
+        1024
+      ],
+      "focal": [
+        0.5,
+        0
+      ],
+      "groundStart": 0.7,
+      "standBand": [
+        0.78,
+        0.98
+      ],
+      "standW": 0.8,
+      "standX": 0.5,
+      "keepOut": [],
+      "targets": {},
+      "variants": {
+        "portrait": {
+          "file": "bg/demo-night-portrait.svg",
+          "about": "a starry night over a cosy house (good for endings)",
+          "size": [
+            768,
+            1366
+          ],
+          "focal": [
+            0.5,
+            0
+          ],
+          "groundStart": 0.7,
+          "standBand": [
+            0.78,
+            0.98
+          ],
+          "standW": 0.8,
+          "standX": 0.5,
+          "keepOut": [],
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
+        }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
+    },
+    "castle-gate": {
+      "file": "bg/demo-castle-gate.svg",
+      "about": "A fictional demo place: Castle gate",
+      "size": [
+        1536,
+        1024
+      ],
+      "focal": [
+        0.5,
+        0
+      ],
+      "groundStart": 0.7,
+      "standBand": [
+        0.78,
+        0.98
+      ],
+      "standW": 0.8,
+      "standX": 0.5,
+      "keepOut": [],
+      "targets": {},
+      "variants": {
+        "portrait": {
+          "file": "bg/demo-castle-gate-portrait.svg",
+          "about": "A fictional demo place: Castle gate",
+          "size": [
+            768,
+            1366
+          ],
+          "focal": [
+            0.5,
+            0
+          ],
+          "groundStart": 0.7,
+          "standBand": [
+            0.78,
+            0.98
+          ],
+          "standW": 0.8,
+          "standX": 0.5,
+          "keepOut": [],
+          "targets": {},
+          "door": [
+            0.404,
+            0.31,
+            0.19,
+            0.28
+          ],
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
+        }
+      },
+      "door": [
+        0.404,
+        0.31,
+        0.19,
+        0.28
+      ],
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
+    },
+    "chess-courtyard": {
+      "file": "bg/demo-chess-courtyard.svg",
+      "about": "A fictional demo place: Chess courtyard",
+      "size": [
+        1536,
+        1024
+      ],
+      "focal": [
+        0.5,
+        0
+      ],
+      "groundStart": 0.7,
+      "standBand": [
+        0.78,
+        0.98
+      ],
+      "standW": 0.8,
+      "standX": 0.5,
+      "keepOut": [],
+      "targets": {},
+      "variants": {
+        "portrait": {
+          "file": "bg/demo-chess-courtyard-portrait.svg",
+          "about": "A fictional demo place: Chess courtyard",
+          "size": [
+            768,
+            1366
+          ],
+          "focal": [
+            0.5,
+            0
+          ],
+          "groundStart": 0.7,
+          "standBand": [
+            0.78,
+            0.98
+          ],
+          "standW": 0.8,
+          "standX": 0.5,
+          "keepOut": [],
+          "targets": {},
+          "door": null,
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
+        }
+      },
+      "door": null,
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
+    },
+    "soccer-pitch": {
+      "file": "bg/demo-soccer-pitch.svg",
+      "about": "A fictional demo place: Soccer pitch",
+      "goal": [
+        0.35,
+        0.43,
+        0.3,
+        0.13
+      ],
+      "size": [
+        1536,
+        1024
+      ],
+      "focal": [
+        0.5,
+        0
+      ],
+      "groundStart": 0.7,
+      "standBand": [
+        0.78,
+        0.98
+      ],
+      "standW": 0.8,
+      "standX": 0.5,
+      "keepOut": [],
+      "targets": {},
+      "variants": {
+        "portrait": {
+          "file": "bg/demo-soccer-pitch-portrait.svg",
+          "about": "A fictional demo place: Soccer pitch",
+          "goal": [
+            0.35,
+            0.43,
+            0.3,
+            0.13
+          ],
+          "size": [
+            768,
+            1366
+          ],
+          "focal": [
+            0.5,
+            0
+          ],
+          "groundStart": 0.7,
+          "standBand": [
+            0.78,
+            0.98
+          ],
+          "standW": 0.8,
+          "standX": 0.5,
+          "keepOut": [],
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
+        }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
+    },
+    "treehouse-town": {
+      "file": "bg/demo-treehouse-town.svg",
+      "about": "A fictional demo place: Treehouse town",
+      "size": [
+        1536,
+        1024
+      ],
+      "focal": [
+        0.5,
+        0
+      ],
+      "groundStart": 0.7,
+      "standBand": [
+        0.78,
+        0.98
+      ],
+      "standW": 0.8,
+      "standX": 0.5,
+      "keepOut": [],
+      "targets": {},
+      "variants": {
+        "portrait": {
+          "file": "bg/demo-treehouse-town-portrait.svg",
+          "about": "A fictional demo place: Treehouse town",
+          "size": [
+            768,
+            1366
+          ],
+          "focal": [
+            0.5,
+            0
+          ],
+          "groundStart": 0.7,
+          "standBand": [
+            0.78,
+            0.98
+          ],
+          "standW": 0.8,
+          "standX": 0.5,
+          "keepOut": [],
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
+        }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "bakery": {
       "file": "bg/demo-bakery.svg",
@@ -385,7 +518,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -406,7 +539,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -416,87 +549,73 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "door": null,
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "door": null,
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "castle-forest": {
-      "file": "bg/real-foreground/castleLandscape.webp",
-      "url": "/book-art/bg/real-foreground/castleLandscape.webp",
+      "file": "bg/demo-castle-forest.svg",
+      "about": "A fictional demo place: Castle forest",
       "size": [
-        1774,
-        887
+        1536,
+        1024
       ],
-      "fit": "cover",
       "focal": [
         0.5,
         0
       ],
-      "realForeground": true,
-      "groundStart": 0.56,
-      "foreground": 0.56,
-      "ground": 0.97,
+      "groundStart": 0.7,
       "standBand": [
-        0,
-        1
+        0.78,
+        0.98
       ],
-      "oneRow": false,
-      "portraitHeight": null,
-      "portraitGround": null,
-      "floorColor": null,
-      "keepOut": [
-        {
-          "name": "castle and river",
-          "r": [
-            0.09,
-            0.01,
-            0.84,
-            0.48
-          ]
-        }
-      ],
-      "goal": null,
-      "targets": null,
+      "standW": 0.8,
+      "standX": 0.5,
+      "keepOut": [],
+      "targets": {},
       "variants": {
         "portrait": {
-          "file": "bg/real-foreground/castlePortrait.webp",
-          "url": "/book-art/bg/real-foreground/castlePortrait.webp",
+          "file": "bg/demo-castle-forest-portrait.svg",
+          "about": "A fictional demo place: Castle forest",
           "size": [
-            836,
-            1881
+            768,
+            1366
           ],
-          "fit": "cover",
           "focal": [
             0.5,
             0
           ],
-          "realForeground": true,
-          "groundStart": 0.25,
-          "foreground": 0.25,
-          "ground": 0.97,
+          "groundStart": 0.7,
           "standBand": [
-            0,
-            1
+            0.78,
+            0.98
           ],
-          "oneRow": false,
-          "portraitHeight": null,
-          "portraitGround": null,
-          "floorColor": null,
-          "keepOut": [
-            {
-              "name": "castle and river",
-              "r": [
-                0.12,
-                0.01,
-                0.8,
-                0.22
-              ]
-            }
-          ],
-          "goal": null,
-          "targets": null
+          "standW": 0.8,
+          "standX": 0.5,
+          "keepOut": [],
+          "targets": {},
+          "door": null,
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "door": null,
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "workshop": {
       "file": "bg/demo-workshop.svg",
@@ -507,7 +626,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -528,7 +647,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -538,9 +657,19 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "door": null,
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "door": null,
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "river-bridge": {
       "file": "bg/demo-river-bridge.svg",
@@ -551,7 +680,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -572,7 +701,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -582,92 +711,69 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "pirate-ship": {
-      "file": "bg/real-foreground/pirate-shipLandscape.webp",
-      "about": "a friendly pirate ship at a river dock",
-      "bed": "meadow",
-      "keepOut": [
-        {
-          "name": "pirate ship and dock",
-          "r": [
-            0.335,
-            0,
-            0.505,
-            0.43
-          ]
-        }
-      ],
+      "file": "bg/demo-pirate-ship.svg",
+      "about": "A fictional demo place: Pirate shore",
       "size": [
-        1774,
-        887
+        1536,
+        1024
       ],
       "focal": [
         0.5,
         0
       ],
-      "groundStart": 0.465,
-      "ground": 0.97,
-      "url": "/book-art/bg/real-foreground/pirate-shipLandscape.webp",
-      "fit": "cover",
-      "realForeground": true,
-      "foreground": 0.465,
+      "groundStart": 0.7,
       "standBand": [
-        0,
-        1
+        0.78,
+        0.98
       ],
-      "oneRow": false,
-      "portraitHeight": null,
-      "portraitGround": null,
-      "floorColor": null,
+      "standW": 0.8,
+      "standX": 0.5,
+      "keepOut": [],
+      "targets": {},
       "variants": {
         "portrait": {
-          "file": "bg/real-foreground/pirate-shipPortrait.webp",
-          "about": "a friendly pirate ship at a river dock",
-          "bed": "meadow",
-          "keepOut": [
-            {
-              "name": "pirate ship and dock",
-              "r": [
-                0.22,
-                0.13,
-                0.71,
-                0.16
-              ]
-            }
-          ],
+          "file": "bg/demo-pirate-ship-portrait.svg",
+          "about": "A fictional demo place: Pirate shore",
           "size": [
-            836,
-            1881
+            768,
+            1366
           ],
           "focal": [
             0.5,
             0
           ],
-          "groundStart": 0.34,
-          "ground": 0.97,
-          "url": "/book-art/bg/real-foreground/pirate-shipPortrait.webp",
-          "fit": "cover",
-          "realForeground": true,
-          "foreground": 0.34,
+          "groundStart": 0.7,
           "standBand": [
-            0,
-            1
+            0.78,
+            0.98
           ],
-          "oneRow": false,
-          "portraitHeight": null,
-          "portraitGround": null,
-          "floorColor": null,
-          "variants": null,
-          "targets": null,
-          "goal": null
+          "standW": 0.8,
+          "standX": 0.5,
+          "keepOut": [],
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
       },
-      "targets": null,
-      "goal": null
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "castle-moon-hill": {
       "file": "bg/demo-castle-moon-hill.svg",
@@ -678,7 +784,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -699,7 +805,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -709,9 +815,19 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "door": null,
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "door": null,
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "castle-night": {
       "file": "bg/demo-castle-night.svg",
@@ -722,7 +838,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -743,7 +859,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -753,9 +869,19 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "door": null,
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "door": null,
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "library-tower": {
       "file": "bg/demo-library-tower.svg",
@@ -766,7 +892,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -787,7 +913,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -797,9 +923,19 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "door": null,
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "door": null,
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "captain-cabin": {
       "file": "bg/demo-captain-cabin.svg",
@@ -810,7 +946,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -831,7 +967,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -841,9 +977,17 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "lighthouse": {
       "file": "bg/demo-lighthouse.svg",
@@ -854,7 +998,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -875,7 +1019,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -885,9 +1029,17 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "forest-meadow": {
       "file": "bg/demo-forest-meadow.svg",
@@ -898,7 +1050,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -919,7 +1071,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -929,418 +1081,315 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "volcano": {
-      "file": "bg/real-foreground/volcanoLandscape.webp",
-      "bed": "none",
-      "about": "Inside a volcanic crater: twelve clear stepping stones and a dry stone bridge.",
-      "fit": "cover",
-      "foreground": 0.57,
-      "oneRow": false,
-      "keepOut": [
-        {
-          "name": "twelve stepping stones",
-          "r": [
-            0.31,
-            0.318,
-            0.4,
-            0.19
-          ]
-        },
-        {
-          "name": "dry bridge",
-          "r": [
-            0.411,
-            0.206,
-            0.155,
-            0.108
-          ]
-        },
-        {
-          "name": "hot spring",
-          "r": [
-            0.135,
-            0.28,
-            0.12,
-            0.07
-          ]
-        }
-      ],
-      "targets": {
-        "stones": [
-          {
-            "id": "1",
-            "label": "Stepping stone 1",
-            "r": [
-              0.4185456595264938,
-              0.3275084554678692,
-              0.047914317925591886,
-              0.02593010146561443
-            ]
-          },
-          {
-            "id": "2",
-            "label": "Stepping stone 2",
-            "r": [
-              0.4935174746335964,
-              0.32525366403607664,
-              0.047914317925591886,
-              0.02593010146561443
-            ]
-          },
-          {
-            "id": "3",
-            "label": "Stepping stone 3",
-            "r": [
-              0.5713077790304397,
-              0.3286358511837655,
-              0.047914317925591886,
-              0.02593010146561443
-            ]
-          },
-          {
-            "id": "4",
-            "label": "Stepping stone 4",
-            "r": [
-              0.6513528748590756,
-              0.32525366403607664,
-              0.047914317925591886,
-              0.02593010146561443
-            ]
-          },
-          {
-            "id": "5",
-            "label": "Stepping stone 5",
-            "r": [
-              0.33962795941375423,
-              0.3737316798196167,
-              0.047914317925591886,
-              0.02593010146561443
-            ]
-          },
-          {
-            "id": "6",
-            "label": "Stepping stone 6",
-            "r": [
-              0.4326381059751973,
-              0.38726042841037206,
-              0.047914317925591886,
-              0.02593010146561443
-            ]
-          },
-          {
-            "id": "7",
-            "label": "Stepping stone 7",
-            "r": [
-              0.5245208568207441,
-              0.3906426155580609,
-              0.047914317925591886,
-              0.02593010146561443
-            ]
-          },
-          {
-            "id": "8",
-            "label": "Stepping stone 8",
-            "r": [
-              0.620913190529876,
-              0.3804960541149944,
-              0.047914317925591886,
-              0.02593010146561443
-            ]
-          },
-          {
-            "id": "9",
-            "label": "Stepping stone 9",
-            "r": [
-              0.3153889515219842,
-              0.44813979706877116,
-              0.047914317925591886,
-              0.02593010146561443
-            ]
-          },
-          {
-            "id": "10",
-            "label": "Stepping stone 10",
-            "r": [
-              0.41685456595264936,
-              0.4616685456595265,
-              0.047914317925591886,
-              0.02593010146561443
-            ]
-          },
-          {
-            "id": "11",
-            "label": "Stepping stone 11",
-            "r": [
-              0.5222660653889515,
-              0.4616685456595265,
-              0.047914317925591886,
-              0.02593010146561443
-            ]
-          },
-          {
-            "id": "12",
-            "label": "Stepping stone 12",
-            "r": [
-              0.632750845546787,
-              0.44813979706877116,
-              0.047914317925591886,
-              0.02593010146561443
-            ]
-          }
-        ],
-        "paths": [
-          {
-            "id": "lava",
-            "label": "Glowing lava",
-            "r": [
-              0.79,
-              0.34,
-              0.07,
-              0.04
-            ]
-          },
-          {
-            "id": "bridge",
-            "label": "Dry stone bridge",
-            "r": [
-              0.411,
-              0.206,
-              0.155,
-              0.108
-            ]
-          }
-        ]
-      },
+      "file": "bg/demo-volcano.svg",
+      "about": "A fictional demo place: Volcano island",
       "size": [
-        1774,
-        887
+        1536,
+        1024
       ],
       "focal": [
         0.5,
         0
       ],
-      "ground": 0.97,
-      "groundStart": 0.57,
-      "url": "/book-art/bg/real-foreground/volcanoLandscape.webp",
-      "realForeground": true,
+      "groundStart": 0.7,
       "standBand": [
-        0,
-        1
+        0.78,
+        0.98
       ],
-      "portraitHeight": null,
-      "portraitGround": null,
-      "floorColor": null,
-      "variants": {
-        "portrait": {
-          "file": "bg/real-foreground/volcanoPortrait.webp",
-          "bed": "none",
-          "about": "Inside a volcanic crater: twelve clear stepping stones and a dry stone bridge.",
-          "fit": "cover",
-          "foreground": 0.31,
-          "oneRow": false,
-          "keepOut": [
-            {
-              "name": "twelve stepping stones",
-              "r": [
-                0.205,
-                0.172,
-                0.62,
-                0.1
-              ]
-            },
-            {
-              "name": "dry bridge",
-              "r": [
-                0.38,
-                0.13,
-                0.235,
-                0.045
-              ]
-            },
-            {
-              "name": "hot spring",
-              "r": [
-                0.02,
-                0.13,
-                0.19,
-                0.035
-              ]
-            }
-          ],
-          "targets": {
-            "stones": [
-              {
-                "id": "1",
-                "label": "Stepping stone 1",
-                "r": [
-                  0.3929425837320574,
-                  0.1757044125465178,
-                  0.08971291866028708,
-                  0.013290802764486975
-                ]
-              },
-              {
-                "id": "2",
-                "label": "Stepping stone 2",
-                "r": [
-                  0.513755980861244,
-                  0.17410951621477938,
-                  0.08971291866028708,
-                  0.013290802764486975
-                ]
-              },
-              {
-                "id": "3",
-                "label": "Stepping stone 3",
-                "r": [
-                  0.6309808612440191,
-                  0.1735778841041999,
-                  0.08971291866028708,
-                  0.013290802764486975
-                ]
-              },
-              {
-                "id": "4",
-                "label": "Stepping stone 4",
-                "r": [
-                  0.7266746411483254,
-                  0.16932482721956407,
-                  0.08971291866028708,
-                  0.013290802764486975
-                ]
-              },
-              {
-                "id": "5",
-                "label": "Stepping stone 5",
-                "r": [
-                  0.27093301435406697,
-                  0.20015948963317384,
-                  0.08971291866028708,
-                  0.013290802764486975
-                ]
-              },
-              {
-                "id": "6",
-                "label": "Stepping stone 6",
-                "r": [
-                  0.43600478468899523,
-                  0.20547581073896865,
-                  0.08971291866028708,
-                  0.013290802764486975
-                ]
-              },
-              {
-                "id": "7",
-                "label": "Stepping stone 7",
-                "r": [
-                  0.5819377990430622,
-                  0.20760233918128654,
-                  0.08971291866028708,
-                  0.013290802764486975
-                ]
-              },
-              {
-                "id": "8",
-                "label": "Stepping stone 8",
-                "r": [
-                  0.7278708133971292,
-                  0.2134502923976608,
-                  0.08971291866028708,
-                  0.013290802764486975
-                ]
-              },
-              {
-                "id": "9",
-                "label": "Stepping stone 9",
-                "r": [
-                  0.2278708133971292,
-                  0.23205741626794257,
-                  0.08971291866028708,
-                  0.013290802764486975
-                ]
-              },
-              {
-                "id": "10",
-                "label": "Stepping stone 10",
-                "r": [
-                  0.4001196172248804,
-                  0.24109516214779372,
-                  0.08971291866028708,
-                  0.013290802764486975
-                ]
-              },
-              {
-                "id": "11",
-                "label": "Stepping stone 11",
-                "r": [
-                  0.56877990430622,
-                  0.2437533227006911,
-                  0.08971291866028708,
-                  0.013290802764486975
-                ]
-              },
-              {
-                "id": "12",
-                "label": "Stepping stone 12",
-                "r": [
-                  0.7254784688995215,
-                  0.24853801169590642,
-                  0.08971291866028708,
-                  0.013290802764486975
-                ]
-              }
-            ],
-            "paths": [
-              {
-                "id": "lava",
-                "label": "Glowing lava",
-                "r": [
-                  0.81,
-                  0.2,
-                  0.05,
-                  0.035
-                ]
-              },
-              {
-                "id": "bridge",
-                "label": "Dry stone bridge",
-                "r": [
-                  0.38,
-                  0.13,
-                  0.235,
-                  0.045
-                ]
-              }
+      "standW": 0.8,
+      "standX": 0.5,
+      "keepOut": [],
+      "targets": {
+        "stones": [
+          {
+            "id": "1",
+            "label": "Demo token 1",
+            "r": [
+              0.18,
+              0.22,
+              0.085,
+              0.07
             ]
           },
+          {
+            "id": "2",
+            "label": "Demo token 2",
+            "r": [
+              0.33999999999999997,
+              0.22,
+              0.085,
+              0.07
+            ]
+          },
+          {
+            "id": "3",
+            "label": "Demo token 3",
+            "r": [
+              0.5,
+              0.22,
+              0.085,
+              0.07
+            ]
+          },
+          {
+            "id": "4",
+            "label": "Demo token 4",
+            "r": [
+              0.6599999999999999,
+              0.22,
+              0.085,
+              0.07
+            ]
+          },
+          {
+            "id": "5",
+            "label": "Demo token 5",
+            "r": [
+              0.18,
+              0.36,
+              0.085,
+              0.07
+            ]
+          },
+          {
+            "id": "6",
+            "label": "Demo token 6",
+            "r": [
+              0.33999999999999997,
+              0.36,
+              0.085,
+              0.07
+            ]
+          },
+          {
+            "id": "7",
+            "label": "Demo token 7",
+            "r": [
+              0.5,
+              0.36,
+              0.085,
+              0.07
+            ]
+          },
+          {
+            "id": "8",
+            "label": "Demo token 8",
+            "r": [
+              0.6599999999999999,
+              0.36,
+              0.085,
+              0.07
+            ]
+          },
+          {
+            "id": "9",
+            "label": "Demo token 9",
+            "r": [
+              0.18,
+              0.5,
+              0.085,
+              0.07
+            ]
+          },
+          {
+            "id": "10",
+            "label": "Demo token 10",
+            "r": [
+              0.33999999999999997,
+              0.5,
+              0.085,
+              0.07
+            ]
+          },
+          {
+            "id": "11",
+            "label": "Demo token 11",
+            "r": [
+              0.5,
+              0.5,
+              0.085,
+              0.07
+            ]
+          },
+          {
+            "id": "12",
+            "label": "Demo token 12",
+            "r": [
+              0.6599999999999999,
+              0.5,
+              0.085,
+              0.07
+            ]
+          }
+        ]
+      },
+      "variants": {
+        "portrait": {
+          "file": "bg/demo-volcano-portrait.svg",
+          "about": "A fictional demo place: Volcano island",
           "size": [
-            836,
-            1881
+            768,
+            1366
           ],
           "focal": [
             0.5,
             0
           ],
-          "ground": 0.97,
-          "groundStart": 0.31,
-          "url": "/book-art/bg/real-foreground/volcanoPortrait.webp",
-          "realForeground": true,
+          "groundStart": 0.7,
           "standBand": [
-            0,
-            1
+            0.78,
+            0.98
           ],
-          "portraitHeight": null,
-          "portraitGround": null,
-          "floorColor": null,
-          "variants": null,
-          "goal": null
+          "standW": 0.8,
+          "standX": 0.5,
+          "keepOut": [],
+          "targets": {
+            "stones": [
+              {
+                "id": "1",
+                "label": "Demo token 1",
+                "r": [
+                  0.18,
+                  0.22,
+                  0.085,
+                  0.07
+                ]
+              },
+              {
+                "id": "2",
+                "label": "Demo token 2",
+                "r": [
+                  0.33999999999999997,
+                  0.22,
+                  0.085,
+                  0.07
+                ]
+              },
+              {
+                "id": "3",
+                "label": "Demo token 3",
+                "r": [
+                  0.5,
+                  0.22,
+                  0.085,
+                  0.07
+                ]
+              },
+              {
+                "id": "4",
+                "label": "Demo token 4",
+                "r": [
+                  0.6599999999999999,
+                  0.22,
+                  0.085,
+                  0.07
+                ]
+              },
+              {
+                "id": "5",
+                "label": "Demo token 5",
+                "r": [
+                  0.18,
+                  0.36,
+                  0.085,
+                  0.07
+                ]
+              },
+              {
+                "id": "6",
+                "label": "Demo token 6",
+                "r": [
+                  0.33999999999999997,
+                  0.36,
+                  0.085,
+                  0.07
+                ]
+              },
+              {
+                "id": "7",
+                "label": "Demo token 7",
+                "r": [
+                  0.5,
+                  0.36,
+                  0.085,
+                  0.07
+                ]
+              },
+              {
+                "id": "8",
+                "label": "Demo token 8",
+                "r": [
+                  0.6599999999999999,
+                  0.36,
+                  0.085,
+                  0.07
+                ]
+              },
+              {
+                "id": "9",
+                "label": "Demo token 9",
+                "r": [
+                  0.18,
+                  0.5,
+                  0.085,
+                  0.07
+                ]
+              },
+              {
+                "id": "10",
+                "label": "Demo token 10",
+                "r": [
+                  0.33999999999999997,
+                  0.5,
+                  0.085,
+                  0.07
+                ]
+              },
+              {
+                "id": "11",
+                "label": "Demo token 11",
+                "r": [
+                  0.5,
+                  0.5,
+                  0.085,
+                  0.07
+                ]
+              },
+              {
+                "id": "12",
+                "label": "Demo token 12",
+                "r": [
+                  0.6599999999999999,
+                  0.5,
+                  0.085,
+                  0.07
+                ]
+              }
+            ]
+          },
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
       },
-      "goal": null
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "flower-meadow": {
       "file": "bg/demo-flower-meadow.svg",
@@ -1351,7 +1400,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -1475,7 +1524,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -1588,9 +1637,17 @@
                 ]
               }
             ]
-          }
+          },
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "brain-world": {
       "file": "bg/demo-brain-world.svg",
@@ -1601,7 +1658,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -1622,7 +1679,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -1632,9 +1689,17 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "pizza-party": {
       "file": "bg/demo-pizza-party.svg",
@@ -1645,7 +1710,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -1719,7 +1784,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -1782,9 +1847,17 @@
                 ]
               }
             ]
-          }
+          },
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "lava-playroom": {
       "file": "bg/demo-lava-playroom.svg",
@@ -1795,7 +1868,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -1859,7 +1932,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -1912,9 +1985,17 @@
                 ]
               }
             ]
-          }
+          },
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "forest-school": {
       "file": "bg/demo-forest-school.svg",
@@ -1925,7 +2006,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -1946,7 +2027,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -1956,9 +2037,17 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "home-room": {
       "file": "bg/demo-home-room.svg",
@@ -1969,7 +2058,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -1990,7 +2079,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -2000,9 +2089,19 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "door": null,
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "door": null,
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "demo-castle-gate": {
       "file": "bg/demo-castle-gate.svg",

@@ -9,7 +9,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -30,7 +30,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -40,9 +40,17 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "forest": {
       "file": "bg/demo-forest.svg",
@@ -53,7 +61,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -74,7 +82,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -84,9 +92,17 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "pitch": {
       "file": "bg/demo-pitch.svg",
@@ -103,7 +119,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -130,7 +146,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -140,9 +156,17 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "castle": {
       "file": "bg/demo-castle.svg",
@@ -153,7 +177,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -174,7 +198,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -184,9 +208,19 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "door": null,
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "door": null,
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "night": {
       "file": "bg/demo-night.svg",
@@ -197,7 +231,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -218,7 +252,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -228,9 +262,17 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "castle-gate": {
       "file": "bg/demo-castle-gate.svg",
@@ -241,7 +283,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -262,7 +304,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -272,9 +314,29 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "door": [
+            0.404,
+            0.31,
+            0.19,
+            0.28
+          ],
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "door": [
+        0.404,
+        0.31,
+        0.19,
+        0.28
+      ],
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "chess-courtyard": {
       "file": "bg/demo-chess-courtyard.svg",
@@ -285,7 +347,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -306,7 +368,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -316,9 +378,19 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "door": null,
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "door": null,
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "soccer-pitch": {
       "file": "bg/demo-soccer-pitch.svg",
@@ -335,7 +407,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -362,7 +434,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -372,9 +444,17 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "treehouse-town": {
       "file": "bg/demo-treehouse-town.svg",
@@ -385,7 +465,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -406,7 +486,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -416,9 +496,17 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "bakery": {
       "file": "bg/demo-bakery.svg",
@@ -429,7 +517,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -450,7 +538,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -460,9 +548,19 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "door": null,
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "door": null,
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "castle-forest": {
       "file": "bg/demo-castle-forest.svg",
@@ -473,7 +571,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -494,7 +592,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -504,9 +602,19 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "door": null,
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "door": null,
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "workshop": {
       "file": "bg/demo-workshop.svg",
@@ -517,7 +625,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -538,7 +646,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -548,9 +656,19 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "door": null,
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "door": null,
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "river-bridge": {
       "file": "bg/demo-river-bridge.svg",
@@ -561,7 +679,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -582,7 +700,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -592,9 +710,17 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "pirate-ship": {
       "file": "bg/demo-pirate-ship.svg",
@@ -605,7 +731,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -626,7 +752,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -636,9 +762,17 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "castle-moon-hill": {
       "file": "bg/demo-castle-moon-hill.svg",
@@ -649,7 +783,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -670,7 +804,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -680,9 +814,19 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "door": null,
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "door": null,
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "castle-night": {
       "file": "bg/demo-castle-night.svg",
@@ -693,7 +837,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -714,7 +858,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -724,9 +868,19 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "door": null,
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "door": null,
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "library-tower": {
       "file": "bg/demo-library-tower.svg",
@@ -737,7 +891,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -758,7 +912,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -768,20 +922,30 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "door": null,
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "door": null,
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "captain-cabin": {
       "file": "bg/demo-captain-cabin.svg",
-      "about": "A fictional demo place: Captain’s cabin",
+      "about": "A fictional demo place: Captain\u2019s cabin",
       "size": [
         1536,
         1024
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -795,14 +959,14 @@
       "variants": {
         "portrait": {
           "file": "bg/demo-captain-cabin-portrait.svg",
-          "about": "A fictional demo place: Captain’s cabin",
+          "about": "A fictional demo place: Captain\u2019s cabin",
           "size": [
             768,
             1366
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -812,9 +976,17 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "lighthouse": {
       "file": "bg/demo-lighthouse.svg",
@@ -825,7 +997,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -846,7 +1018,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -856,9 +1028,17 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "forest-meadow": {
       "file": "bg/demo-forest-meadow.svg",
@@ -869,7 +1049,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -890,7 +1070,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -900,9 +1080,17 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "volcano": {
       "file": "bg/demo-volcano.svg",
@@ -913,7 +1101,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -1057,7 +1245,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -1190,9 +1378,17 @@
                 ]
               }
             ]
-          }
+          },
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "flower-meadow": {
       "file": "bg/demo-flower-meadow.svg",
@@ -1203,7 +1399,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -1327,7 +1523,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -1440,9 +1636,17 @@
                 ]
               }
             ]
-          }
+          },
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "brain-world": {
       "file": "bg/demo-brain-world.svg",
@@ -1453,7 +1657,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -1474,7 +1678,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -1484,9 +1688,17 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "pizza-party": {
       "file": "bg/demo-pizza-party.svg",
@@ -1497,7 +1709,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -1571,7 +1783,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -1634,9 +1846,17 @@
                 ]
               }
             ]
-          }
+          },
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "lava-playroom": {
       "file": "bg/demo-lava-playroom.svg",
@@ -1647,7 +1867,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -1711,7 +1931,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -1764,9 +1984,17 @@
                 ]
               }
             ]
-          }
+          },
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "forest-school": {
       "file": "bg/demo-forest-school.svg",
@@ -1777,7 +2005,7 @@
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -1798,7 +2026,7 @@
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -1808,20 +2036,28 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     },
     "home-room": {
       "file": "bg/demo-home-room.svg",
-      "about": "A fictional demo place: Grown-up’s room",
+      "about": "A fictional demo place: Grown-up\u2019s room",
       "size": [
         1536,
         1024
       ],
       "focal": [
         0.5,
-        0.25
+        0
       ],
       "groundStart": 0.7,
       "standBand": [
@@ -1835,14 +2071,14 @@
       "variants": {
         "portrait": {
           "file": "bg/demo-home-room-portrait.svg",
-          "about": "A fictional demo place: Grown-up’s room",
+          "about": "A fictional demo place: Grown-up\u2019s room",
           "size": [
             768,
             1366
           ],
           "focal": [
             0.5,
-            0.25
+            0
           ],
           "groundStart": 0.7,
           "standBand": [
@@ -1852,9 +2088,19 @@
           "standW": 0.8,
           "standX": 0.5,
           "keepOut": [],
-          "targets": {}
+          "targets": {},
+          "door": null,
+          "paintStyle": "pastel",
+          "paintStyleName": "Soft garden",
+          "fit": "cover",
+          "ground": 0.97
         }
-      }
+      },
+      "door": null,
+      "paintStyle": "pastel",
+      "paintStyleName": "Soft garden",
+      "fit": "cover",
+      "ground": 0.97
     }
   }
 }

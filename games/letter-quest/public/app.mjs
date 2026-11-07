@@ -2,7 +2,7 @@ import {calmHome,calmNav,calmFeedback} from './calm-view.mjs';
 import {calmSound} from './calm-sound.mjs';
 import {elapsedMs} from './timing.mjs';
 import {exclusiveReadingAction} from './reading-client.mjs';
-import {readingHintState} from './reading.mjs';
+import {readingHintState,readingChangeSupport} from './reading.mjs';
 import {hintLabel,useHint,wasHinted} from './hints.mjs';
 import {GuidedTrace} from './guided-trace.mjs';
 import {KINGDOMS,freshProfile,nextChallenge,applyAttempt,leagueRows,questRating,taskPrompt,visibleTaskPrompt,startDuel,startAdventure,recommendedDuelLevel,claimQuest,questBoard,expectedAnswer,DUEL_LEVELS,useMatchHint} from './engine.mjs';
@@ -324,7 +324,7 @@ async function readingAct(kind,value){
  else if(kind==='position')input={kind:'position',position:Number(value)};
  else if(kind==='ink-undo'){readingInkDraft=s.ink.slice(0,-1);input={kind:'ink',ink:readingInkDraft};}
  else if(['tile','actor','undo','clear'].includes(kind)){
-  const draft=[...s.draft];if(kind==='undo'&&q.type==='change'){draft.splice(0,draft.length,...[...q.from].map(c=>q.tiles.indexOf(c)));}else if(kind==='undo')draft.pop();else if(kind==='clear')draft.length=0;else if(q.type==='change')draft[s.cursor||0]=Number(value);else if(draft.length<(q.type==='act'?q.count:q.type==='sentence'?(q.slots||q.tiles.length):q.word.length))draft.push(Number(value));
+  const support=readingChangeSupport(s),draft=[...(support?.draft||s.draft)];if(kind==='undo'&&q.type==='change'){draft.splice(0,draft.length,...[...q.from].map(c=>q.tiles.indexOf(c)));}else if(kind==='undo')draft.pop();else if(kind==='clear')draft.length=0;else if(q.type==='change')draft[support?.position??(s.cursor||0)]=Number(value);else if(draft.length<(q.type==='act'?q.count:q.type==='sentence'?(q.slots||q.tiles.length):q.word.length))draft.push(Number(value));
   input={kind:'draft',draft};
  }else if(kind==='answer'||kind==='check')input={kind:'answer',answer:value,durationMs:elapsedMs(readingStarted)};
  else {busy=false;return;}

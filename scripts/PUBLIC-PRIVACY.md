@@ -27,6 +27,9 @@ repository (default `~/.config/family-public-sync/privacy.json`). Existing
 `denylist: {"category": ["term", ...]}`. Include family, friends, therapists,
 schools, town/street and private devices; a denylist cannot discover unknown names.
 Never copy this policy or its values into logs, tests, PRs or public history.
+Set `referenceRoots` to a nonempty array of absolute private reference directories
+in that private policy. The gate refuses missing or unreadable roots; public source
+contains no household reference paths.
 
 The gate generates a private temporary Gitleaks TOML ruleset from every private
 term (including existing replacement keys), escapes literal terms for RE2/TOML,

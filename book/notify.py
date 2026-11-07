@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
-"""Same SMTP channel as the personal Morning Digest. Configuration stays private."""
+"""Optional SMTP notices. Configuration stays outside the repository."""
 import json, os, smtplib, sys
 from pathlib import Path
 from email.message import EmailMessage
 from notice_payload import read_payload
 payload = read_payload(sys.argv[1:], sys.stdin)
 address = os.environ.get('BOOK_NOTICE_ADDRESS')
-if not address:
-    # Read the channel's configured address rather than publishing a household address in source.
-    import runpy
-    address = runpy.run_path(str(Path.home() / 'personal-kb/scripts/send-digest.py'))['ADDR']
-pw = (Path.home() / '.config/claude-nightly/gmail-app-password').read_text().strip()
+password_file = os.environ.get('BOOK_NOTICE_PASSWORD_FILE')
+if not address or not password_file:
+    raise SystemExit('Configure the notice address and password file before sending notices.')
+pw = Path(password_file).read_text().strip()
 msg = EmailMessage()
 msg['From'] = msg['To'] = address
 msg['Subject'] = payload['subject']

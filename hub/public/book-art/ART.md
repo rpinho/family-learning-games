@@ -55,3 +55,9 @@ Final prompt set:
 - **Fox:** one original burnt-orange felt companion, cream muzzle/belly/tail tip, small sewn eyes, embroidered smile, rounded ears and visible stitching. Walking, pointing, reaching toward a star, kneeling beside a generic stone, carrying a rolled parchment, and cheering with one paw raised. No clothing, rainbow colours, hedgehog design or familiar franchise likeness.
 
 Authored scene composition chooses poses, foot positions, relative size and gaze direction. The standing guide occupies 40% of the landscape frame height. Scene-specific celebration retains the guide's pointing and sister's map-carrying poses while the explorer reacts. Soft CSS contact shadows ground the figures; overlapping depth follows their foot positions.
+
+## Public pastel scenes
+
+The `bg/demo-*.svg` landscape and portrait scenes are original code-native illustrations: soft sky, hills, paths, castles, trees and counting stones. They use no raster references, photographs or household paintings. The scene geometry and tap rectangles are shipped together in the public library. Each room resolves its own available picture; an incomplete local library retains the public fallback for that room. The documentation chapter uses these scenes with the already published fictional mapmaker and fox.
+
+The chess companion in `../chess/rook.mjs` is an original public tower character with a leaf cape and pencil. It replaces the earlier human vector coach in chess. The other games retain their original generic vector coach.

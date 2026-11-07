@@ -86,3 +86,14 @@ test('speakToEnd keeps the audio-finished contract: settles when the clip ends, 
  player.play=async()=>{throw Object.assign(Error('blocked'),{name:'NotAllowedError'});};
  assert.equal(await voice.speakToEnd('B'),'failed','blocked autoplay settles at once; the speaker button replays');
 });
+test('missing recordings use device narration and keep completion and cancellation signals',async t=>{
+ const previous={speechSynthesis:globalThis.speechSynthesis,SpeechSynthesisUtterance:globalThis.SpeechSynthesisUtterance};
+ let utterance,cancels=0;
+ globalThis.SpeechSynthesisUtterance=class{constructor(text){this.text=text;}};
+ globalThis.speechSynthesis={speak:u=>utterance=u,cancel:()=>cancels++};
+ const {voice}=harness(t);
+ t.after(()=>Object.assign(globalThis,previous));
+ let finished=false;const spoken=voice.speakToEnd('A new generic prompt.').then(result=>{finished=true;return result;});await tick();
+ assert.equal(utterance.text,'A new generic prompt.');assert.equal(finished,false);utterance.onend();assert.equal(await spoken,'ended');
+ const pending=voice.speakToEnd('Another generic prompt.');await tick();voice.stop();assert.equal(await pending,'stopped');assert.equal(cancels,1);
+});

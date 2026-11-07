@@ -27,6 +27,8 @@ export class CoachVoice {
     this.generation++;if(this.mode)this.lastSpeech=Date.now();this.mode=null;clearTimeout(this.promptTimer);this.promptTimer=null;
     this.cancelWait?.();this.cancelWait=null;
     this.tail=Promise.resolve();this.queued=false;
+    if(this.cancelDevice){this.cancelDevice('stopped');globalThis.speechSynthesis?.cancel();}
+    this.deviceDone=null;
     this.player.pause();
     this.player.removeAttribute('src');
     this.player.load();
@@ -40,7 +42,7 @@ export class CoachVoice {
   async speakToEnd(text){
     const starting=this.speak(text),generation=this.generation;
     if(!await starting)return generation===this.generation?'failed':'stopped';
-    return generation===this.generation?mediaSettled(this.player):'stopped';
+    return generation===this.generation?(this.deviceDone||mediaSettled(this.player)):'stopped';
   }
   instruction(text,{key='',essential=true}={}){
     if(!text)return;
@@ -74,6 +76,7 @@ export class CoachVoice {
     const task=this.tail.then(async()=>{
       if(generation!==this.generation||latest&&letterToken!==this.latestLetter){if(latest)this.record('voice_skip',{reason:'superseded_letter'});return;}
       if(!await this.play(text,generation)||generation!==this.generation)return;
+      if(this.deviceDone){await this.deviceDone;return;}
       await new Promise(resolve=>{
         const done=()=>{clearTimeout(timer);this.player.removeEventListener('ended',done);this.player.removeEventListener('error',done);if(this.cancelWait===done)this.cancelWait=null;resolve();};
         const timer=setTimeout(done,20000);
@@ -85,7 +88,21 @@ export class CoachVoice {
     void tail.then(()=>{if(this.tail===tail){this.queued=false;this.mode=null;}});
     return tail;
   }
+  playDevice(text,generation){
+    if(!globalThis.speechSynthesis||!globalThis.SpeechSynthesisUtterance)return false;
+    const utterance=new SpeechSynthesisUtterance(text);utterance.lang='en-US';utterance.rate=.85;
+    this.deviceDone=new Promise(resolve=>{
+      const done=status=>{clearTimeout(timer);if(this.cancelDevice===done)this.cancelDevice=null;
+        if(generation===this.generation){this.lastSpeech=Date.now();this.player.dataset.status=status;if(!this.queued)this.mode=null;}
+        resolve(status);};
+      const timer=setTimeout(()=>done('failed'),20000);this.cancelDevice=done;
+      utterance.onend=()=>done('ended');utterance.onerror=()=>done('failed');
+    });
+    this.player.dataset.voice='device';this.player.dataset.status='playing';
+    this.lastSpeech=Date.now();speechSynthesis.speak(utterance);this.record('voice_play',{voice:'device'});return true;
+  }
   async play(text,generation){
+    this.deviceDone=null;
     let manifest=await this.ready;
     if(!manifest){this.ready=this.load();manifest=await this.ready;}
     if(generation!==this.generation)return;
@@ -93,7 +110,7 @@ export class CoachVoice {
     // A new deployment can add clips while an older tab still holds its manifest.
     if(!clip&&manifest){this.ready=this.load();manifest=await this.ready;clip=manifest?.clips[text];}
     if(generation!==this.generation)return;
-    if(!clip){this.mode=null;this.record('voice_error',{reason:'missing_clip',message:text});this.notify('Rook’s voice is not ready. Try the speaker again in a moment.');return;}
+    if(!clip){if(this.playDevice(text,generation))return true;this.mode=null;this.record('voice_error',{reason:'missing_clip',message:text});this.notify('Rook’s voice is not ready. Try the speaker again in a moment.');return;}
     this.lastSpeech=Date.now();
     this.player.src=clip;
     this.player.dataset.voice=manifest.voice;

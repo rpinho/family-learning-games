@@ -3,7 +3,7 @@ import {join} from 'node:path';
 
 // Same-origin checks live at the hub boundary. Each game keeps its own save and
 // serializes writes per player, including reads made while a write is pending.
-export function gameStore({data, name, players, fresh, validate, update}) {
+export function gameStore({data, name, players, fresh, validate, update, view=()=>({})}) {
  const queues=new Map();
  const file=player=>join(data,`${name}-${player}.json`);
  const send=(res,status,value)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
@@ -16,7 +16,7 @@ export function gameStore({data, name, players, fresh, validate, update}) {
   if(!players.includes(player))return send(res,400,{error:'Choose a player.'});
   if(u.pathname!==`/api/${name}`)return send(res,404,{error:'Unknown activity route.'});
   if(req.method==='GET'){
-   try{await queues.get(player)?.catch(()=>{});return send(res,200,{profile:await load(player),serverNow:Date.now()});}
+   try{await queues.get(player)?.catch(()=>{});const p=await load(player);return send(res,200,{profile:p,serverNow:Date.now(),...view(p)});}
    catch{return send(res,503,{error:'Could not open your saved place.'});}
   }
   if(req.method!=='POST')return send(res,405,{error:'Unsupported action.'});
@@ -34,7 +34,7 @@ export function gameStore({data, name, players, fresh, validate, update}) {
      await writeFile(file(player)+'.tmp',JSON.stringify(p),{mode:0o600});
      await rename(file(player)+'.tmp',file(player));
     }
-    send(res,200,{profile:p,result,serverNow:Date.now()});
+    send(res,200,{profile:p,result,serverNow:Date.now(),...view(p)});
    }catch(e){send(res,e.status||503,{error:e.status?e.message:'Could not save. Reopen your saved place before continuing.'});}
   });queues.set(player,work);await work;
  }};

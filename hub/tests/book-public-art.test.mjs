@@ -11,7 +11,7 @@ test('a serialized chapter retains both painted count coordinates and the gate r
   const volcano=selectBackground(art.backgrounds.volcano,{width,height});
   assert.equal(volcano.targets.stones.length,12);
   assert.ok(volcano.targets.stones.every(t=>t.r.length===4));
-  assert.match(volcano.url,width<height?/Portrait.webp$/:/Landscape.webp$/);
+  assert.match(volcano.url,width<height?/demo-volcano-portrait\.svg$/:/demo-volcano\.svg$/);
   const gate=selectBackground(art.backgrounds['castle-gate'],{width,height});assert.equal(gate.door.length,4);
  }
  assert.match(art.props['treasure-chest'].url,/treasure-chest.webp$/);

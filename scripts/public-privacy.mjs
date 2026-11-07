@@ -60,11 +60,12 @@ export function textIssues(file,bytes,terms=[],{scanMediaText=false,familyOnly=f
 export function metadataFindings(tags){
  return Object.keys(tags).filter(k=>!/^File:|^System:|^ExifTool:|^SourceFile$/.test(k)&&/(GPS|Location|Make$|Model$|Owner|Artist|Author|Creator|By-line|DateTimeOriginal|CreateDate|CreationDate|ModifyDate|DateCreated|TimeCreated|MediaCreateDate|TrackCreateDate|CameraSerial|SerialNumber)/i.test(k)&&tags[k]!==''&&tags[k]!==0&&tags[k]!=='0000:00:00 00:00:00');
 }
-const privateRoots=()=>[
- join(homedir(),'personal-kb/inbox/kids apps'),
- ...['refs','src','lib'].map(s=>join(homedir(),'.local/share/family-games/book/art',s)),
- join(homedir(),'.local/share/family-games/book/cast')
-];
+const privateRoots=policy=>{
+ const roots=policy.referenceRoots;
+ if(!Array.isArray(roots)||!roots.length||roots.some(p=>typeof p!=='string'||!p.trim()))throw Error('privacy-policy:1: configure private referenceRoots outside the repository');
+ return roots;
+};
+
 export async function runGate({root=resolve('.'),base=process.env.PUBLIC_SYNC_BASE||'origin/main',head='HEAD',strip=false,secretsOnly=false,publicTextOnly=false,allHistory=false,policyPath,reviewDir,referenceRoots,scanSecrets=secretScan,scanPrivateTerms=privateTermScan}={}){
  const git=args=>execFileSync('git',args,{cwd:root,maxBuffer:256*1024*1024});
  base=allHistory?null:git(['merge-base',base,head]).toString().trim(); // Bound both scanners to the actual PR ancestry.
@@ -141,7 +142,7 @@ export async function runGate({root=resolve('.'),base=process.env.PUBLIC_SYNC_BA
    for(const [file,hits]of metadata)for(const tag of hits)issues.push(`${file}:1: identifying media metadata ${tag} (use --strip)`);
    const python=process.env.PUBLIC_SYNC_PYTHON||join(homedir(),'.local/share/family-public-sync/venv/bin/python');
    const worker=join(dirname(fileURLToPath(import.meta.url)),'public-media.py');
-   const result=spawnSync(python,[worker],{input:JSON.stringify({root,files:assets,review,references:referenceRoots||privateRoots()}),encoding:'utf8',maxBuffer:128*1024*1024,timeout:600000});
+   const result=spawnSync(python,[worker],{input:JSON.stringify({root,files:assets,review,references:referenceRoots||privateRoots(policy)}),encoding:'utf8',maxBuffer:128*1024*1024,timeout:600000});
    try{mediaResult=JSON.parse(result.stdout);issues.push(...mediaResult.issues);}catch{issues.push('media-worker:1: missing or invalid report');}
    if(result.status!==0)issues.push('media-worker:1: scanner failed (details withheld)');
    const approvals=policy.mediaReviews||{};

@@ -1,8 +1,4 @@
-// One pronunciation map for every spoken line (the book, its chapter generator, the living book, any game that
-// voices a friend's name): names the voice must never guess from their spelling go to it as explicit Kokoro
-// phonemes ([[...]]). The household can add or override names in its private cast.json ("pronounce").
-//  - Pip: PEE-ka. Pip-pi: PEE-ka-PEE (spelled, the "pi" came out as "pie").
-//  - Picos: European Portuguese, stress on the i, /ˈpi.kuʃ/ (PEE-koosh).
+// Optional pronunciation overrides are supplied by an installation, never bundled identities.
 export const PRONOUNCE={Bo:'bˈoʊ',Pip:'pˈɪp'};
 const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 function table(extra){const m={...PRONOUNCE,...(extra||{})};const names=Object.keys(m).sort((a,b)=>b.length-a.length);
