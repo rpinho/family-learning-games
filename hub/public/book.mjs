@@ -766,7 +766,7 @@ const TRACE_LIFT=0.8,TRACE_LIVE=0.97,TRACE_LIVE_PART=0.85,TRACE_LIFT_PART=0.75;
    const started=Date.now();let repeats=0,done=false;teleStart('magic',{target:p.magic.word});if(!masteredWords.has(p.magic.word))void phonics.word(p.magic.word);
    // The reminder only comes after real silence: every tap (an attempt) restarts the wait.
    let lastTry=0;btn.addEventListener('click',()=>{lastTry=Date.now();},true);
-   const nudge=()=>later(()=>{if(done||my!==turn||repeats>=IDLE_REPEATS)return;if(Date.now()-lastTry<IDLE_REPEAT_MS||btn.classList.contains('listening')||btn.classList.contains('thinking'))return nudge();repeats++;teleHint(1);btn.classList.remove('bk-nudge');void btn.offsetWidth;btn.classList.add('bk-nudge');nudge();},IDLE_REPEAT_MS); // a soft glow, never a spoken "Can you read it?" (Alex 2026-10-02: stressful)
+   const nudge=()=>later(()=>{if(done||my!==turn||repeats>=IDLE_REPEATS)return;if(Date.now()-lastTry<IDLE_REPEAT_MS||btn.classList.contains('listening')||btn.classList.contains('thinking'))return nudge();repeats++;teleHint(1);btn.classList.remove('bk-nudge');void btn.offsetWidth;btn.classList.add('bk-nudge');nudge();},IDLE_REPEAT_MS); // Keep reminders quiet.
    // The page has usually just asked "can you read it?": then it is not asked again.
    const asked=/read it\??/i.test((p.say||[]).map(l=>l.text).join(' ').slice(-80));
    // With a microphone, the word itself is the button he taps to read it aloud.
