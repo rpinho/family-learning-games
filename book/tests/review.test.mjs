@@ -1,3 +1,4 @@
+import {findChrome,chromeSkip} from '../../scripts/chrome.mjs';
 import {certifyTestChapter} from './episode-test-helpers.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -22,7 +23,7 @@ test('review generation preserves live chapter, saves, profiles and learners; us
  assert.deepEqual(await readFile(before.file),live);assert.deepEqual(await readFile(join(paths.learner,'young.json')),learner);assert.deepEqual(await readFile(paths.profiles),profile);assert.deepEqual(await readFile(join(paths.data['number-park'],'young.json')),save);
  assert.equal((await gen('young',{paths,profiles,date,review:true})).skipped,true);
 });
-test('request changes are retained on redo and applied to writer; stale approval refused, failed redo preserves draft',async()=>{
+test('request changes are retained on redo and applied to writer; stale approval refused, failed redo preserves draft',{skip:findChrome()?false:chromeSkip},async()=>{
  const {paths,profiles}=await fixture(),r=await gen('young',{paths,profiles,date,review:true}),revision=r.chapter.meta.review.revision;
  await requestChanges({book:paths.book,player:'young',date,revision,note:'Use a warm meadow ending.'});assert.equal((await readJSON(r.file)).meta.review.state,'changes');
  const before=await readFile(r.file);await assert.rejects(generateOne('young',{paths:{...paths,python:'false'},profiles,date,review:true,force:true,noLLM:true,now:NOW,log:()=>{}}));assert.deepEqual(await readFile(r.file),before);
