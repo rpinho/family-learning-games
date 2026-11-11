@@ -83,7 +83,15 @@ export function worldService({bookDir,config,book,authorized}){
   profiles[player]={...profiles[player],learner:{...compiled,literacy:compiled.literacy||raw.literacy||{},math:{...(compiled.math||{}),...(raw.math||{})}}};
  }});
  const lines=player=>recordedWorldLines(bookDir,definitions[player],profiles[player]);
- return {async available(player){await learnerReady;const date=book.today?.()||new Date().toISOString().slice(0,10);return (await worldEpisodes(bookDir,player,{date,base:worldDefinition(profiles[player]||{})}))?.episode.date===date;},async preview(player){await learnerReady;return worldDefinition(profiles[player]||config.players.find(p=>p.id===player)||{}).id;},async handle(req,res,u){
+ async function worldArt(definition,player){
+  const {ROOMS}=definition;
+    const generic=JSON.parse(await readFile(join(here,'public','book-art','library.json'),'utf8')),layouts=JSON.parse(await readFile(join(here,'book-art-layouts.json'),'utf8'));
+    const additions=JSON.parse(await readFile(join(here,'book-art-additions.json'),'utf8'));const lib=applyBackgroundLayouts(mergeArtLibrary(mergeArtLibrary(generic,additions),await book.library()),layouts),actors=[...new Set([player,...Object.values(ROOMS).map(r=>r.friend)])].filter(id=>lib.actors?.[id]).map(id=>({id,pose:id===player&&lib.actors[id].poses?.stand?'stand':'idle'}));
+    const art=artFor(Object.entries(ROOMS).map(([id,r])=>({scene:{bg:r.bg||id,actors,props:['chest','presents','ball','star',...['rook','knight','pawn','bishop'].flatMap(p=>['chess-black-'+p,'chess-white-'+p])].map(id=>({id,n:1}))},beat:id==='chess-courtyard'?{kind:'puzzle',variant:'captures',captures:{hero:['rook','knight','pawn']}}:undefined})),lib);
+  return art;
+ }
+ const artReady=(art,definition,player)=>Object.entries(definition.ROOMS).every(([id,r])=>!!art.backgrounds[r.bg||id])&&!!art.actors[player];
+ return {async ready(player){await learnerReady;const base=worldDefinition(profiles[player]||config.players.find(p=>p.id===player)||{}),date=book.today?.()||new Date().toISOString().slice(0,10),episodes=await worldEpisodes(bookDir,player,{date,base}),definition=episodes?.episode.date===date?episodes.definition:base;return artReady(await worldArt(definition,player),definition,player);},async available(player){await learnerReady;const date=book.today?.()||new Date().toISOString().slice(0,10);return (await worldEpisodes(bookDir,player,{date,base:worldDefinition(profiles[player]||{})}))?.episode.date===date;},async preview(player){await learnerReady;return worldDefinition(profiles[player]||config.players.find(p=>p.id===player)||{}).id;},async handle(req,res,u){
   const pages={'/world':['world.html','text/html'],'/world.mjs':['world.mjs','text/javascript'],'/world.css':['world.css','text/css'],'/world-model.mjs':['world-model.mjs','text/javascript'],'/world-icons.mjs':['world-icons.mjs','text/javascript'],'/world-definitions.mjs':['world-definitions.mjs','text/javascript'],'/world-episode.mjs':['world-episode.mjs','text/javascript'],'/world-progress.mjs':['world-progress.mjs','text/javascript']};
   if(pages[u.pathname]){if(req.method!=='GET')return send(res,405,{error:'Read only.'});const [name,type]=pages[u.pathname];res.writeHead(200,{'Content-Type':type+'; charset=utf-8','Cache-Control':'no-store','X-Robots-Tag':'noindex'});res.end(await readFile(join(here,'public',name)));return;}
   if(!['/api/world','/api/world/voice'].includes(u.pathname))return false;
@@ -101,9 +109,7 @@ export function worldService({bookDir,config,book,authorized}){
   try{
    if(req.method==='GET'&&u.pathname==='/api/world'){
     // A newly painted room can be in the release library before it reaches the household manifest.
-    const generic=JSON.parse(await readFile(join(here,'public','book-art','library.json'),'utf8')),layouts=JSON.parse(await readFile(join(here,'book-art-layouts.json'),'utf8'));
-    const additions=JSON.parse(await readFile(join(here,'book-art-additions.json'),'utf8'));const lib=applyBackgroundLayouts(mergeArtLibrary(mergeArtLibrary(generic,additions),await book.library()),layouts),actors=[...new Set([player,...Object.values(ROOMS).map(r=>r.friend)])].filter(id=>lib.actors?.[id]).map(id=>({id,pose:id===player&&lib.actors[id].poses?.stand?'stand':'idle'}));
-    const art=artFor(Object.entries(ROOMS).map(([id,r])=>({scene:{bg:r.bg||id,actors,props:['chest','presents','ball','star',...['rook','knight','pawn','bishop'].flatMap(p=>['chess-black-'+p,'chess-white-'+p])].map(id=>({id,n:1}))},beat:id==='chess-courtyard'?{kind:'puzzle',variant:'captures',captures:{hero:['rook','knight','pawn']}}:undefined})),lib);
+    const art=await worldArt(definition,player);
     if(Object.values(ROOMS).some(r=>!art.backgrounds[r.bg||Object.keys(ROOMS).find(id=>ROOMS[id]===r)])||!art.actors[player])return send(res,503,{error:'This world needs its reviewed Book paintings and hero cut-out.'});
     return send(res,200,{state:await store.read(player,savePreview,definition),art,definition:{...definition,TOYS:worldToys(definition)},lines:await episodeLines(),name:config.players.find(p=>p.id===player).name,preview:review||futurePreview});
    }

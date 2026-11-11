@@ -54,7 +54,7 @@ curl --fail 'http://localhost:4810/api/chess?player=admin'
 curl --fail http://localhost:4810/onboarding
 ```
 
-Verify Family setup in a browser: the adult gate must precede private reads/writes, add a **fictional child only in an isolated test data root**, leave photos empty, save, return to Games, and confirm its name. Reopen setup and edit it; restart and verify it persists. In a real family installation, let the grown-up enter their data and confirm it privately. Verify each embedded game and its API using the route suffixes above. Optional World previews require a reviewed painting library and may report 503 until supplied; the separate fictional showcase is not household setup.
+Verify Family setup in a browser: the adult gate must precede private reads/writes, add a **fictional child only in an isolated test data root**, leave photos empty, save, return to Games, and confirm its name. Reopen setup and edit it; restart and verify it persists. In a real family installation, let the grown-up enter their data and confirm it privately. Verify each embedded game and its API using the route suffixes above. World is hidden until its reviewed painting library and hero art exist. The separate fictional pastel showcase is not household setup. The book card explains optional chapter setup; the hunt card is hidden until hunts exist.
 
 ## Enable the nightly quest writer (optional)
 
@@ -71,15 +71,17 @@ Complete the browser’s **ChatGPT** sign-in to use eligible subscription access
 From the repository root, first verify without model or voice calls, then run the subscribed writer:
 
 ```sh
-# Local template smoke check; no text model or local voice installation required:
+# Local generation/cover smoke check; no text model or voice installation required:
 BOOK_BACKEND=none npm run book:nightly -- --no-llm
 # Subscription-backed generation (override the model if needed):
 BOOK_BACKEND=codex BOOK_CODEX_MODEL=gpt-6-sol npm run book:nightly -- --force
 ```
 
-The second command replaces the local smoke-check chapter with a model-written one; scheduled runs do not use `--force`.
+The smoke check writes tomorrow’s quest directly, not a review draft. It will not appear on **Review tomorrow’s Book**. To inspect its cover, open `http://localhost:4810/?player=admin#book/CHILD_ID/YYYY-MM-DD`, replacing the ID from `/api/config` and date from the command output. Playing beyond **Let’s go!** requires a reviewed local painting library and hero art; the smoke check does not create them. For a playable public pastel story example, run `node docs/showcase/demo-server.mjs` and open `http://localhost:5710/book-demo`. This separate demo does not use household data.
 
-`book:nightly` shares the launcher’s `.data/` default, writes tomorrow’s Book/quest episode for every onboarded child, and disables voice rendering so a fresh installation needs no Python speech environment. Inspect the resulting `book/<child>/<date>.json` privately, confirm `meta.source` is the selected model rather than `template` or `deterministic quest fallback`, and preview from **Grown-ups → Watch**. Failed/unavailable providers can fall back to a template; a successful exit alone does not prove the subscription was used. The host must stay awake. The older `book/nightly.sh` also renders local voices and hunts; use it only after separately installing its voice dependencies.
+The second command replaces the smoke-check quest with a model-written one; scheduled runs do not use `--force`. It also needs the optional art setup for play.
+
+`book:nightly` shares the launcher’s `.data/` default, writes tomorrow’s Book/quest episode for every onboarded child, and disables voice rendering so a fresh installation needs no Python speech environment. Inspect the resulting `book/<child>/<date>.json` privately, confirm `meta.source` is the selected model rather than `template` or `deterministic quest fallback`, and inspect the cover using the dated Admin preview above. **Grown-ups → Watch** selects today’s or the latest chapter, not necessarily tomorrow’s. Failed/unavailable providers can fall back to a template; a successful exit alone does not prove the subscription was used. The host must stay awake. The older `book/nightly.sh` also renders local voices and hunts; use it only after separately installing its voice dependencies.
 
 To schedule on macOS/Linux, create a private executable wrapper **outside the repository**. Replace the repository and Node paths with those you verified (`command -v node`); include your explicit `FAMILY_DEPLOY_ROOT` if you use an external root. For example:
 
@@ -119,7 +121,7 @@ First name/nickname and age/grade personalise the Book without needing a birthda
 - Individual games can use their own data environment variables; inspect existing configuration before changing it. Never point a new/test installation at another household's saves.
 - If ports are occupied, do not kill unrelated processes. Use a free seven-port block: `BASE_PORT` selects the first existing-game port; the hub uses one port below it (or `HUB_PORT`). Provide the adjusted single hub URL.
 - If setup fails, report the actual failing command. Do not claim installation succeeded because cloning succeeded. Do not ignore build failures and start stale bundles.
-- `npm test` runs the six app suites and hub tests sequentially; some tests use fixed isolated ports. Build before testing. For code changes, run the relevant tests and `npm run check:privacy` before any public commit.
+- `npm test` runs all six app, hub, Book and script suites sequentially and reports every suite even after a failure. Browser checks use `CHROME=/path/to/chrome npm test` or discover an installed Chrome; they skip with a message when none exists. Optional privacy-tool tests skip when their documented tools are absent. Publication gates still require those tools; some tests use fixed isolated ports. Build before testing. For code changes, run the relevant tests and `npm run check:privacy` before any public commit.
 
 ## Publication boundaries
 

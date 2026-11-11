@@ -1,16 +1,17 @@
+import {findChrome,chromeSkip} from '../../scripts/chrome.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {spawn} from 'node:child_process';
 import {readFile,mkdtemp,rm} from 'node:fs/promises';
 import {join,extname} from 'node:path';
-import {homedir,tmpdir} from 'node:os';
+import {tmpdir} from 'node:os';
 import {SMALL} from '../public/world-definitions.mjs';
 import {createWorldModel} from '../public/world-model.mjs';
 import {guardChrome} from '../scripts/headless-guard.mjs';
 import {worldLines} from '../world-service.mjs';
 
-test('cropped painted doors remain visible and accept a physical pointer at every viewport', {timeout:90000},async()=>{
+test('cropped painted doors remain visible and accept a physical pointer at every viewport', {timeout:90000,skip:findChrome()?false:chromeSkip},async()=>{
  const image='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="160"><rect width="100" height="160" fill="gold"/></svg>');
  const backgrounds=Object.fromEntries(Object.entries(SMALL.ROOMS).map(([id,r])=>[r.bg||id,{url:image,size:[3000,1000],ground:.97,groundStart:.5}]));
  const actors=Object.fromEntries(['hero',...new Set(Object.values(SMALL.ROOMS).map(r=>r.friend))].map(id=>[id,{name:id,h:.4,poses:{idle:{url:image,ar:.44}}}]));
@@ -20,7 +21,7 @@ test('cropped painted doors remain visible and accept a physical pointer at ever
  const path=req.url.split('?')[0]==='/world'?'world.html':req.url.split('?')[0].slice(1);if(path.includes('..'))throw Error('Invalid path');res.setHeader('Content-Type',({'.mjs':'text/javascript','.css':'text/css','.html':'text/html'})[extname(path)]||'application/octet-stream');res.end(await readFile(new URL('../public/'+path,import.meta.url)));}catch{res.writeHead(404);res.end();}});
  await new Promise(r=>server.listen(0,'127.0.0.1',r));
  const profile=await mkdtemp(join(tmpdir(),'world-geometry-'));let chrome,ws;
- try{chrome=guardChrome(spawn(process.env.CHROME||join(homedir(),'.local/share/family-games/bin/test-chrome'),['--headless=new','--remote-debugging-port=0','--user-data-dir='+profile,'--no-first-run','--mute-audio'],{stdio:'ignore'}));
+ try{chrome=guardChrome(spawn(findChrome(),['--headless=new','--remote-debugging-port=0','--user-data-dir='+profile,'--no-first-run','--mute-audio'],{stdio:'ignore'}));
  const sleep=ms=>new Promise(r=>setTimeout(r,ms));let port;for(let i=0;i<100;i++){try{port=(await readFile(join(profile,'DevToolsActivePort'),'utf8')).split('\n')[0];break;}catch{await sleep(50);}}assert.ok(port,'Chrome did not start');
  let target;for(let i=0;i<100&&!target;i++){target=(await fetch('http://127.0.0.1:'+port+'/json').then(r=>r.json())).find(t=>t.type==='page');if(!target)await sleep(50);}assert.ok(target,'Chrome did not create a page');ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise(r=>ws.onopen=r);let seq=0;const browserErrors=[];const pending=new Map();ws.onmessage=e=>{const v=JSON.parse(e.data);if(v.id){pending.get(v.id)?.(v);pending.delete(v.id);}if(v.method==='Runtime.exceptionThrown')browserErrors.push(v.params.exceptionDetails.exception?.description||v.params.exceptionDetails.text);};
  const send=(method,params={})=>new Promise((resolve,reject)=>{const id=++seq,t=setTimeout(()=>reject(Error('CDP timeout '+method)),10000);pending.set(id,v=>{clearTimeout(t);v.error?reject(Error(JSON.stringify(v.error))):resolve(v.result);});ws.send(JSON.stringify({id,method,params}));});

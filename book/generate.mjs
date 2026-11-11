@@ -147,7 +147,7 @@ export async function writeAdventure(plan,{sk,kit,ask=askModel,log=()=>{},...opt
   if(!firstLint.length)firstLint.push(...issues);let styleFixed=false;try{const fixed=softFixAdventure(story,plan),fl=lintAdventure(fixed,sk,kit,plan,lintOpts);if(writeStoryScore(fl)<writeStoryScore(issues)){story=fixed;issues=fl;styleFixed=true;}}catch{}const c={story,issues,source:r.source+(attempt?' (adventure repaired '+attempt+')':' (adventure)')+(styleFixed?' (style fixed)':'')};cands.push(c);
   if(!issues.length)return {...c,lint:firstLint};log(`adventure lint: ${issues.join(' | ')}`);
  }
- // A missing flag payoff is the one rule the full-story repairs keep missing (2026-10-03: both boys' 10-04 drafts failed
+ // A missing flag payoff is the one rule the full-story repairs keep missing (2026-10-03: both players' 10-04 drafts failed
  // all repairs on "node ending: flag X needs an if line"). Ask for just those lines, check them with the same rules, slot them in.
  {const b=cands.slice().sort((a,b)=>writeStoryScore(a.issues)-writeStoryScore(b.issues))[0];
   if(b){const fixed=await repairFlagPayoffs(b.story,b.issues,{ask,log});

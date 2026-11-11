@@ -4,6 +4,8 @@ import {mkdtempSync,readFileSync,writeFileSync,rmSync,existsSync,statSync,mkdirS
 import {execFileSync,spawnSync} from 'node:child_process';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
+import {CATALOG} from '../../hub/public/catalog.mjs';
+import {publicTitles} from '../public-titles.mjs';
 import {familyTextIssues} from '../public-family-text.mjs';
 import {privateGitleaksConfig,privateTermScan} from '../public-private-terms.mjs';
 import {runGate} from '../public-privacy.mjs';
@@ -67,7 +69,7 @@ test('temporary private rules and reports stay local, are redacted, and are remo
 });
 test('real custom gitleaks rules catch removed private terms in earlier PR commits',t=>{
  const binary=existsSync('/opt/homebrew/bin/gitleaks')?'/opt/homebrew/bin/gitleaks':'gitleaks';
- assert.equal(spawnSync(binary,['version']).status,0,'Install gitleaks to run this integration test');
+ if(spawnSync(binary,['version']).status!==0)return t.skip('Optional gitleaks integration tool unavailable; install gitleaks to run this test.');
  const root=mkdtempSync(join(tmpdir(),'family-history-test-'));t.after(()=>rmSync(root,{recursive:true,force:true}));
  const git=a=>execFileSync('git',a,{cwd:root});git(['init','-q']);git(['config','user.name','Test']);git(['config','user.email','test@example.invalid']);
  writeFileSync(join(root,'safe.txt'),'safe');git(['add','.']);git(['commit','-qm','Synthetic base']);const base=git(['rev-parse','HEAD']).toString().trim();
@@ -97,4 +99,14 @@ test('CI feature range survives force pushes and retains removed leaks on subseq
  }
  assert.equal(select(prior,{PR_BASE:base,GITHUB_REF:'refs/pull/3/merge'}),base);
  assert.equal(select(prior,{GITHUB_REF:'refs/heads/main'}),prior);
+});
+
+// The original failure was a product title in ordinary release prose.
+test('commit messages accept complete catalog and README titles while retaining name rules',()=>{
+ const file='commit/'+ 'a'.repeat(40)+'/message';
+ assert.deepEqual(familyTextIssues(file,'chapter with counting and a choice, '+CATALOG.find(item=>item.id==='chess').name+' and '+CATALOG.find(item=>item.id==='number-park').name+', a new'),[]);
+ for(const title of publicTitles)assert.deepEqual(familyTextIssues(file,title),[],title);
+ for(const text of [unknown+' played Rook Academy',CATALOG.find(item=>item.id==='number-park').name+' with '+unknown,unknown+"’s Rook Academy",'Rook Academy @'+novel,novel+' said “Hello” near Rook Academy'])assert.ok(familyTextIssues(file,text).length,text);
+ assert.ok(textIssues(file,Buffer.from('Rook Academy'),['Rook']).some(hit=>hit.includes('private denylist')));
+ assert.ok(familyTextIssues('example.md',CATALOG.find(item=>item.id==='number-park').name).length,'ordinary source prose keeps existing name rules');
 });

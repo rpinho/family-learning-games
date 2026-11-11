@@ -8,15 +8,24 @@ const command=process.argv[2],children=[];
 const privateRoot=resolve(process.env.FAMILY_DEPLOY_ROOT||resolve(root,'.data'));
 const familyEnv={...process.env,FAMILY_DEPLOY_ROOT:privateRoot,FAMILY_DATA:process.env.FAMILY_DATA||resolve(privateRoot,'hub'),FAMILY_ASSETS3D:process.env.FAMILY_ASSETS3D||resolve(privateRoot,'assets3d'),WORD_ARCADE_AUDIO:process.env.WORD_ARCADE_AUDIO||resolve(privateRoot,'word-arcade','audio')};
 const [major,minor]=process.versions.node.split('.').map(Number);if(major<22||major===22&&minor<13)throw Error('Please install Node.js 22.13 or newer, then run npm run play again.');
-function run(exe,args,game,env=process.env){return new Promise((ok,fail)=>{const p=spawn(exe,args,{cwd:game==='hub'||game==='book'?resolve(root,game):resolve(root,'games',game),stdio:'inherit',env,shell:process.platform==='win32'&&exe==='npm'});p.on('error',fail);p.on('exit',code=>code===0?ok():fail(Error(game+' exited '+code)));});}
+function run(exe,args,game,env=process.env){return new Promise((ok,fail)=>{const p=spawn(exe,args,{cwd:['hub','book','scripts'].includes(game)?resolve(root,game):resolve(root,'games',game),stdio:'inherit',env,shell:process.platform==='win32'&&exe==='npm'});p.on('error',fail);p.on('exit',code=>code===0?ok():fail(Error(game+' exited '+code)));});}
 if(command==='setup'){
  for(const game of ['word-arcade','number-park']){await run('npm',['ci'],game);await run('npm',['run','build'],game);}
  console.log('Ready. Run npm start.');
 }else if(command==='test'){
- // Run app suites sequentially: several existing integration tests share fixture ports.
- for(const [game]of games){const files=(await readdir(resolve(root,'games',game,'tests'))).filter(f=>f.endsWith('.test.mjs')).map(f=>'tests/'+f);await run(process.execPath,['--test','--test-concurrency=4',...files],game);}
- const hubTests=(await readdir(resolve(root,'hub','tests'))).filter(f=>f.endsWith('.test.mjs')).map(f=>'tests/'+f);await run(process.execPath,['--test','--test-concurrency=4',...hubTests],'hub');
- const bookTests=(await readdir(resolve(root,'book','tests'))).filter(f=>f.endsWith('.test.mjs')).map(f=>'tests/'+f);await run(process.execPath,['--test','--test-concurrency=4',...bookTests],'book');
+ // Run sequentially: existing integration tests share fixture ports. Report every suite.
+ const results=[];
+ for(const suite of [...games.map(([game])=>game),'hub','book','scripts']){
+  try{
+   const dir=resolve(root,...(['hub','book','scripts'].includes(suite)?[suite]:['games',suite]),'tests');
+   const files=(await readdir(dir)).filter(f=>f.endsWith('.test.mjs')).map(f=>'tests/'+f);
+   await run(process.execPath,['--test','--test-concurrency=4',...files],suite);
+   results.push({suite,passed:true});
+  }catch(error){console.error(error.message);results.push({suite,passed:false});}
+ }
+ console.log('\nSuite results:');
+ for(const r of results)console.log(`${r.passed?'PASS':'FAIL'} ${r.suite}`);
+ if(results.some(r=>!r.passed))process.exitCode=1;
 }else if(command==='start'){
  let stopping=false;
  function stop(code=0){if(stopping)return;stopping=true;for(const p of children)p.kill('SIGTERM');setTimeout(()=>process.exit(code),700);}

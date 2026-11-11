@@ -4,7 +4,7 @@ import {Button} from '@/components/ui/button';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from '@/components/ui/dialog';
 import {NativeSelect,NativeSelectOption} from '@/components/ui/native-select';
 import './parent-settings.css';
-const names:Record<string,string>={beginner:'Beginner',explorer:'Explorer',admin:'Admin · Alex'};
+const names:Record<string,string>={beginner:'Beginner',explorer:'Explorer',admin:'Admin'};
 const STAGES:Record<string,string>={show:'counts shown',hide:'counts hidden (Help shows them)',own:'says the answer first'};
 // Today's summary for the grown-ups: read-only, from this child's own saves.
 function Today({player,open}:{player:string,open:boolean}){

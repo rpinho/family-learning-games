@@ -53,7 +53,7 @@ export function prepareProfile(p){
  }
  return p;
 }
-export const freshProfile=id=>({id,name:id==='admin'?'Alex':String(id).split('_')[0]==='beginner'?'Beginner':'Explorer',revision:0,xp:0,lessons:0,completed:{},recent:[],history:[],session:null,drawing:[],guided:{},ceiling:String(id).split('_')[0]==='explorer'?200:13});
+export const freshProfile=id=>({id,name:id==='admin'?'Admin':String(id).split('_')[0]==='beginner'?'Beginner':'Explorer',revision:0,xp:0,lessons:0,completed:{},recent:[],history:[],session:null,drawing:[],guided:{},ceiling:String(id).split('_')[0]==='explorer'?200:13});
 export const random=seed=>()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
 const shuffle=(a,r)=>a.map(v=>[r(),v]).sort((a,b)=>a[0]-b[0]).map(v=>v[1]);
 export function makeQuestion(p,game,round=0){

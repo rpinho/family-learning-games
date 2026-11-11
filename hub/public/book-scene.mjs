@@ -89,7 +89,7 @@ export function layoutActors(actors,art,{width=16,height=9,ground=0.93,maxShare=
 }
 // ---- Composition (2026-09-28): one size system for every page, phone portrait, landscape and Chromebook ----
 // Everyone is sized from ONE unit, U = the SMALLER screen side x k (so a scene reads the same turned either way; a
-// tall phone's extra height is sky, not smaller people). Heights are relative to Dad (1.0): Dad > Mom > the boys >
+// tall phone's extra height is sky, not smaller people). Heights are relative to Dad (1.0): Dad > Mom > the children >
 // people and props share one row with a gap between neighbours, never overlapping (the row shrinks, and props give
 // way first, when it does not fit). A friend who flies is lifted. Pure: sizes in, fractions of the screen out.
 export const PEOPLE={dad:1,'grown-up':1,mom:0.93,explorer:0.82,hero:0.8,beginner:0.74};

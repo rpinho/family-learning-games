@@ -1,10 +1,11 @@
+import {findChrome,chromeSkip} from '../../scripts/chrome.mjs';
 import {waitForPageTarget} from '../../hub/scripts/chrome-target.mjs';
 import {waitFor,STEP_MS,ROOM_LOAD_MS,CDP_COMMAND_MS} from './audit-wait.mjs';
 // Real renderer and service, pointer input and recorded playback. All progress lives in a disposable Book root.
 import {createServer} from 'node:http';
 import {spawn} from 'node:child_process';
 import {mkdtemp,mkdir,writeFile,readFile,symlink,rm} from 'node:fs/promises';
-import {tmpdir,homedir} from 'node:os';
+import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {guardChrome} from '../../hub/scripts/headless-guard.mjs';
@@ -14,6 +15,7 @@ import {createWorldModel} from '../../hub/public/world-model.mjs';
 import {measureWorldGeometry,worldGeometryIssues} from '../../hub/scripts/world-geometry.mjs';
 const publicDir=fileURLToPath(new URL('../../hub/public/',import.meta.url)),pause=ms=>new Promise(r=>setTimeout(r,ms));
 export async function auditEpisode(ch,{paths,library,viewports=[[1366,768],[390,844]]}={}){
+ const executable=findChrome();if(!executable)throw Error(chromeSkip);
  const root=await mkdtemp(join(tmpdir(),'quest-audit-')),bookDir=join(root,'book'),player=ch.player;let chrome,ws,server;const issues=[],frames=[];
  try{
   await mkdir(join(bookDir,player,'review'),{recursive:true});await mkdir(join(bookDir,'world'),{recursive:true});
@@ -25,7 +27,7 @@ export async function auditEpisode(ch,{paths,library,viewports=[[1366,768],[390,
   const service=worldService({bookDir,config,book:{...book,library:async()=>library},authorized:()=>true});
   server=createServer(async(req,res)=>{try{const u=new URL(req.url,'http://localhost');if(u.pathname==='/api/book/review/gate'){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({unlocked:true}));return;}if(await service.handle(req,res,u)!==false)return;if(await book.handle(req,res,u)!==false)return;const name=u.pathname.slice(1);if(!/^[a-z0-9/-]+\.(mjs|css|m4a|svg|woff2)$/.test(name)||name.includes('..')){res.writeHead(404);res.end();return;}const bytes=await readFile(join(publicDir,name));res.writeHead(200,{'Content-Type':name.endsWith('.mjs')?'text/javascript':name.endsWith('.css')?'text/css':'application/octet-stream'});res.end(bytes);}catch(e){res.writeHead(500);res.end(e.message);}});
   await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port,query=new URLSearchParams({player,preview:'1',review:'1',date:ch.date});
-  chrome=guardChrome(spawn(process.env.CHROME||join(homedir(),'.local/share/family-games/bin/test-chrome'),['--headless=new','--remote-debugging-port=0','--user-data-dir='+join(root,'chrome'),'--mute-audio','--autoplay-policy=no-user-gesture-required','--no-first-run'],{stdio:'ignore'}));
+  chrome=guardChrome(spawn(executable,['--headless=new','--remote-debugging-port=0','--user-data-dir='+join(root,'chrome'),'--mute-audio','--autoplay-policy=no-user-gesture-required','--no-first-run'],{stdio:'ignore'}));
   let port;for(let i=0;i<100;i++){try{port=(await readFile(join(root,'chrome','DevToolsActivePort'),'utf8')).split('\n')[0];break;}catch{await pause(100);}}if(!port)throw Error('Test Chrome did not start');
   const target=await waitForPageTarget(()=>fetch('http://127.0.0.1:'+port+'/json').then(r=>r.json()));ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((ok,no)=>{ws.onopen=ok;ws.onerror=no;});let seq=0;const pending=new Map(),errors=[];
   ws.onmessage=e=>{const v=JSON.parse(e.data);if(v.id){pending.get(v.id)?.(v);pending.delete(v.id);}if(v.method==='Runtime.exceptionThrown')errors.push(v.params.exceptionDetails.exception?.description||'Browser error');};

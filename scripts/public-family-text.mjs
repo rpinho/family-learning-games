@@ -1,3 +1,4 @@
+import {titleSpans} from './public-titles.mjs';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 
@@ -28,6 +29,7 @@ const familyPatterns=[
 // Reviews are bound to exact public lines and a rule, never whole paths. A name
 // review may only document a non-person homonym; people belong in the allowlist.
 export function familyTextFindings(file,text,{filename=false}={}){
+ const titles=/^commit\/[a-f0-9]+\/message$/.test(file)?titleSpans(text):[];
  const source=file.replace(/@[a-f0-9]{12}$/,'');
  const lines=text.split('\n'),out=[],seen=new Set(),starts=[0],digests=new Map();
  for(let i=0;i<text.length;i++)if(text[i]==='\n')starts.push(i+1);
@@ -44,6 +46,7 @@ export function familyTextFindings(file,text,{filename=false}={}){
   out.push({line,endLine,rule,value});
  };
  for(const hit of text.matchAll(new RegExp('(?<![\\p{L}\\p{M}0-9])'+word+'(?![\\p{L}\\p{M}0-9])','gu'))){
+  if(titles.some(([start,end])=>hit.index>=start&&hit.index+hit[0].length<=end))continue;
   const token=hit[0].toLowerCase();if(!nameCache.has(token))nameCache.set(token,names.has(hash(token)));
   const known=nameCache.get(token)||token.split(/[-’']/u).some(part=>names.has(hash(part)));
   if(known&&!allowed.has(token)&&!/^['’](?:t|re|ll|ve|d|m)\b/.test(text.slice(hit.index+hit[0].length)))add(hit,'unapproved person-like name',hit[0]);

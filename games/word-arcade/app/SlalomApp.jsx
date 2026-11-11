@@ -38,7 +38,7 @@ export default function SlalomApp(){
   return()=>{document.removeEventListener('visibilitychange',hidden);voice.current?.stop();voice.current?.player?.remove();audio.current?.dispose();};
  // eslint-disable-next-line react-hooks/exhaustive-deps
  },[]);
- const name=id==='admin'?'Admin · Alex':p?.name||'';
+ const name=id==='admin'?'Admin':p?.name||'';
  return <div className="slalom-app" onPointerDownCapture={()=>void audio.current?.unlock()}>
   {id&&<div className="active-player-banner" data-player={id} aria-label="Active player">{name}</div>}
   {(phase==='boot'||!p)&&<Boot text={error?`${error} Tap Games and try again.`:'Waxing the skis…'}/>}

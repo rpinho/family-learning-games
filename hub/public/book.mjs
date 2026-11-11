@@ -180,7 +180,7 @@ export function mountBook(main,{player,book,event=()=>{},onDone=()=>{},preview=f
  function propHTML(list){return list.map(r=>{const P=art.props[r.id];return P?`<div class="bk-prop" data-id="${esc(r.id)}" style="left:${(r.left*100).toFixed(2)}%;width:${(r.width*100).toFixed(2)}%;height:${(r.height*100).toFixed(2)}%;bottom:${(r.bottom*100).toFixed(2)}%"><img src="${esc(P.url)}" alt=""></div>`:'';}).join('');}
  function trainHTML(scene,W,H,{ground=0.93,maxHeight=1,beat=false,keepOut=[],drive=false}={}){
   // The train is sized from the same unit as everyone (about Dad's height), so a scene with a train
-  // reads the same turned either way; riders keep the family's relative heights (Dad > Mom > the boys > the toys).
+  // reads the same turned either way; riders keep the family's relative heights (Dad > Mom > the children > the toys).
   const U=sceneUnit({width:W,height:H,beat,maxHeight,tallest:1}),rel={...art,actors:Object.fromEntries(Object.entries(art.actors).map(([k,A])=>[k,{...A,h:relHeight(k,A)}]))};
   const T=art.props.train,L=layoutTrain(scene.actors,rel,{width:W,height:H,bottom:1-ground+0.02,maxHeight:Math.min(0.5,maxHeight*0.75,U*0.95/H),keepOut,preferRight:drive});sky=Math.max(0,1-(1-ground+0.02)-(L?.train.height||0)*1.4);
   if(L){

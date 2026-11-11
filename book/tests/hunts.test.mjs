@@ -16,7 +16,7 @@ test('Four hunts, three letters a day, every line clean: one letter sound each, 
   if(h.kind==='sound')for(const x of h.hints)assert.ok(THINGS[h.letter.toLowerCase()].some(([w])=>w===x.word));}
 });
 
-test('every letter, both boys: no word said twice in a row, a/an right', async()=>{
+test('every letter, both players: no word said twice in a row, a/an right', async()=>{
  const {dayHunts,THINGS}=await import('../hunts.mjs');const {repeatedWords}=await import('../lint.mjs');
  const whos=[{greet:'Ahoy, Beginner!',cheer:'Ahoy!',voice:{voice:'bm_fable',speed:1},lower:false},{greet:'Pip-pi! Explorer!',cheer:'Pip!',voice:{voice:'am_adam',speed:1},lower:true}];
  for(const who of whos)for(const k of Object.keys(THINGS).filter(k=>!'xq'.includes(k))){const L=who.lower?k:k.toUpperCase();

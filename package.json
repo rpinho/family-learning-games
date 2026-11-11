@@ -9,7 +9,7 @@
     "play": "npm run setup && npm start",
     "setup": "node scripts/manage.mjs setup",
     "start": "node scripts/manage.mjs start",
-    "test": "node scripts/manage.mjs test && node --test scripts/tests/*.test.mjs",
+    "test": "node scripts/manage.mjs test",
     "check:privacy": "node scripts/check-public-tree.mjs",
     "book:nightly": "node scripts/family-nightly.mjs"
   }

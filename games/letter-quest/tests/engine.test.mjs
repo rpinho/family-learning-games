@@ -41,7 +41,7 @@ test('Lowercase a accepts curve plus stem and legacy closed-oval plus stem',()=>
  assert.equal(assessTrace(GLYPHS.a,[GLYPHS.a[0]]).ok,false);
  assert.equal(assessTrace(GLYPHS.a,GLYPHS.a.map(s=>[...s].reverse())).ok,false);
 });
-test('Both boys explore the alphabet independently of old placement misses',()=>{
+test('Both players explore the alphabet independently of old placement misses',()=>{
  for(const id of ['explorer','beginner']){
  const p=freshProfile(id);p.seq=20;p.placement={index:4,misses:2,letters:['E','T']};
  const observed=new Set();
@@ -113,8 +113,8 @@ test('Failed tracing retries the same letter with a new ID and reduced difficult
  assert.equal(success.ok,true);assert.equal(p.inLesson,1);assert.equal(p.retryTrace,undefined);
  assert.equal(p.history.at(-1).helped,true);
 });
-test('Admin practice starts with Alex; reset preserves settings and invalidates stale challenges',()=>{
- const p=freshProfile('admin');assert.equal(p.name,'Alex');p.seq=13;
+test('Admin practice keeps its fictional spelling rotation; reset preserves settings and invalidates stale challenges',()=>{
+ const p=freshProfile('admin');assert.equal(p.name,'Admin');p.seq=13;
  assert.equal(nextChallenge(p).word,'Alex');
  p.xp=80;p.completed=1;p.revision=15;p.retryTrace='F';p.settings.sound=false;
  const prior=JSON.stringify(p),reset=resetProgress(p);

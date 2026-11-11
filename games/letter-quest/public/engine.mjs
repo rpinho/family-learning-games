@@ -41,7 +41,7 @@ export const KINGDOMS = [
  {name:'Memory Castle',gem:'Emerald',color:'#3fcdb5',icon:'🏰',intro:'Remember a letter. Build a word.'},
  {name:'Reading Rainbow',gem:'Diamond',color:'#a4d7e6',icon:'★',intro:'Small steps have brought you a long way.'}
 ];
-export function freshProfile(id='explorer') {return {id,name:String(id).split('_')[0]==='beginner'?'Beginner':id==='demo'?'Explorer':id==='admin'?'Alex':'Explorer',seq:0,xp:0,gems:0,completed:0,inLesson:0,league:0,leagueBase:0,crowns:0,chests:0,skills:{},history:[],settings:{leftHanded:String(id).split('_')[0]!=='beginner',sound:true},revision:0};}
+export function freshProfile(id='explorer') {return {id,name:String(id).split('_')[0]==='beginner'?'Beginner':id==='demo'?'Explorer':id==='admin'?'Admin':'Explorer',seq:0,xp:0,gems:0,completed:0,inLesson:0,league:0,leagueBase:0,crowns:0,chests:0,skills:{},history:[],settings:{leftHanded:String(id).split('_')[0]!=='beginner',sound:true},revision:0};}
 export function resetProgress(p){return {...freshProfile(p.id),settings:{...p.settings},revision:p.revision+1,ignoreAttemptsThroughRevision:p.ignoreAttemptsThroughRevision||0};}
 export const FAMILY_NAMES=['Explorer','Beginner','Alex','Ada'];
 export const WORDS=[
@@ -159,7 +159,7 @@ function buildChallenge(p){
  const readyForLowercase=[...alphabet].filter(c=>skill(p,`find:${c}`).level>=2).length>=8;
  const chars=advanced&&type==='find'?[...alphabet,...(readyForLowercase?[...alphabet.toLowerCase()]:[])]:unlocked(p);
  if(type==='name'){
-  const first=Math.max(0,FAMILY_NAMES.indexOf(p.name));
+  const first=Math.max(0,FAMILY_NAMES.indexOf(p.id==='admin'?'Alex':p.name));
   const word=FAMILY_NAMES[(first+(p.familyNameRound||0))%FAMILY_NAMES.length];
   const extras=hard?shuffle([...alphabet.toLowerCase()].filter(c=>!word.toLowerCase().includes(c)),r).slice(0,2):[];
   return {id:`family2:${p.revision}:${p.seq}`,type,word,level:hard?2:0,memory:hard,probe:hard,options:shuffle([...word,...extras],r)};

@@ -4,7 +4,7 @@ import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {join} from 'node:path';
 import {tmpdir,homedir} from 'node:os';
-import {execFileSync} from 'node:child_process';
+import {execFileSync,spawnSync} from 'node:child_process';
 import {textIssues,metadataFindings,runGate,loadPolicy} from '../public-privacy.mjs';
 import {secretScan} from '../public-secrets.mjs';
 
@@ -34,6 +34,8 @@ test('scanner failures and every unverified secret fail closed without raw outpu
  }finally{rmSync(dir,{recursive:true,force:true});}
 });
 test('full gate catches historical identity, untracked file, fake EXIF and transformed private photo',async t=>{
+ const python=process.env.PUBLIC_SYNC_PYTHON||join(homedir(),'.local/share/family-public-sync/venv/bin/python');
+ if(spawnSync(python,['-c','import PIL, numpy, cv2, resvg_py']).status!==0)return t.skip('Optional privacy media tools unavailable; set PUBLIC_SYNC_PYTHON to an interpreter with the documented packages.');
  const root=mkdtempSync(join(tmpdir(),'public-privacy-test-'));t.after(()=>rmSync(root,{recursive:true,force:true}));
  const git=args=>execFileSync('git',args,{cwd:root});git(['init','-q']);git(['config','user.name','Test']);git(['config','user.email','test@example.invalid']);
  writeFileSync(join(root,'safe.txt'),'safe');git(['add','.']);git(['commit','-qm','Synthetic base']);const base=git(['rev-parse','HEAD']).toString().trim();
@@ -43,7 +45,6 @@ test('full gate catches historical identity, untracked file, fake EXIF and trans
  const refs=join(root,'.private'),review=join(root,'.review');mkdirSync(refs);mkdirSync(review);
  const policy=join(root,'.policy.json');writeFileSync(policy,JSON.stringify({denied:[fakeName]}));
  writeFileSync(join(root,'.gitignore'),'.private/\n.review/\n.policy.json\n');
- const python=join(homedir(),'.local/share/family-public-sync/venv/bin/python');
  execFileSync(python,['-c',`from PIL import Image, ImageDraw
 from pathlib import Path
 im=Image.new('RGB',(160,120),'white');d=ImageDraw.Draw(im)

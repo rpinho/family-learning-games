@@ -8,13 +8,13 @@ await Promise.all([mkdir(shots,{recursive:true}),mkdir(tiles,{recursive:true}),m
 const ports=JSON.parse(process.env.SHOWCASE_PORTS||'{"letter-quest":5721,"word-arcade":5722,"number-park":5723,"maze-garden":5724,"three-in-a-row":5725,"target-trail":5726,"hub":5727,"world":5710}');
 const labels=(process.env.SHOWCASE_PRIVATE_LABELS||'').split(',').filter(Boolean);
 const browser=await chromium.launch({executablePath:process.env.CHROME,headless:true,args:['--mute-audio']});
-const chessOnly=Boolean(process.env.SHOWCASE_CHESS_ONLY);
-const clips=(chessOnly||process.env.SHOWCASE_GAMES_ONLY||process.env.SHOWCASE_EXTRAS_ONLY||process.env.SHOWCASE_WORLD_ONLY)?JSON.parse(await readFile(resolve(scratch,'clips.json'))).filter(c=>chessOnly?c.id!=='chess':process.env.SHOWCASE_WORLD_ONLY?!(c.id.startsWith('world-')||c.id.startsWith('book-')):process.env.SHOWCASE_EXTRAS_ONLY||c.id.startsWith('world-')||c.id.startsWith('book-')):[],errors=[],receipts=[];
+const chessOnly=Boolean(process.env.SHOWCASE_CHESS_ONLY),refreshStills=Boolean(process.env.SHOWCASE_REFRESH_STILLS);
+const clips=refreshStills?[]:(chessOnly||process.env.SHOWCASE_GAMES_ONLY||process.env.SHOWCASE_EXTRAS_ONLY||process.env.SHOWCASE_WORLD_ONLY)?JSON.parse(await readFile(resolve(scratch,'clips.json'))).filter(c=>chessOnly?c.id!=='chess':process.env.SHOWCASE_WORLD_ONLY?!(c.id.startsWith('world-')||c.id.startsWith('book-')):process.env.SHOWCASE_EXTRAS_ONLY||c.id.startsWith('world-')||c.id.startsWith('book-')):[],errors=[],receipts=[];
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 let context,page,origin;
 async function fresh(){
  if(context)await context.close();
- context=await browser.newContext({viewport:{width:1280,height:720},deviceScaleFactor:2,recordVideo:{dir:resolve(scratch,'raw-video'),size:{width:1280,height:720}}});
+ context=await browser.newContext({viewport:{width:1280,height:720},deviceScaleFactor:2,...(refreshStills?{}:{recordVideo:{dir:resolve(scratch,'raw-video'),size:{width:1280,height:720}}})});
  await context.route('**/*',async route=>{
   if(new URL(route.request().url()).hostname!=='localhost')return route.abort();
   try{const response=await route.fetch(),type=response.headers()['content-type']||'';
@@ -25,9 +25,9 @@ async function fresh(){
  await context.addInitScript(()=>{speechSynthesis.speak=u=>setTimeout(()=>u.onend?.(),150);speechSynthesis.cancel=()=>{};});
  page=await context.newPage();origin=Date.now();page.setDefaultTimeout(9000);page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
 }
-async function load(game,hash=''){
+async function load(game,hash='',keepHub=false){
  await fresh();const url=`http://localhost:${ports[game]}/?player=admin${hash?'#'+hash:''}`;await page.goto(url);await wait(750);
- if(game==='hub'&&page.frames().length>1){const frame=page.frames().at(-1);await page.goto(frame.url());await wait(650);}
+ if(game==='hub'&&!keepHub&&page.frames().length>1){const frame=page.frames().at(-1);await page.goto(frame.url());await wait(650);}
 }
 async function click(name){await page.getByRole('button',{name,exact:false}).first().click({force:true});await wait(300);}
 async function shot(id){
@@ -62,8 +62,31 @@ async function captureChess(){
  await record('chess',3,[[.4,()=>page.locator('[data-square="d5"]').click()],[1.2,()=>page.locator('[data-square="c7"]').click()],[2,()=>shot('chess-feedback')]]);
 }
 try{
+ if(refreshStills){
+  // Keep the public hub toolbar and native activity toolbar in the requested README stills.
+  await load('hub','maze-garden/trace',true);
+  await page.frames().find(f=>f.parentFrame()).locator('#board').waitFor({state:'visible'});
+  await page.screenshot({path:resolve('docs/media/maze-garden.png'),scale:'css'});
+  await load('hub','dribble-duel/live',true);
+  await page.locator('.live-soccer canvas').waitFor({state:'visible'});
+  await page.locator('.live-soccer canvas').evaluate(e=>e.focus({preventScroll:true}));
+  await page.locator('#restart').click();await wait(300);
+  await page.locator('.live-soccer canvas').evaluate(e=>e.focus({preventScroll:true}));
+  await page.keyboard.down('ArrowLeft');await wait(400);await page.keyboard.up('ArrowLeft');
+  await page.keyboard.down('ArrowUp');await wait(450);await page.keyboard.up('ArrowUp');
+  await page.evaluate(()=>window.scrollTo(0,0));
+  await page.screenshot({path:resolve('docs/media/dribble-duel.png'),scale:'css'});
+  await load('hub','chess',true);await page.setViewportSize({width:1366,height:768});
+  const lesson=page.getByRole('button',{name:'Start Find the forcing move'});if(await lesson.isVisible())await lesson.click();
+  await page.locator('#chess-board').waitFor({state:'visible'});await wait(600);
+  const hint=page.locator('[data-paced-hint]');for(let i=0;i<2&&await hint.count();i++)await hint.click();await wait(300);
+  const rook=page.locator('.rook-replay .rook-puppet');
+  if(!await rook.evaluate(e=>e.classList.contains('public-rook')))throw Error('Expected the public tower companion.');
+  await page.screenshot({path:resolve('docs/media/rook-academy-hint.png'),scale:'css'});
+  console.log('Refreshed the three public hub stills.');
+ }
  if(chessOnly)await captureChess();
- if(!chessOnly){
+ if(!chessOnly&&!refreshStills){
  if(!process.env.SHOWCASE_GAMES_ONLY&&!process.env.SHOWCASE_EXTRAS_ONLY){
  await fresh();await page.goto(`http://localhost:${ports.world}/world?player=hero&session=walk-${Date.now()}`);await page.locator('#world').waitFor({state:'visible'});await wait(750);await shot('world-walk');
  await record('world-walk-talk-map',8,[[.2,()=>page.mouse.click(640,665)],[2.5,()=>page.locator('.actor:not(.hero)').first().click({force:true})],[4.2,()=>shot('world-talk')],[5.3,()=>page.locator('#map-button').click()],[6,()=>shot('world-map')]]);

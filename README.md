@@ -1,12 +1,12 @@
 # Family Learning Games
 
-![Family Learning Games: thirteen games and an illustrated story Book in one self-hosted app](docs/media/social-preview.png)
+![Family Learning Games: fourteen games and an illustrated story Book in one self-hosted app](docs/media/social-preview.png)
 
-**One app. Thirteen games, The Book and fictional demo worlds.** A single home screen brings together reading, numbers, free drawing, mazes, chess, strategy, soccer, and an illustrated story with little games inside it. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, intended to run on your own computer.
+**One app. Fourteen games, The Book and fictional demo worlds.** A single home screen brings together reading, numbers, free drawing, mazes, chess, strategy, soccer, and an illustrated story with little games inside it. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, intended to run on your own computer.
 
-After setup, open **http://localhost:4810/**. Choose a player once; their name stays large at the top and their progress stays separate. Use **Games** to return home, **Refresh** to reload, and **Grown-ups** to change the device's player or switch the main menu between gameplay screenshots and illustrated logos. The artwork choice is saved for that player on that device; activity-variant menus retain their gameplay previews. Main-menu order adapts per player from recent local play sessions, including older activities that now belong to Maze Garden or Soccer Club. The menu opens immediately using its last known order (or the default), updates preferences in the background for the next visit, and stays still while choosing.
+After setup, open **http://localhost:4810/**. Choose a player once; their name stays large at the top and their progress stays separate. Use **Games** to return home, **Refresh** to reload, and **Grown-ups** to change the device's player. The main menu uses illustrated logos; activity menus show gameplay previews. Main-menu order adapts per player from recent local play sessions, including older activities that now belong to Maze Garden or Soccer Club. The menu opens immediately using its last known order (or the default), updates preferences in the background for the next visit, and stays still while choosing.
 
-[Quick start](#quick-start) · [Let an agent install it](#let-a-coding-agent-install-it) · [Explore the games and Book](#thirteen-games-and-the-book) · [Privacy](PRIVACY.md)
+[Quick start](#quick-start) · [Let an agent install it](#let-a-coding-agent-install-it) · [Explore the games and Book](#fourteen-games-and-the-book) · [Privacy](PRIVACY.md)
 
 What I learned building this: [RETRO.md](RETRO.md)
 
@@ -14,9 +14,9 @@ What I learned building this: [RETRO.md](RETRO.md)
 
 [Watch the 10-second highlight video](docs/media/highlights.mp4) · Silent · Recorded from real play with fictional players
 
-**Edition note:** this edition includes pictured Word Search gardens up to 12×12, Expert clues, guided word changes, open World paths and generic pastel scenes. The World and Book pictures here are screen captures from the install we use. It runs a newer build of this code, with the optional art worker painting each new place. A fresh install shows the generic pastel scenes until you set that up. The characters in these captures are the public ones in this repo, and the players are fictional. Household paintings of people and recordings stay private.
+**Edition note:** the World and Book pictures and clips came from a household installation with the optional local art worker, using public characters and fictional players. A fresh install has the games, but no chapters or playable World. Painted scenes need a separately configured local art worker and a reviewed painting library with hero art; chapters also need the optional writer. Personal paintings and recordings stay private.
 
-## Thirteen games and The Book
+## Fourteen games and The Book
 
 **[Rook Academy](hub/CHESS.md)** offers 36 First moves lessons, 189 Small steps lessons that grow from sparse boards into full positions, and a 72-lesson advanced continuation in two difficulty bands, with an original speaking coach, hints, review and local practice games. **Maze Garden** gathers four activities: tracing mazes, Make a Maze, letter labyrinths and obstacle rescues. **Soccer Club** gathers three soccer variants. Choose any version; existing progress is preserved.
 
@@ -27,14 +27,14 @@ Drag, trace, steer, aim, and think ahead. Pick an activity and a manageable chal
 <td colspan="2" valign="top">
 <img src="docs/media/world-forest-guide.png" alt="World quest: the Mapmaker guide, a child explorer and Bo in a painted candy forest, with a treasure chest and a signpost to the Cloud station" width="65%"> <img src="docs/media/world-quest-map.png" alt="World quest map: one of three puzzles done, with the candy forest, cloud station and crystal cavern, and today's quest list" width="33%"><br>
 <strong>The Castle Kingdom — a world to explore together.</strong><br>
-Explore painted places, talk to friends, collect tools, and solve little challenges in your own order. <a href="docs/media/world-quest-play.mp4">Watch a quest being played</a> (19 seconds, silent). Walking paths stay open; keys and tools still matter at real locks. The map reveals places as you visit; restoring its three pieces opens the castle treasure. A public-safe, memory-only preview is included: run <code>node docs/showcase/demo-server.mjs</code>, then open <code>http://localhost:5710/world?player=hero</code>. This preview is separate from the standard hub installation.
+Explore painted places, talk to friends, collect tools, and solve little challenges in your own order. <a href="docs/media/world-quest-play.mp4">Watch a quest being played</a> (19 seconds, silent). Walking paths stay open; keys and tools still matter at real locks. The map reveals places as you visit; restoring its three pieces opens the castle treasure. A public-safe, memory-only preview is included: run <code>node docs/showcase/demo-server.mjs</code>, then open <code>http://localhost:5710/world?player=hero</code>. This pastel preview is separate from the standard hub installation. The painted captures above require the optional local art worker and reviewed painting library; a fresh hub hides World until its art is ready.
 </td>
 </tr>
 <tr>
 <td colspan="2" valign="top">
 <a href="book/SCHEMA.md"><img src="docs/media/book-forest-story.png" alt="The Book: a mapmaker and a fox on a forest path under a lantern-lit sky, with the opening line of the chapter" width="100%"><br> <img src="docs/media/book-counting-stars.png" alt="The Book: five tappable stars on a bridge in the clouds, under the line Five stars for our lantern." width="49%"> <img src="docs/media/book-crystal-choice.png" alt="The Book: a crystal cavern with two picture choices, a moon over a hill and a pine tree" width="49%"></a><br>
 <strong>The Book — play inside the story.</strong><br>
-The optional nightly writing pipeline creates an illustrated chapter. Tap the stars to count them, pick which path the story takes, and help a friend put the story right. <a href="docs/media/book-story-and-counting.mp4">Watch a chapter being read and played</a> (18 seconds, silent). Letter kicks and magic words are also supported. Grown-ups can preview a chapter without changing progress.
+The optional nightly writing pipeline creates an illustrated chapter. Tap the stars to count them, pick which path the story takes, and help a friend put the story right. <a href="docs/media/book-story-and-counting.mp4">Watch a chapter being read and played</a> (18 seconds, silent). Letter kicks and magic words are also supported. Grown-ups can preview a chapter without changing progress. A fresh install has no chapter. The local template smoke check creates a quest cover; playing it needs the optional painting library and hero art. The painted captures above used the local art worker.
 </td>
 </tr>
 <tr>
@@ -131,7 +131,7 @@ The current edition also includes the calm theme, two home pages, balance challe
 - **Touch-friendly:** drag objects, trace paths, steer a spaceship, and aim with a finger.
 - **Choose the challenge:** separate Beginner and Explorer presets; adjustable or adaptive challenges vary by game.
 - **Keep progress local:** saved rounds and diagnostics live on your own server. No ads or game-owned analytics.
-- **One icon:** one installed home screen for all thirteen games and the Book; no separate installs needed.
+- **One icon:** one installed home screen for all fourteen games and the Book; no separate installs needed.
 - **Easy to start:** one setup command for the whole collection. No AI API key required.
 
 ## Pick a game
@@ -151,6 +151,7 @@ The current edition also includes the calm theme, two home pages, balance challe
 | [free build](hub/README.md#free-build-word-search-and-word-blocks) | Stack blocks, bounce balls and spin connected wooden gears | http://localhost:4810/#free-build |
 | [Word Search](hub/README.md#free-build-word-search-and-word-blocks) | Find pictured words in gardens up to 12×12; optional Expert picture clues | http://localhost:4810/#word-search |
 | [Word Blocks](hub/README.md#free-build-word-search-and-word-blocks) | Turn spelling blocks, match pictured sentences, and pair number coins | http://localhost:4810/#word-blocks |
+| [Letter Slalom](games/word-arcade) | Ski or snowboard through the letter you hear | http://localhost:4810/#letter-slalom |
 | [The Book](book/SCHEMA.md) | Illustrated chapters, counting, letter kicks and magic words; separate chapter setup | Grown-ups → Watch; Admin can preview chapters |
 
 ## Run on your computer
@@ -175,13 +176,13 @@ If you download the repository ZIP instead, unzip it, open a terminal in its fol
 
 Give your agent this request:
 
-> Install and run this repository locally (use its clone URL from the Code menu). Consult its AGENTS.md and README first. Check Node/npm, use a new folder, run npm run play, verify all thirteen games through the hub and the optional Book preview, and give me the single home-screen link. Keep it private and preserve any existing saves.
+> Install and run this repository locally (use its clone URL from the Code menu). Consult its AGENTS.md and README first. Check Node/npm, use a new folder, run npm run play, verify all fourteen games through the hub and the optional Book preview, and give me the single home-screen link. Keep it private and preserve any existing saves.
 
 [AGENTS.md](AGENTS.md) contains the installation, verification, data-preservation and privacy instructions. No API key or paid AI service is needed to run the games.
 
 After onboarding, choose a child by name; each has separate saves. Before setup, the public demo presets are **Beginner**, **Explorer**, and **Admin**. Add `/?player=beginner` or `/?player=explorer` to a link to open that preset. Explicit preset links work before Family setup, using generic content. free build, Word Search and Word Blocks need no Book, cast, word pack, voice cache or model account. Beginner and Explorer have different starting challenges and separate saves; Admin is for testing. Child profiles and demo presets are shared within your installation, not authenticated personal accounts. Spelling names in exercises are fictional examples.
 
-To run just one game, run `npm start` inside its directory (for the React games, first run `npm ci` and `npm run build`). Individual servers use their original default ports, listed in their READMEs. Run `npm test` from the collection root after setup to check all game and hub suites.
+To run just one game, run `npm start` inside its directory (for the React games, first run `npm ci` and `npm run build`). Individual servers use their original default ports, listed in their READMEs. Run `npm test` from the collection root after setup to check every game, hub, Book and script suite. Browser tests find an installed Chrome, or use `CHROME=/path/to/chrome npm test`. If none is found, they report a skip. Optional privacy-tool integration tests also skip when their tools are absent; publication checks still require those tools.
 
 ## Play on a tablet or Chromebook
 

@@ -163,7 +163,7 @@ async function render() {
       dispose = await mountBook(main, { player, book: again, event, onDone: () => { dispose = null; location.hash = ""; } });
       return;
     }
-    main.innerHTML = `<section class="error"><h1>Your next chapter is being written.</h1><p>It will be ready in the morning.</p><a class="back-link" href="#">← Back</a></section>`;
+    main.innerHTML = `<section class="error"><h1>No chapter yet.</h1><p>A grown-up can set up optional Book chapters using the installation guide. The other games are ready to play.</p><a class="back-link" href="#">← Back</a></section>`;
     return;
   }
   const dest = destination(location.hash),
@@ -227,7 +227,7 @@ async function render() {
   // Paint immediately. Updated preferences apply only on the NEXT menu visit.
   const order = menuOrders.current(player);
   void menuOrders.refresh(player);
-  const catalog = [...CATALOG].sort((a, b) => {
+  const catalog = CATALOG.filter(item=>item.id!=='hunt'||p.huntReady).sort((a, b) => {
     const rank = id => order.includes(id) ? order.indexOf(id) : order.length + CATALOG.findIndex(g => g.id === id);
     return rank(a.id) - rank(b.id);
   });
@@ -297,7 +297,7 @@ $("#gate-form").onsubmit = (e) => {
   $("#gate-form").hidden = true;
   $("#parent-options").hidden = false;
   $("#gate-cancel").focus();
-  $("#world-previews").innerHTML = config.players.filter(k=>k.id!=="admin"&&k.id===player).map(k=>`<a class="book-watch-btn" href="/world?player=${encodeURIComponent(k.id)}&amp;preview=${k.worldQuest?0:1}">🌍 ${esc(k.name)}'s ${k.world==='small'?'World':'Castle Kingdom'}${k.worldQuest?'':' · Preview'}</a>`).join("");
+  $("#world-previews").innerHTML = config.players.filter(k=>k.id!=="admin"&&k.id===player&&k.worldReady).map(k=>`<a class="book-watch-btn" href="/world?player=${encodeURIComponent(k.id)}&amp;preview=${k.worldQuest?0:1}">🌍 ${esc(k.name)}'s ${k.world==='small'?'World':'Castle Kingdom'}${k.worldQuest?'':' · Preview'}</a>`).join("");
   $("#book-watch").innerHTML = config.players.filter((k) => k.id !== "admin").map((k) => `<button type="button" class="book-watch-btn" data-watch="${esc(k.id)}">Watch ${esc(k.name)}'s book</button><a class="book-watch-btn book-cards-link" href="/api/book/cards?player=${encodeURIComponent(k.id)}" target="_blank" rel="noopener">🖨️ ${esc(k.name)}'s word cards</a>`).join("");
   $("#book-watch").querySelectorAll("[data-watch]").forEach((b) => (b.onclick = () => { $("#parents").close(); location.hash = "book/" + b.dataset.watch; }));
 };

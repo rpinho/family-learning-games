@@ -204,6 +204,7 @@ export function bookService({data,bookDir,players,config,log=()=>{},timeZone,now
   });
  }
  return {
+  async huntAvailable(player){return !!(await dayHunt(player));},
   async handle(req,res,u){
    if(u.pathname==='/api/book'){
     const player=u.searchParams.get('player');

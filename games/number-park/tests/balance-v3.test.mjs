@@ -76,7 +76,7 @@ test('every Balance spoken event is one complete inventory line, never number cl
   }
  }
 });
-test('both boys can place, optionally guess and weigh before answering; reload preserves observations and progress',()=>{
+test('both players can place, optionally guess and weigh before answering; reload preserves observations and progress',()=>{
  for(const id of ['beginner','explorer'])for(const guess of [null,0,1]){
   const p=freshProfile(id);p.xp=47;p.drawing=[[[1,1],[2,2]]];p.completed={place:2};
   act(p,{kind:'start',game:id==='beginner'?'balance-k':'balance'});const q=p.session.question;

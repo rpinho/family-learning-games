@@ -90,7 +90,7 @@ export function Drawing({player,traceNext,shapeNext,saved,savedSpace,onSave,onTr
  </svg>
  {mode==='free'&&<GuessDrawing ink={ink} art={art} act={act} busy={busy} onSpeak={onSpeak}/>}
  {mode==='trace'&&ready===String(TRACE_MAX)&&<Button onClick={()=>{setDigit('1');reset('1');onSpeak('1');}}>Trace again from 1 →</Button>}
- <p aria-live="polite">{message||(mode==='free'?'Your last saved drawing stays on the Mac Mini.':'Finish to meet the next '+(mode==='shapes'?'shape':'number')+'. Lift your finger anytime.')}</p>
+ <p aria-live="polite">{message||(mode==='free'?'Your last saved drawing stays on this computer.':'Finish to meet the next '+(mode==='shapes'?'shape':'number')+'. Lift your finger anytime.')}</p>
  {message.includes('not saved yet')&&mode!=='free'&&<Button disabled={busy} onClick={()=>void completed(guided?rail.current.completed as Point[][]:attempt)}>Save practice again</Button>}
  {mode!=='free'&&<small>{guided?'Guided practice—not a handwriting test.':'Copying practice—not a handwriting or memory test. Use Gold guide whenever you need it.'}</small>}
  </section>;

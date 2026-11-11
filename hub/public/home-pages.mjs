@@ -66,7 +66,7 @@ export function homePins(player) {
   return [
     {id:'my-world', name:small ? player.name + "'s World" : 'Castle Kingdom', href:'/world?player='+encodeURIComponent(player.id), icon:'/book-art/bg/real-foreground/'+(small ? 'volcanoPortrait.webp' : 'castle-gatePortrait.webp'), painted:true, description:'Your quest, friends and discoveries.', color:'#d5dfbc'},
     {id:'my-book', name:'My Book', href:'#my-book', icon:'/my-book.svg', description:'Today’s chapter, any time.', color:'#f0a52c'},
-  ];
+  ].filter(card=>card.id!=='my-world'||player.worldReady).map(card=>card.id==='my-book'?{...card,description:'Optional chapters · grown-up setup.'}:card);
 }
 
 // Pinned cards stay first, and page 1 keeps the larger half including those cards.

@@ -60,7 +60,7 @@ test('Word transformer starts from a real word and replaces a selected letter',(
 });
 test('Reading UI is safe and evidence stays separate in diagnostics',async()=>{
  const p=freshProfile('admin');p.name='<script>x</script>';assert.doesNotMatch(readingHome(p),/<script>/);assert.match(readingHome(p),/Word transformer/);assert.match(readingHome(p),/No alphabet drills/);
- act(p,{kind:'start',focus:'story'});assert.match(readingView(p),/Read it to me/);const before={question:p.reading.question};const result=correct(p),rows=[{type:'reading_action',player:'admin',session:'test',before,input:{kind:'answer'},result}];
+ act(p,{kind:'start',focus:'story'});assert.match(readingView(p),/Hear the text/);const before={question:p.reading.question};const result=correct(p),rows=[{type:'reading_action',player:'admin',session:'test',before,input:{kind:'answer'},result}];
  rows.push({type:'reading_action',player:'admin',session:'test',before,input:{kind:'next'},result:{kind:'next'}});
  assert.deepEqual((await summarize(rows)).reading,[]);const r=(await summarize(rows,{player:'admin'})).reading[0];assert.equal(r.independent,1);assert.equal(r.activity,'story');assert.equal(r.assisted,0);
 });

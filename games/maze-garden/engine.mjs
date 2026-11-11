@@ -1,8 +1,9 @@
 export const VERSION = 'maze-garden-2026-09-27-request-history';
 export const MAX_LEVEL = 27;
-export const baseline = player => String(player).split('_')[0]==='explorer'?12:String(player).split('_')[0]==='beginner'?6:6;
+// Start beginners at the ladder’s smallest grid (level 1, 9×9); saved levels are preserved.
+export const baseline = player => String(player).split('_')[0]==='explorer'?12:String(player).split('_')[0]==='beginner'?1:6;
 export const gridSize = level => 9+2*(Math.max(1,Math.min(MAX_LEVEL,level))-1);
-export const PLAYERS = {explorer:'Explorer',beginner:'Beginner',admin:'Admin · Alex'};
+export const PLAYERS = {explorer:'Explorer',beginner:'Beginner',admin:'Admin'};
 export const THEMES = [
  {name:'Garden trails',animal:'🐰',goal:'🥕',wall:'#17734d',floor:'#efffe7',accent:'#f7ab28',back:'#b4e5bc'},
  {name:'Coral coves',animal:'🐢',goal:'🏝️',wall:'#146784',floor:'#e2faff',accent:'#ff8d6b',back:'#95dfe9'},

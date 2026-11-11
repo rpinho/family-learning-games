@@ -13,9 +13,10 @@ import {createWorldModel} from '../public/world-model.mjs';
 import {CASTLE,SMALL} from '../public/world-definitions.mjs';
 
 // Identities and progress are synthetic; household replay receipts stay outside the repository.
-test('both world cards are permanent page-one pins outside every smart order',()=>{
+test('ready world cards stay on page one outside every smart order',()=>{
  for(const player of [{id:'young',name:'Ada',world:'small'},{id:'older',name:'Max',world:'castle'}]){
-  const pins=homePins(player);
+  const pins=homePins({...player,worldReady:true});
+  assert.deepEqual(homePins(player).map(c=>c.id),['my-book']);
   assert.deepEqual(pins.map(c=>c.id),['my-world','my-book']);
   assert.equal(pins[0].name,player.world==='small'?"Ada's World":'Castle Kingdom');
   assert.equal(pins[0].href,'/world?player='+player.id);
@@ -67,6 +68,9 @@ test('current episodes open and act without a gate; review/future writes are gat
  const base='http://127.0.0.1:'+server.address().port;
  const get=async q=>{const r=await fetch(base+'/api/world?player=hero'+q);assert.equal(r.status,200);return r.json();};
  assert.equal(await service.available('hero'),true);
+ assert.equal(await service.ready('hero'),true);
+ const empty=worldService({bookDir,config:{players:[{id:'beginner_1'}]},book:{library:async()=>({})}});
+ assert.equal(await empty.ready('beginner_1'),false);
  let child=await get('');assert.equal(child.definition.episode.id,ep.id);assert.equal(child.state.room,ep.id+'--'+ep.start);assert.ok(child.state.items.includes('map-chess'));
  const post=async(q,body,cookie='')=>fetch(base+'/api/world?player=hero'+q,{method:'POST',headers:{'Content-Type':'application/json',cookie},body:JSON.stringify(body)});
  const action={action:'walk',room:child.state.room,x:.45,y:.96,revision:58};
