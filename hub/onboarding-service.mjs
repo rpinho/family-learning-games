@@ -6,6 +6,11 @@ export function onboardingService({paths,authorized,onSave}){
  return {store,async handle(req,res,u){
   const pages={'/onboarding':['onboarding.html','text/html'],'/onboarding.mjs':['onboarding.mjs','text/javascript'],'/onboarding.css':['onboarding.css','text/css']};
   if(pages[u.pathname]&&req.method==='GET'){const [name,type]=pages[u.pathname];res.writeHead(200,{'Content-Type':type+'; charset=utf-8','X-Robots-Tag':'noindex'});res.end(await readFile(new URL('./public/'+name,import.meta.url)));return;}
+  // Skipping creates no child and grants no access to private setup reads or writes.
+  if(u.pathname==='/api/onboarding/skip'){
+   if(req.method!=='POST')return send(res,405,{error:'Use POST.'});
+   try{return send(res,200,await store.skip());}catch{return send(res,500,{error:'Could not remember your choice. Please try again.'});}
+  }
   if(u.pathname!=='/api/onboarding')return false;
   if(!authorized(req))return send(res,403,{error:'Open the grown-ups gate.'});
   try{

@@ -166,6 +166,8 @@ git clone REPOSITORY_URL && cd family-learning-games && npm run play
 
 This downloads the collection, installs locked dependencies, builds the two React interfaces, and starts the hub plus the game servers. The hub and other games need only Node. Open **http://localhost:4810/** in Chrome, Edge, or another modern browser. On the first visit, a **grown-up** completes Family setup: add each child, choose a starting point, and optionally add interests and photos. You can save a child with **zero photos**. Add another child before opening Games. Later, use **Grown-ups → Family setup** to edit a child or add one.
 
+Choose **skip for now** to play with demo players Beginner and Explorer, then set up later under **Grown-ups → Family setup**.
+
 Tablet previews with fictional children: [child details](docs/media/onboarding-child-tablet.png), [starting skills](docs/media/onboarding-skills-tablet.png), [optional photos](docs/media/onboarding-photos-tablet.png).
 
 Keep the terminal running; Ctrl+C stops the servers. Later, run `npm start` in the same folder; no reinstall is necessary. An existing `family-learning-games` folder is not overwritten.

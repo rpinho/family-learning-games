@@ -10,10 +10,10 @@ const text=(v,max=120)=>{if(typeof v!=='string'||v.length>max||/[\x00-\x1f]/.tes
 const list=v=>{if(!Array.isArray(v)||v.length>20)throw bad('Use up to 20 favourite things.');return [...new Set(v.map(x=>text(x,80)).filter(Boolean))];};
 const json=async(file,fallback)=>{try{return JSON.parse(await readFile(file,'utf8'));}catch(e){if(e.code==='ENOENT')return fallback;throw e;}};
 export function onboardingStore({paths,onSave=async()=>{}}){
- const root=resolve(paths.root);let queue=Promise.resolve();
+ const root=resolve(paths.root),setupFile=join(paths.book,'setup.json');let queue=Promise.resolve();
  const safe=file=>safePrivatePath(root,file);
  const write=(file,value)=>writePrivateFile(root,file,value);
- async function read(){await safe(paths.profiles);const profiles=await json(paths.profiles,{});return {children:Object.entries(profiles).filter(([id,p])=>ID.test(id)&&p?.name).map(([id,p])=>({id,name:p.name,age:p.age,grade:p.grade||'',skills:p.startingSkills||{letters:'starting',counting:p.countsTo||5,reading:p.track==='words'?'words':'starting',maths:p.mathTrack==='facts'?'tables':'starting'},interests:p.interests||[],favourites:p.favourites||[],placement:p.placement||null,photoCount:p.artReferences?.photos?.length||0,privateArt:p.artReferences?.enabled===true})),required:!Object.entries(profiles).some(([k,v])=>!k.startsWith('_')&&v?.name)};}
+ async function read(){await safe(paths.profiles);await safe(setupFile);const profiles=await json(paths.profiles,{}),skipped=(await json(setupFile,{})).skipped===true;return {children:Object.entries(profiles).filter(([id,p])=>ID.test(id)&&p?.name).map(([id,p])=>({id,name:p.name,age:p.age,grade:p.grade||'',skills:p.startingSkills||{letters:'starting',counting:p.countsTo||5,reading:p.track==='words'?'words':'starting',maths:p.mathTrack==='facts'?'tables':'starting'},interests:p.interests||[],favourites:p.favourites||[],placement:p.placement||null,photoCount:p.artReferences?.photos?.length||0,privateArt:p.artReferences?.enabled===true})),skipped,required:!skipped&&!Object.entries(profiles).some(([k,v])=>!k.startsWith('_')&&v?.name)};}
  async function saveChild(input){
   if(!input||typeof input!=='object'||Array.isArray(input))throw bad('Add a child first.');
   const name=text(input.name,60),grade=text(input.grade||'',40),age=input.age==null?null:Number(input.age);
@@ -41,5 +41,5 @@ export function onboardingStore({paths,onSave=async()=>{}}){
   if(input.removePhotos)for(const file of old.artReferences?.photos||[])if(new RegExp('^photos/'+id+'/[a-f0-9-]+\\.(png|jpg)$').test(file))await unlink(await safe(join(paths.book,file))).catch(e=>{if(e.code!=='ENOENT')throw e;});
   await onSave(profiles);return {id,...await read()};
  }
- return {read,save(input){const task=queue.then(()=>saveChild(input));queue=task.catch(()=>{});return task;}};
+ return {read,async skip(){await write(setupFile,JSON.stringify({skipped:true})+'\n');return {skipped:true};},save(input){const task=queue.then(()=>saveChild(input));queue=task.catch(()=>{});return task;}};
 }

@@ -138,7 +138,7 @@ const server=http.createServer(async(req,res)=>{
   }
   if(u.pathname==='/__deploy/version'&&req.method==='GET'){const g=u.searchParams.get('game'),idle=Number(u.searchParams.get('idle'));if(Number.isFinite(idle)&&idle>=0&&idle<120)touch(g,Date.now()-idle*1000);const games=Object.fromEntries(ids.map(id=>[id,releaseOf(id)]));return send(res,200,{hub:HUB_RELEASE,games,channel});}
   if(u.pathname.startsWith('/api/')&&!['GET','HEAD'].includes(req.method))touch('hub');
-  if(u.pathname==='/api/onboarding'||u.pathname.startsWith('/onboarding')){const handled=await onboarding.handle(req,res,u);if(handled!==false)return;}
+  if(u.pathname==='/api/onboarding'||u.pathname==='/api/onboarding/skip'||u.pathname.startsWith('/onboarding')){const handled=await onboarding.handle(req,res,u);if(handled!==false)return;}
   if(u.pathname==='/api/free-build')return await freeBuild.handle(req,res,u);
   if(u.pathname.startsWith('/api/word-search'))return await wordSearch.handle(req,res,u);
   if(u.pathname.startsWith('/api/word-blocks'))return await wordBlocks.handle(req,res,u);

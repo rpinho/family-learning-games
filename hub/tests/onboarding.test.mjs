@@ -1,3 +1,6 @@
+import {findChrome,chromeSkip} from '../../scripts/chrome.mjs';
+import {waitForChrome} from '../scripts/chrome-target.mjs';
+import {guardChrome} from '../scripts/headless-guard.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,readFile,readdir,writeFile,mkdir,symlink,stat,rm,realpath} from 'node:fs/promises';
@@ -80,4 +83,79 @@ test('managed staging reads and edits its own Book/learner paths inside the conf
  const gate=await(await fetch(h.base+'/api/book/review/gate')).json();const post=(path,body,cookie='')=>fetch(h.base+path,{method:'POST',headers:{'Content-Type':'application/json',Cookie:cookie},body:JSON.stringify(body)});
  const unlock=await post('/api/book/review/gate',{id:gate.id,answer:gate.code.replace(/[^A-Z]/g,'').split('').reverse().join('')});const cookie=unlock.headers.get('set-cookie').split(';')[0];assert.equal((await post('/api/onboarding',{...input,id:saved.id,name:'Stage Demo'},cookie)).status,200);
  assert.equal(readProfiles(stagePaths)[saved.id].name,'Stage Demo');assert.equal(await readFile(paths.profiles,'utf8'),original);
+});
+
+test('skip persists without profiles, serves demos, keeps the gate, and later setup replaces demos',async t=>{
+ const {root,paths,store}=await fixture(t);let h=await hub(root);t.after(()=>h.child.exitCode===null?stop(h.child):null);
+ const config=async()=>{const r=await fetch(h.base+'/api/config');assert.equal(r.status,200);return r.json();};
+ const post=(path,body,cookie='',origin)=>fetch(h.base+path,{method:'POST',headers:{'Content-Type':'application/json',cookie:cookie,...(origin?{Origin:origin}:{})},body:JSON.stringify(body)});
+ assert.equal((await config()).onboardingRequired,true);
+ assert.equal((await post('/api/onboarding/skip',{},'','https://untrusted.example')).status,403);
+ assert.equal((await fetch(h.base+'/api/onboarding/skip')).status,405);
+ assert.equal((await post('/api/onboarding/skip',{})).status,200);
+ assert.deepEqual(await store.read(),{children:[],skipped:true,required:false});
+ assert.deepEqual(await readdir(paths.book),['setup.json']); // No profiles, chapters, cast or art.
+ assert.equal((await stat(join(paths.book,'setup.json'))).mode&0o777,0o600);
+ await stop(h.child);h=await hub(root);
+ const skipped=await config();assert.equal(skipped.onboardingRequired,false);
+ assert.deepEqual(skipped.players.map(p=>[p.id,p.name]),[['beginner','Beginner'],['explorer','Explorer'],['admin','Admin']]);
+ for(const player of ['beginner','explorer'])for(const api of ['dribble','chess'])assert.equal((await fetch(h.base+'/api/'+api+'?player='+player)).status,200);
+ assert.equal((await fetch(h.base+'/onboarding')).status,200);
+ assert.equal((await fetch(h.base+'/api/onboarding')).status,403);
+ assert.equal((await post('/api/onboarding',input)).status,403);
+ const gate=await(await fetch(h.base+'/api/book/review/gate')).json();
+ const unlock=await post('/api/book/review/gate',{id:gate.id,answer:gate.code.replace(/[^A-Z]/g,'').split('').reverse().join('')});
+ const cookie=unlock.headers.get('set-cookie').split(';')[0];
+ assert.deepEqual((await(await fetch(h.base+'/api/onboarding',{headers:{cookie:cookie}})).json()).children,[]);
+ const saved=await post('/api/onboarding',input,cookie);assert.equal(saved.status,200);const {id}=await saved.json();
+ assert.deepEqual((await config()).players.map(p=>p.id),['admin',id]);
+ assert.equal((await config()).onboardingRequired,false);
+ // Further skip requests cannot restore demos over an existing child's setup.
+ assert.equal((await post('/api/onboarding/skip',{})).status,200);
+ assert.deepEqual((await config()).players.map(p=>p.id),['admin',id]);
+});
+
+for(const step of ['gate','editor'])test(`fresh setup: skip for now from ${step} opens demo home and remembers the choice`,{timeout:60000,skip:findChrome()?false:chromeSkip},async t=>{
+ const root=await mkdtemp(join(tmpdir(),'setup-skip-')),profile=join(root,'chrome');
+ let server,chrome,ws;
+ const stop=async child=>{if(child&&child.exitCode===null&&child.signalCode===null){const exited=new Promise(r=>child.once('exit',r));child.kill('SIGTERM');await exited;}};
+ t.after(async()=>{ws?.close();await stop(chrome);await stop(server);await rm(root,{recursive:true,force:true,maxRetries:5,retryDelay:100});});
+ const h=await hub(root);server=h.child;const base=h.base;
+ chrome=guardChrome(spawn(findChrome(),['--headless=new','--remote-debugging-port=0','--user-data-dir='+profile,'--no-first-run','--mute-audio'],{stdio:'ignore'}));
+ const target=await waitForChrome({profile});ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise(r=>ws.onopen=r);
+ let seq=0;const pending=new Map(),browserErrors=[];
+ ws.onmessage=e=>{const v=JSON.parse(e.data);if(v.id){pending.get(v.id)?.(v);pending.delete(v.id);}if(v.method==='Runtime.exceptionThrown')browserErrors.push(v.params.exceptionDetails.text);};
+ const send=(method,params={})=>new Promise((resolve,reject)=>{const id=++seq,timer=setTimeout(()=>reject(Error('CDP timeout '+method)),10000);pending.set(id,v=>{clearTimeout(timer);v.error?reject(Error(JSON.stringify(v.error))):resolve(v.result);});ws.send(JSON.stringify({id,method,params}));});
+ const js=async expression=>{const v=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(v.exceptionDetails)throw Error(v.exceptionDetails.exception?.description||v.exceptionDetails.text);return v.result?.value;};
+ const wait=async expression=>{for(let i=0;i<200;i++){if(await js(expression))return;await new Promise(r=>setTimeout(r,50));}assert.fail('Timed out: '+expression);};
+ const click=async selector=>{const point=await js(`(()=>{const el=document.querySelector(${JSON.stringify(selector)});el.scrollIntoView();const r=el.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()`);for(const type of ['mousePressed','mouseReleased'])await send('Input.dispatchMouseEvent',{type,...point,button:'left',clickCount:1});};
+ await send('Runtime.enable');
+ await send('Emulation.setDeviceMetricsOverride',{width:820,height:1180,deviceScaleFactor:1,mobile:false});
+ await js(`location.assign(${JSON.stringify(base+'/')})`);
+ await wait(`location.pathname==='/onboarding'&&document.querySelector('#code')?.textContent.length>0`);
+ if(step==='editor'){
+  await js(`document.querySelector('#answer').value=document.querySelector('#code').textContent.replace(/[^A-Z]/g,'').split('').reverse().join('')`);
+  await click('#gate-form button');await wait(`document.querySelector('#editor')?.hidden===false`);
+ }
+ assert.ok(await js(`(()=>{const r=document.querySelector('#${step} [data-skip]').getBoundingClientRect();return r.width>=100&&r.height>=44&&r.top>=0&&r.bottom<=innerHeight;})()`),'skip is visible and touch-sized');
+ await click(`#${step} [data-skip]`);
+ await wait(`location.pathname==='/'&&!!document.querySelector('[data-choose="explorer"]')`);
+ assert.deepEqual(await js(`[...document.querySelectorAll('[data-choose]')].map(e=>e.textContent)`),['Beginner','Explorer','Admin']);
+ assert.equal(await js(`!!document.querySelector('[data-skip]')`),false,'no skip on child-facing picker');
+ await js('location.reload()');await wait(`!!document.querySelector('[data-choose="beginner"]')`);
+ assert.equal(await js('location.pathname'),'/');
+ await click('[data-choose="beginner"]');await wait(`!!document.querySelector('#grown-ups')`);
+ await click('#grown-ups');
+ await js(`document.querySelector('#gate-answer').value=document.querySelector('#gate-code').textContent.replace(/[^A-Z]/g,'').split('').reverse().join('')`);
+ await click('#unlock');await wait(`document.querySelector('#parent-options')?.hidden===false`);
+ await click('a[href="/onboarding"]');
+ await wait(`location.pathname==='/onboarding'&&!!document.querySelector('#gate')`);
+ // A prior server gate session can still be unlocked; skipping alone never unlocks it.
+ await wait(`document.querySelector('#code')?.textContent.length>0||document.querySelector('#editor')?.hidden===false`);
+ if(await js(`document.querySelector('#editor').hidden`)){
+  await js(`document.querySelector('#answer').value=document.querySelector('#code').textContent.replace(/[^A-Z]/g,'').split('').reverse().join('')`);
+  await click('#gate-form button');
+ }
+ await wait(`document.querySelector('#editor')?.hidden===false`);
+ assert.deepEqual(browserErrors,[]);
 });
