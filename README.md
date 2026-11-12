@@ -1,12 +1,12 @@
 # Family Learning Games
 
-![Family Learning Games: fourteen games and an illustrated story Book in one self-hosted app](docs/media/social-preview.png)
+![Family Learning Games: thirteen games and an illustrated story Book in one self-hosted app](docs/media/social-preview.png)
 
-**One app. Fourteen games, The Book and fictional demo worlds.** A single home screen brings together reading, numbers, free drawing, mazes, chess, strategy, soccer, and an illustrated story with little games inside it. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, intended to run on your own computer.
+**One app. Thirteen games, The Book and fictional demo worlds.** A single home screen brings together reading, numbers, free drawing, mazes, chess, strategy, soccer, and an illustrated story with little games inside it. Install the hub once, then switch games without another website. This is a **self-hosted source collection**, intended to run on your own computer.
 
 After setup, open **http://localhost:4810/**. Choose a player once; their name stays large at the top and their progress stays separate. Use **Games** to return home, **Refresh** to reload, and **Grown-ups** to change the device's player. The main menu uses illustrated logos; activity menus show gameplay previews. Main-menu order adapts per player from recent local play sessions, including older activities that now belong to Maze Garden or Soccer Club. The menu opens immediately using its last known order (or the default), updates preferences in the background for the next visit, and stays still while choosing.
 
-[Quick start](#quick-start) · [Let an agent install it](#let-a-coding-agent-install-it) · [Explore the games and Book](#fourteen-games-and-the-book) · [Privacy](PRIVACY.md)
+[Quick start](#quick-start) · [Let an agent install it](#let-a-coding-agent-install-it) · [Explore the games and Book](#thirteen-games-and-the-book) · [Privacy](PRIVACY.md)
 
 What I learned building this: [RETRO.md](RETRO.md)
 
@@ -16,7 +16,7 @@ What I learned building this: [RETRO.md](RETRO.md)
 
 **Edition note:** the World and Book pictures and clips came from a household installation with the optional local art worker, using public characters and fictional players. A fresh install has the games, but no chapters or playable World. Painted scenes need a separately configured local art worker and a reviewed painting library with hero art; chapters also need the optional writer. Personal paintings and recordings stay private.
 
-## Fourteen games and The Book
+## Thirteen games and The Book
 
 **[Rook Academy](hub/CHESS.md)** offers 36 First moves lessons, 189 Small steps lessons that grow from sparse boards into full positions, and a 72-lesson advanced continuation in two difficulty bands, with an original speaking coach, hints, review and local practice games. **Maze Garden** gathers four activities: tracing mazes, Make a Maze, letter labyrinths and obstacle rescues. **Soccer Club** gathers three soccer variants. Choose any version; existing progress is preserved.
 
@@ -131,7 +131,7 @@ The current edition also includes the calm theme, two home pages, balance challe
 - **Touch-friendly:** drag objects, trace paths, steer a spaceship, and aim with a finger.
 - **Choose the challenge:** separate Beginner and Explorer presets; adjustable or adaptive challenges vary by game.
 - **Keep progress local:** saved rounds and diagnostics live on your own server. No ads or game-owned analytics.
-- **One icon:** one installed home screen for all fourteen games and the Book; no separate installs needed.
+- **One icon:** one installed home screen for all thirteen games and the Book; no separate installs needed.
 - **Easy to start:** one setup command for the whole collection. No AI API key required.
 
 ## Pick a game
@@ -151,7 +151,7 @@ The current edition also includes the calm theme, two home pages, balance challe
 | [free build](hub/README.md#free-build-word-search-and-word-blocks) | Stack blocks, bounce balls and spin connected wooden gears | http://localhost:4810/#free-build |
 | [Word Search](hub/README.md#free-build-word-search-and-word-blocks) | Find pictured words in gardens up to 12×12; optional Expert picture clues | http://localhost:4810/#word-search |
 | [Word Blocks](hub/README.md#free-build-word-search-and-word-blocks) | Turn spelling blocks, match pictured sentences, and pair number coins | http://localhost:4810/#word-blocks |
-| [Letter Slalom](games/word-arcade) | Ski or snowboard through the letter you hear | http://localhost:4810/#letter-slalom |
+| [Letter Slalom](games/word-arcade) | Part of Word Arcade: ski or snowboard through the letter you hear | http://localhost:4810/#letter-slalom |
 | [The Book](book/SCHEMA.md) | Illustrated chapters, counting, letter kicks and magic words; separate chapter setup | Grown-ups → Watch; Admin can preview chapters |
 
 ## Run on your computer
@@ -178,7 +178,7 @@ If you download the repository ZIP instead, unzip it, open a terminal in its fol
 
 Give your agent this request:
 
-> Install and run this repository locally (use its clone URL from the Code menu). Consult its AGENTS.md and README first. Check Node/npm, use a new folder, run npm run play, verify all fourteen games through the hub and the optional Book preview, and give me the single home-screen link. Keep it private and preserve any existing saves.
+> Install and run this repository locally (use its clone URL from the Code menu). Consult its AGENTS.md and README first. Check Node/npm, use a new folder, run npm run play, verify all thirteen games through the hub and the optional Book preview, and give me the single home-screen link. Keep it private and preserve any existing saves.
 
 [AGENTS.md](AGENTS.md) contains the installation, verification, data-preservation and privacy instructions. No API key or paid AI service is needed to run the games.
 
